@@ -3,7 +3,7 @@ TARGET = libdiaplexis-stl.so
 OBJECTS = sheet.o spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
 spacetime_geometry.o spacetime_hyphansis.o vertex.o simplex.o 
 
-CXX_FLAGS += -I$(SYNARMOSMA)/include 
+CXX_FLAGS += -I$(SYNARMOSMA)/include
 LD_FLAGS  += -L$(SYNARMOSMA)/lib -Wall -shared 
 LIBS       = -lsynarmosma $(LAPACK) -lboost_system -lpugixml -lntl -lm
 

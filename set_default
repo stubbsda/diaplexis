@@ -1,17 +1,17 @@
 #!/bin/bash
 
 if [ $1 = "NTL" ]; then
-   cd ../include
+   cd $DIAPLEXIS/include
    rm -f diaplexis.h
    ln -s diaplexis-ntl.h diaplexis.h
-   cd ../lib
+   cd $DIAPLEXIS/lib
    rm -f libdiaplexis.so
    ln -s libdiaplexis-ntl.so libdiaplexis.so
 else 
-   cd ../include
+   cd $DIAPLEXIS/include
    rm -f diaplexis.h
    ln -s diaplexis-stl.h diaplexis.h
-   cd ../lib
+   cd $DIAPLEXIS/lib
    rm -f libdiaplexis.so
    ln -s libdiaplexis-stl.so libdiaplexis.so
 fi
