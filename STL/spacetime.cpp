@@ -1,6 +1,6 @@
 #include "spacetime.h"
 
-Random RND;
+extern Random RND;
 
 const double Spacetime::ramosity = 0.15;
 const double Spacetime::epsilon = 0.00001;

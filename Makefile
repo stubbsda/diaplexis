@@ -27,8 +27,10 @@ clean:
 	rm -f diaplexis.aux diaplexis.dvi diaplexis.log diaplexis.ps 
 	rm -f *~
 	rm -f $(DIAPLEXIS)/documentation/*
-	rm -f $(DIAPLEXIS)/lib/*
-	rm -rf $(DIAPLEXIS)/include/*
+	rm -f $(DIAPLEXIS)/lib/libdiaplexis*
+	rm -f $(DIAPLEXIS)/include/diaplexis*
+	rm -rf $(DIAPLEXIS)/include/NTL
+	rm -rf $(DIAPLEXIS)/include/STL
 	cd NTL; make clean
 	cd STL; make clean
 
