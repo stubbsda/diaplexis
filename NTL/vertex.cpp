@@ -43,8 +43,8 @@ Vertex& Vertex::operator =(const Vertex& source)
   entwinement = source.entwinement;
   curvature = source.curvature;
   obliquity = source.obliquity;
-  boundary = source.boundary;
   geometric_deficiency = source.geometric_deficiency;
+  boundary = source.boundary;
   topology_modified = source.topology_modified;
   geometry_modified = source.geometry_modified;
 
@@ -86,6 +86,7 @@ void Vertex::write2screen() const
   std::cout << obliquity << std::endl;
   std::cout << geometric_deficiency << std::endl;
   std::cout << ubiquity << std::endl;
+  std::cout << theorem << std::endl;
 }
 
 void Vertex::serialize(std::ofstream& s,int nt) const

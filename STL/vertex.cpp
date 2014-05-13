@@ -90,6 +90,7 @@ void Vertex::write2screen() const
     std::cout << ubiquity[i] << ",";
   }
   std::cout << ubiquity[ubiquity.size()-1] << "]" << std::endl;
+  std::cout << theorem << std::endl;
 }
 
 void Vertex::serialize(std::ofstream& s) const
