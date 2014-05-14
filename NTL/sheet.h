@@ -1,4 +1,5 @@
-#include "nexus.h"
+#include "homology.h"
+#include "homotopy.h"
 
 #ifndef _sheeth
 #define _sheeth
@@ -15,8 +16,8 @@ class Sheet {
   bool boundary;
   bool orientable;
   std::string ops;
-  std::vector<Group> HZ;
-  Group pi1;
+  Homology* H;
+  Homotopy* pi;
 
   void clear();
   void serialize(std::ofstream&) const;

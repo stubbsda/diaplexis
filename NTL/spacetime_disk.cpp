@@ -86,22 +86,22 @@ void Spacetime::read_parameters(const char* filename)
     }
     else if (name == "HomologyMethod") {
       if (value == "GAP") {
-        homology_method = GAP; 
+        H->set_method(GAP); 
       }
       else if (value == "Native") {
-        homology_method = NATIVE;
+        H->set_method(NATIVE);
       }
     }
     else if (name == "HomologyBase") {
       if (value == "INT") {
-        homology_base = INT;
+        H->set_field(INT);
       }
       else if (value == "NTL::ZZ") {
-        homology_base = ZZ;
+        H->set_field(ZZ);
       }
       else {
         // This should be the Galois field GF(2)
-        homology_base = GF2;
+        H->set_field(GF2);
       }
     }
     else if (name == "Compressible") {
@@ -543,15 +543,12 @@ void Spacetime::write_log() const
   }
 
   atom = rstep.append_child("Homology");
-  nvalue = "[";
-  for(i=0; i<dimension(-1); ++i) {
-    nvalue += HZ[i].compact_form() + "],[";
-  }
-  nvalue += HZ[dimension(-1)].compact_form() + "]";
+  nvalue = H->write();
+  nvalue += H->sequence[dimension(-1)].compact_form() + "]";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("Homotopy");
-  nvalue = pi1.compact_form();
+  nvalue = pi->write();
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   ne = cardinality(1,-1);
@@ -798,15 +795,11 @@ void Spacetime::write_log() const
     }
 
     atom = sheet.append_child("Homology");
-    nvalue = "[";
-    for(j=0; j<dimension(i); ++j) {
-      nvalue += codex[i].HZ[j].compact_form() + "],[";
-    }
-    nvalue += codex[i].HZ[dimension(i)].compact_form() + "]";
+    nvalue = codex[i].H->write();
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("Homotopy");
-    nvalue = codex[i].pi1.compact_form();
+    nvalue = codex[i].pi->write();
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("Cyclomaticity");
@@ -950,12 +943,8 @@ void Spacetime::read_complex(std::ifstream& s)
   compute_entourages(-1);
 
   // Now the algebraic properties...
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    G.deserialize(s);
-    HZ.push_back(G);
-  }
-  pi1.deserialize(s);
+  H->deserialize(s);
+  pi->deserialize(s);
 
   s.read((char*)(&j),sizeof(int));
   for(i=0; i<j; ++i) {
@@ -1243,12 +1232,8 @@ void Spacetime::write_complex(std::ofstream& s) const
     }
   }
   // Now the algebraic properties...
-  j = (signed) HZ.size();
-  s.write((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    HZ[i].serialize(s);
-  }
-  pi1.serialize(s);
+  H->serialize(s);
+  pi->serialize(s);
 
   // Finally the data for each Sheet instance...
   j = (signed) codex.size();

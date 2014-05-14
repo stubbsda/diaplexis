@@ -45,10 +45,8 @@ class Spacetime {
   std::vector<Vertex> events;
   std::vector<Sheet> codex;
   Geometry* geometry;
-  //Homology* H;
-  //Homotopy* pi;
-  std::vector<Group> HZ;
-  Group pi1;
+  Homology* H;
+  Homotopy* pi;
   bool pseudomanifold;
   bool boundary;
   bool orientable;
