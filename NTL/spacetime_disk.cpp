@@ -544,7 +544,6 @@ void Spacetime::write_log() const
 
   atom = rstep.append_child("Homology");
   nvalue = H->write();
-  nvalue += H->sequence[dimension(-1)].compact_form() + "]";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("Homotopy");
