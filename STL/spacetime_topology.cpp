@@ -444,7 +444,7 @@ int Spacetime::cyclicity(int sheet) const
   Graph* G = new Graph;
 
   compute_graph(G,sheet);
-  int output = G->nedge - G->bridge_count();
+  int output = G->size() - G->bridge_count();
   delete G;
   return output;
 }

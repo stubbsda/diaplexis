@@ -1,4 +1,5 @@
-#include "nexus.h"
+#include "homology.h"
+#include "homotopy.h"
 
 #ifndef _sheeth
 #define _sheeth
@@ -11,8 +12,8 @@ class Sheet {
   int nstep;
   bool active;
   std::string ops;
-  std::vector<Group> HZ;
-  Group pi1;
+  Homology* H;
+  Homotopy* pi;
   bool pseudomanifold;
   bool boundary;
   bool orientable;  
@@ -22,8 +23,8 @@ class Sheet {
   void deserialize(std::ifstream&);
  public:
   Sheet();
-  Sheet(int);
-  Sheet(int,int);
+  Sheet(int,FIELD,METHOD);
+  Sheet(int,int,FIELD,METHOD);
   Sheet(const Sheet&);
   Sheet& operator =(const Sheet&);
   ~Sheet();

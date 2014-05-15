@@ -48,8 +48,6 @@ Spacetime::~Spacetime()
 {
   events.clear();
   codex.clear();
-  HZ.clear();
-  pi1.clear();
   for(int i=1; i<=ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
@@ -60,6 +58,8 @@ Spacetime::~Spacetime()
     anterior.index_table[i].clear();
   }
   delete geometry;
+  delete H;
+  delete pi;
 }
 
 void Spacetime::set_default_values()
@@ -115,14 +115,14 @@ void Spacetime::set_default_values()
   edge_probability = std::log(500.0)/250.0;
   nactive = 1;
   nt_initial = 1;
-  homology_method = NATIVE;
-  homology_base = GF2;
   pseudomanifold = false;
   boundary = false;
   orientable = false;
   diskless = false;
   original_state = RANDOM;
   geometry = new Geometry(false);
+  H = new Homology(GF2,NATIVE);
+  pi = new Homotopy;
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -150,8 +150,8 @@ void Spacetime::clear()
 {
   events.clear();
   codex.clear();
-  HZ.clear();
-  pi1.clear();
+  H->clear();
+  pi->clear();
   geometry->clear();
   for(int i=1; i<=ND; ++i) {
     simplices[i].clear();
@@ -1126,7 +1126,7 @@ void Spacetime::sheet_dynamics()
       std::cout << "Sheet " << p << " spawning " << n << " daughter sheet(s)..." << std::endl;
 #endif
       for(i=0; i<n; ++i) {
-        codex.push_back(Sheet(nt+nspawn+i,p));
+        codex.push_back(Sheet(nt+nspawn+i,p,H->get_field(),H->get_method()));
       }
       nspawn += n;
     }
@@ -1167,31 +1167,16 @@ void Spacetime::compute_global_topology(int sheet)
   // the fundamental group, for the total spacetime, operations that are serial...
   Nexus* NX = new Nexus;
   compute_global_nexus(NX,sheet);
+  H->compute(NX);
+  pi->compute(NX);
   if (sheet == -1) {
     // The global case...
-    if (homology_method == GAP) {
-      NX->compute_homology(HZ,homology_base);
-    }
-    else {
-      // Native method
-      NX->compute_homology_native(HZ,homology_base);
-    }
-    // And the fundamental group...
-    NX->compute_homotopy(&pi1);
     // Finally, the pseudomanifold and orientability properties
     pseudomanifold = NX->pseudomanifold(&boundary);
     if (pseudomanifold) orientable = NX->orientable();
   }
   else {
     bool bdry;
-    if (homology_method == GAP) {
-      NX->compute_homology(codex[sheet].HZ,homology_base);
-    }
-    else {
-      NX->compute_homology_native(codex[sheet].HZ,homology_base);
-    }
-    // And the fundamental group...
-    NX->compute_homotopy(&(codex[sheet].pi1));
     codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
     codex[sheet].boundary = bdry;
     if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
@@ -1960,7 +1945,7 @@ void Spacetime::initialize()
 
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
-      codex.push_back(Sheet(i));
+      codex.push_back(Sheet(i,H->get_field(),H->get_method()));
       locale.push_back(1);
     }
     build_initial_state(locale);

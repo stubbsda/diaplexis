@@ -1253,10 +1253,10 @@ void Spacetime::inversion()
       j = *it;
       if (i < j) {
         p = RND.irandom(nt);
-        codex[p] = 1;
+        chi[p] = 1;
         simplices[1].push_back(Simplex(i,j,chi));
         index_table[1][make_key(i,j)] = (signed) simplices[1].size() - 1;
-        codex[p] = 0;
+        chi[p] = 0;
       }
     }
   }

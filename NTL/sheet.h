@@ -24,8 +24,8 @@ class Sheet {
   void deserialize(std::ifstream&);
  public:
   Sheet();
-  Sheet(int,unsigned long);
-  Sheet(int,int,unsigned long);
+  Sheet(int,unsigned long,FIELD,METHOD);
+  Sheet(int,int,unsigned long,FIELD,METHOD);
   Sheet(const Sheet&);
   Sheet& operator =(const Sheet&);
   ~Sheet();

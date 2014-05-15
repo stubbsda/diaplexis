@@ -374,19 +374,19 @@ void Spacetime::write_log() const
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (homology_method == GAP) {
+    if (H->get_method() == GAP) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
     else {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (homology_base == INT) {
+    if (H->get_field() == INT) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (homology_base == ZZ) {
+    else if (H->get_field() == ZZ) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (homology_base == GF2) {
+    else if (H->get_field() == GF2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     s << "</Global>" << std::endl;
@@ -1089,8 +1089,6 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&perturb_geometry),sizeof(bool));
   s.read((char*)(&perturb_energy),sizeof(bool));
   s.read((char*)(&edge_probability),sizeof(double));
-  s.read((char*)(&homology_method),sizeof(METHOD));
-  s.read((char*)(&homology_base),sizeof(FIELD));
 
   s.read((char*)(&solver),sizeof(ALGORITHM));
   s.read((char*)(&geometry_cutoff),sizeof(double));
@@ -1296,8 +1294,6 @@ void Spacetime::write_state() const
   s.write((char*)(&perturb_geometry),sizeof(bool));
   s.write((char*)(&perturb_energy),sizeof(bool));
   s.write((char*)(&edge_probability),sizeof(double));
-  s.write((char*)(&homology_method),sizeof(METHOD));
-  s.write((char*)(&homology_base),sizeof(FIELD));
 
   // Geometric runtime constants...
   s.write((char*)(&solver),sizeof(ALGORITHM));

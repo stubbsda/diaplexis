@@ -45,8 +45,8 @@ class Spacetime {
   std::vector<Vertex> events;
   std::vector<Sheet> codex;
   Geometry* geometry;
-  std::vector<Group> HZ;
-  Group pi1;
+  Homology* H;
+  Homotopy* pi;
   bool pseudomanifold;
   bool boundary;
   bool orientable;
@@ -77,8 +77,6 @@ class Spacetime {
   bool foliodynamics;
   bool checkpoint;
   int checkpoint_frequency;
-  FIELD homology_base;
-  METHOD homology_method;
 
   // Now the parameters associated with the
   // geometry solver

@@ -2,7 +2,7 @@
 
 Sheet::Sheet()
 {
-  H = new Homology;
+  H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
 
   clear();
@@ -10,9 +10,9 @@ Sheet::Sheet()
   active = true;
 }
 
-Sheet::Sheet(int n,unsigned long c)
+Sheet::Sheet(int n,unsigned long c,FIELD f,METHOD m)
 {
-  H = new Homology;
+  H = new Homology(f,m);
   pi = new Homotopy;
 
   clear();
@@ -22,9 +22,9 @@ Sheet::Sheet(int n,unsigned long c)
   colour = c;
 }
 
-Sheet::Sheet(int n,int p,unsigned long c)
+Sheet::Sheet(int n,int p,unsigned long c,FIELD f,METHOD m)
 {
-  H = new Homology;
+  H = new Homology(f,m);
   pi = new Homotopy;
 
   clear();
@@ -37,7 +37,7 @@ Sheet::Sheet(int n,int p,unsigned long c)
 
 Sheet::Sheet(const Sheet& source)
 {
-  H = new Homology;
+  H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
 
   index = source.index;

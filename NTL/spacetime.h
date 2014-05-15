@@ -78,8 +78,6 @@ class Spacetime {
   bool foliodynamics;
   bool checkpoint;
   int checkpoint_frequency;
-  FIELD homology_base;
-  METHOD homology_method;
 
   // Now the parameters associated with the
   // geometry solver

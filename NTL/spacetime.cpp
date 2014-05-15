@@ -1113,7 +1113,7 @@ int Spacetime::sheet_fission(int parent)
 #endif
 
   for(l=0; l<offspring; ++l) {
-    codex.push_back(Sheet(nt+l,parent,psequence.next()));
+    codex.push_back(Sheet(nt+l,parent,psequence.next(),H->get_field(),H->get_method()));
     for(i=0; i<nv; ++i) {
       if (NTL::divide(events[i].ubiquity,codex[parent].colour) == 1) events[i].ubiquity *= codex[nt+l].colour;
     }
@@ -1940,7 +1940,7 @@ void Spacetime::initialize()
     locale = 1;
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
-      codex.push_back(Sheet(i,psequence.next()));
+      codex.push_back(Sheet(i,psequence.next(),H->get_field(),H->get_method()));
       locale *= codex[i].colour;
     }
     build_initial_state(locale);
