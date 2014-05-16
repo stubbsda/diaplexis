@@ -19,7 +19,7 @@
 
 \pagestyle{plain}
 
-\title{Penelope: A C++ Library for Combinatorial Spacetime Models}
+\title{Diaplexis: A C++ Library for Combinatorial Spacetime Models}
 \author{Daniel Stubbs}
 
 \maketitle
@@ -30,18 +30,18 @@
 
 \chapter{Introduction}
 
-This document will discuss the structure and use of the Penelope library, a set of C++ 
+This document will discuss the structure and use of the Diaplexis library, a set of C++ 
 classes and functions for investigating combinatorial spacetime models. It corresponds 
-to version 1.0 of the Penelope library, released on \today.  
+to version 1.0 of the Diaplexis library, released on \today.  
 
-The Penelope library's principal class is \texttt{Spacetime} which depends however on a 
-large collection of auxiliary classes, with the entire hierarchy illustrated in Figure 
-\ref{fig:class_hierarchy}. 
+The Diaplexis library's principal class is \texttt{Spacetime} which depends however on a 
+large collection of auxiliary classes, some from the Synarmosma library, with the entire 
+hierarchy illustrated in Figure \ref{fig:class_hierarchy}. 
 \begin{figure}[htb]
 \centering
 \includegraphics[width=4in]{images/class_hierarchy.eps}
-\caption{Penelope Class Diagram (black indicates composition, red inheritance and a 
-rectangular box a template class)}
+\caption{Diaplexis Class Diagram (black indicates composition, red inheritance and a 
+class in green comes from the Synarmosma library)}
 \label{fig:class_hierarchy}
 \end{figure}
 A user can either make use of the \texttt{Spacetime} as it is or else derive a further class 
@@ -65,26 +65,26 @@ through the aforementioned structure equation. The energy distribution arises fr
 \texttt{Vertex} class, which has a property \texttt{energy} represented by a double precision 
 number, subject to the restriction that the energy is always greater than or equal to zero. 
 It is the energy distribution which is the motor of topological entwinement and geometric 
-curvature in the combinational spacetime model that is at the heart of the Penelope library.  
+curvature in the combinational spacetime model that is at the heart of the Diaplexis library.  
 
 \section{Compilation and Installation}
 
-Compiling the Penelope library requires a modern C++ compiler (g++, icpc etc.) as well as 
+Compiling the Diaplexis library requires a modern C++ compiler (g++, icpc etc.) as well as 
 the Boost System and Thread libraries, the Number Theory Library (NTL), the BLAS/LAPACK 
-libraries and the PugiXML library for XML processing. Once the penelope-1.0.tar.gz file is 
+libraries and the PugiXML library for XML processing. Once the diaplexis-latest.tar.gz file is 
 obtained from www.synarmosma.org/downloads you can untar it via the command\newline
-\texttt{tar -xzf penelope-1.0.tar.gz}\newline
+\texttt{tar -xzf diaplexis-latest.tar.gz}\newline
 then change directory,\newline
-\texttt{cd penelope/src}\newline  
+\texttt{cd diaplexis/src}\newline  
 and finally type the command \texttt{make install} to begin the build process. Once this is 
 complete, you can decide whether to use the NTL or STL version of the simplicial ubiquity 
 as the default and use the script command \texttt{./set\_default} with the argument NTL or STL 
-to make the necessary changes. The compilation of the Penelope library has been 
-tested on several Unix platforms, including OS X (10.6 on Intel) and Linux on the x86, 
+to make the necessary changes. The compilation of the Diaplexis library has been 
+tested on several Unix platforms, including OS X (10.9 on Intel) and Linux on the x86, 
 x86-64, IA-64 and ARM architectures, using both the g++ and icpc compilers. In principle it 
 should also run under Windows using the Cygwin environment. 
 
-Normally the only file that a user should need to modify in order to build the Penelope library 
+Normally the only file that a user should need to modify in order to build the Diaplexis library 
 is \texttt{Makefile.def}, where various compiler arguments and libraries are all specified. Note that 
 the build process expects the compiler to be defined in the environment variable \texttt{CXX}, along 
 with the existence of the environment variables \texttt{CXX\_FLAGS}, \texttt{CXX\_OPT} and \texttt{DEBUG}. 
@@ -129,7 +129,7 @@ will be a vector of length equal to the greatest dimension of the two vertices a
 if not the same for both vertices, the lower dimensional one will have values close 
 to zero assigned to its coordinate vector for the missing dimensions. 
 
-The \texttt{VERBOSE} flag causes the Penelope library to write a great deal of 
+The \texttt{VERBOSE} flag causes the Diaplexis library to write a great deal of 
 diagnostic logging information to the standard output during execution and is normally 
 only useful for developers. That said, with this flag users can have access to a 
 wealth of information about the library's reasoning process for the hyphantic operators 
@@ -162,17 +162,17 @@ used in statistics.
 %set of lengths of 1-simplices $\ell_i$. If the spacetime complex's background dimension 
 %is two this operation is relatively straightforward but when it is greater than two, 
 %the parameterization of $\text{SO}(n,\mathbb{R})$ is non-trivial for $n>2$. In addition, 
-%there are many routines in the Penelope library that presuppose the ease of calculating 
+%there are many routines in the Diaplexis library that presuppose the ease of calculating 
 %the distance between any two vertices $u$ and $v$, which in the relational model is by 
 %no means evident though if they share a common neighbour we can use the triangle 
 %inequality to construct an upper bound on their mutual distance.  
 
 \section{Basic Usage}
 
-As the simplest possible example of the use of the Penelope library, we consider the 
+As the simplest possible example of the use of the Diaplexis library, we consider the 
 following content,
 \begin{verbatim}
-#include "penelope.h"
+#include "diaplexis.h"
 
 int main(int argc,char** argv)
 {
@@ -184,22 +184,23 @@ int main(int argc,char** argv)
 If we save this as the file \texttt{main.cpp} we can then compile and link the program 
 with the command
 \begin{verbatim}
-export PDIR=/usr/local/penelope/
-g++ -I${PDIR}include -O3 -fast -c main.cpp 
-g++ -L${PDIR}lib -O3 -fast -o cosmos main.o -lpenelope
+export SYNARMOSMA=/usr/local/synarmosma
+export DIAPLEXIS=/usr/local/diaplexis
+g++ -I${SYNARMOSMA}/include -I${DIAPLEXIS}/include -O3 -fast -c main.cpp 
+g++ -L${SYNARMOSMA}/lib -L${DIAPLEXIS}/lib -O3 -fast -o cosmos main.o -ldiaplexis -lsynarmosma
 \end{verbatim}
 and then run the executable via \texttt{./cosmos parameters.xml}. This will result in the 
 creation of a sub-directory \texttt{data} if one does not already exist in the directory where 
 the program is run, into which all of the data and log files will be written. The naming 
-convention that the Penelope library uses for these files is based on the pattern 
+convention that the Diaplexis library uses for these files is based on the pattern 
 \texttt{spacetime\_date\_pid\_iteration.dat} where the date has the form ddmmyyyy, so 
 for example 25032013 for March 25, 2013, while the ``pid'' is the Unix process identifier, a 
 positive integer. 
 
 Naturally the main work for the user is the preparation of the parameter file, which must 
-be in XML format. To avoid the error-prone task of manually composing an XML file, the Penelope 
-library comes with the file \texttt{penelope\_parameters.xml}. This is a wxPython script that 
-provides a graphical interface for setting the parameters used in Penelope, which can then be 
+be in XML format. To avoid the error-prone task of manually composing an XML file, the Diaplexis 
+library comes with the file \texttt{diaplexis\_parameters.xml}. This is a wxPython script that 
+provides a graphical interface for setting the parameters used in Diaplexis, which can then be 
 saved to an XML file on disk. The use of the graphical interface should also ensure that no 
 illegal values for various parameters are selected. 
 
@@ -207,7 +208,7 @@ The parameters can be divided into two broad categories, global and geometry-rel
 is reflected in the XML file itself, with the global parameters controlling the entire nature of 
 the spacetime simulation while the geometry solver parameters control the behaviour of this one 
 component of the algorithm. We begin with a table illustrating the global parameters used in the 
-Penelope codebase, listing the parameter name, its type and default value in the library. Note that 
+Diaplexis codebase, listing the parameter name, its type and default value in the library. Note that 
 by integer we mean a 32 bit signed integer, as this is the type used to store such parameters in 
 the code, even if it is meaningless for most of these parameters to assume negative values. The 
 one exception is the \texttt{RandomSeed} parameter, which is stored as an unsigned integer; when it 
@@ -248,7 +249,7 @@ InputFile & \texttt{string} & NULL \\
 \end{table}
 The most important category is undoubtedly the spacetime complex's initial state, 
 which must be one of the following: RANDOM, CARTESIAN, MONOPLEX, DISKFILE and 
-SINGLETON. This is stored as an enumerated type in the Penelope library and the 
+SINGLETON. This is stored as an enumerated type in the Diaplexis library and the 
 different values correspond to an initial state that is read from a diskfile (DISKFILE), 
 a regular grid (CARTESIAN) in $D$ dimensions where $D$ is the value of the compile-time 
 parameter \texttt{background\_dimension}, a single $n$-simplex (MONOPLEX), a single vertex 
@@ -297,14 +298,14 @@ of which there are five: MINIMAL, EVOLUTIONARY, ANNEALING, MECHANICAL and SIMPLE
 
 \chapter{Spacetime Dynamics}
 
-What makes the models simulated by the Penelope library relatively unusual is that 
+What makes the models simulated by the Diaplexis library relatively unusual is that 
 both the topology and geometry are dynamic, with the variations in each depending on 
 the other. In this sense, the library encapsulates many of the ideas surrounding various 
 approaches to quantum gravity, where all of the properties of spacetime, including 
 topological ones like dimension and connectivity, are allowed to fluctuate in the 
 same manner as the curvature is in general relativity. 
 
-The Penelope library begins with the assumption that the spacetime complex is not in 
+The Diaplexis library begins with the assumption that the spacetime complex is not in 
 equilibrium, that is the complex's topology, geometry and energy are not in balance 
 according to the structure equation, expressed by the existence of a structural deficiency 
 which measures the extent to which this equation is not satisfied. The library uses an 
@@ -313,7 +314,7 @@ each step, thereby reducing the deficiency until it falls below the threshold va
 specified in the parameter file or the maximum number of iterations is exceeded, at which 
 point program execution terminates. 
 
-The flow of control in the Penelope library makes a clear distinction between different 
+The flow of control in the Diaplexis library makes a clear distinction between different 
 stages or phases within each relaxation step. The first stage is \emph{hyphansis}, in which 
 each active sheet modifies its topology. This is followed by the global operations, which 
 are those stages that are sheet-independent like energy diffusion and optimization of the 
@@ -357,7 +358,7 @@ the occupancy number of the vertex, i.e.\ the number of sheets of which $v$ is a
 
 We begin by a discussion of how best to measure the local topological entwinement, that is a 
 measure of the entwinement in the immediate neighbourhood of a given vertex $v$. In the current 
-version of the Penelope library we use the expression 
+version of the Diaplexis library we use the expression 
 \begin{equation}
 {\cal T}_v = \frac {1}{2N} \sum_{i=1}^N\left(\dim(v,i) - 1\right) + P_v \label{tterm_local}
 \end{equation}
@@ -378,7 +379,7 @@ complete graph on $k$ vertices,
 T_G = \frac {2}{k(k-1)}\deg(G).
 \end{equation*}
 The one problem with the completeness is that its zero point corresponds to a graph with no edges at 
-all, when the zero point for the spacetime model used in the Penelope library is that of a $D$-dimensional 
+all, when the zero point for the spacetime model used in the Diaplexis library is that of a $D$-dimensional 
 orthonormal lattice. Another possibility is to calculate the adjacency matrix $A_G$ associated with $G$ and 
 then use its largest eigenvalue $\lambda$,
 \begin{equation*}
@@ -416,7 +417,7 @@ where the three terms measure the abnormality $\Lambda_v$, the obliquity $\Theta
 and the local curvature $\kappa_v$. To calculate the abnormality of $v$, we measure the extent to which 
 the lengths of its edges differ from unity, though this is made more complicated when the spacetime 
 complex's geometry is assumed to be Lorentzian so that edge lengths can have the form $\alpha$ (spacelike 
-and null) or $i\alpha$ (timelike) where $\alpha\in\mathbb{R}^+$. The formula used in the Penelope library 
+and null) or $i\alpha$ (timelike) where $\alpha\in\mathbb{R}^+$. The formula used in the Diaplexis library 
 is,
 \begin{equation*}
 \Lambda_v = \frac {1}{d}\sum_{i=1}^d F(\ell_i), \quad F(x) = \begin{cases} 
@@ -475,7 +476,7 @@ optimization. It involves the diffusion of energy from one vertex to its neighbo
 algorithm that favours the transfer of energy from high energy vertices to those with less energy, when 
 the two vertices have a similar degree of topological entwinement and are not too far apart geometrically.
 
-The \texttt{Spacetime::energy\_diffusion} method employed in the Penelope library first assembles a vector of 
+The \texttt{Spacetime::energy\_diffusion} method employed in the Diaplexis library first assembles a vector of 
 vertices, sorted in ascending order of the absolute value of their structural deficiency. Beginning with 
 the vertex $v$ whose deficiency has the greatest magnitude and contining down, we initialize $E_t$ with the 
 value of ${\cal E}_v$ and loop over all of the neighbours of $v$. If a neighbour $w$ has already been 
@@ -559,7 +560,7 @@ until the needed $n_c-1$ have been obtained that span the whole of $\Sigma$.
 
 \chapter{Global Topology of Spacetime}
 
-The Penelope library also contains classes for handling representations of the global topological 
+The Diaplexis library also contains classes for handling representations of the global topological 
 structure of the spacetime complex $\Sigma_\chi$ for a given sheet $\chi$, namely \texttt{Matrix} for 
 homology computations, \texttt{Group} for the homology and homotopy groups and finally \texttt{Word} 
 for the combinatorial presentation of a group. This chapter will discuss how these classes are used 
@@ -574,7 +575,7 @@ class and those for $\Sigma_\chi$ are properties of the appropriate instance of 
 represented by the \texttt{Spacetime::codex} property. 
 
 A computational infrastructure for the calculation of these global topological properties has been 
-included in the Penelope library because of the potential utility of such measures in an eventual 
+included in the Diaplexis library because of the potential utility of such measures in an eventual 
 structure equation formulation. One could for example imagine a structure equation for spacetime that 
 included terms which involved the generators and relations for the entire family of homotopy groups 
 $\pi_n(\Sigma)$, $n\ge 1$, based on searching for solutions over $\mathbb{Z}$ of a system of equations 
@@ -582,19 +583,19 @@ $\{\, q_i = 0\,\}$ where $q_i \in \mathbb{Z}[x_1,\dots,x_m]$.
 
 \section{Homology}
 
-The Penelope library has a variety of methods for computing the simplicial homology groups $H_n(\Sigma_k,F)$ 
+The Diaplexis library has a variety of methods for computing the simplicial homology groups $H_n(\Sigma_k,F)$ 
 of the $k$-th sheet of the spacetime complex $\Sigma_k$ over the domain $F$. Some general observations about 
 such groups for any finite simplicial complex are that they are always Abelian and finitely generated, 
 $H_n(\Sigma_k,F)$ is the trivial group for $n > \dim(\Sigma_k)$ and $H_0(\Sigma_k,F)$ is the free group 
 on $m$ generators, where $m$ is the number of connected components of $\Sigma_k$. The methods used for 
-computing these groups depend both on what software is available on the computer where the Penelope library 
+computing these groups depend both on what software is available on the computer where the Diaplexis library 
 is being used and the kind of base field upon which the homology groups are being computed. If the GAP software 
-(\texttt{www.gap-system.org}) is installed, in particular the package \texttt{simpcomp}, then the Penelope 
+(\texttt{www.gap-system.org}) is installed, in particular the package \texttt{simpcomp}, then the Diaplexis 
 library can automatically write a small script that uses the GAP software to calculate the homology of 
 $\Sigma_k$ over $\mathbb{Z}$ (using \texttt{simpcomp}) or $\textnormal{GF}(2)$ (using the GAP kernel). In 
 this case the user should choose to set the parameter \texttt{HomologyMethod} equal to \texttt{GAP}; if GAP 
 isn't available or its use isn't desired, then this parameter can be set equal to \texttt{Native}. In this 
-case, the Penelope library will directly obtain the $H_n(\Sigma_k,F)$ by computing the Smith normal form of 
+case, the Diaplexis library will directly obtain the $H_n(\Sigma_k,F)$ by computing the Smith normal form of 
 the relevant boundary operators $\partial_d$. These boundary operators take the form of matrices over the 
 homology base domain $F$, which is set using the run-time parameter \texttt{HomologyBase}. This parameter 
 can take the value \texttt{INT}, which simply uses the signed 32 bit C++ \texttt{int} datatype to calculate 
@@ -644,7 +645,7 @@ while a cyclic group would have the presentation
 \begin{equation*}
 G = \langle a \mid a^n \rangle \simeq \mathbb{Z}_n. 
 \end{equation*} 
-In the Penelope library, we use the \texttt{Word} class the store the relations of an instance of the \texttt{Group} 
+In the Diaplexis library, we use the \texttt{Word} class the store the relations of an instance of the \texttt{Group} 
 class, whose main properties are the unsigned integer \texttt{ngenerators} and \texttt{std::vector<Word> relations}. 
 The \texttt{Word} class has as its principal properties the unsigned integer \texttt{NL}, representing the 
 number of potential letters in this word, and the STL vector \texttt{content}, consisting of pairs of an 
@@ -657,11 +658,11 @@ $x_{r+i}^{p_i}$ corresponding to the torsion coefficients and the further $N(N-1
 x_j x_i^{-1} x_j^{-1}$ among all pairs of generators, for a total of $\abs{T} + N(N-1)/2$ relations. If $r=0$ 
 the group is finite, otherwise it is infinite. The \texttt{Group} class has a constructor designed for just such 
 groups, accepting as argument an integer and a set of integers; however the rank and torsion coefficients 
-are calculated this is how the homology groups are assembled in the Penelope library.       
+are calculated this is how the homology groups are assembled in the Diaplexis library.       
 
 \section{Homotopy} 
 
-The only homotopy group which can be computed by the Penelope library is the fundamental group $\pi_i(\Sigma_k)$, 
+The only homotopy group which can be computed by the Diaplexis library is the fundamental group $\pi_i(\Sigma_k)$, 
 for which the software calculates a combinatorial presentation derived from the 1-skeleton $\Sigma_k^{(1)}$ of 
 the spacetime complex $\Sigma_k$ as discussed in \cite{Nakahara}, pp.\ 134--145. This algorithm begins by the 
 construction of a minimal spanning tree $T$ for the 1-skeleton, that is a graph consisting of $n-1$ edges of 
@@ -708,7 +709,7 @@ only four or five hops from any other vertex.
 
 \subsection{Pseudomanifold Property}  
 
-The Penelope library includes a method that tests whether or not the spacetime complex $\Sigma_k$ is a 
+The Diaplexis library includes a method that tests whether or not the spacetime complex $\Sigma_k$ is a 
 \emph{combinatorial pseudomanifold}, a much stronger property than that of being a simplicial complex. 
 The three conditions that $\Sigma_k$ must meet are the non-branching requirement, dimensional homogeneity 
 and being strongly connected. For $\Sigma_k$ to be non-branching means that if $\dim(\Sigma_k) = D$, then 
@@ -762,7 +763,7 @@ divided by the total number of active vertices.
 \chapter{Hyphantic Operations}
 
 The hyphantic\footnote{From the classical Greek noun \greektext<'ufansis\latintext, which 
-means ``weaving''.} operators in the Penelope library are the mechanism by which the spacetime 
+means ``weaving''.} operators in the Diaplexis library are the mechanism by which the spacetime 
 complex's topology is modified, with each one carrying out an atomic operation of one kind or 
 another on the complex: deleting or adding a 1-simplex, fusing together two vertices, inflating 
 a 2-simplex into a 4-simplex and so forth. A topological transformation of arbitrary complexity 
@@ -771,14 +772,14 @@ are divided into two classes, implicative (folding in) or explicative (folding o
 their effect --- those which are implicative tend to increase the topological entwinement of a given 
 vertex and its neighbourhood, while explicative operators have the opposite effect, restoring an 
 orthonormal Cartesian grid in the vicinity of the vertex. All of the operators are represented 
-in the Penelope library as methods belonging to the \texttt{Spacetime} class and all of them have 
+in the Diaplexis library as methods belonging to the \texttt{Spacetime} class and all of them have 
 a Boolean return type, which \emph{true} indicating that the operation successfully modified the 
 spacetime complex's topology. Every such method has among its arguments at least two integers, 
 the first of which is the base vertex $v$, where $v = -1$ indicates that an arbitrary active 
 vertex should be employed, and the second the sheet whose topology will be modified by the 
 operator. 
 
-We begin with a presentation of the implicative operators in the Penelope library, of which there 
+We begin with a presentation of the implicative operators in the Diaplexis library, of which there 
 are seven listed in the following chart,    
 \begin{center}
 \begin{tabular}{|l|l|l|}
@@ -978,7 +979,7 @@ coordinates.
 \includegraphics[width=5in]{images/germination.eps} 
 \end{figure}
  
-The manner in which the Penelope library decides which operator to apply in a given context depends on 
+The manner in which the Diaplexis library decides which operator to apply in a given context depends on 
 several factors. The \texttt{Spacetime} class has two methods, one to generate the particular implicative 
 (\texttt{implication}) and the other to do the same for explicative operators (\texttt{explication}). Each 
 method uses a set of probabilities as well as the number of elapsed iterations to determine which 
@@ -1232,7 +1233,7 @@ Shrinkage Coefficient & $\sigma$ \\ \hline
     
 \chapter{File Formats}
 
-This chapter discusses the format of the three kinds of disk files used by the Penelope library, the 
+This chapter discusses the format of the three kinds of disk files used by the Diaplexis library, the 
 text-based log and incastrature\footnote{From the Latin noun \emph{incastratura, -ae} which means an 
 encasement or nesting inside one another.} files and the binary state file used for checkpointing the 
 program execution. The incastrature file is only produced at the end of the relaxation process, either 
@@ -1247,7 +1248,7 @@ This is an XML file that is created at program start-up (during the call to the 
 of the \texttt{Spacetime} class) and updated at each relaxation step, as the final component of the global 
 operations for that iteration. A post-amble is written to the log file when the program execution is complete. 
 During the first call to the method \texttt{Spacetime::write\_log}, fields containing global information 
-about this run will be written to the file, such as the branch of the Penelope library used (NTL or STL), 
+about this run will be written to the file, such as the branch of the Diaplexis library used (NTL or STL), 
 the hostname of the machine on which it is running, the date and time of the program execution and the 
 value of both the compile-time parameters (see Table (\ref{ct_parms})) and run-time parameters (see 
 Tables (\ref{rt_parms1}) and (\ref{rt_parms2})). The XML tree structure has the following form
@@ -1332,7 +1333,7 @@ Thermal Decay Rate for & \texttt{double} \\
 Permutation Annealing & \\ \hline 
 \end{tabular} 
 \end{center}
-As these are all compile-time constants, when the a spacetime state file is read the Penelope library will 
+As these are all compile-time constants, when the a spacetime state file is read the Diaplexis library will 
 verify that the current values for these constants are the same as those found in the file.   
 
 The next element of a state file is the set of run-time parameters that control program execution and 
@@ -1389,7 +1390,7 @@ among the various $k$-simplices.
 \label{hasse} 
 \end{figure}
 The GraphViz software is available at no cost for the Linux, OS X and Windows platforms and users of the 
-Penelope library are encouraged to download it from the \texttt{www.graphviz.org} site. 
+Diaplexis library are encouraged to download it from the \texttt{www.graphviz.org} site. 
 \begin{thebibliography}{99}
 \bibitem{Edelsbrunner:2001} Edelsbrunner, Herbert, \emph{Geometry and Topology for Mesh Generation}. Cambridge (UK): 
 Cambridge University Press, 2001
