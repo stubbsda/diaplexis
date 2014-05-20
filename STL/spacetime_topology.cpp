@@ -582,10 +582,10 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
   } while(true);
 }
 
-void Spacetime::compute_causal_graph(Graph* G,int base,DIRECTION d,int sheet) const
+void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet) const
 {
   int i,j,l,v;
-  DIRECTION output;
+  CAUSALITY output;
   hash_map::const_iterator qt;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
@@ -610,7 +610,7 @@ void Spacetime::compute_causal_graph(Graph* G,int base,DIRECTION d,int sheet) co
           if (!(simplices[1][qt->second].sq_volume < 0.0)) continue;
           output = simplices[1][qt->second].orientation;
           if (j < v) output = (output == FUTURE) ? PAST : FUTURE;
-          if (output == d) {
+          if (output == lcone) {
             if (offset[j] == -1) {
               offset[j] = G->add_vertex();
               next.push_back(j);
@@ -636,7 +636,7 @@ void Spacetime::compute_causal_graph(Graph* G,int base,DIRECTION d,int sheet) co
           if (!(simplices[1][l].sq_volume < 0.0)) continue;
           output = simplices[1][l].orientation;
           if (j < v) output = (output == FUTURE) ? PAST : FUTURE;
-          if (output == d) {
+          if (output == lcone) {
             if (offset[j] == -1) {
               offset[j] = G->add_vertex();
               next.push_back(j);
@@ -753,7 +753,7 @@ void Spacetime::compute_lightcones()
   // sheet = -1, with a Lorentzian metric
   if (geometry->euclidean) return;
   int i,j,k;
-  DIRECTION d;
+  CAUSALITY lcone;
   hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
   std::set<int> pcurrent,fcurrent,old,v,null;
@@ -767,9 +767,9 @@ void Spacetime::compute_lightcones()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
       j = *it;
       qt = index_table[1].find(make_key(i,j));
-      d = simplices[1][qt->second].orientation;
-      if (d == SPACELIKE) continue;
-      if (d == PAST) {
+      lcone = simplices[1][qt->second].orientation;
+      if (lcone == SPACELIKE) continue;
+      if (lcone == PAST) {
         pcurrent.insert(j);
       }
       else {
@@ -787,9 +787,9 @@ void Spacetime::compute_lightcones()
           for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
-            d = simplices[1][qt->second].orientation;
-            if (d == SPACELIKE) continue;
-            if (d == PAST) {
+            lcone = simplices[1][qt->second].orientation;
+            if (lcone == SPACELIKE) continue;
+            if (lcone == PAST) {
               // Check to see if k doesn't already exist in the set "old"
               if (old.count(k) == 0) v.insert(k);
             }
@@ -816,9 +816,9 @@ void Spacetime::compute_lightcones()
         for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
           k = *jt;
           qt = index_table[1].find(make_key(j,k));
-          d = simplices[1][qt->second].orientation;
-          if (d == SPACELIKE) continue;
-          if (d == FUTURE) {
+          lcone = simplices[1][qt->second].orientation;
+          if (lcone == SPACELIKE) continue;
+          if (lcone == FUTURE) {
             if (old.count(k) == 0) v.insert(k);
           }
         }
@@ -844,7 +844,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   if (geometry->euclidean) return 0.0;
   int in1,in2,tcount;
   double l,w1,w2,tipsy,vorticity;
-  DIRECTION d1,d2;
+  CAUSALITY d1,d2;
   std::set<int> n1,n2;
   std::vector<int> jset;
   std::set<int>::const_iterator it;
@@ -925,7 +925,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   if (geometry->euclidean) return 0.0;
   int i,j,k,nsink = 0,nsource = 0,causal_loop = 0;
   double output,nlinearity = 0.0;
-  DIRECTION d;
+  CAUSALITY lcone;
   std::set<int> past,future,fcurrent,pcurrent,v,null,old;
   std::set<int>::const_iterator it,jt;
   hash_map::const_iterator qt;
@@ -935,7 +935,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
 
   if (sheet == -1) {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,d,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
@@ -945,9 +945,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
         j = *it;
         qt = index_table[1].find(make_key(i,j));
-        d = simplices[1][qt->second].orientation;
-        if (d == SPACELIKE) continue;
-        if (d == PAST) {
+        lcone = simplices[1][qt->second].orientation;
+        if (lcone == SPACELIKE) continue;
+        if (lcone == PAST) {
           pcurrent.insert(j);
         }
         else {
@@ -965,9 +965,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
               k = *jt;
               qt = index_table[1].find(make_key(j,k));
-              d = simplices[1][qt->second].orientation;
-              if (d == SPACELIKE) continue;
-              if (d == PAST) {
+              lcone = simplices[1][qt->second].orientation;
+              if (lcone == SPACELIKE) continue;
+              if (lcone == PAST) {
                 // Check to see if k doesn't already exist in the set "old"
                 if (old.count(k) == 0) v.insert(k);
               }
@@ -994,9 +994,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
           for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
-            d = simplices[1][qt->second].orientation;
-            if (d == SPACELIKE) continue;
-            if (d == FUTURE) {
+            lcone = simplices[1][qt->second].orientation;
+            if (lcone == SPACELIKE) continue;
+            if (lcone == FUTURE) {
               if (old.count(k) == 0) v.insert(k);
             }
           }
@@ -1029,7 +1029,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   }
   else {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,d,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity[sheet] == 0) continue;
@@ -1040,9 +1040,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
         j = *it;
         qt = index_table[1].find(make_key(i,j));
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-        d = simplices[1][qt->second].orientation;
-        if (d == SPACELIKE) continue;
-        if (d == PAST) {
+        lcone = simplices[1][qt->second].orientation;
+        if (lcone == SPACELIKE) continue;
+        if (lcone == PAST) {
           pcurrent.insert(j);
         }
         else {
@@ -1061,9 +1061,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
               k = *jt;
               qt = index_table[1].find(make_key(j,k));
               if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-              d = simplices[1][qt->second].orientation;
-              if (d == SPACELIKE) continue;
-              if (d == PAST) {
+              lcone = simplices[1][qt->second].orientation;
+              if (lcone == SPACELIKE) continue;
+              if (lcone == PAST) {
                 // Check to see if k doesn't already exist in the set "old"
                 if (old.count(k) == 0) v.insert(k);
               }
@@ -1091,9 +1091,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
             if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-            d = simplices[1][qt->second].orientation;
-            if (d == SPACELIKE) continue;
-            if (d == FUTURE) {
+            lcone = simplices[1][qt->second].orientation;
+            if (lcone == SPACELIKE) continue;
+            if (lcone == FUTURE) {
               if (old.count(k) == 0) v.insert(k);
             }
           }

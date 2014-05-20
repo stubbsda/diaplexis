@@ -56,7 +56,6 @@ Simplex::Simplex(const std::set<int>& v,const std::vector<int>& locale) : Cell(v
   modified = true;
 }
 
-
 Simplex::Simplex(const Simplex& source) : Cell()
 {
   vertices = source.vertices;
@@ -181,7 +180,7 @@ void Simplex::serialize(std::ofstream& s) const
   }
   s.write((char*)(&volume),sizeof(double));
   s.write((char*)(&sq_volume),sizeof(double));
-  s.write((char*)(&orientation),sizeof(DIRECTION));
+  s.write((char*)(&orientation),sizeof(CAUSALITY));
   s.write((char*)(&energy),sizeof(double));
   s.write((char*)(&incept),sizeof(int));
 }
@@ -204,7 +203,7 @@ void Simplex::deserialize(std::ifstream& s)
   }
   s.read((char*)(&volume),sizeof(double));
   s.read((char*)(&sq_volume),sizeof(double));
-  s.read((char*)(&orientation),sizeof(DIRECTION));
+  s.read((char*)(&orientation),sizeof(CAUSALITY));
   s.read((char*)(&energy),sizeof(double));
   s.read((char*)(&incept),sizeof(int));
   string_assembly();

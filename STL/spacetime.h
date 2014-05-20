@@ -134,7 +134,7 @@ class Spacetime {
   void compute_graph(Graph*,int,int,int) const;
   inline void compute_graph(Graph*,int,int) const;
   void compute_graph(Graph*,int) const;
-  void compute_causal_graph(Graph*,int,DIRECTION,int) const;
+  void compute_causal_graph(Graph*,int,CAUSALITY,int) const;
   void compute_global_nexus(Nexus*,int) const;
   void compute_local_nexus(Nexus*,int,int) const;
   void simplex_membership(int,std::vector<int>&) const;

@@ -300,7 +300,7 @@ void Spacetime::write_log() const
   double max_length,min_length,avg_length;
   bool atemporal;
   static bool fcall = true;
-  DIRECTION d;
+  CAUSALITY lcone;
   std::string nvalue;
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
@@ -461,11 +461,11 @@ void Spacetime::write_log() const
     for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
       in1 = *it;
       if (simplices[1][in1].sq_volume > 0.0) continue;
-      d = simplices[1][in1].orientation;
+      lcone = simplices[1][in1].orientation;
       simplices[1][in1].get_vertices(vx);
-      if (i == vx[1]) d = (d == FUTURE) ? PAST : FUTURE;
+      if (i == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
       atemporal = false;
-      if (d == FUTURE) {
+      if (lcone == FUTURE) {
         nf++;
       }
       else {
@@ -722,11 +722,11 @@ void Spacetime::write_log() const
       for(it=events[j].entourage.begin(); it!=events[j].entourage.end(); it++) {
         in1 = *it;
         if (simplices[1][in1].sq_volume > 0.0) continue;
-        d = simplices[1][in1].orientation;
+        lcone = simplices[1][in1].orientation;
         simplices[1][in1].get_vertices(vx);
-        if (j == vx[1]) d = (d == FUTURE) ? PAST : FUTURE;
+        if (j == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
         atemporal = false;
-        if (d == FUTURE) {
+        if (lcone == FUTURE) {
           nf++;
         }
         else {

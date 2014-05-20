@@ -1,5 +1,12 @@
 #include "cell.h"
 
+enum CAUSALITY 
+{
+    PAST,
+    FUTURE,
+    SPACELIKE
+};
+
 class Simplex: public Cell {
  private:
   double volume;
@@ -8,7 +15,7 @@ class Simplex: public Cell {
   bool modified;
   int incept;
   std::vector<int> ubiquity;
-  DIRECTION orientation;
+  CAUSALITY orientation;
 
  public:
   Simplex();
