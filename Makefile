@@ -10,13 +10,6 @@ install: diaplexis-ntl diaplexis-stl
 	cp NTL/*.h $(DIAPLEXIS)/include/NTL/
 	cp STL/*.h $(DIAPLEXIS)/include/STL/ 
 
-manual:
-	latex diaplexis.tex
-	dvips -o diaplexis.ps diaplexis.dvi
-	ps2pdf diaplexis.ps userguide.pdf
-	mkdir -p $(DIAPLEXIS)/documentation
-	mv userguide.pdf $(DIAPLEXIS)/documentation/
-
 diaplexis-ntl: $(OBJECTS) 
 	cd NTL; $(MAKE)  
 
@@ -26,7 +19,6 @@ diaplexis-stl: $(OBJECTS)
 clean:
 	rm -f diaplexis.aux diaplexis.dvi diaplexis.log diaplexis.ps 
 	rm -f *~
-	rm -f $(DIAPLEXIS)/documentation/*
 	rm -f $(DIAPLEXIS)/lib/libdiaplexis*
 	rm -f $(DIAPLEXIS)/include/diaplexis*
 	rm -rf $(DIAPLEXIS)/include/NTL
