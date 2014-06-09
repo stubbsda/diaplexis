@@ -11,6 +11,10 @@
 \usepackage[greek,english]{babel}
 \usepackage[T1]{fontenc}
 
+\makeatletter
+\def\verbatim@font{\linespread{1}\normalfont\ttfamily}
+\makeatother
+
 \begin{document}
 \newcommand{\double}{\par\setlength{\baselineskip}{22pt}}
 
@@ -79,10 +83,10 @@ then change directory,\newline
 and finally type the command \texttt{make install} to begin the build process. Once this is 
 complete, you can decide whether to use the NTL or STL version of the simplicial ubiquity 
 as the default and use the script command \texttt{./set\_default} with the argument NTL or STL 
-to make the necessary changes. The compilation of the Diaplexis library has been 
-tested on several Unix platforms, including OS X (10.9 on Intel) and Linux on the x86, 
-x86-64, IA-64 and ARM architectures, using both the g++ and icpc compilers. In principle it 
-should also run under Windows using the Cygwin environment. 
+to make the necessary changes. The compilation of the Diaplexis library has been tested on 
+several Unix platforms, including OS X on x86-64, OpenBSD on x86 and Linux on the x86, x86-64, 
+IA-64 and ARM architectures, using both the Gnu and Intel C++ compilers. In principle it should 
+also run under Windows using the Cygwin environment. 
 
 Normally the only file that a user should need to modify in order to build the Diaplexis library 
 is \texttt{Makefile.def}, where various compiler arguments and libraries are all specified. Note that 
@@ -178,18 +182,28 @@ int main(int argc,char** argv)
 {
   Spacetime cosmos(argv[1]);
   cosmos.evolve();
+
   return 0;
 }
 \end{verbatim}
 If we save this as the file \texttt{main.cpp} we can then compile and link the program 
 with the command
-\begin{verbatim}
-export SYNARMOSMA=/usr/local/synarmosma
-export DIAPLEXIS=/usr/local/diaplexis
-g++ -I${SYNARMOSMA}/include -I${DIAPLEXIS}/include -O3 -fast -c main.cpp 
-g++ -L${SYNARMOSMA}/lib -L${DIAPLEXIS}/lib -O3 -fast -o cosmos main.o -ldiaplexis -lsynarmosma
-\end{verbatim}
-and then run the executable via \texttt{./cosmos parameters.xml}. This will result in the 
+\newline
+\texttt{g++ -I\${SYNARMOSMA}/include -I\${DIAPLEXIS}/include -c main.cpp}
+\newline
+\texttt{g++ -L\${SYNARMOSMA}/lib -L\${DIAPLEXIS}/lib -o euplecton main.o}
+\newline
+\hspace*{0.5in}\texttt{-ldiaplexis -lsynarmosma}
+\newline
+assuming that we have the environment variables \texttt{SYNARMOSMA} and \texttt{DIAPLEXIS} set 
+to the location where these two libraries are installed, for example 
+\newline
+\texttt{SYNARMOSMA = /usr/local/synarmosma}
+\newline
+\texttt{DIAPLEXIS = /usr/local/diaplexis}
+\newline
+on a Unix-based operating system. The resulting program can then be run using the command 
+\texttt{./euplecton parameters.xml}. This will result in the 
 creation of a sub-directory \texttt{data} if one does not already exist in the directory where 
 the program is run, into which all of the data and log files will be written. The naming 
 convention that the Diaplexis library uses for these files is based on the pattern 
@@ -583,35 +597,37 @@ $\{\, q_i = 0\,\}$ where $q_i \in \mathbb{Z}[x_1,\dots,x_m]$.
 
 \section{Homology}
 
-The Diaplexis library has a variety of methods for computing the simplicial homology groups $H_n(\Sigma_k,F)$ 
+The Synarmosma library has a variety of methods for computing the simplicial homology groups $H_n(\Sigma_k,F)$ 
 of the $k$-th sheet of the spacetime complex $\Sigma_k$ over the domain $F$. Some general observations about 
 such groups for any finite simplicial complex are that they are always Abelian and finitely generated, 
 $H_n(\Sigma_k,F)$ is the trivial group for $n > \dim(\Sigma_k)$ and $H_0(\Sigma_k,F)$ is the free group 
-on $m$ generators, where $m$ is the number of connected components of $\Sigma_k$. The methods used for 
-computing these groups depend both on what software is available on the computer where the Diaplexis library 
-is being used and the kind of base field upon which the homology groups are being computed. If the GAP software 
-(\texttt{www.gap-system.org}) is installed, in particular the package \texttt{simpcomp}, then the Diaplexis 
-library can automatically write a small script that uses the GAP software to calculate the homology of 
-$\Sigma_k$ over $\mathbb{Z}$ (using \texttt{simpcomp}) or $\textnormal{GF}(2)$ (using the GAP kernel). In 
-this case the user should choose to set the parameter \texttt{HomologyMethod} equal to \texttt{GAP}; if GAP 
-isn't available or its use isn't desired, then this parameter can be set equal to \texttt{Native}. In this 
-case, the Diaplexis library will directly obtain the $H_n(\Sigma_k,F)$ by computing the Smith normal form of 
-the relevant boundary operators $\partial_d$. These boundary operators take the form of matrices over the 
-homology base domain $F$, which is set using the run-time parameter \texttt{HomologyBase}. This parameter 
-can take the value \texttt{INT}, which simply uses the signed 32 bit C++ \texttt{int} datatype to calculate 
-the homology over $\mathbb{Z}$ --- this is the fastest approach but one which obviously runs the risk of 
-encountering various overflow problems. Alternatively, to compute the integral homology the user can set 
-the value of the parameter to \texttt{NTL::ZZ}, which will use the NTL's ZZ class of multi-precision integers 
-to perform the calculations, a slower but safer approach. In both of these choices for the homology base, 
-the boundary operators are represented as integer matrices via the class \texttt{Matrix}. Finally, the 
-user can choose to have the homology computed over the Galois field $\textnormal{GF}(2)$, which uses 
-the \texttt{Binary\_Matrix} class to calculate a homology that ignores orientation (since we have the 
-relation $-1 =1$ in this field) and has no torsion. If GAP is used for the homology calculations, then 
-the \texttt{HomologyBase} parameter can be set to either \texttt{INT} or \texttt{ZZ} as they have the 
-same effect.  
+on $m$ generators, where $m$ is the number of connected components of $\Sigma_k$. The Diaplexis library 
+uses a method to convert $\Sigma_k$ into an instance of the Synarmosma library's \texttt{Nexus} class, 
+which is the argument needed for the computational methods of the \texttt{Homology} and \texttt{Homotopy} 
+classes in the Synarmosma library. The methods used for computing these groups depend both on what software 
+is available on the computer where the Synarmosma library is being used and the kind of base field upon which 
+the homology groups are being computed. If the GAP software (\texttt{www.gap-system.org}) is installed, in 
+particular the package \texttt{simpcomp}, then the Synarmosma library can automatically write a small script 
+that uses the GAP software to calculate the homology of $\Sigma_k$ over $\mathbb{Z}$ (using \texttt{simpcomp}) 
+or $\textnormal{GF}(2)$ (using the GAP kernel). In this case the user should choose to set the parameter 
+\texttt{HomologyMethod} equal to \texttt{GAP}; if GAP isn't available or its use isn't desired, then this 
+parameter can be set equal to \texttt{Native}. In this case, the Synarmosma library will directly obtain the 
+$H_n(\Sigma_k,F)$ by computing the Smith normal form of the relevant boundary operators $\partial_d$. These 
+boundary operators take the form of matrices over the homology base domain $F$, which is set using the 
+run-time parameter \texttt{HomologyBase}. This parameter can take the value \texttt{INT}, which simply uses 
+the signed 32 bit C++ \texttt{int} datatype to calculate the homology over $\mathbb{Z}$ --- this is the 
+fastest approach but one which obviously runs the risk of encountering various overflow problems. Alternatively, 
+to compute the integral homology the user can set the value of the parameter to \texttt{NTL::ZZ}, which will 
+use the NTL's ZZ class of multi-precision integers to perform the calculations, a slower but safer approach. 
+In both of these choices for the homology base, the boundary operators are represented as integer matrices via 
+the Synarmosma class \texttt{Matrix}. Finally, the user can choose to have the homology computed over the Galois 
+field $\textnormal{GF}(2)$, which uses the Synarmosma library's \texttt{Binary\_Matrix} class to calculate a 
+homology that ignores orientation (since we have the relation $-1 =1$ in this field) and has no torsion. If GAP 
+is used for the homology calculations, then the \texttt{HomologyBase} parameter can be set to either \texttt{INT} 
+or \texttt{ZZ} as they have the same effect.  
 
-However the $H_n(\Sigma_k,F)$ are calculated, they are always represented in the same manner by  
-the \texttt{Group} class. As finitely generated Abelian groups, they have a well-known structure (see 
+However the $H_n(\Sigma_k,F)$ are calculated, they are always represented in the same manner by the Synarmosma 
+library's \texttt{Group} class. As finitely generated Abelian groups, they have a well-known structure (see 
 \cite{Hungerford}, pp.\ 78--79 for more details) that can be compactly written as 
 \begin{equation}
 G = \langle r \mid \{\, p_1,p_2,\dots,p_m \,\} \rangle, \quad p_i > 1 \,\, \forall \, i \textnormal{ and } 
