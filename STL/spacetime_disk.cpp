@@ -267,7 +267,7 @@ void Spacetime::read_parameters(const char* filename)
   }
   else if (solver == MECHANICAL) {
 #ifndef FLAT
-    std::cerr << "The Penelope library must be compiled with the flag FLAT in order to use the MECHANICAL geometry solver!" << std::endl;
+    std::cerr << "The Diaplexis library must be compiled with the flag FLAT in order to use the MECHANICAL geometry solver!" << std::endl;
     exit(1);
 #endif
     assert(int_engine == "EULER" || int_engine == "RK4");
@@ -324,7 +324,7 @@ void Spacetime::write_log() const
     std::ofstream s(log_file.c_str(),std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     s << "<LogFile>" << std::endl;
-    s << "<Application>Penelope (STL)</Application>" << std::endl;
+    s << "<Library>Diaplexis (STL)</Library>" << std::endl;
     s << "<Hostname>" << hostname << "</Hostname>" << std::endl;
     s << "<StartDate>" << start_time.date() << "</StartDate>" << std::endl;
     s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
