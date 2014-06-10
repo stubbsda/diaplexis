@@ -1166,21 +1166,26 @@ void Spacetime::compute_global_topology(int sheet)
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
   Nexus* NX = new Nexus;
+
   compute_global_nexus(NX,sheet);
-  H->compute(NX);
-  pi->compute(NX);
+
   if (sheet == -1) {
     // The global case...
+    H->compute(NX);
+    pi->compute(NX);
     // Finally, the pseudomanifold and orientability properties
     pseudomanifold = NX->pseudomanifold(&boundary);
     if (pseudomanifold) orientable = NX->orientable();
   }
   else {
     bool bdry;
+    codex[sheet].H->compute(NX);
+    codex[sheet].pi->compute(NX);
     codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
     codex[sheet].boundary = bdry;
     if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
   }
+
   delete NX;
 }
 
