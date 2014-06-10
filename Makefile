@@ -1,4 +1,13 @@
-include Makefile.def
+CXX_FLAGS += -Wall -fPIC -DFLAT -DVERBOSE #-DLEIBNIZ
+
+DEBUG    = -g 
+OPT      = $(CXX_OPT)
+
+#CXX_FLAGS += $(OPT)
+CXX_FLAGS += $(DEBUG) 
+
+#LD_FLAGS += $(OPT)
+LD_FLAGS += $(DEBUG)
 
 install: diaplexis-ntl diaplexis-stl
 	mkdir -p $(DIAPLEXIS)/lib
