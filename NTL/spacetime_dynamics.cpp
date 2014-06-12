@@ -219,23 +219,32 @@ bool Spacetime::adjust_dimension()
   bool modified;
   std::vector<int> vdimension;
   const int nvertex = (signed) events.size();
+  const bool uniform = geometry->get_uniform();
 
   system_size = 0;
 
-  for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1) {
-      vdimension.push_back(-1);
-      continue;
+  if (uniform) {
+    for(i=0; i<nvertex; ++i) {
+      if (events[i].ubiquity == 1) {
+        vdimension.push_back(-1);
+        continue;
+      }
+      n = events[i].global_dimension;
+      system_size += Geometry::background_dimension;
+      vdimension.push_back(n);
     }
-    n = events[i].global_dimension;
-#ifdef FLAT
-    system_size += Geometry::background_dimension;
-#else
-    system_size += (n <= Geometry::background_dimension) ? Geometry::background_dimension : n;
-#endif
-    vdimension.push_back(n);
   }
-
+  else {
+    for(i=0; i<nvertex; ++i) {
+      if (events[i].ubiquity == 1) {
+        vdimension.push_back(-1);
+        continue;
+      }
+      n = events[i].global_dimension;
+      system_size += (n <= Geometry::background_dimension) ? Geometry::background_dimension : n;
+      vdimension.push_back(n);
+    }
+  }
   modified = geometry->adjust_dimension(vdimension);
   return modified;
 }
@@ -323,15 +332,18 @@ void Spacetime::optimize()
   }
   else if (solver == EVOLUTIONARY) {
     int j,n,in1,vc,joust,generation = 1;
-    bool viable,mtype = geometry->euclidean;
+    bool viable;
     double p,f1,f2,severity,fbest,fitness[2*pool_size],ftemp[pool_size];
+    const bool euclidean = geometry->get_euclidean();
+    const bool relational = geometry->get_relational();
+    const bool uniform = geometry->get_uniform();
     std::vector<std::pair<int,int> > vcount;
     std::set<int> vmodified,vx;
     std::set<int>::const_iterator it;
     Geometry* pool = new Geometry[2*pool_size];
     Geometry* ptemp = new Geometry[pool_size];
-    Geometry* optimal = new Geometry(mtype);
-    Geometry* initial_state = new Geometry(mtype);
+    Geometry* optimal = new Geometry(euclidean,relational,uniform);
+    Geometry* initial_state = new Geometry(euclidean,relational,uniform);
     const int pmagnitude = int(0.15*system_size);
     const double initial_error = error;
 
@@ -340,11 +352,15 @@ void Spacetime::optimize()
 #endif
 
     for(i=0; i<2*pool_size; ++i) {
-      pool[i].set_metric(mtype);
+      pool[i].set_euclidean(euclidean);
+      pool[i].set_relational(relational);
+      pool[i].set_uniform(uniform);
       vcount.push_back(std::pair<int,int>(0,0));
     }
     for(i=0; i<pool_size; ++i) {
-      ptemp[i].set_metric(mtype);
+      ptemp[i].set_euclidean(euclidean);
+      ptemp[i].set_relational(relational);
+      ptemp[i].set_uniform(uniform);
     }
 
     geometry->store(initial_state);
@@ -489,7 +505,7 @@ void Spacetime::optimize()
     std::set<int> vmodified;
     std::set<int>::const_iterator it;
     std::vector<double> E,lengths,base,output,output1,output2;
-    Geometry* optimal = new Geometry(geometry->euclidean);
+    Geometry* optimal = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
     const double initial_error = error;
 
     geometry->store(optimal);
@@ -757,7 +773,7 @@ void Spacetime::optimize()
     compute_volume();
     if (!cgradient_refinement) return;
     double d,q,E,prior,alpha,beta,E_initial,n = 0.0,sigma = 0.1;
-    Geometry* initial_state = new Geometry(geometry->euclidean);
+    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
     determine_flexible_edges();
@@ -882,7 +898,7 @@ void Spacetime::optimize()
     int in1,j,k,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
     Geometry SR,SE;
-    Geometry* initial_state = new Geometry(geometry->euclidean);
+    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
     std::vector<std::pair<int,double> > fitness;
     std::set<int> vmodified;
     std::vector<Geometry> S;
@@ -892,8 +908,12 @@ void Spacetime::optimize()
     std::cout << "Using Nelder-Mead method with dimension " << system_size << std::endl;
 #endif
     geometry->store(initial_state);
-    SR.set_metric(geometry->euclidean);
-    SE.set_metric(geometry->euclidean);
+    SR.set_euclidean(geometry->get_euclidean());
+    SE.set_euclidean(geometry->get_euclidean());    
+    SR.set_relational(geometry->get_relational());
+    SE.set_relational(geometry->get_relational());
+    SR.set_uniform(geometry->get_uniform());
+    SE.set_uniform(geometry->get_uniform());
 
     // We begin by creating a simplex of size system_size....
     geometry->store(&SR);

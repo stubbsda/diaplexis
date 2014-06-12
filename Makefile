@@ -1,4 +1,4 @@
-CXX_FLAGS += -Wall -fPIC -DFLAT -DVERBOSE #-DLEIBNIZ
+CXX_FLAGS += -Wall -fPIC -DVERBOSE 
 
 DEBUG    = -g 
 OPT      = $(CXX_OPT)
