@@ -51,7 +51,7 @@ void Spacetime::chorogenesis(int nsteps)
   //assert(initial_state == RANDOM);
   assert(solver == MECHANICAL);
   assert(edge_probability > 0.3);
-  assert(geometry->euclidean);
+  assert(geometry->get_euclidean());
   assert(connected(-1));
   int i,j,dpopulation[1+Geometry::background_dimension];
   std::vector<std::pair<long,int> > factors;
@@ -257,77 +257,78 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
   for(i=0; i<system_size; ++i) {
     df.push_back(0.0);
   }
-#ifdef LEIBNIZ
-  std::set<int> vmodified,last,current;
-  double E,alpha;
-  const double B = compute_abnormality();
+  if (geometry->get_relational()) {
+    std::set<int> vmodified,last,current;
+    double E,alpha;
+    const double B = compute_abnormality();
 
-  for(i=0; i<system_size; ++i) {
-    geometry->add(i,geometry_cutoff);
-    geometry->get_implied_vertices(i,current);
-    compute_geometric_dependency(current);
-    vmodified = last;
-    for(it=current.begin(); it!=current.end(); it++) {
-      vmodified.insert(*it);
+    for(i=0; i<system_size; ++i) {
+      geometry->add(i,geometry_cutoff);
+      geometry->get_implied_vertices(i,current);
+      compute_geometric_dependency(current);
+      vmodified = last;
+      for(it=current.begin(); it!=current.end(); it++) {
+        vmodified.insert(*it);
+      }
+      geometry->compute_distances(vmodified);
+      compute_volume();
+      E = compute_abnormality();
+      alpha = (E - B)/geometry_cutoff;
+      df[i] = alpha;
+      geometry->add(i,-geometry_cutoff);
+      last = current;
+      current.clear();
     }
-    geometry->compute_distances(vmodified);
-    compute_volume();
-    E = compute_abnormality();
-    alpha = (E - B)/geometry_cutoff;
-    df[i] = push_back(alpha);
-    geometry->add(i,-geometry_cutoff);
-    last = current;
-    current.clear();
+    geometry->compute_distances(last);
   }
-  geometry->compute_distances(last);
-#else
-  int j,k;
-  double l,ell;
-  std::vector<double> x1,x2;
-  hash_map::const_iterator qt;
-  const int nvertex = (signed) events.size();
-  const int D = Geometry::background_dimension;
-  const double pfactor = (2.0/M_PI)*5.0;
-  const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
-  double alpha[D];
+  else {
+    int j,k;
+    double l,ell;
+    std::vector<double> x1,x2;
+    hash_map::const_iterator qt;
+    const int nvertex = (signed) events.size();
+    const int D = Geometry::background_dimension;
+    const double pfactor = (2.0/M_PI)*5.0;
+    const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
+    double alpha[D];
 
-  assert(system_size == D*nvertex);
+    assert(system_size == D*nvertex);
 
 #ifdef PARALLEL
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,qt)
 #endif
-  for(i=0; i<nvertex; ++i) {
-    if (ghost(events[i].ubiquity)) continue;
-    geometry->get_coordinates(i,x1);
-    for(j=0; j<D; ++j) {
-      alpha[j] = 0.0;
-    }
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-      k = *it;
-      geometry->get_coordinates(k,x2);
-      l = geometry->get_distance(i,k,false);
-      qt = index_table[1].find(make_key(i,k));
-      if (flexible_edge[qt->second] == 1) {
-        if (l > sq_cutoff) {
+    for(i=0; i<nvertex; ++i) {
+      if (ghost(events[i].ubiquity)) continue;
+      geometry->get_coordinates(i,x1);
+      for(j=0; j<D; ++j) {
+        alpha[j] = 0.0;
+      }
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+        k = *it;
+        geometry->get_coordinates(k,x2);
+        l = geometry->get_distance(i,k,false);
+        qt = index_table[1].find(make_key(i,k));
+        if (flexible_edge[qt->second] == 1) {
+          if (l > sq_cutoff) {
+            l = std::sqrt(l);
+            for(j=0; j<D; ++j) {
+              alpha[j] += 2.0*(l - edge_flexibility_threshold)*(x1[j] - x2[j])/l;
+            }
+          }
+        }
+        else {
+          ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[i].energy + events[k].energy)));
           l = std::sqrt(l);
           for(j=0; j<D; ++j) {
-            alpha[j] += 2.0*(l - edge_flexibility_threshold)*(x1[j] - x2[j])/l;
+            alpha[j] += 2.0*(l - ell)*(x1[j] - x2[j])/l;
           }
         }
       }
-      else {
-        ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[i].energy + events[k].energy)));
-        l = std::sqrt(l);
-        for(j=0; j<D; ++j) {
-          alpha[j] += 2.0*(l - ell)*(x1[j] - x2[j])/l;
-        }
+      for(j=0; j<D; ++j) {
+        df[D*i+j] = alpha[j];
       }
     }
-    for(j=0; j<D; ++j) {
-      df[D*i+j] = alpha[j];
-    }
   }
-#endif
   if (negate) {
     for(i=0; i<system_size; ++i) {
       df[i] = -df[i];
@@ -377,15 +378,15 @@ bool Spacetime::delaunay() const
 
 void Spacetime::compute_obliquity()
 {
-  int i;
   const int nvertex = (signed) events.size();
-#ifdef LEIBNIZ
-  for(i=0; i<nvertex; ++i) {
-    events[i].obliquity = 0.0;
+  if (geometry->get_relational()) {
+    for(int i=0; i<nvertex; ++i) {
+      events[i].obliquity = 0.0;
+    }
+    return;
   }
-#else
-  int j;
-  double t,rho,theta,alpha,nv1,nv2,d;
+  int i,j;
+  double rho,theta,alpha;
   bool first;
   std::vector<double> vx,vy;
   std::set<int>::const_iterator it;
@@ -397,7 +398,6 @@ void Spacetime::compute_obliquity()
     j = *(events[i].neighbours.begin());
 
     geometry->vertex_difference(i,j,vx);
-    nv1 = norm(vx);
 
     rho = 0.0;
     first = true;
@@ -408,16 +408,7 @@ void Spacetime::compute_obliquity()
       }
       j = *it;
       geometry->vertex_difference(i,j,vy);
-      nv2 = norm(vy);
-      d = geometry->dot_product(vx,vy);
-      alpha = d/(nv1*nv2);
-      t = std::abs(alpha);
-      // Necessary when compiled *without* -DFLAT...
-#ifndef FLAT
-      if (t > 1.0) alpha = 1.0/alpha;
-#else
-      if (t > 1.0) alpha = alpha/t;
-#endif
+      alpha = geometry->get_argument(vx,vy);
       theta = std::acos(alpha);
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);
     }
@@ -425,7 +416,6 @@ void Spacetime::compute_obliquity()
     if (rho < Spacetime::epsilon) rho = 0.0;
     events[i].obliquity = rho;
   }
-#endif
 }
 
 void Spacetime::compute_curvature()

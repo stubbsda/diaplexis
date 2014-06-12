@@ -46,12 +46,28 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "InputFile") {
       input_file = value;
     }
-    else if (name == "Euclidean") {
+    else if (name == "EuclideanGeometry") {
       if (value == "True") {
-        geometry->set_metric("EUCLIDEAN");
+        geometry->set_euclidean(true);
       }
       else {
-        geometry->set_metric("LORENTZIAN");
+        geometry->set_euclidean(false);
+      }
+    }
+    else if (name == "RelationalGeometry") {
+      if (value == "True") {
+        geometry->set_relational(true);
+      }
+      else {
+        geometry->set_relational(false);
+      }
+    }
+    else if (name == "DimensionalUniformity") {
+      if (value == "True") {
+        geometry->set_uniform(true);
+      }
+      else {
+        geometry->set_uniform(false);
       }
     }
     else if (name == "RandomSeed") {
@@ -266,10 +282,10 @@ void Spacetime::read_parameters(const char* filename)
     assert(thermal_sweep > 0);
   }
   else if (solver == MECHANICAL) {
-#ifndef FLAT
-    std::cerr << "The Diaplexis library must be compiled with the flag FLAT in order to use the MECHANICAL geometry solver!" << std::endl;
-    exit(1);
-#endif
+    if (!geometry->get_relational() && !geometry->get_uniform()) {
+      std::cerr << "If the geometry model is absolute it must be dimensionally uniform in order to use the MECHANICAL geometry solver!" << std::endl;
+      std::exit(1);
+    }
     assert(int_engine == "EULER" || int_engine == "RK4");
     assert(step_size > 0.0 && step_size < 1.0);
     assert(spring_constant < 0.0);
@@ -333,16 +349,6 @@ void Spacetime::write_log() const
     s << "<MaximumDimension>" << ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
     s << "<BackgroundDimension>" << Geometry::background_dimension << "</BackgroundDimension>" << std::endl;
-#ifdef LEIBNIZ
-    s << "<GeometryModel>Relational</GeometryModel>" << std::endl;
-#else
-    s << "<GeometryModel>Absolute</GeometryModel>" << std::endl;
-#endif
-#ifdef FLAT
-    s << "<DimensionalUniformity>True</DimensionalUniformity>" << std::endl;
-#else
-    s << "<DimensionalUniformity>False</DimensionalUniformity>" << std::endl;
-#endif
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
@@ -353,8 +359,10 @@ void Spacetime::write_log() const
     s << "<Global>" << std::endl;
     if (initial_state != SINGLETON) s << "<InitialVertices>" << initial_size << "</InitialVertices>" << std::endl;
     s << "<InitialSheets>" << nt_initial << "</InitialSheets>" << std::endl;
-    s << "<Euclidean>" << bvalue[geometry->euclidean] << "</Euclidean>" << std::endl;
     s << "<MaxIterations>" << max_iter << "</MaxIterations>" << std::endl;
+    s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
+    s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
+    s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<SheetDynamics>" << bvalue[foliodynamics] << "</SheetDynamics>" << std::endl;
     s << "<RandomSeed>" << RND.get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
@@ -1003,38 +1011,6 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-#ifdef LEIBNIZ
-  if (n != 1) {
-    cmodel = "LEIBNIZ";
-    fmodel = "NEWTON";
-#else
-  if (n != 0) {
-    cmodel = "NEWTON";
-    fmodel = "LEIBNIZ";
-#endif
-    s.close();
-    std::cerr << "The spacetime's geometric model " << cmodel << " does not match that (" << fmodel << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-
-  s.read((char*)(&n),sizeof(int));
-#ifdef FLAT
-  if (n != 1) {
-    cmodel = "FLAT";
-    fmodel = "NON-FLAT";
-#else
-  if (n != 0) {
-    cmodel = "NON-FLAT";
-    fmodel = "FLAT";
-#endif
-    s.close();
-    std::cerr << "The spacetime's dimensional uniformity " << cmodel << " does not match that (" << fmodel << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-
-  s.read((char*)(&n),sizeof(int));
   if (n != Spacetime::topological_radius) {
     s.close();
     std::cerr << "The compiled binary's topological radius " << Spacetime::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
@@ -1257,18 +1233,6 @@ void Spacetime::write_state() const
   s.write((char*)(&ND),sizeof(int));
   s.write((char*)(&NP),sizeof(int));
   s.write((char*)(&Geometry::background_dimension),sizeof(int));
-#ifdef LEIBNIZ
-  n = 1;
-#else
-  n = 0;
-#endif
-  s.write((char*)(&n),sizeof(int));
-#ifdef FLAT
-  n = 1;
-#else
-  n = 0;
-#endif
-  s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
   s.write((char*)(&Spacetime::epsilon),sizeof(double));

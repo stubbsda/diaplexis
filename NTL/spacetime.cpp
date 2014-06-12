@@ -1758,22 +1758,17 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     events.push_back(vt);
     vx.insert(0);
 
-    if (relational) {
-      for(i=1; i<=initial_dim; ++i) {
-        events.push_back(vt);
-        vx.insert(i);
-      }
-      geometry->initialize(initial_dim,"MONOPLEX");
-    }
-    else {
-      for(i=1; i<=initial_dim; ++i) {
+    for(i=1; i<=initial_dim; ++i) {
+      if (!relational) {
         svalue[i-1] = 1.0;
         geometry->add_vertex(svalue);
         svalue[i-1] = 0.0;
-        events.push_back(vt);
-        vx.insert(i);
       }
+      events.push_back(vt);
+      vx.insert(i);
     }
+
+    if (relational) geometry->initialize(initial_dim,"MONOPLEX");
 
     S.vertices = vx;
     S.string_assembly();

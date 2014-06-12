@@ -120,7 +120,8 @@ void Spacetime::set_default_values()
   orientable = false;
   diskless = false;
   original_state = RANDOM;
-  geometry = new Geometry(false);
+  // Default geometry (Euclidean, absolute and dimensionally uniform) is fine
+  geometry = new Geometry;
   H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
 }
@@ -1537,13 +1538,13 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
   int i,j,in1;
   Vertex vt;
   Simplex S;
-#ifndef LEIBNIZ
+  const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
   for(i=0; i<Geometry::background_dimension; ++i) {
     svalue.push_back(0.0);
   }
-#endif
+
   vt.incept = 0;
   vt.ubiquity = locale;
   S.ubiquity = locale;
@@ -1560,9 +1561,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     const int nd = ipow(n,Geometry::background_dimension-1);
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*RND.irandom(initial_size));
-#ifndef LEIBNIZ
     const double dx = 1.0;
-#endif
     int m,k,l,d,rvalue;
     hash_map::const_iterator qt;
     std::vector<int> entourage,v;
@@ -1580,21 +1579,15 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       in1 = l/k;
       entourage[0] = in1;
       rvalue = l - in1*nd;
-#ifndef LEIBNIZ
       svalue[0] = dx*(double(in1) - 0.5*double(nm1));
-#endif
       for(m=1; m<Geometry::background_dimension; ++m) {
         k /= n;
         in1 = rvalue/k;
         entourage[m] = in1;
         rvalue -= k*in1;
-#ifndef LEIBNIZ
         svalue[m] = dx*(double(in1) - 0.5*double(nm1));
-#endif
       }
-#ifndef LEIBNIZ
-      geometry->add_vertex(svalue);
-#endif
+      if (!relational) geometry->add_vertex(svalue);
       for(m=0; m<Geometry::background_dimension; ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
@@ -1602,9 +1595,9 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       vt.boundary = false;
       arrangement[l] = entourage;
     }
-#ifdef LEIBNIZ
-    geometry->initialize(n,"CARTESIAN");
-#endif
+
+    if (relational) geometry->initialize(n,"CARTESIAN");
+
     // Now the edges...
     for(i=0; i<initial_size; ++i) {
       v = arrangement[i];
@@ -1747,44 +1740,44 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
   else if (initial_state == SINGLETON) {
     // An initial spacetime consisting of a single isolated vertex, though with very
     // high energy
-#ifdef LEIBNIZ
-    geometry->initialize(0,"SINGLETON");
-#else
-    geometry->add_vertex(svalue);
-#endif
+    if (relational) {
+      geometry->initialize(0,"SINGLETON");
+    }
+    else {
+      geometry->add_vertex(svalue);
+    }
     vt.energy = 5000.0*(0.5 + RND.drandom()/2.0);
     events.push_back(vt);
   }
   else if (initial_state == MONOPLEX) {
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
-#ifndef LEIBNIZ
     int ulimit = Geometry::background_dimension;
     if (initial_dim > Geometry::background_dimension) ulimit = initial_dim;
-#endif
     if (perturb_energy) vt.energy = 500.0 + (2000.0/double(initial_dim))*RND.drandom();
 
-#ifndef LEIBNIZ
-    svalue.clear();
-    for(i=0; i<ulimit; ++i) {
-      svalue.push_back(0.0);
+    if (!relational) {
+      svalue.clear();
+      for(i=0; i<ulimit; ++i) {
+        svalue.push_back(0.0);
+      }
+      geometry->add_vertex(svalue);
     }
-    geometry->add_vertex(svalue);
-#endif
     events.push_back(vt);
     vx.insert(0);
+
     for(i=1; i<=initial_dim; ++i) {
-#ifndef LEIBNIZ
-      svalue[i-1] = 1.0;
-      geometry->add_vertex(svalue);
-      svalue[i-1] = 0.0;
-#endif
+      if (!relational) {
+        svalue[i-1] = 1.0;
+        geometry->add_vertex(svalue);
+        svalue[i-1] = 0.0;
+      }
       events.push_back(vt);
       vx.insert(i);
     }
-#ifdef LEIBNIZ
-    geometry->initialize(initial_dim,"MONOPLEX");
-#endif
+
+    if (relational) geometry->initialize(initial_dim,"MONOPLEX");
+
     S.vertices = vx;
     S.string_assembly();
     simplices[initial_dim].push_back(S);
@@ -1804,22 +1797,30 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
 
     RND.initialize_bernoulli(edge_probability);
 
-    for(i=0; i<initial_size; ++i) {
-      if (RND.drandom() < 0.1) {
-        vt.energy = 10.0*RND.drandom();
-        k++;
+    if (relational) {
+      for(i=0; i<initial_size; ++i) {
+        if (RND.drandom() < 0.1) {
+          vt.energy = 10.0*RND.drandom();
+          k++;
+        }
+        events.push_back(vt);
       }
-#ifndef LEIBNIZ
-      for(j=0; j<Geometry::background_dimension; ++j) {
-        svalue[j] = -10.0 + 20.0*RND.drandom();
-      }
-      geometry->add_vertex(svalue);
-#endif
-      events.push_back(vt);
+      geometry->initialize(initial_size,"RANDOM");
     }
-#ifdef LEIBNIZ
-    geometry->initialize(initial_size,"RANDOM");
-#endif
+    else {
+      for(i=0; i<initial_size; ++i) {
+        if (RND.drandom() < 0.1) {
+          vt.energy = 10.0*RND.drandom();
+          k++;
+        }
+        for(j=0; j<Geometry::background_dimension; ++j) {
+          svalue[j] = -10.0 + 20.0*RND.drandom();
+        }
+        geometry->add_vertex(svalue);
+        events.push_back(vt);
+      }
+    }
+
     // A final step to ensure that at least one node has non-zero energy...
     if (k == 0) events[RND.irandom(initial_size)].energy = 20.0*RND.drandom();
 

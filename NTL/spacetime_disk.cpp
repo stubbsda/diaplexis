@@ -348,9 +348,6 @@ void Spacetime::write_log() const
     s << "<MaximumDimension>" << ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
     s << "<BackgroundDimension>" << Geometry::background_dimension << "</BackgroundDimension>" << std::endl;
-    s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
-    s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
-    s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
@@ -362,6 +359,9 @@ void Spacetime::write_log() const
     if (initial_state != SINGLETON) s << "<InitialVertices>" << initial_size << "</InitialVertices>" << std::endl;
     s << "<InitialSheets>" << nt_initial << "</InitialSheets>" << std::endl;
     s << "<MaxIterations>" << max_iter << "</MaxIterations>" << std::endl;
+    s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
+    s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
+    s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<SheetDynamics>" << bvalue[foliodynamics] << "</SheetDynamics>" << std::endl;
     s << "<RandomSeed>" << RND.get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;

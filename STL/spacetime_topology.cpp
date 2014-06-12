@@ -751,7 +751,7 @@ void Spacetime::compute_lightcones()
 {
   // This method only makes sense for the entire polycosmic spacetime complex, i.e.
   // sheet = -1, with a Lorentzian metric
-  if (geometry->euclidean) return;
+  if (geometry->get_euclidean()) return;
   int i,j,k;
   CAUSALITY lcone;
   hash_map::const_iterator qt;
@@ -841,7 +841,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   // whereas a large positive value means much more topological entwinement is needed and a
   // large negative value means the topology must be altered to resemble that of the Cartesian
   // initial state.
-  if (geometry->euclidean) return 0.0;
+  if (geometry->get_euclidean()) return 0.0;
   int in1,in2,tcount;
   double l,w1,w2,tipsy,vorticity;
   CAUSALITY d1,d2;
@@ -922,7 +922,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
 
 double Spacetime::compute_temporal_nonlinearity(int sheet) const
 {
-  if (geometry->euclidean) return 0.0;
+  if (geometry->get_euclidean()) return 0.0;
   int i,j,k,nsink = 0,nsource = 0,causal_loop = 0;
   double output,nlinearity = 0.0;
   CAUSALITY lcone;
