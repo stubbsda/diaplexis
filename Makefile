@@ -1,13 +1,16 @@
-CXX_FLAGS += -Wall -fPIC -DVERBOSE 
+HEADERS    = vertex.h simplex.h sheet.h spacetime.h
 
-DEBUG    = -g 
-OPT      = $(CXX_OPT)
+DEBUG      = -g
 
-#CXX_FLAGS += $(OPT)
+OPT        = $(CXX_OPT)
+
+CXX_FLAGS += -I$(SYNARMOSMA)/include -Wall -fPIC -DVERBOSE
+LD_FLAGS  += -L$(SYNARMOSMA)/lib -Wall -shared
+
 CXX_FLAGS += $(DEBUG) 
+LD_FLAGS  += $(DEBUG)
 
-#LD_FLAGS += $(OPT)
-LD_FLAGS += $(DEBUG)
+LIBS       = -lsynarmosma $(LAPACK) -lboost_system -lpugixml -lntl -lm
 
 install: diaplexis-ntl diaplexis-stl
 	mkdir -p $(DIAPLEXIS)/lib
