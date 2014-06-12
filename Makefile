@@ -12,6 +12,8 @@ LD_FLAGS  += $(DEBUG)
 
 LIBS       = -lsynarmosma $(LAPACK) -lboost_system -lpugixml -lntl -lm
 
+export LIBS
+
 install: diaplexis-ntl diaplexis-stl
 	mkdir -p $(DIAPLEXIS)/lib
 	cp NTL/libdiaplexis-ntl.so $(DIAPLEXIS)/lib/
@@ -22,10 +24,10 @@ install: diaplexis-ntl diaplexis-stl
 	cp NTL/*.h $(DIAPLEXIS)/include/NTL/
 	cp STL/*.h $(DIAPLEXIS)/include/STL/ 
 
-diaplexis-ntl: $(OBJECTS) 
+diaplexis-ntl:
 	cd NTL; $(MAKE)  
 
-diaplexis-stl: $(OBJECTS)
+diaplexis-stl:
 	cd STL; $(MAKE) 
 
 clean:
