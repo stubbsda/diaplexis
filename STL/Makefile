@@ -1,4 +1,4 @@
-include ../Makefile.def
+include ../Makefile.inc
 
 OBJECTS = sheet.o spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
 spacetime_geometry.o spacetime_hyphansis.o vertex.o simplex.o
