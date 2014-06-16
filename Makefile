@@ -1,7 +1,3 @@
-ifneq (,)
-This makefile requires Gnu make.
-endif
-
 install: diaplexis-ntl diaplexis-stl
 	mkdir -p $(DIAPLEXIS)/lib
 	cp NTL/libdiaplexis-ntl.so $(DIAPLEXIS)/lib/
