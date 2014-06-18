@@ -125,8 +125,7 @@ class Spacetime {
   static const int topological_radius = 4;
 
   std::string sheet_activity() const;
-  void compute_degree_distribution(std::vector<int>&,int) const;
-  void compute_degree_distribution(int) const;
+  void compute_degree_distribution(bool,int) const;
   void compute_connectivity_distribution(int) const;
   void random_walk(double*,double*,int) const;
   void arclength_statistics(double*,int) const;
@@ -143,9 +142,9 @@ class Spacetime {
   double dimensional_stress(int,int) const;
   int combinatorial_distance(int,int) const;
   int combinatorial_distance(int,int,int) const;
-  double entwinement() const;
+  double entwinement(int) const;
   double return_probability(int,int,int) const;
-  double cyclic_resistance() const;
+  double cyclic_resistance(int) const;
   bool edge_exists(int,int,int) const;
   int max_degree() const;
   bool delaunay() const;

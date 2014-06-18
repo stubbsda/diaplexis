@@ -64,60 +64,20 @@ void Spacetime::get_ubiquity(int d,int n,std::string& output) const
   }
 }
 
-void Spacetime::compute_degree_distribution(std::vector<int>& output,int sheet) const
+void Spacetime::compute_degree_distribution(bool logarithmic,int sheet) const
 {
-  int i,vx[2],m = 0;
-  std::vector<int> vdegree,pcount;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  std::vector<double> histogram;
+  Graph* G = new Graph(cardinality(0,sheet));
 
-  for(i=0; i<nv; ++i) {
-    vdegree.push_back(0);
-    pcount.push_back(0);
-  }
-  if (sheet == -1) {
-    for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
-      simplices[1][i].get_vertices(vx);
-      vdegree[vx[0]] += 1; vdegree[vx[1]] += 1;
-    }
-    for(i=0; i<nv; ++i) {
-      if (vdegree[i] == 0) continue;
-      if (vdegree[i] > m) m = vdegree[i];
-      pcount[vdegree[i]] += 1;
-    }
-  }
-  else {
-    for(i=0; i<ne; ++i) {
-      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
-      simplices[1][i].get_vertices(vx);
-      vdegree[vx[0]] += 1; vdegree[vx[1]] += 1;
-    }
-    for(i=0; i<nv; ++i) {
-      if (vdegree[i] == 0) continue;
-      if (vdegree[i] > m) m = vdegree[i];
-      pcount[vdegree[i]] += 1;
-    }
-  }
+  compute_graph(G,sheet);
 
-  output.clear();
-  for(i=0; i<=m; ++i) {
-    output.push_back(pcount[i]);
-  }
-}
-
-void Spacetime::compute_degree_distribution(int sheet) const
-{
-  int i;
-  std::vector<int> pcount;
-  const double ntotal = double(cardinality(0,sheet));
-
-  compute_degree_distribution(pcount,sheet);
+  G->degree_distribution(logarithmic,histogram);
 
   std::cout << "Vertex degree histogram (sheet = " << sheet << "):" << std::endl;
-  for(i=0; i<(signed) pcount.size(); ++i) {
-    if (pcount[i] > 0) std::cout << i << "  " << 100.0*double(pcount[i])/ntotal << std::endl;
+  for(int i=0; i<(signed) histogram.size(); ++i) {
+    if (histogram[i] > 0) std::cout << i+1 << "  " << 100.0*histogram[i] << std::endl;
   }
+  delete G;
 }
 
 void Spacetime::compute_connectivity_distribution(int sheet) const
@@ -1135,94 +1095,19 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
 int Spacetime::chromatic_number(int sheet) const
 {
   // Computes the chromatic number chi of the graph associated with the
-  // colour "p"; we already know that 1 <= chi <= max_degree+1.
+  // colour "p"; we already know that 1 <= chi <= max_degree+1.  
 
   // It makes no sense to try to compute a single chromatic number for
   // a disconnected graph.
   if (!connected(sheet)) return 0;
 
-  int i,in1,test;
-  double mbreak;
-  bool done,good,found,highest;
-  std::set<int>::const_iterator it;
-  const int nvertex = (signed) events.size();
-  std::vector<int> colour,pcolour;
-  std::vector<double> breaker;
-  bool* skip = new bool[nvertex];
+  Graph* G = new Graph(cardinality(0,sheet));
+  compute_graph(G,sheet);
+  int chi = G->chromatic_number();
 
-  for(i=0; i<nvertex; ++i) {
-    colour.push_back(-1);
-    breaker.push_back(0.0);
-    if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) skip[i] = true;
-  }
-  for(i=0; i<nvertex; ++i) {
-    pcolour.push_back(-1);
-  }
-  colour[0] = 0;
-  do {
-    for(i=0; i<nvertex; ++i) {
-      if (colour[i] >= 0) {
-        skip[i] = true;
-        continue;
-      }
-      skip[i] = false;
-      breaker[i] = RND.drandom();
-      test = 0;
-      do {
-        good = true;
-        for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
-          if (colour[*it] == test) {
-            good = false;
-            break;
-          }
-        }
-        if (good) break;
-        test++;
-      } while(true);
-      pcolour[i] = test;
-    }
-    for(i=0; i<nvertex; ++i) {
-      if (skip[i]) continue;
-      found = false;
-      highest = true;
-      mbreak = breaker[i];
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
-        in1 = *it;
-        if (colour[in1] >= 0) {
-          found = true;
-          continue;
-        }
-        if (mbreak < breaker[in1]) {
-          highest = false;
-          break;
-        }
-      }
-      if (!found || !highest) skip[i] = true;
-    }
-    for(i=0; i<nvertex; ++i) {
-      if (!skip[i]) colour[i] = pcolour[i];
-    }
-    done = true;
-    for(i=0; i<nvertex; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      if (colour[i] < 0) {
-        done = false;
-        break;
-      }
-    }
-  } while(!done);
+  delete G;
 
-  // The chromatic number is the maximum colour assigned, plus one
-  int ncolour = 0;
-  for(i=0; i<nvertex; ++i) {
-    if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-    if (colour[i] > ncolour) ncolour = colour[i];
-  }
-  ncolour += 1;
-
-  delete[] skip;
-
-  return ncolour;
+  return chi;
 }
 
 int Spacetime::entourage(int base,int sheet) const
@@ -1300,149 +1185,24 @@ int Spacetime::max_degree() const
   return output;
 }
 
-double Spacetime::entwinement() const
+double Spacetime::entwinement(int sheet) const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
-  int i,j,k,info,nwork,nv,vx[2],nvertex = (signed) events.size();
-  std::vector<int> offset;
-  char jtype = 'N';
-  char uplo = 'U';
-  std::set<int>::const_iterator it;
-  double* A;
-  double* w;
-  double* work;
-  double output = 0.0;
-
-  if (nvertex == 1) return output;
-  /*
-  int nedge = 0;
-
-  for(int i=0; i<nvertex; ++i) {
-    for(it=neighbours[i].begin(); it!=neighbours[i].end(); it++) {
-      if (i < *it) nedge++;
-    }
-  }
-  output = 2.0*double(nedge)/double(nvertex*(nvertex-1));
-  */
-
-  // First built the adjacency matrix
-  nv = 0;
-  for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1) {
-      offset.push_back(-1);
-      continue;
-    }
-    offset.push_back(nv);
-    nv++;
-  }
-
-  nwork = 3*nv - 1;
-  A = new double[nv*nv];
-  w = new double[nv];
-  work = new double[nwork];
-
-  for(i=0; i<nv*nv; ++i) {
-    A[i] = 0.0;
-  }
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
-    simplices[1][i].get_vertices(vx);
-    j = offset[vx[0]];
-    k = offset[vx[1]];
-    A[nv*j+k] = 1.0;
-    A[nv*k+j] = 1.0;
-  }
-  dsyev_(&jtype,&uplo,&nv,A,&nv,w,work,&nwork,&info);
-  if (info == 0) output = w[nv-1]/double(max_degree());
-
-  delete[] A;
-  delete[] w;
-  delete[] work;
-
+  Graph* G = new Graph(cardinality(0,sheet));
+  compute_graph(G,sheet);
+  double output = G->entwinement();
+  delete G;
   return output;
 }
 
-double Spacetime::cyclic_resistance() const
+double Spacetime::cyclic_resistance(int sheet) const
 {
-  int i,j,k,nedge,info,vx[2],nvertex = (signed) events.size();
-  double sum;
-  std::set<int>::const_iterator it;
-
-  int nv = 0;
-  std::vector<int> offset;
-  for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1) {
-      offset.push_back(-1);
-      continue;
-    }
-    offset.push_back(nv);
-    nv++;
-  }
-  int nwork = 5*nv;
-  double* L = new double[nv*nv];
-  double* C = new double[nv*nv];
-  double* A = new double[nv*nv];
-  double* W = new double[nv*nv];
-  double* work = new double[nwork];
-  int* pivots = new int[nv];
-
-  for(i=0; i<nv*nv; ++i) {
-    A[i] = 0.0;
-    L[i] = 0.0;
-  }
-  j = 0;
-  for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    L[nv*j+j] = double(events[i].neighbours.size());
-    ++j;
-  }
-  nedge = 0;
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
-    simplices[1][i].get_vertices(vx);
-    j = offset[vx[0]];
-    k = offset[vx[1]];
-    nedge++;
-    A[nv*j+k] = 1.0;
-    A[nv*k+j] = 1.0;
-    L[nv*j+k] = -1.0;
-    L[nv*k+j] = -1.0;
-  }
-  for(i=0; i<nv*nv; ++i) {
-    C[i] = L[i];
-  }
-  dgetri_(&nv,C,&nv,pivots,work,&nwork,&info);
-  assert(info == 0);
-  for(i=0; i<nv; ++i) {
-    W[nv*i+i] = 0.0;
-    for(j=i+1; j<nv; ++j) {
-      sum = 1.0/(C[nv*i+i] + C[nv*j+j] - (C[nv*i+j] + C[nv*j+i]));
-      W[nv*i+j] = sum;
-      W[nv*j+i] = sum;
-    }
-  }
-  for(i=0; i<nv; ++i) {
-    for(j=0; j<nv; ++j) {
-      sum = 0.0;
-      for(k=0; k<nv; ++k) {
-        sum += W[nv*k+i]*A[nv*j+k];
-      }
-      L[nv*i+j] = sum;
-    }
-  }
-  sum = 0.0;
-  for(i=0; i<nv; ++i) {
-    sum += L[nv*i+i];
-  }
-  sum -= nedge;
-  delete[] L;
-  delete[] C;
-  delete[] A;
-  delete[] W;
-  delete[] pivots;
-  delete[] work;
-  return sum;
+  Graph* G = new Graph(cardinality(0,sheet));
+  compute_graph(G,sheet);
+  double output = G->cyclic_resistance();
+  delete G;
+  return output;
 }
 
 int Spacetime::combinatorial_distance(int v1,int v2) const
@@ -2050,80 +1810,12 @@ bool Spacetime::connected(int sheet) const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.
-  const int nvertex = (signed) events.size();
-  int i,n;
-  bool output = true;
-  hash_map::const_iterator qt;
-  std::vector<int> ubiquity;
-  std::set<int> change,nchange;
-  std::set<int>::const_iterator it,jt;
+  Graph* G = new Graph(cardinality(0,sheet));
 
-  for(i=0; i<nvertex; ++i) {
-    ubiquity.push_back(0);
-  }
-  if (sheet == -1) {
-    for(i=0; i<nvertex; ++i) {
-      if (events[i].ubiquity == 1) continue;
-      ubiquity[i] = 1;
-      change.insert(i);
-      break;
-    }
-    do {
-      for(it=change.begin(); it!=change.end(); it++) {
-        i = *it;
-        for(jt=events[i].neighbours.begin(); jt!=events[i].neighbours.end(); jt++) {
-          if (ubiquity[*jt] == 1) continue;
-          n = *jt;
-          qt = index_table[1].find(make_key(i,n));
-          if (simplices[1][qt->second].ubiquity > 1) nchange.insert(n);
-        }
-      }
-      if (nchange.empty()) break;
-      for(it=nchange.begin(); it!=nchange.end(); it++) {
-        ubiquity[*it] = 1;
-      }
-      change = nchange;
-      nchange.clear();
-    } while(true);
-    for(i=0; i<nvertex; ++i) {
-      if (ubiquity[i] == 0 && events[i].ubiquity > 1) {
-        output = false;
-        break;
-      }
-    }
-  }
-  else {
-    for(i=0; i<nvertex; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      ubiquity[i] = 1;
-      change.insert(i);
-      break;
-    }
-    do {
-      for(it=change.begin(); it!=change.end(); it++) {
-        i = *it;
-        for(jt=events[i].neighbours.begin(); jt!=events[i].neighbours.end(); jt++) {
-          n = *jt;
-          if (ubiquity[n] == 1) continue;
-          qt = index_table[1].find(make_key(i,n));
-          if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 1) nchange.insert(n);
-        }
-      }
-      if (nchange.empty()) break;
-      for(it=nchange.begin(); it!=nchange.end(); it++) {
-        n = *it;
-        ubiquity[n] = 1;
-      }
-      change = nchange;
-      nchange.clear();
-    } while(true);
-    for(i=0; i<nvertex; ++i) {
-      if (ubiquity[i] == 0 && NTL::divide(events[i].ubiquity,codex[sheet].colour) == 1) {
-        output = false;
-        break;
-      }
-    }
-  }
+  compute_graph(G,sheet);
+
+  bool output = G->connected();
+  delete G;
   return output;
 }
 
