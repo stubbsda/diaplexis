@@ -1026,9 +1026,9 @@ int Spacetime::chromatic_number(int sheet) const
   if (!connected(sheet)) return 0;
 
   Graph* G = new Graph(cardinality(0,sheet));
+
   compute_graph(G,sheet);
   int chi = G->chromatic_number();
-
   delete G;
 
   return chi;

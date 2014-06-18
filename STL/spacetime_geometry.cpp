@@ -83,11 +83,13 @@ void Spacetime::chorogenesis(int nsteps)
     y.clear();
   }
   // We have now verified all the necessary conditions and can begin  
-  compute_degree_distribution(-1);
+  compute_degree_distribution(false,-1);
 
   int d,cfactor,derror,csize,vx[2];
   double temperature = 1.0;
-  std::vector<int> candidates,reorder,dcount;
+  std::vector<int> candidates,reorder;
+  std::vector<double> hgram;
+  Graph* G = new Graph(cardinality(0,-1));
   const int ne = (signed) simplices[1].size();
 
 #ifdef VERBOSE
@@ -131,14 +133,16 @@ void Spacetime::chorogenesis(int nsteps)
     }
     std::cout << "Deleted " << d << " edges from the spacetime complex." << std::endl;
     regularization(false,-1);
-    compute_degree_distribution(dcount,-1);
+    compute_graph(G,-1);
+    G->degree_distribution(false,hgram);
     derror = 0;
-    for(i=0; i<(signed) dcount.size(); ++i) {
+    for(i=0; i<(signed) hgram.size(); ++i) {
+      d = int(nv*hgram[i]);
       if (i > D) {
-        derror += dcount[i];
+        derror += d;
       }
       else {
-        derror += std::abs(dcount[i] - dpopulation[i]);
+        derror += std::abs(d - dpopulation[i]);
       }
     }
     std::cout << "Vertex degree error is " << derror << std::endl;
