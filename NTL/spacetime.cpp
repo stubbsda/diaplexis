@@ -448,30 +448,6 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
   }
 }
 
-bool Spacetime::edge_exists(int u,int v,int sheet) const
-{
-  hash_map::const_iterator qt = index_table[1].find(make_key(u,v));
-  if (qt == index_table[1].end()) return false;
-  if (sheet == -1) {
-    if (simplices[1][qt->second].ubiquity == 1) return false;
-  }
-  else {
-    if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
-  }
-  return true;
-}
-
-std::string Spacetime::sheet_activity() const
-{
-  std::string out = "(";
-  for(int i=0; i<(signed) codex.size()-1; ++i) {
-    out += (boost::lexical_cast<std::string>(codex[i].active) + ",");
-  }
-  out += boost::lexical_cast<std::string>(codex[codex.size()-1].active);
-  out += ")";
-  return out;
-}
-
 char Spacetime::implication() const
 {
   // Should return one of {F,U,O,E,I,P,V}

@@ -154,61 +154,10 @@ bool Spacetime::active_element(int d,int n) const
 
 void Spacetime::random_walk(double* mean,double* sdeviation,int sheet) const
 {
-  int i,j,v;
-  double mu,rho = 0.0,sigma = 0.0;
-  std::set<int> vx;
-  std::set<int>::const_iterator it;
-  const int ntrials = 15;
-  const int nvertex = (signed) events.size();
-  const int L = int(std::pow(cardinality(0,sheet),1.0/double(Geometry::background_dimension)));
-  const int nbase = int(0.05*nvertex);
-  double value[nbase];
-
-  if (sheet == -1) {
-    for(i=0; i<nbase; ++i) {
-      do {
-        v = RND.irandom(nvertex);
-        if (events[v].ubiquity == 1) continue;
-        it = std::find(vx.begin(),vx.end(),v);
-        if (it != vx.end()) continue;
-        vx.insert(v);
-        break;
-      } while(true);
-      mu = 0.0;
-      for(j=0; j<ntrials; ++j) {
-        mu += return_probability(v,L,sheet);
-      }
-      mu = mu/double(ntrials);
-      value[i] = mu;
-      rho += mu;
-    }
-  }
-  else {
-    for(i=0; i<nbase; ++i) {
-      do {
-        v = RND.irandom(nvertex);
-        if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
-        it = std::find(vx.begin(),vx.end(),v);
-        if (it != vx.end()) continue;
-        vx.insert(v);
-        break;
-      } while(true);
-      mu = 0.0;
-      for(j=0; j<ntrials; ++j) {
-        mu += return_probability(v,L,sheet);
-      }
-      mu = mu/double(ntrials);
-      value[i] = mu;
-      rho += mu;
-    }
-  }
-  rho = rho/double(nbase);
-  for(i=0; i<nbase; ++i) {
-    sigma = (value[i] - rho)*(value[i] - rho);
-  }
-  sigma = std::sqrt(sigma/double(nbase));
-  *mean = rho;
-  *sdeviation = sigma;
+  Graph* G = new Graph(cardinality(0,sheet));
+  compute_graph(G,sheet);
+  G->random_walk(mean,sdeviation,Geometry::background_dimension);
+  delete G;
 }
 
 double Spacetime::dimensional_stress(int d,int n,int sheet) const
@@ -365,39 +314,12 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
 
 void Spacetime::vertex_degree_statistics(double* output,int sheet) const
 {
-  int i,v,mn,mx = 0,sum = 0;
-  std::set<int>::const_iterator it;
-  const int nvertex = (signed) events.size();
-  const double nn = double(cardinality(0,sheet));
-
-  mn = nvertex;
-  if (sheet == -1) {
-    for(i=0; i<nvertex; ++i) {
-      if (events[i].ubiquity == 1) continue;
-      v = 0;
-      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
-        if (simplices[1][*it].ubiquity > 1) v++;
-      }
-      sum += v;
-      if (v > mx) mx = v;
-      if (v < mn) mn = v;
-    }
-  }
-  else {
-    for(i=0; i<nvertex; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      v = 0;
-      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
-        if (NTL::divide(simplices[1][*it].ubiquity,codex[sheet].colour) == 1) v++;
-      }
-      sum += v;
-      if (v > mx) mx = v;
-      if (v < mn) mn = v;
-    }
-  }
-  output[0] = double(mx);
-  output[1] = double(mn);
-  output[2] = double(sum)/nn;
+  Graph* G = new Graph(cardinality(0,sheet));  
+  compute_graph(G,sheet);
+  output[0] = double(G->max_degree());
+  output[1] = double(G->min_degree());
+  output[2] = G->average_degree();
+  delete G;
 }
 
 int Spacetime::cyclicity(int sheet) const
@@ -405,7 +327,7 @@ int Spacetime::cyclicity(int sheet) const
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
   if (!(connected(sheet))) return 0;
-  Graph* G = new Graph;
+  Graph* G = new Graph(cardinality(0,sheet));
 
   compute_graph(G,sheet);
   int output = G->size() - G->bridge_count();
@@ -477,6 +399,8 @@ void Spacetime::compute_graph(Graph* G,int sheet) const
   const int nv = (signed) events.size();
   const int ne = (signed) simplices[1].size();
   int offset[nv];
+
+  G->clear();
 
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
@@ -1128,52 +1052,6 @@ int Spacetime::entourage(int base,int sheet) const
   return output;
 }
 
-double Spacetime::return_probability(int base,int length,int sheet) const
-{
-  int i,j,h = 0,next,current;
-  bool home;
-  double rho;
-  hash_map::const_iterator qt;
-  const int ntrials = 50;
-
-  if (sheet == -1) {
-    for(i=0; i<ntrials; ++i) {
-      current = base;
-      home = false;
-      for(j=0; j<length; ++j) {
-        next = RND.irandom(events[current].neighbours);
-        current = next;
-        if (current == base) {
-          home = true;
-          break;
-        }
-      }
-      if (home) h++;
-    }
-  }
-  else {
-    for(i=0; i<ntrials; ++i) {
-      current = base;
-      home = false;
-      for(j=0; j<length; ++j) {
-        do {
-          next = RND.irandom(events[current].neighbours);
-          qt = index_table[1].find(make_key(current,next));
-          if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 1) break;
-        } while(true);
-        current = next;
-        if (current == base) {
-          home = true;
-          break;
-        }
-      }
-      if (home) h++;
-    }
-  }
-  rho = double(h)/double(ntrials);
-  return rho;
-}
-
 int Spacetime::max_degree() const
 {
   int i,n,output = 0;
@@ -1305,110 +1183,6 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
     }
   } while(true);
   return l;
-}
-
-int Spacetime::spanning_tree(std::vector<int>& tree_edges,int sheet) const
-{
-  int ntree,n,m;
-  std::set<int> current,vertices,next;
-  std::set<int>::const_iterator it,jt,kt,lt;
-  hash_map::const_iterator qt;
-
-  // A sanity check...
-  assert(connected(sheet));
-
-  if (sheet == -1) {
-    for(n=0; n<(signed) events.size(); ++n) {
-      if (events[n].ubiquity > 1) {
-        current.insert(n);
-        break;
-      }
-    }
-
-    do {
-      for(it=current.begin(); it!=current.end(); it++) {
-        vertices.insert(*it);
-      }
-      for(it=current.begin(); it!=current.end(); it++) {
-        n = *it;
-        for(jt=events[n].neighbours.begin(); jt!=events[n].neighbours.end(); jt++) {
-          m = *jt;
-          qt = index_table[1].find(make_key(n,m));
-          if (simplices[1][qt->second].ubiquity == 1) continue;
-          kt = std::find(vertices.begin(),vertices.end(),m);
-          if (kt != vertices.end()) continue;
-          lt = std::find(next.begin(),next.end(),m);
-          if (lt != next.end()) continue;
-          next.insert(m);
-          // Now add this edge to the spanning tree...
-          if (n < m) {
-            tree_edges.push_back(n);
-            tree_edges.push_back(m);
-          }
-          else {
-            tree_edges.push_back(m);
-            tree_edges.push_back(n);
-          }
-        }
-      }
-      if (next.empty()) break;
-      current = next;
-      next.clear();
-    } while(true);
-    ntree = (signed) tree_edges.size();
-    m = 0;
-    for(n=0; n<(signed) events.size(); ++n) {
-      if (events[n].ubiquity > 1) m++;
-    }
-  }
-  else {
-    for(n=0; n<(signed) events.size(); ++n) {
-      if (NTL::divide(events[n].ubiquity,codex[sheet].colour) == 1) {
-        current.insert(n);
-        break;
-      }
-    }
-
-    do {
-      for(it=current.begin(); it!=current.end(); it++) {
-        vertices.insert(*it);
-      }
-      for(it=current.begin(); it!=current.end(); it++) {
-        n = *it;
-        for(jt=events[n].neighbours.begin(); jt!=events[n].neighbours.end(); jt++) {
-          m = *jt;
-          qt = index_table[1].find(make_key(n,m));
-          if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
-          kt = std::find(vertices.begin(),vertices.end(),m);
-          lt = std::find(next.begin(),next.end(),m);
-          if (kt == vertices.end() && lt == next.end()) {
-            next.insert(m);
-            // Now add this edge to the spanning tree...
-            if (n < m) {
-              tree_edges.push_back(n);
-              tree_edges.push_back(m);
-            }
-            else {
-              tree_edges.push_back(m);
-              tree_edges.push_back(n);
-            }
-          }
-        }
-      }
-      if (next.empty()) break;
-      current = next;
-      next.clear();
-    } while(true);
-    ntree = (signed) tree_edges.size();
-    m = 0;
-    for(n=0; n<(signed) events.size(); ++n) {
-      if (NTL::divide(events[n].ubiquity,codex[sheet].colour) == 1) m++;
-    }
-  }
-  n = (signed) vertices.size();
-  assert(m == n);
-  assert(n == (1+ntree/2));
-  return ntree;
 }
 
 int Spacetime::euler_characteristic(int sheet) const
@@ -1821,81 +1595,35 @@ bool Spacetime::connected(int sheet) const
 
 int Spacetime::component_analysis(std::vector<int>& component,int sheet) const
 {
-  int i,n,m,start,nc;
-  const int nvertex = (signed) events.size();
-  std::set<int> change,nchange;
-  std::set<int>::const_iterator it,jt;
-  hash_map::const_iterator qt;
+  int i,n,ct = 0;
+  std::vector<int> cvalue;
+  Graph* G = new Graph(cardinality(0,sheet));
 
+  compute_graph(G,sheet);
+  n = G->component_analysis(cvalue);
+  delete G;
+  // We now need to include the unused vertices in the output component vector
   component.clear();
-  nc = 0;
-  for(i=0; i<nvertex; ++i) {
-    component.push_back(-1);
-  }
   if (sheet == -1) {
-    do {
-      start = -1;
-      for(i=0; i<nvertex; ++i) {
-        if (component[i] == -1 && events[i].ubiquity > 1) {
-          start = i;
-          break;
-        }
+    for(i=0; i<(signed) events.size(); ++i) {
+      if (events[i].ubiquity == 1) {
+        component.push_back(-1);
+        continue;
       }
-      if (start == -1) break;
-      change.insert(start);
-      do {
-        for(it=change.begin(); it!=change.end(); it++) {
-          n = *it;
-          component[n] = nc;
-        }
-        for(it=change.begin(); it!=change.end(); it++) {
-          n = *it;
-          for(jt=events[n].neighbours.begin(); jt!=events[n].neighbours.end(); jt++) {
-            m = *jt;
-            qt = index_table[1].find(make_key(n,m));
-            if (component[m] < 0 && simplices[1][qt->second].ubiquity > 1) nchange.insert(m);
-          }
-        }
-        if (nchange.empty()) break;
-        change = nchange;
-        nchange.clear();
-      } while(true);
-      nc++;
-      change.clear();
-    } while(true);
+      component.push_back(cvalue[ct]);
+      ct++;
+    }
   }
   else {
-    do {
-      start = -1;
-      for(i=0; i<nvertex; ++i) {
-        if (component[i] == -1 && NTL::divide(events[i].ubiquity,codex[sheet].colour) == 1) {
-          start = i;
-          break;
-        }
+    for(i=0; i<(signed) events.size(); ++i) {
+      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) {
+        component.push_back(-1);
+        continue;
       }
-      if (start == -1) break;
-      change.insert(start);
-      do {
-        for(it=change.begin(); it!=change.end(); it++) {
-          n = *it;
-          component[n] = nc;
-        }
-        for(it=change.begin(); it!=change.end(); it++) {
-          n = *it;
-          for(jt=events[n].neighbours.begin(); jt!=events[n].neighbours.end(); jt++) {
-            m = *jt;
-            qt = index_table[1].find(make_key(n,m));
-            if (component[m] < 0 && NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 1) nchange.insert(m);
-          }
-        }
-        if (nchange.empty()) break;
-        change = nchange;
-        nchange.clear();
-      } while(true);
-      nc++;
-      change.clear();
-    } while(true);
+      component.push_back(cvalue[ct]);
+      ct++;
+    }
   }
-  return nc;
+  return n;
 }
 

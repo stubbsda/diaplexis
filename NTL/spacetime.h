@@ -124,7 +124,10 @@ class Spacetime {
   // the topological entwinement at a vertex
   static const int topological_radius = 4;
 
-  std::string sheet_activity() const;
+  inline std::string sheet_activity() const;
+  inline bool edge_exists(int,int,int) const;
+  inline int cardinality(int,int) const;
+  inline void compute_graph(Graph*,int,int) const;
   void compute_degree_distribution(bool,int) const;
   void compute_connectivity_distribution(int) const;
   void random_walk(double*,double*,int) const;
@@ -132,7 +135,6 @@ class Spacetime {
   void vertex_degree_statistics(double*,int) const;
   void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
   void compute_graph(Graph*,int,int,int) const;
-  inline void compute_graph(Graph*,int,int) const;
   void compute_graph(Graph*,int) const;
   void compute_causal_graph(Graph*,int,CAUSALITY,int) const;
   void compute_global_nexus(Nexus*,int) const;
@@ -143,12 +145,9 @@ class Spacetime {
   int combinatorial_distance(int,int) const;
   int combinatorial_distance(int,int,int) const;
   double entwinement(int) const;
-  double return_probability(int,int,int) const;
   double cyclic_resistance(int) const;
-  bool edge_exists(int,int,int) const;
   int max_degree() const;
   bool delaunay() const;
-  inline int cardinality(int,int) const;
   int total_dimension(int) const;
   int structural_index(int) const;
   int dimension(int) const;
@@ -161,7 +160,6 @@ class Spacetime {
   bool active_simplex(int,int,int) const;
   int euler_characteristic(int) const;
   int component_analysis(std::vector<int>&,int) const;
-  int spanning_tree(std::vector<int>&,int) const;
   int entourage(int,int) const;
   bool connected(int) const;
   bool consistent(int) const;
@@ -178,9 +176,10 @@ class Spacetime {
   void compute_geometric_dependency(const std::set<int>&);
   void compute_topological_dependency(const std::set<int>&);
   void simplicial_implication(int);
-  void hyphansis(int);
   void reciprocate();
   void compute_simplex_energy(int,int);
+  // The various methods needed for the hyphantic operators
+  void hyphansis(int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);
@@ -332,6 +331,30 @@ class Spacetime {
   friend class Cell;
   friend class Vertex;
 };
+
+inline bool Spacetime::edge_exists(int u,int v,int sheet) const
+{
+  hash_map::const_iterator qt = index_table[1].find(make_key(u,v));
+  if (qt == index_table[1].end()) return false;
+  if (sheet == -1) {
+    if (simplices[1][qt->second].ubiquity == 1) return false;
+  }
+  else {
+    if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
+  }
+  return true;
+}
+
+inline std::string Spacetime::sheet_activity() const
+{
+  std::string out = "(";
+  for(int i=0; i<(signed) codex.size()-1; ++i) {
+    out += (boost::lexical_cast<std::string>(codex[i].active) + ",");
+  }
+  out += boost::lexical_cast<std::string>(codex[codex.size()-1].active);
+  out += ")";
+  return out;
+}
 
 inline bool Spacetime::is_pseudomanifold(bool* bdry,int sheet) const 
 {
