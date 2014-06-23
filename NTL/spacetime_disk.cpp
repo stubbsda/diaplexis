@@ -100,6 +100,9 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "PerturbEnergy") {
       perturb_energy = (value == "True") ? true : false;
     }
+    else if (name == "MusicalHyphansis") {
+      musical_weaving = (value == "True") ? true : false;
+    }
     else if (name == "HomologyMethod") {
       if (value == "GAP") {
         H->set_method(GAP); 

@@ -684,7 +684,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
   return true;
 }
 
-bool Spacetime::compensation(int base,bool dimensional,int sheet)
+bool Spacetime::compensation_m(int base,int sheet)
 {
   int i,j,vx[2];
   double l;
@@ -692,13 +692,104 @@ bool Spacetime::compensation(int base,bool dimensional,int sheet)
   hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
-  if (dimensional) {
-    if (vertex_dimension(base,sheet) < 2) return false;
+  if (vertex_dimension(base,sheet) < 2) return false;
 
 #ifdef VERBOSE
-    std::cout << "Compensation with " << dimension(sheet) << std::endl;
+  std::cout << "Compensation with " << dimension(sheet) << std::endl;
 #endif
 
+  // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
+  // is also excessive *and* which is relatively far away (edge length >> 1)
+  for(i=0; i<ne; ++i) {
+    if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (vx[0] != base && vx[1] != base) continue;
+    j = (vx[0] == base) ? vx[1] : vx[0];
+    if (vertex_dimension(j,sheet) < 2) continue;
+    if (events[j].deficiency < -Spacetime::epsilon) continue;
+    l = geometry->get_computed_distance(base,j,false);
+    if (l >= 0.81 && l <= 1.21) continue;
+    qt = index_table[1].find(make_key(base,j));
+    candidates.insert(qt->second);
+  }
+
+  if (candidates.empty()) {
+#ifdef VERBOSE
+    std::cout << "Unable to perform dimensional compensation, no viable candidates..." << std::endl;
+#endif
+    return false;
+  }
+  j = RND.irandom(candidates);
+#ifdef VERBOSE
+  std::cout << "Deleting edge with key " << simplices[1][j].key << " to reduce the complex's dimensionality" << std::endl;
+#endif
+  simplex_deletion(1,j,sheet);
+  return true;
+}
+
+bool Spacetime::compensation_g(int base,int sheet)
+{
+  int i,j,vx[2];
+  double l;
+  std::set<int> candidates;
+  hash_map::const_iterator qt;
+  const int ne = (signed) simplices[1].size();
+
+  int sdegree = 0;
+  for(i=0; i<ne; ++i) {
+    if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (base != vx[0] && base != vx[1]) continue;
+    sdegree++;
+  }
+  if (sdegree == 2*Geometry::background_dimension) return false;
+  const int idegree = 2*Geometry::background_dimension;
+  const int nv = (signed) events.size();
+
+  bool up = (sdegree < idegree) ? true : false;
+#ifdef VERBOSE
+  std::cout << "Compensation with " << base << "  " << up << "  " << sdegree - idegree << std::endl;
+#endif
+  if (up) {
+    // Add an edge to the vertex base: ideally one that connects with a vertex whose degree is
+    // also too low and which is relatively close at hand. If the only candidates are distant
+    // then do nothing and return false!
+    for(i=0; i<nv; ++i) {
+      if (i == base) continue;
+      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (edge_exists(base,i,sheet)) continue;
+      l = geometry->get_computed_distance(base,i,false);
+      if (l >= 0.81 && l <= 1.21) candidates.insert(i);
+    }
+
+    if (candidates.empty()) {
+#ifdef VERBOSE
+      std::cout << "Failure in positive compensation..." << std::endl;
+#endif
+      return false;
+    }
+    j = RND.irandom(candidates);
+    codex[sheet].vx_delta.insert(base);
+    codex[sheet].vx_delta.insert(j);
+    qt = index_table[1].find(make_key(base,j));
+    if (qt != index_table[1].end()) {
+      assert(NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0);
+#ifdef VERBOSE
+      std::cout << "Restoring edge with key " << simplices[1][qt->second].key << " in positive compensation" << std::endl;
+#endif
+      simplices[1][qt->second].ubiquity *= codex[sheet].colour;
+    }
+    else {
+#ifdef VERBOSE
+      std::cout << "Adding edge connecting " << base << " and " << j << " in positive compensation" << std::endl;
+#endif
+      Simplex S(base,j,codex[sheet].colour);
+      // Now add this simplex to the spacetime complex...
+      simplices[1].push_back(S);
+      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+    }
+  }
+  else {
     // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
     // is also excessive *and* which is relatively far away (edge length >> 1)
     for(i=0; i<ne; ++i) {
@@ -706,106 +797,22 @@ bool Spacetime::compensation(int base,bool dimensional,int sheet)
       simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
-      if (vertex_dimension(j,sheet) < 2) continue;
-      if (events[j].deficiency < -Spacetime::epsilon) continue;
       l = geometry->get_computed_distance(base,j,false);
       if (l >= 0.81 && l <= 1.21) continue;
       qt = index_table[1].find(make_key(base,j));
       candidates.insert(qt->second);
     }
-
     if (candidates.empty()) {
 #ifdef VERBOSE
-      std::cout << "Unable to perform dimensional compensation, no viable candidates..." << std::endl;
+      std::cout << "Failure in negative compensation..." << std::endl;
 #endif
       return false;
     }
-    j = RND.irandom(candidates);
+    i = RND.irandom(candidates);
 #ifdef VERBOSE
-    std::cout << "Deleting edge with key " << simplices[1][j].key << " to reduce the complex's dimensionality" << std::endl;
+    std::cout << "Deleting edge with key " << simplices[1][i].key << " in negative compensation" << std::endl;
 #endif
-    simplex_deletion(1,j,sheet);
-  }
-  else {
-    int sdegree = 0;
-    for(i=0; i<ne; ++i) {
-      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
-      simplices[1][i].get_vertices(vx);
-      if (base != vx[0] && base != vx[1]) continue;
-      sdegree++;
-    }
-    if (sdegree == 2*Geometry::background_dimension) return false;
-    const int idegree = 2*Geometry::background_dimension;
-    const int nv = (signed) events.size();
-
-    bool up = (sdegree < idegree) ? true : false;
-#ifdef VERBOSE
-    std::cout << "Compensation with " << base << "  " << up << "  " << sdegree - idegree << std::endl;
-#endif
-    if (up) {
-      // Add an edge to the vertex base: ideally one that connects with a vertex whose degree is
-      // also too low and which is relatively close at hand. If the only candidates are distant
-      // then do nothing and return false!
-      for(i=0; i<nv; ++i) {
-        if (i == base) continue;
-        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-        if (edge_exists(base,i,sheet)) continue;
-        l = geometry->get_computed_distance(base,i,false);
-        if (l >= 0.81 && l <= 1.21) candidates.insert(i);
-      }
-
-      if (candidates.empty()) {
-#ifdef VERBOSE
-        std::cout << "Failure in positive compensation..." << std::endl;
-#endif
-        return false;
-      }
-      j = RND.irandom(candidates);
-      codex[sheet].vx_delta.insert(base);
-      codex[sheet].vx_delta.insert(j);
-      qt = index_table[1].find(make_key(base,j));
-      if (qt != index_table[1].end()) {
-        assert(NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0);
-#ifdef VERBOSE
-        std::cout << "Restoring edge with key " << simplices[1][qt->second].key << " in positive compensation" << std::endl;
-#endif
-        simplices[1][qt->second].ubiquity *= codex[sheet].colour;
-      }
-      else {
-#ifdef VERBOSE
-        std::cout << "Adding edge connecting " << base << " and " << j << " in positive compensation" << std::endl;
-#endif
-        Simplex S(base,j,codex[sheet].colour);
-        // Now add this simplex to the spacetime complex...
-        simplices[1].push_back(S);
-        index_table[1][S.key] = (signed) simplices[1].size() - 1;
-      }
-    }
-    else {
-      // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
-      // is also excessive *and* which is relatively far away (edge length >> 1)
-      for(i=0; i<ne; ++i) {
-        if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
-        simplices[1][i].get_vertices(vx);
-        if (vx[0] != base && vx[1] != base) continue;
-        j = (vx[0] == base) ? vx[1] : vx[0];
-        l = geometry->get_computed_distance(base,j,false);
-        if (l >= 0.81 && l <= 1.21) continue;
-        qt = index_table[1].find(make_key(base,j));
-        candidates.insert(qt->second);
-      }
-      if (candidates.empty()) {
-#ifdef VERBOSE
-        std::cout << "Failure in negative compensation..." << std::endl;
-#endif
-        return false;
-      }
-      i = RND.irandom(candidates);
-#ifdef VERBOSE
-      std::cout << "Deleting edge with key " << simplices[1][i].key << " in negative compensation" << std::endl;
-#endif
-      simplex_deletion(1,i,sheet);
-    }
+    simplex_deletion(1,i,sheet);
   }
   return true;
 }
@@ -1232,7 +1239,7 @@ void Spacetime::inversion()
   }
 }
 
-bool Spacetime::foliation(int base,bool implicate,int sheet)
+bool Spacetime::foliation_m(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
   std::set<int> candidates;
@@ -1254,37 +1261,56 @@ bool Spacetime::foliation(int base,bool implicate,int sheet)
     if (n2 != n1) break;
   } while(true);
 
-  if (implicate) {
-    // Clearly adding this edge creates at least a 2-simplex (v,n1,n2) which should be
-    // added to the spacetime complex!
-    std::set<int> leaf;
-    leaf.insert(base);
-    leaf.insert(n1);
-    leaf.insert(n2);
-    Simplex S(leaf,codex[sheet].colour);
-    qt = index_table[2].find(S.key);
-    if (qt == index_table[2].end()) {
-      simplices[2].push_back(S);
-      index_table[2][S.key] = (signed) simplices[2].size() - 1;
-      return true;
-    }
-    if (NTL::divide(simplices[2][qt->second].ubiquity,codex[sheet].colour) == 1) return false;
-    simplices[2][qt->second].ubiquity *= codex[sheet].colour;
-    qt = index_table[1].find(make_key(n1,n2));
-    if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
-      simplices[1][qt->second].ubiquity *= codex[sheet].colour;
-    }
-    codex[sheet].vx_delta.insert(n1);
-    codex[sheet].vx_delta.insert(n2);
+  // Clearly adding this edge creates at least a 2-simplex (v,n1,n2) which should be
+  // added to the spacetime complex!
+  std::set<int> leaf;
+  leaf.insert(base);
+  leaf.insert(n1);
+  leaf.insert(n2);
+  Simplex S(leaf,codex[sheet].colour);
+  qt = index_table[2].find(S.key);
+  if (qt == index_table[2].end()) {
+    simplices[2].push_back(S);
+    index_table[2][S.key] = (signed) simplices[2].size() - 1;
     return true;
   }
-  else {
-    qt = index_table[1].find(make_key(n1,n2));
-    if (qt == index_table[1].end()) return false;
-    if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
-    simplex_deletion(1,qt->second,sheet);
-    return true;
+  if (NTL::divide(simplices[2][qt->second].ubiquity,codex[sheet].colour) == 1) return false;
+  simplices[2][qt->second].ubiquity *= codex[sheet].colour;
+  qt = index_table[1].find(make_key(n1,n2));
+  if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
+    simplices[1][qt->second].ubiquity *= codex[sheet].colour;
   }
+  codex[sheet].vx_delta.insert(n1);
+  codex[sheet].vx_delta.insert(n2);
+  return true;
+}
+
+bool Spacetime::foliation_x(int base,int sheet)
+{
+  int i,p,n1,n2,vx[2];
+  std::set<int> candidates;
+  hash_map::iterator qt;
+  const int ne = (signed) simplices[1].size();
+
+  for(i=0; i<ne; ++i) {
+    if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (vx[0] != base && vx[1] != base) continue;
+    p = (vx[0] == base) ? vx[1] : vx[0];
+    if (std::abs(events[p].deficiency) < Spacetime::epsilon) continue;
+    candidates.insert(p);
+  }
+  if (candidates.size() < 2) return false;
+  n1 = RND.irandom(candidates);
+  do {
+    n2 = RND.irandom(candidates);
+    if (n2 != n1) break;
+  } while(true);
+  qt = index_table[1].find(make_key(n1,n2));
+  if (qt == index_table[1].end()) return false;
+  if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
+  simplex_deletion(1,qt->second,sheet);
+  return true;
 }
 
 bool Spacetime::amputation(int base,double cutoff,bool explicative,int sheet)
@@ -1341,7 +1367,7 @@ bool Spacetime::amputation(int base,double cutoff,bool explicative,int sheet)
   return true;
 }
 
-bool Spacetime::fusion(int base,double geometric_cutoff,int sheet)
+bool Spacetime::fusion_x(int base,double geometric_cutoff,int sheet)
 {
   int i,u;
   std::set<int> candidates;
@@ -1363,7 +1389,7 @@ bool Spacetime::fusion(int base,double geometric_cutoff,int sheet)
   return true;
 }
 
-bool Spacetime::fusion(int base,int sheet)
+bool Spacetime::fusion_m(int base,int sheet)
 {
   int i,u,vx[2];
   std::set<int> candidates;
@@ -2731,10 +2757,8 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 
 void Spacetime::hyphansis(int sheet)
 {
-  int i,v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
-  std::ios_base::openmode fmode;
   const int nvertex = (signed) events.size();
   const double nactive = double(cardinality(0,sheet));
   codex[sheet].ops = "";
@@ -2742,7 +2766,7 @@ void Spacetime::hyphansis(int sheet)
 #ifdef VERBOSE
   int npos = 0,nneg = 0,nze = 0;
 #endif
-  for(i=0; i<nvertex; ++i) {
+  for(int i=0; i<nvertex; ++i) {
     if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
 #ifdef VERBOSE
     if (events[i].energy > Spacetime::epsilon) nze++;
@@ -2760,7 +2784,31 @@ void Spacetime::hyphansis(int sheet)
 #endif
   if (candidates.empty()) return;
 
-  fmode = (iterations == 0) ? std::ios::trunc : std::ios::app;
+  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+
+  if (musical_weaving) {
+    musical_hyphansis(candidates,sheet);
+  }
+  else {
+    random_hyphansis(candidates,sheet);
+  }
+}
+
+void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+{
+  static int elapsed_time = 0;
+
+  std::ifstream s(score_file.c_str());
+
+  s.close();
+}
+
+void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet) 
+{
+  int i,v;
+  double alpha;
+  const double nactive = double(cardinality(0,sheet));
+  std::ios_base::openmode fmode = (iterations == 0) ? std::ios::trunc : std::ios::app;
   std::ofstream s("hyphansis.log",fmode);
 
   const int nc = (signed) candidates.size();
@@ -2776,10 +2824,8 @@ void Spacetime::hyphansis(int sheet)
     }
   }
   int nsuccess = 0;
-  char ov;
+  std::string op;
   bool success;
-
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
 
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
@@ -2788,84 +2834,83 @@ void Spacetime::hyphansis(int sheet)
     if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
     alpha = events[v].deficiency;
     if (alpha < -Spacetime::epsilon) {
-      ov = implication();
-      switch(ov) {
-      case 'F':
+      implication(op);
+      if (op == "F") {
         success = fission(v,0.4,sheet);
-        break;
-      case 'U':
-        success = fusion(v,sheet);
-        break;
-      case 'O':
-        success = foliation(v,true,sheet);
-        break;
-      case 'E':
+      }
+      else if (op == "Um") {
+        success = fusion_m(v,sheet);
+      }
+      else if (op == "Om") {
+        success = foliation_m(v,sheet);
+      }
+      else if (op == "E") {
         success = expansion(v,0.15,sheet);
-        break;
-      case 'I':
+      }
+      else if (op == "I") {
         success = inflation(v,0.25,sheet);
-        break;
-      case 'P':
+      }
+      else if (op == "P") {
         success = perforation(v,0,sheet);
-        break;
-      case 'V':
+      }
+      else if (op == "V") {
         success = circumvolution(v,sheet);
-        break;
       }
     }
     else if (alpha > Spacetime::epsilon) {
       if (vertex_dimension(v,sheet) > 1) {
         if (RND.drandom() < alpha/10.0) {
-          ov = 'D';
+          op = "D";
           success = deflation(v,sheet);
         }
         else {
-          ov = 'R';
+          op = "R";
           success = reduction(v,sheet);
         }
       }
       else {
-        ov = explication();
-        switch(ov) {
-        case 'C':
+        explication(op);
+        if (op == "C") {
           success = correction(v,sheet);
-          break;
-        case 'N':
-          success = contraction(v,1.2,sheet);
-          break;
-        case 'U':
-          success = fusion(v,0.5,sheet);
-          break;
-        case 'S':
-          success = compensation(v,false,sheet);
-          break;
-        case 'G':
-          success = germination(v,sheet);
-          break;
-        case 'A':
-          success = amputation(v,10.0,true,sheet);
-          break;
         }
-        if (!success && ov == 'R') {
+        else if (op == "N") {
+          success = contraction(v,1.2,sheet);
+        }
+        else if (op == "Ux") {
+          success = fusion_x(v,0.5,sheet);
+        }
+        else if (op == "Sg") {
+          success = compensation_g(v,sheet);
+        }
+        else if (op == "Sm") {
+          success = compensation_m(v,sheet);
+        }
+        else if (op == "G") {
+          success = germination(v,sheet);
+        }
+        else if (op == "A") {
+          success = amputation(v,10.0,true,sheet);
+        }
+        if (!success && op == "R") {
           if (RND.irandom(2) == 0) {
-            ov = 'N';
+            op = "N";
             success = contraction(v,1.2,sheet);
           }
           else {
-            ov = 'U';
-            success = fusion(v,0.5,sheet);
+            op = "Ux";
+            success = fusion_x(v,0.5,sheet);
           }
         }
         if (!success) {
-          ov = 'S';
-          success = compensation(v,false,sheet);
+          op = "Sg";
+          success = compensation_g(v,sheet);
         }
       }
     }
     if (success) {
-      s << boost::format("%-5d %-2c: %-6d %8.3f %-5d\n") % iterations % ov % v % events[v].deficiency % sheet;
+      s << boost::format("%-5d %-2c: %-6d %8.3f %-5d\n") % iterations % op % v % events[v].deficiency % sheet;
       regularization(false,sheet);
-      codex[sheet].ops += ov;
+      codex[sheet].ops += op;
       nsuccess++;
     }
     if (double(nsuccess)/nactive > 0.1) break;

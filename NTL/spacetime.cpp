@@ -8,8 +8,8 @@ const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
-const char Spacetime::EXP_OP[] = {'D','U','S','R','C','N','A','G'};
-const char Spacetime::IMP_OP[] = {'F','U','O','E','I','P','V'};
+const std::string Spacetime::EXP_OP[] = {"D","Ux","Sg","Sm","R","C","N","A","G"};
+const std::string Spacetime::IMP_OP[] = {"F","Um","Om","E","I","P","V"};
 const int Spacetime::topological_radius;
 
 const double seqn_weights[] = {1.0,0.0,0.2,0.2};
@@ -124,6 +124,8 @@ void Spacetime::set_default_values()
   geometry = new Geometry;
   H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
+  musical_weaving = false;
+  score_file = "harmonia.xml";
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -448,102 +450,106 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
   }
 }
 
-char Spacetime::implication() const
+void Spacetime::implication(std::string& output) const
 {
   // Should return one of {F,U,O,E,I,P,V}
   double alpha;
   if (iterations < 50) {
     alpha = RND.drandom();
     if (alpha < 0.3) {
-      return 'F';
+      output = "F";
     }
     else if (alpha < 0.6) {
       if (RND.drandom() < 0.5) {
-        return 'E';
+        output = "E";
       }
       else {
-        return 'I';
+        output = "I";
       }
     }
     else if (alpha < 0.75) {
-      return 'O';
+      output = "Om";
     }
     else if (alpha < 0.9) {
-      return 'U';
+      output = "Um";
     }
     else {
       if (RND.drandom() < 0.33) {
-        return 'P';
+        output = "P";
       }
       else {
-        return 'V';
+        output = "V";
       }
     }
   }
   else {
     if (RND.drandom() < 0.5) {
       if (RND.drandom() < 0.5) {
-        return 'P';
+        output = "P";
       }
       else {
-        return 'V';
+        output = "V";
       }
     }
     else {
       alpha = RND.drandom();
       if (alpha < 0.4) {
-        return 'O';
+        output = "Om";
       }
       else if (alpha < 0.6) {
-        return 'U';
+        output = "Um";
       }
       else if (alpha < 0.8) {
-        return 'F';
+        output = "F";
       }
       else {
         if (RND.drandom() < 0.67) {
-          return 'E';
+          output = "E";
         }
         else {
-          return 'I';
+          output = "I";
         }
       }
     }
   }
 }
 
-char Spacetime::explication() const
+void Spacetime::explication(std::string& output) const
 {
   // Should return one of {U,D,S,R,G,A,C,N}
   //if (RND.drandom() < 0.1) return 'G';
   double alpha;
   if (iterations < 50) {
     if (RND.drandom() < (0.35 + 1.0/(1+iterations/2))) {
-      return 'S';
+      output = "Sg";
     }
     else {
-      if (iterations <= 10) return 'C';
-      if (RND.drandom() < 0.5) {
-        return 'C';
+      if (iterations <= 10) {
+        output = "C";
       }
       else {
-        return 'A';
+        if (RND.drandom() < 0.5) {
+          output = "C";
+        }
+        else {
+          output = "A";
+        }
       }
     }
   }
   else {
     alpha = RND.drandom();
     if (alpha < 0.25) {
-      return 'C';
+      output = "C";
     }
     else if (alpha < 0.5) {
-      return 'S';
+      output = "Sg";
     }
     else if (alpha < 0.75) {
-      return 'N';
+      output = "N";
     }
     else {
-      return 'U';
+      output = "Ux";
     }
   }
 }
