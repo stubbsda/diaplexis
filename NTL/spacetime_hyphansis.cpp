@@ -1313,57 +1313,43 @@ bool Spacetime::foliation_x(int base,int sheet)
   return true;
 }
 
-bool Spacetime::amputation(int base,double cutoff,bool explicative,int sheet)
+bool Spacetime::amputation(int base,double cutoff,int sheet)
 {
   int i,j,n,p,vx[2];
   std::set<int> candidates;
   const int ne = (signed) simplices[1].size();
   const int ulimit = dimension(sheet);
 
-  if (explicative) {
-    if (events[base].deficiency > cutoff) candidates.insert(base);
-    for(i=0; i<ne; ++i) {
-      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
-      simplices[1][i].get_vertices(vx);
-      if (base != vx[0] && base != vx[1]) continue;
-      n = (vx[0] == base) ? vx[1] : vx[0];
-      if (events[n].deficiency > cutoff) candidates.insert(n);
-    }
+  if (events[base].deficiency > cutoff) candidates.insert(base);
+  for(i=0; i<ne; ++i) {
+    if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (base != vx[0] && base != vx[1]) continue;
+    n = (vx[0] == base) ? vx[1] : vx[0];
+    if (events[n].deficiency > cutoff) candidates.insert(n);
   }
-  else {
-    if (events[base].deficiency < -cutoff) candidates.insert(base);
-    for(i=0; i<ne; ++i) {
-      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
-      simplices[1][i].get_vertices(vx);
-      if (base != vx[0] && base != vx[1]) continue;
-      n = (vx[0] == base) ? vx[1] : vx[0];
-      if (events[n].deficiency < -cutoff) candidates.insert(n);
-    }
-  }
+  
   if (candidates.empty()) return false;
   n = RND.irandom(candidates);
-  if (explicative) {
+ 
 #ifdef VERBOSE
-    std::cout << "Amputating vertex " << n << " and all its dependent simplices" << std::endl;
+  std::cout << "Amputating vertex " << n << " and all its dependent simplices" << std::endl;
 #endif
-    // Delete this vertex and all its edges...
-    events[n].ubiquity /= codex[sheet].colour;
-    codex[sheet].vx_delta.insert(n);
-    for(i=ulimit; i>=1; --i) {
-      p = (signed) simplices[i].size();
-      for(j=0; j<p; ++j) {
-        if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
-        if (simplices[i][j].contains(n)) simplex_deletion(i,j,sheet);
-      }
-    }
-    if (events[n].ubiquity == 1) {
-      events[base].energy += events[n].energy;
-      events[n].energy = 0.0;
+  // Delete this vertex and all its edges...
+  events[n].ubiquity /= codex[sheet].colour;
+  codex[sheet].vx_delta.insert(n);
+  for(i=ulimit; i>=1; --i) {
+    p = (signed) simplices[i].size();
+    for(j=0; j<p; ++j) {
+      if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
+      if (simplices[i][j].contains(n)) simplex_deletion(i,j,sheet);
     }
   }
-  else {
-
+  if (events[n].ubiquity == 1) {
+    events[base].energy += events[n].energy;
+    events[n].energy = 0.0;
   }
+  
   return true;
 }
 
@@ -2786,31 +2772,30 @@ void Spacetime::hyphansis(int sheet)
 
   std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
 
-  if (musical_weaving) {
-    musical_hyphansis(candidates,sheet);
+  if (weaving == FILE) {
+    diskfile_hyphansis(candidates,sheet);
   }
-  else {
-    random_hyphansis(candidates,sheet);
+  else if (weaving == DYNAMIC) {
+    dynamic_hyphansis(candidates,sheet);
   }
 }
 
-void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+void Spacetime::diskfile_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
-  static int elapsed_time = 0;
-
-  std::ifstream s(score_file.c_str());
+  std::ifstream s(hyphansis_file.c_str());
 
   s.close();
 }
 
-void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet) 
+void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet) 
 {
   int i,v;
   double alpha;
   const double nactive = double(cardinality(0,sheet));
-  std::ios_base::openmode fmode = (iterations == 0) ? std::ios::trunc : std::ios::app;
-  std::ofstream s("hyphansis.log",fmode);
 
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  s << "  <Sheet>" << std::endl;
+  s << "    <Index>" << sheet << "</Index>" << std::endl;
   const int nc = (signed) candidates.size();
   if (nc == 1) {
     v = candidates[0].first;
@@ -2818,13 +2803,15 @@ void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& cand
       assert(expansion(v,sheet));
       codex[sheet].ops += 'E';
       regularization(false,sheet);
-      s << boost::format("%-5d E : %-6d %8.3f %-5d\n") % iterations % v % events[v].deficiency % sheet;
+      s << "    <Operation>E," << v << "</Operation>" << std::endl;
+      s << "  </Sheet>" << std::endl;
       s.close();
       return;
     }
   }
   int nsuccess = 0;
   std::string op;
+  std::stringstream opstring;
   bool success;
 
   for(i=nc-1; i>0; --i) {
@@ -2835,8 +2822,10 @@ void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& cand
     alpha = events[v].deficiency;
     if (alpha < -Spacetime::epsilon) {
       implication(op);
+      opstring << op << "," << v;
       if (op == "F") {
         success = fission(v,0.4,sheet);
+        opstring << ",0.4";
       }
       else if (op == "Um") {
         success = fusion_m(v,sheet);
@@ -2846,12 +2835,15 @@ void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& cand
       }
       else if (op == "E") {
         success = expansion(v,0.15,sheet);
+        opstring << ",0.15";
       }
       else if (op == "I") {
         success = inflation(v,0.25,sheet);
+        opstring << ",0.25";
       }
       else if (op == "P") {
         success = perforation(v,0,sheet);
+        opstring << ",0";
       }
       else if (op == "V") {
         success = circumvolution(v,sheet);
@@ -2862,22 +2854,27 @@ void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& cand
         if (RND.drandom() < alpha/10.0) {
           op = "D";
           success = deflation(v,sheet);
+          opstring << "D," << v;
         }
         else {
           op = "R";
           success = reduction(v,sheet);
+          opstring << "R," << v;
         }
       }
       else {
         explication(op);
+        opstring << op << "," << v;
         if (op == "C") {
           success = correction(v,sheet);
         }
         else if (op == "N") {
           success = contraction(v,1.2,sheet);
+          opstring << ",1.2";
         }
         else if (op == "Ux") {
           success = fusion_x(v,0.5,sheet);
+          opstring << "0.5";
         }
         else if (op == "Sg") {
           success = compensation_g(v,sheet);
@@ -2889,31 +2886,39 @@ void Spacetime::random_hyphansis(const std::vector<std::pair<int,double> >& cand
           success = germination(v,sheet);
         }
         else if (op == "A") {
-          success = amputation(v,10.0,true,sheet);
+          success = amputation(v,10.0,sheet);
+          opstring << ",10.0";
         }
         if (!success && op == "R") {
+          opstring.str("");
           if (RND.irandom(2) == 0) {
             op = "N";
             success = contraction(v,1.2,sheet);
+            opstring << "N," << v << ",1.2"; 
           }
           else {
             op = "Ux";
             success = fusion_x(v,0.5,sheet);
+            opstring << "Ux," << v << ",0.5";
           }
         }
         if (!success) {
           op = "Sg";
           success = compensation_g(v,sheet);
+          opstring.str("");
+          opstring << "Sg," << v; 
         }
       }
     }
     if (success) {
-      s << boost::format("%-5d %-2c: %-6d %8.3f %-5d\n") % iterations % op % v % events[v].deficiency % sheet;
+      s << "    <Operation>" << opstring.str() << "</Operation>" << std::endl;
       regularization(false,sheet);
       codex[sheet].ops += op;
       nsuccess++;
+      opstring.str("");
     }
     if (double(nsuccess)/nactive > 0.1) break;
   }
+  s << "  </Sheet>" << std::endl;
   s.close();
 }

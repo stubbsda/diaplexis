@@ -30,6 +30,12 @@ class Spacetime {
       DISKFILE
   };
 
+  enum HYPHANSIS
+  {
+      DYNAMIC,
+      FILE
+  };
+
   // The main (variable) properties of the Spacetime class
   int iterations;
   int system_size;
@@ -56,6 +62,7 @@ class Spacetime {
   // The global parameters
   TOPOLOGY initial_state;
   TOPOLOGY original_state;
+  HYPHANSIS weaving;
   int initial_size;
   int max_iter;
   int nt_initial;
@@ -78,8 +85,7 @@ class Spacetime {
   bool foliodynamics;
   bool checkpoint;
   int checkpoint_frequency;
-  bool musical_weaving;
-  std::string score_file;
+  std::string hyphansis_file;
 
   // Now the parameters associated with the
   // geometry solver
@@ -182,8 +188,8 @@ class Spacetime {
   void compute_simplex_energy(int,int);
   // The various methods needed for the hyphantic operators
   void hyphansis(int);
-  void random_hyphansis(const std::vector<std::pair<int,double> >&,int);
-  void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+  void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
+  void diskfile_hyphansis(const std::vector<std::pair<int,double> >&,int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);
@@ -200,7 +206,7 @@ class Spacetime {
   bool expansion(int,double,int);
   bool foliation_m(int,int);
   bool foliation_x(int,int);
-  bool amputation(int,double,bool,int);
+  bool amputation(int,double,int);
   bool fusion_x(int,double,int);
   bool fusion_m(int,int);
   bool fission(int,double,int);

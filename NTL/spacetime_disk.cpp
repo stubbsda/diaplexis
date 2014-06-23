@@ -6,7 +6,7 @@ void Spacetime::read_parameters(const char* filename)
 {
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
-  std::string name,value;
+  std::string name,value,hfile;
   unsigned int rs;
   int q,n_is = 0,n_so = 0;
 
@@ -100,8 +100,16 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "PerturbEnergy") {
       perturb_energy = (value == "True") ? true : false;
     }
-    else if (name == "MusicalHyphansis") {
-      musical_weaving = (value == "True") ? true : false;
+    else if (name == "Hyphansis") {
+      if (value == "FILE") {
+        weaving = FILE;
+      }
+      else if (value == "DYNAMIC") {
+        weaving = DYNAMIC;
+      }
+    }
+    else if (name == "HyphansisFile") {
+      hfile = value;
     }
     else if (name == "HomologyMethod") {
       if (value == "GAP") {
@@ -247,6 +255,9 @@ void Spacetime::read_parameters(const char* filename)
   assert(n_is == 1);
   // And similarly for the solver type...
   assert(n_so == 1);
+
+  if (weaving == FILE) hyphansis_file = hfile;
+
   if (initial_state == RANDOM) {
     assert(edge_probability > 0.0 && edge_probability < 1.0);
     assert(initial_size > 1);

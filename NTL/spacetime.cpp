@@ -124,8 +124,8 @@ void Spacetime::set_default_values()
   geometry = new Geometry;
   H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
-  musical_weaving = false;
-  score_file = "harmonia.xml";
+  weaving = DYNAMIC;
+  hyphansis_file = std::string("data/hyphansis");
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -579,9 +579,20 @@ bool Spacetime::step_forwards()
   gettimeofday(&Z,NULL);
   t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
   RND.shuffle(order,n);
+  if (weaving != FILE) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+    s << "<Iteration>" << std::endl;
+    s << "  <Index>" << iterations << "</Index>" << std::endl;
+    s.close();
+  }
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
     hyphansis(order[i]);
+  }
+  if (weaving != FILE) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+    s << "</Iteration>" << std::endl;
+    s.close();
   }
   regularization(false,-1);
   geometry->compute_distances();
@@ -1914,6 +1925,8 @@ void Spacetime::initialize()
     log_file += "_" + date_string + "_" + pid_string + ".log";
   }
 
+  if (weaving != FILE) hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
+
   if (initial_state == DISKFILE) {
     read_state(input_file);
     if (converged) {
@@ -1983,6 +1996,11 @@ void Spacetime::initialize()
 
   write_state();
   write_log();
+  if (weaving != FILE && iterations == 0) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::trunc);
+    s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    s.close();
+  }
 #ifdef VERBOSE
   std::cout << "At relaxation step " << iterations << " the global error is " << error << std::endl;
   std::cout << "Sheet activity " << sheet_activity() << std::endl;
