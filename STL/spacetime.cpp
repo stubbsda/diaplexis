@@ -8,8 +8,8 @@ const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
-const char Spacetime::EXP_OP[] = {'D','U','S','R','C','N','A','G'};
-const char Spacetime::IMP_OP[] = {'F','U','O','E','I','P','V'};
+const std::string Spacetime::EXP_OP[] = {"D","Ux","Sg","Sm","R","C","N","A","G"};
+const std::string Spacetime::IMP_OP[] = {"F","Um","Om","E","I","P","V"};
 const int Spacetime::topological_radius;
 
 const double seqn_weights[] = {1.0,0.0,0.2,0.2};
@@ -124,6 +124,8 @@ void Spacetime::set_default_values()
   geometry = new Geometry;
   H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
+  weaving = DYNAMIC;
+  hyphansis_file = std::string("data/hyphansis");
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -445,102 +447,106 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
   }
 }
 
-char Spacetime::implication() const
+void Spacetime::implication(std::string& output) const
 {
-  // Should return one of {F,U,O,E,I,P,V}
+  // Should return one of {F,Um,Om,E,I,P,V}
   double alpha;
   if (iterations < 50) {
     alpha = RND.drandom();
     if (alpha < 0.3) {
-      return 'F';
+      output = "F";
     }
     else if (alpha < 0.6) {
       if (RND.drandom() < 0.5) {
-        return 'E';
+        output = "E";
       }
       else {
-        return 'I';
+        output = "I";
       }
     }
     else if (alpha < 0.75) {
-      return 'O';
+      output = "Om";
     }
     else if (alpha < 0.9) {
-      return 'U';
+      output = "Um";
     }
     else {
       if (RND.drandom() < 0.33) {
-        return 'P';
+        output = "P";
       }
       else {
-        return 'V';
+        output = "V";
       }
     }
   }
   else {
     if (RND.drandom() < 0.5) {
       if (RND.drandom() < 0.5) {
-        return 'P';
+        output = "P";
       }
       else {
-        return 'V';
+        output = "V";
       }
     }
     else {
       alpha = RND.drandom();
       if (alpha < 0.4) {
-        return 'O';
+        output = "Om";
       }
       else if (alpha < 0.6) {
-        return 'U';
+        output = "Um";
       }
       else if (alpha < 0.8) {
-        return 'F';
+        output = "F";
       }
       else {
         if (RND.drandom() < 0.67) {
-          return 'E';
+          output = "E";
         }
         else {
-          return 'I';
+          output = "I";
         }
       }
     }
   }
 }
 
-char Spacetime::explication() const
+void Spacetime::explication(std::string& output) const
 {
-  // Should return one of {U,D,S,R,G,A,C,N}
+  // Should return one of {Ux,D,Sg,Sm,R,G,A,C,N}
   //if (RND.drandom() < 0.1) return 'G';
   double alpha;
   if (iterations < 50) {
     if (RND.drandom() < (0.35 + 1.0/(1+iterations/2))) {
-      return 'S';
+      output = "Sg";
     }
     else {
-      if (iterations <= 10) return 'C';
-      if (RND.drandom() < 0.5) {
-        return 'C';
+      if (iterations <= 10) {
+        output = "C";
       }
       else {
-        return 'A';
+        if (RND.drandom() < 0.5) {
+          output = "C";
+        }
+        else {
+          output = "A";
+        }
       }
     }
   }
   else {
     alpha = RND.drandom();
     if (alpha < 0.25) {
-      return 'C';
+      output = "C";
     }
     else if (alpha < 0.5) {
-      return 'S';
+      output = "Sg";
     }
     else if (alpha < 0.75) {
-      return 'N';
+      output = "N";
     }
     else {
-      return 'U';
+      output = "Ux";
     }
   }
 }
@@ -570,9 +576,25 @@ bool Spacetime::step_forwards()
   gettimeofday(&Z,NULL);
   t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
   RND.shuffle(order,n);
+  if (weaving != FILE) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+    s << "<Iteration>" << std::endl;
+    s << "  <Index>" << iterations << "</Index>" << std::endl;
+    s.close();
+  }
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
-    hyphansis(order[i]);
+    if (weaving == FILE) {
+      diskfile_hyphansis(order[i]);
+    }
+    else if (weaving == DYNAMIC) {
+      dynamic_hyphansis(order[i]);
+    }
+  }
+  if (weaving != FILE) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+    s << "</Iteration>" << std::endl;
+    s.close();
   }
   regularization(false,-1);
   geometry->compute_distances();
@@ -1907,10 +1929,12 @@ void Spacetime::initialize()
   if (diskless) {
     state_file = "";
     log_file = "";
+    hyphansis_file = "";
   }
   else {
     state_file += "_" + date_string + "_" + pid_string;
     log_file += "_" + date_string + "_" + pid_string + ".log";
+    if (weaving != FILE) hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
   }
 
   if (initial_state == DISKFILE) {
@@ -1983,6 +2007,11 @@ void Spacetime::initialize()
 
   write_state();
   write_log();
+  if (weaving != FILE && iterations == 0) {
+    std::ofstream s(hyphansis_file.c_str(),std::ios::trunc);
+    s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    s.close();
+  }
 #ifdef VERBOSE
   std::cout << "At relaxation step " << iterations << " the global error is " << error << std::endl;
   std::cout << "Sheet activity " << sheet_activity() << std::endl;

@@ -2741,13 +2741,137 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
-void Spacetime::hyphansis(int sheet)
+void Spacetime::diskfile_hyphansis(int sheet)
 {
+  int i,d,n,v;
+  double lambda;
+  bool success;
+  std::string val1,val2,opstring,ovalue;
+  std::vector<std::string> weaving,elements,pvalues;
+  std::vector<std::vector<std::string> > params;
+  pugi::xml_document hfile;
+  pugi::xml_node its,feuille;  
+  boost::char_separator<char> sep(",");
+
+  codex[sheet].ops = "";
+
+  // Open the file
+  if (!hfile.load_file(hyphansis_file.c_str())) {
+    std::cerr << "The file " << hyphansis_file << " either does not exist or could not be loaded correctly." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+
+  // Parse it for the hyphantic operators we need...
+  for(pugi::xml_node branch = hfile.first_child(); branch; branch = branch.next_sibling()) {
+    its = branch.child("Index");
+    val1 = its.first_child().value();
+    // Get the right iteration...
+    if (boost::lexical_cast<int>(val1) == iterations) {
+      for(pugi::xml_node leaf = branch.child("Sheet"); leaf; leaf = leaf.next_sibling()) {
+        feuille = leaf.child("Index");
+        val2 = feuille.first_child().value();
+        // Now the right sheet...
+        if (boost::lexical_cast<int>(val2) == sheet) {
+          // We can finally grab the hyphantic operators...
+          for(pugi::xml_node op = leaf.child("Operator"); op; op = op.next_sibling()) {
+            opstring = op.first_child().value();
+            // Break it up at the commas
+            boost::tokenizer<boost::char_separator<char> > tok(opstring,sep);
+            for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
+              elements.push_back(*beg);
+            }
+            weaving.push_back(elements[0]);
+            for(i=1; i<(signed) elements.size(); ++i) {
+              pvalues.push_back(elements[i]);
+            }
+            params.push_back(pvalues);
+            elements.clear();
+            pvalues.clear();
+          }
+        }
+      }
+    }
+  }
+  // If there are no operators exit the method...
+  if (weaving.empty()) return;
+  // Get the number of weaving attempts to be made and then perform them...
+  n = (signed) weaving.size();
+  for(i=0; i<n; ++i) {
+    // The first parameter is always the vertex
+    v = boost::lexical_cast<int>(params[i][0]);
+    std::cout << "Hyphansis attempt with " << weaving[i] << "  " << v << std::endl;
+    if (weaving[i] == "F") {
+      lambda = boost::lexical_cast<double>(params[i][1]);
+      success = fission(v,lambda,sheet);
+    }
+    else if (weaving[i] == "Um") {
+      success = fusion_m(v,sheet);
+    }
+    else if (weaving[i] == "Om") {
+      success = foliation_m(v,sheet);
+    }
+    else if (weaving[i] == "E") {
+      success = expansion(v,sheet);
+    }
+    else if (weaving[i] == "I") {
+      lambda = boost::lexical_cast<double>(params[i][1]);
+      success = inflation(v,lambda,sheet);
+    }
+    else if (weaving[i] == "P") {
+      d = boost::lexical_cast<int>(params[i][1]);
+      success = perforation(v,d,sheet);
+    }
+    else if (weaving[i] == "V") {
+      success = circumvolution(v,sheet);
+    }
+    else if (weaving[i] == "D") {
+      success = deflation(v,sheet);
+    }
+    else if (weaving[i] == "Ux") {
+      lambda = boost::lexical_cast<double>(params[i][1]);
+      success = fusion_x(v,lambda,sheet);
+    }
+    else if (weaving[i] == "Sg") {
+      success = compensation_g(v,sheet);
+    }
+    else if (weaving[i] == "Sm") {
+      success = compensation_m(v,sheet);
+    }
+    else if (weaving[i] == "R") {
+      success = reduction(v,sheet);
+    }
+    else if (weaving[i] == "C") {
+      success = correction(v,sheet);
+    }
+    else if (weaving[i] == "N") {
+      lambda = boost::lexical_cast<double>(params[i][1]);
+      success = contraction(v,lambda,sheet);
+    }
+    else if (weaving[i] == "A") {
+      lambda = boost::lexical_cast<double>(params[i][1]);
+      success = amputation(v,lambda,sheet);
+    }
+    else if (weaving[i] == "G") {
+      success = germination(v,sheet);
+    }
+    if (success) codex[sheet].ops += weaving[i];
+  }
+}
+
+void Spacetime::dynamic_hyphansis(int sheet) 
+{
+  int i,v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
   const int nvertex = (signed) events.size();
   const double nactive = double(cardinality(0,sheet));
+
   codex[sheet].ops = "";
+
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  s << "  <Sheet>" << std::endl;
+  s << "    <Index>" << sheet << "</Index>" << std::endl;
 
 #ifdef VERBOSE
   int npos = 0,nneg = 0,nze = 0;
@@ -2768,34 +2892,12 @@ void Spacetime::hyphansis(int sheet)
   std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/nactive << " percent of the total." << std::endl;
   std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
 #endif
-  if (candidates.empty()) return;
-
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
-
-  if (weaving == FILE) {
-    diskfile_hyphansis(candidates,sheet);
+  if (candidates.empty()) {
+    s << "  </Sheet>" << std::endl;
+    s.close();
+    return;
   }
-  else if (weaving == DYNAMIC) {
-    dynamic_hyphansis(candidates,sheet);
-  }
-}
 
-void Spacetime::diskfile_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
-{
-  std::ifstream s(hyphansis_file.c_str());
-
-  s.close();
-}
-
-void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet) 
-{
-  int i,v;
-  double alpha;
-  const double nactive = double(cardinality(0,sheet));
-
-  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
-  s << "  <Sheet>" << std::endl;
-  s << "    <Index>" << sheet << "</Index>" << std::endl;
   const int nc = (signed) candidates.size();
   if (nc == 1) {
     v = candidates[0].first;
@@ -2809,6 +2911,9 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       return;
     }
   }
+
+  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+
   int nsuccess = 0;
   std::string op;
   std::stringstream opstring;

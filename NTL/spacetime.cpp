@@ -452,7 +452,7 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
 
 void Spacetime::implication(std::string& output) const
 {
-  // Should return one of {F,U,O,E,I,P,V}
+  // Should return one of {F,Um,Om,E,I,P,V}
   double alpha;
   if (iterations < 50) {
     alpha = RND.drandom();
@@ -516,7 +516,7 @@ void Spacetime::implication(std::string& output) const
 
 void Spacetime::explication(std::string& output) const
 {
-  // Should return one of {U,D,S,R,G,A,C,N}
+  // Should return one of {Ux,D,Sg,Sm,R,G,A,C,N}
   //if (RND.drandom() < 0.1) return 'G';
   double alpha;
   if (iterations < 50) {
@@ -587,7 +587,12 @@ bool Spacetime::step_forwards()
   }
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
-    hyphansis(order[i]);
+    if (weaving == FILE) {
+      diskfile_hyphansis(order[i]);
+    }
+    else if (weaving == DYNAMIC) {
+      dynamic_hyphansis(order[i]);
+    }
   }
   if (weaving != FILE) {
     std::ofstream s(hyphansis_file.c_str(),std::ios::app);
@@ -1919,13 +1924,13 @@ void Spacetime::initialize()
   if (diskless) {
     state_file = "";
     log_file = "";
+    hyphansis_file = "";
   }
   else {
     state_file += "_" + date_string + "_" + pid_string;
     log_file += "_" + date_string + "_" + pid_string + ".log";
+    if (weaving != FILE) hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
   }
-
-  if (weaving != FILE) hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
 
   if (initial_state == DISKFILE) {
     read_state(input_file);

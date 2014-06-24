@@ -30,6 +30,12 @@ class Spacetime {
       DISKFILE
   };
 
+  enum HYPHANSIS
+  {
+      DYNAMIC,
+      FILE
+  };
+
   // The main (variable) properties of the Spacetime class
   int iterations;
   int system_size;
@@ -55,6 +61,7 @@ class Spacetime {
   // The global parameters
   TOPOLOGY initial_state;
   TOPOLOGY original_state;
+  HYPHANSIS weaving;
   int initial_size;
   int max_iter;
   int nt_initial;
@@ -77,6 +84,7 @@ class Spacetime {
   bool foliodynamics;
   bool checkpoint;
   int checkpoint_frequency;
+  std::string hyphansis_file;
 
   // Now the parameters associated with the
   // geometry solver
@@ -106,10 +114,10 @@ class Spacetime {
   int annealing_steps;
 
   // Stuff for the implicative/explicative operators:
-  static const int N_EXP = 8;
+  static const int N_EXP = 9;
   static const int N_IMP = 7;
-  static const char EXP_OP[N_EXP];
-  static const char IMP_OP[N_IMP];
+  static const std::string EXP_OP[N_EXP];
+  static const std::string IMP_OP[N_IMP];
 
   // The intensity of branching in the polycosmos, 0 < x < 1
   static const double ramosity;
@@ -175,10 +183,11 @@ class Spacetime {
   void compute_geometric_dependency(const std::set<int>&);
   void compute_topological_dependency(const std::set<int>&);
   void simplicial_implication(int);
-  void hyphansis(int);
   void reciprocate();
   void compute_simplex_energy(int,int);
   // The various methods needed for the hyphantic operators
+  void dynamic_hyphansis(int);
+  void diskfile_hyphansis(int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);
@@ -189,13 +198,15 @@ class Spacetime {
   bool unravel(int,int);
   bool reduction(int,int);
   bool contraction(int,double,int);
-  bool compensation(int,bool,int);
+  bool compensation_m(int,int);
+  bool compensation_g(int,int);
   bool expansion(int,int);
   bool expansion(int,double,int);
-  bool foliation(int,bool,int);
-  bool amputation(int,double,bool,int);
-  bool fusion(int,double,int);
-  bool fusion(int,int);
+  bool foliation_x(int,int);
+  bool foliation_m(int,int);
+  bool amputation(int,double,int);
+  bool fusion_x(int,double,int);
+  bool fusion_m(int,int);
   bool fission(int,double,int);
   bool inflation(int,double,int);
   bool deflation(int,int);
@@ -233,8 +244,8 @@ class Spacetime {
   bool logical_conformity(int) const;
   double representational_energy(bool) const;
 
-  char implication() const;
-  char explication() const;
+  void implication(std::string&) const;
+  void explication(std::string&) const;
   void compute_delta();
   int sheet_fission(int);
   void sheet_dynamics();
