@@ -409,7 +409,7 @@ void Spacetime::compute_graph(Graph* G,int sheet) const
     for(i=0; i<ne; ++i) {
       if (ghost(simplices[1][i].ubiquity)) continue;
       simplices[1][i].get_vertices(vx);
-      G->add_edge(offset[vx[0]],offset[vx[1]]);
+      G->foliation_m(offset[vx[0]],offset[vx[1]]);
     }
   }
   else {
@@ -423,7 +423,7 @@ void Spacetime::compute_graph(Graph* G,int sheet) const
     for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity[sheet] == 0) continue;
       simplices[1][i].get_vertices(vx);
-      G->add_edge(offset[vx[0]],offset[vx[1]]);
+      G->foliation_m(offset[vx[0]],offset[vx[1]]);
     }
   }
 }
@@ -456,7 +456,7 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
           offset[w] = G->add_vertex();
           next.insert(w);
         }
-        G->add_edge(offset[v],offset[w]);
+        G->foliation_m(offset[v],offset[w]);
       }
     }
     if (next.empty() || hop >= steps) break;
@@ -499,7 +499,7 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
               offset[j] = G->add_vertex();
               next.push_back(j);
             }
-            G->add_edge(offset[j],offset[v]);
+            G->foliation_m(offset[j],offset[v]);
           }
         }
       }
@@ -525,7 +525,7 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
               offset[j] = G->add_vertex();
               next.push_back(j);
             }
-            G->add_edge(offset[j],offset[v]);
+            G->foliation_m(offset[j],offset[v]);
           }
         }
       }
