@@ -1,4 +1,7 @@
-#include "proposition.h"
+#include "synarmosma.h"
+
+#ifndef _vertexh
+#define _vertexh
 
 class Vertex {
  // For the event structure, the nodes of spacetime...
@@ -39,3 +42,5 @@ class Vertex {
   friend class Sheet;
   friend class Spacetime;
 };
+#endif
+

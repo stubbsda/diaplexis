@@ -1,5 +1,4 @@
-#include "homology.h"
-#include "homotopy.h"
+#include "synarmosma.h"
 
 #ifndef _sheeth
 #define _sheeth

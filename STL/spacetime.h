@@ -1,7 +1,9 @@
-#include "geometry.h"
 #include "sheet.h"
 #include "vertex.h"
 #include "simplex.h"
+
+#ifndef _spacetimeh
+#define _spacetimeh
 
 typedef struct {
   std::vector<Vertex> events;
@@ -495,5 +497,5 @@ int Spacetime::cardinality(int d,int sheet) const
   }
   return n;
 }
-
+#endif
 

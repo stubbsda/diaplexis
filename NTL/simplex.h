@@ -1,4 +1,7 @@
-#include "cell.h"
+#include "synarmosma.h"
+
+#ifndef _simplexh
+#define _simplexh
 
 enum CAUSALITY 
 {
@@ -51,3 +54,5 @@ class Simplex: public Cell {
   friend class Sheet;
   friend class Spacetime;
 };
+#endif
+
