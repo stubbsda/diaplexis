@@ -40,11 +40,11 @@ bool Spacetime::germination(int base,int sheet)
   geometry->vertex_difference(n,base,z);
   geometry->get_coordinates(base,bvector);
   xc = bvector;
-  for(i=0; i<Geometry::background_dimension; ++i) {
+  for(i=0; i<geometry->dimension(); ++i) {
     x.push_back(0.0);
   }
-  for(i=0; i<Geometry::background_dimension; ++i) {
-    for(j=1+i; j<Geometry::background_dimension; ++j) {
+  for(i=0; i<geometry->dimension(); ++i) {
+    for(j=1+i; j<geometry->dimension(); ++j) {
       a = z[i];
       b = z[j];
       delta = a*a + b*b;
@@ -193,7 +193,7 @@ bool Spacetime::germination(int base,int sheet)
 
   // Now we use rolling cross products to branch out into higher
   // dimensions...
-  for(i=0; i<Geometry::background_dimension; ++i) {
+  for(i=0; i<geometry->dimension(); ++i) {
     if (i == D1 || i == D2) continue;
     free_dims.insert(i);
   }
@@ -257,7 +257,7 @@ bool Spacetime::germination(int base,int sheet)
     // Now look to see if there are any existing vertices near xc
     // and -xc...
     xc.clear();
-    for(i=0; i<Geometry::background_dimension; ++i) {
+    for(i=0; i<geometry->dimension(); ++i) {
       xc.push_back(bvector[i]);
     }
     xc[D1] = z[0] + bvector[D1];
@@ -464,7 +464,7 @@ bool Spacetime::correction(int base,int sheet)
   vt.ubiquity = codex[sheet].colour;
   geometry->get_coordinates(base,x1);
   geometry->get_coordinates(n,x2);
-  for(i=0; i<Geometry::background_dimension; ++i) {
+  for(i=0; i<geometry->dimension(); ++i) {
     l = 0.5*(x1[i] + x2[i]);
     xc.push_back(l);
   }
@@ -742,8 +742,8 @@ bool Spacetime::compensation_g(int base,int sheet)
     if (base != vx[0] && base != vx[1]) continue;
     sdegree++;
   }
-  if (sdegree == 2*Geometry::background_dimension) return false;
-  const int idegree = 2*Geometry::background_dimension;
+  if (sdegree == 2*geometry->dimension()) return false;
+  const int idegree = 2*geometry->dimension();
   const int nv = (signed) events.size();
 
   bool up = (sdegree < idegree) ? true : false;
@@ -852,15 +852,15 @@ bool Spacetime::unravel(int base,int sheet)
   }
   if (base >= 0) {
     n1 = (signed) events[base].entourage.size();
-    if (n1 <= 2*Geometry::background_dimension) return false;
+    if (n1 <= 2*geometry->dimension()) return false;
     for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); it++) {
       j = *it;
       if (NTL::divide(simplices[1][j].ubiquity,codex[sheet].colour) == 0) continue;
       simplices[1][j].get_vertices(vx);
       c = (vx[0] == base) ? vx[1] : vx[0];
       n2 = (signed) events[c].entourage.size();
-      if (n2 <= 2*Geometry::background_dimension) continue;
-      vf = 0.5*double(n1 + n2 - 4*Geometry::background_dimension);
+      if (n2 <= 2*geometry->dimension()) continue;
+      vf = 0.5*double(n1 + n2 - 4*geometry->dimension());
       if (vf > vf_max) {
         vf_max = vf;
         in_max = j;
@@ -872,10 +872,10 @@ bool Spacetime::unravel(int base,int sheet)
       if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
       simplices[1][i].get_vertices(vx);
       n1 = (signed) events[vx[0]].entourage.size();
-      if (n1 <= 2*Geometry::background_dimension) continue;
+      if (n1 <= 2*geometry->dimension()) continue;
       n2 = (signed) events[vx[1]].entourage.size();
-      if (n2 <= 2*Geometry::background_dimension) continue;
-      vf = 0.5*double(n1 + n2 - 4*Geometry::background_dimension);
+      if (n2 <= 2*geometry->dimension()) continue;
+      vf = 0.5*double(n1 + n2 - 4*geometry->dimension());
       if (vf > vf_max) {
         vf_max = vf;
         in_max = i;
@@ -2680,7 +2680,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     if (dimension(sheet) == 0) {
       n1 = 0;
     }
-    else if (dimension(sheet) < Geometry::background_dimension) {
+    else if (dimension(sheet) < geometry->dimension()) {
       n1 = 1;
     }
     else {
@@ -2691,7 +2691,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     }
     na = (signed) candidates.size();
     if (n1 == 0) {
-      delta = RND.irandom(2,2*Geometry::background_dimension);
+      delta = RND.irandom(2,2*geometry->dimension());
       vx.insert(RND.irandom(candidates));
     }
     else {
@@ -2701,7 +2701,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       }
       if (candidates.empty()) return false;
       vx = simplices[n1][RND.irandom(candidates)].vertices;
-      delta = n1 + RND.irandom(1,Geometry::background_dimension);
+      delta = n1 + RND.irandom(1,geometry->dimension());
     }
     if (double(delta)/double(na) > 0.25) creativity = 1.0;
     if (double(vx.size())/double(na) > 0.9) creativity = 1.0;

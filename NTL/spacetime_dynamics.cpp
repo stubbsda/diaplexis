@@ -9,7 +9,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
   std::set<int>::const_iterator it;
   const int nv = (signed) events.size();
   const int nreal = cardinality(0,-1);
-  const int D = Geometry::background_dimension;
+  const int D = geometry->dimension();
   const double pfactor = (2.0/M_PI)*5.0;
   double force[D*nreal];
 
@@ -230,7 +230,7 @@ bool Spacetime::adjust_dimension()
         continue;
       }
       n = events[i].global_dimension;
-      system_size += Geometry::background_dimension;
+      system_size += geometry->dimension();
       vdimension.push_back(n);
     }
   }
@@ -241,7 +241,7 @@ bool Spacetime::adjust_dimension()
         continue;
       }
       n = events[i].global_dimension;
-      system_size += (n <= Geometry::background_dimension) ? Geometry::background_dimension : n;
+      system_size += (n <= geometry->dimension()) ? geometry->dimension() : n;
       vdimension.push_back(n);
     }
   }
@@ -337,13 +337,13 @@ void Spacetime::optimize()
     const bool euclidean = geometry->get_euclidean();
     const bool relational = geometry->get_relational();
     const bool uniform = geometry->get_uniform();
+    const int D = geometry->dimension();
     std::vector<std::pair<int,int> > vcount;
     std::set<int> vmodified,vx;
     std::set<int>::const_iterator it;
-    Geometry* pool = new Geometry[2*pool_size];
-    Geometry* ptemp = new Geometry[pool_size];
-    Geometry* optimal = new Geometry(euclidean,relational,uniform);
-    Geometry* initial_state = new Geometry(euclidean,relational,uniform);
+    std::vector<Geometry> pool,ptemp;
+    Geometry* optimal = new Geometry(euclidean,relational,uniform,D);
+    Geometry* initial_state = new Geometry(euclidean,relational,uniform,D);
     const int pmagnitude = int(0.15*system_size);
     const double initial_error = error;
 
@@ -352,15 +352,11 @@ void Spacetime::optimize()
 #endif
 
     for(i=0; i<2*pool_size; ++i) {
-      pool[i].set_euclidean(euclidean);
-      pool[i].set_relational(relational);
-      pool[i].set_uniform(uniform);
+      pool.push_back(Geometry(euclidean,relational,uniform,D));
       vcount.push_back(std::pair<int,int>(0,0));
     }
     for(i=0; i<pool_size; ++i) {
-      ptemp[i].set_euclidean(euclidean);
-      ptemp[i].set_relational(relational);
-      ptemp[i].set_uniform(uniform);
+      ptemp.push_back(Geometry(euclidean,relational,uniform,D));
     }
 
     geometry->store(initial_state);
@@ -495,8 +491,6 @@ void Spacetime::optimize()
     structural_deficiency();
     delete optimal;
     delete initial_state;
-    delete[] ptemp;
-    delete[] pool;
   }
   else if (solver == ANNEALING) {
     int j,m,step,naccept,nim,nwo_a,nwo_r;
@@ -505,7 +499,7 @@ void Spacetime::optimize()
     std::set<int> vmodified;
     std::set<int>::const_iterator it;
     std::vector<double> E,lengths,base,output,output1,output2;
-    Geometry* optimal = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
+    Geometry* optimal = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform(),geometry->dimension());
     const double initial_error = error;
 
     geometry->store(optimal);
@@ -692,7 +686,7 @@ void Spacetime::optimize()
     std::vector<int> offset;
     std::vector<double> y,ynew;
     const int nreal = cardinality(0,-1);
-    const int D = Geometry::background_dimension;
+    const int D = geometry->dimension();
 
 #ifdef VERBOSE
     std::cout << "Using effective force geometry solver with " << nreal << " active vertices and background dimension = " << D << "." << std::endl;
@@ -773,7 +767,7 @@ void Spacetime::optimize()
     compute_volume();
     if (!cgradient_refinement) return;
     double d,q,E,prior,alpha,beta,E_initial,n = 0.0,sigma = 0.1;
-    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
+    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform(),geometry->dimension());
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
     determine_flexible_edges();
@@ -897,8 +891,12 @@ void Spacetime::optimize()
   else if (solver == SIMPLEX) {
     int in1,j,k,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
-    Geometry SR,SE;
-    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform());
+    const bool euclidean = geometry->get_euclidean();
+    const bool relational = geometry->get_relational();
+    const bool uniform = geometry->get_uniform();
+    const int D = geometry->dimension();
+    Geometry SR(euclidean,relational,uniform,D),SE(euclidean,relational,uniform,D);
+    Geometry* initial_state = new Geometry(euclidean,relational,uniform,D);
     std::vector<std::pair<int,double> > fitness;
     std::set<int> vmodified;
     std::vector<Geometry> S;
@@ -908,12 +906,6 @@ void Spacetime::optimize()
     std::cout << "Using Nelder-Mead method with dimension " << system_size << std::endl;
 #endif
     geometry->store(initial_state);
-    SR.set_euclidean(geometry->get_euclidean());
-    SE.set_euclidean(geometry->get_euclidean());    
-    SR.set_relational(geometry->get_relational());
-    SE.set_relational(geometry->get_relational());
-    SR.set_uniform(geometry->get_uniform());
-    SE.set_uniform(geometry->get_uniform());
 
     // We begin by creating a simplex of size system_size....
     geometry->store(&SR);

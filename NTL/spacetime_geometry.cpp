@@ -17,7 +17,7 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     get_coordinates(i,vx);
-    for(j=0; j<Geometry::background_dimension; ++j) {
+    for(j=0; j<geometry->dimension(); ++j) {
       x.push_back(vx[j]);
     }
   }
@@ -53,9 +53,9 @@ void Spacetime::chorogenesis(int nsteps)
   assert(edge_probability > 0.3);
   assert(geometry->get_euclidean());
   assert(connected(-1));
-  int i,j,dpopulation[1+Geometry::background_dimension];
+  int i,j,dpopulation[1+geometry->dimension()];
   std::vector<std::pair<long,int> > factors;
-  const int D = Geometry::background_dimension;
+  const int D = geometry->dimension();
   const int nv = (signed) events.size();
 
   factorize(nv,factors);
@@ -104,9 +104,9 @@ void Spacetime::chorogenesis(int nsteps)
       if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
       d = (signed) events[vx[0]].neighbours.size();
-      if (d <= 2*Geometry::background_dimension) continue;
+      if (d <= 2*geometry->dimension()) continue;
       d = (signed) events[vx[1]].neighbours.size();
-      if (d <= 2*Geometry::background_dimension) continue;
+      if (d <= 2*geometry->dimension()) continue;
       candidates.push_back(i);
     }
     if (candidates.empty()) {
@@ -294,7 +294,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     std::vector<double> x1,x2;
     hash_map::const_iterator qt;
     const int nvertex = (signed) events.size();
-    const int D = Geometry::background_dimension;
+    const int D = geometry->dimension();
     const double pfactor = (2.0/M_PI)*5.0;
     const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
     double alpha[D];

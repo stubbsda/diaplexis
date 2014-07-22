@@ -156,7 +156,7 @@ void Spacetime::random_walk(double* mean,double* sdeviation,int sheet) const
 {
   Graph* G = new Graph(cardinality(0,sheet));
   compute_graph(G,sheet);
-  G->random_walk(mean,sdeviation,Geometry::background_dimension);
+  G->random_walk(mean,sdeviation,geometry->dimension());
   delete G;
 }
 
@@ -1359,15 +1359,15 @@ double Spacetime::dimensional_frontier(int D,int sheet) const
 double Spacetime::dimensional_uniformity(int sheet) const
 {
   int i,n,nv,sdimension = dimension(sheet),sum = 0;
-
-  if (sdimension < Geometry::background_dimension) sdimension = Geometry::background_dimension;
+  const int D = geometry->dimension();
+  if (sdimension < D) sdimension = D;
 
   nv = 0;
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
       if (events[i].ubiquity == 1) continue;
       n = vertex_dimension(i,sheet);
-      n = (n < Geometry::background_dimension) ? Geometry::background_dimension : n;
+      n = (n < D) ? D : n;
       sum += sdimension - n;
       nv++;
     }
@@ -1376,7 +1376,7 @@ double Spacetime::dimensional_uniformity(int sheet) const
     for(i=0; i<(signed) events.size(); ++i) {
       if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
       n = vertex_dimension(i,sheet);
-      n = (n < Geometry::background_dimension) ? Geometry::background_dimension : n;
+      n = (n < D) ? D : n;
       sum += sdimension - n;
       nv++;
     }
