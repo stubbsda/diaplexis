@@ -6,7 +6,7 @@ void Spacetime::read_parameters(const char* filename)
 {
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
-  std::string name,value,hfile;
+  std::string name,value;
   unsigned int rs;
   int q,n_is = 0,n_so = 0,D = 0;
   bool euclidean = false,relational = false,uniform = false;
@@ -90,15 +90,10 @@ void Spacetime::read_parameters(const char* filename)
       perturb_energy = (value == "True") ? true : false;
     }
     else if (name == "Hyphansis") {
-      if (value == "FILE") {
-        weaving = FILE;
-      }
-      else if (value == "DYNAMIC") {
-        weaving = DYNAMIC;
-      }
+      if (value == "MUSICAL") weaving = MUSICAL;
     }
-    else if (name == "HyphansisFile") {
-      hfile = value;
+    else if (name == "HyphansisScore") {
+      hyphansis_score = value;
     }
     else if (name == "HomologyMethod") {
       if (value == "GAP") {
@@ -249,8 +244,6 @@ void Spacetime::read_parameters(const char* filename)
 
   delete geometry;
   geometry = new Geometry(euclidean,relational,uniform,D);
-
-  if (weaving == FILE) hyphansis_file = hfile;
 
   if (initial_state == RANDOM) {
     assert(edge_probability > 0.0 && edge_probability < 1.0);
@@ -404,6 +397,13 @@ void Spacetime::write_log() const
     }
     else if (H->get_field() == GF2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
+    }
+    if (weaving == DYNAMIC) {
+      s << "<Hyphansis>DYNAMIC</Hyphansis>" << std::endl; 
+    }
+    else {
+      s << "<Hyphansis>MUSICAL</Hyphansis>" << std::endl;
+      s << "<HyphansisScore>" << hyphansis_score << "</HyphansisScore>" << std::endl;
     }
     s << "</Global>" << std::endl;
     s << "<Geometry>" << std::endl;

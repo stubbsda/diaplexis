@@ -75,7 +75,7 @@ void Spacetime::set_default_values()
   thermal_sweep = 1000;
   annealing_steps = 500;
   thermalization = 0.001;
-  int_engine = "RK4";
+  int_engine = std::string("RK4");
   max_int_steps = 10000;
   step_size = 0.05;
   spring_constant = -1.5;
@@ -126,6 +126,7 @@ void Spacetime::set_default_values()
   pi = new Homotopy;
   weaving = DYNAMIC;
   hyphansis_file = std::string("data/hyphansis");
+  hyphansis_score = std::string("");
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -578,26 +579,21 @@ bool Spacetime::step_forwards()
   gettimeofday(&Z,NULL);
   t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
   RND.shuffle(order,n);
-  if (weaving != FILE) {
-    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
-    s << "<Iteration>" << std::endl;
-    s << "  <Index>" << iterations << "</Index>" << std::endl;
-    s.close();
-  }
+
+  std::ofstream s1(hyphansis_file.c_str(),std::ios::app);
+  s1 << "<Iteration>" << std::endl;
+  s1 << "  <Index>" << iterations << "</Index>" << std::endl;
+  s1.close();
+ 
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
-    if (weaving == FILE) {
-      diskfile_hyphansis(order[i]);
-    }
-    else if (weaving == DYNAMIC) {
-      dynamic_hyphansis(order[i]);
-    }
+    hyphansis(order[i]);
   }
-  if (weaving != FILE) {
-    std::ofstream s(hyphansis_file.c_str(),std::ios::app);
-    s << "</Iteration>" << std::endl;
-    s.close();
-  }
+
+  std::ofstream s2(hyphansis_file.c_str(),std::ios::app);
+  s2 << "</Iteration>" << std::endl;
+  s2.close();
+
   regularization(false,-1);
   geometry->compute_distances();
   gettimeofday(&Z,NULL);
@@ -1928,7 +1924,7 @@ void Spacetime::initialize()
   else {
     state_file += "_" + date_string + "_" + pid_string;
     log_file += "_" + date_string + "_" + pid_string + ".log";
-    if (weaving != FILE) hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
+    hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
   }
 
   if (initial_state == DISKFILE) {
@@ -2000,7 +1996,7 @@ void Spacetime::initialize()
 
   write_state();
   write_log();
-  if (weaving != FILE && iterations == 0) {
+  if (iterations == 0) {
     std::ofstream s(hyphansis_file.c_str(),std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     s.close();

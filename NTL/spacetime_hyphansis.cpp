@@ -2741,6 +2741,12 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
+void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int voice)
+{
+
+}
+
+/*
 void Spacetime::diskfile_hyphansis(int sheet)
 {
   int i,d,n,v;
@@ -2858,8 +2864,9 @@ void Spacetime::diskfile_hyphansis(int sheet)
     if (success) codex[sheet].ops += weaving[i];
   }
 }
+*/
 
-void Spacetime::dynamic_hyphansis(int sheet) 
+void Spacetime::hyphansis(int sheet)
 {
   int i,v;
   double alpha;
@@ -2898,8 +2905,7 @@ void Spacetime::dynamic_hyphansis(int sheet)
     return;
   }
 
-  const int nc = (signed) candidates.size();
-  if (nc == 1) {
+  if (candidates.size() == 1) {
     v = candidates[0].first;
     if (events[v].deficiency < -Spacetime::epsilon) {
       assert(expansion(v,sheet));
@@ -2911,13 +2917,27 @@ void Spacetime::dynamic_hyphansis(int sheet)
       return;
     }
   }
-
+  s.close();
   std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
 
-  int nsuccess = 0;
+  if (weaving == DYNAMIC) {
+    dynamic_hyphansis(candidates,sheet);
+  }
+  else {
+    musical_hyphansis(candidates,sheet);
+  }
+}
+
+void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+{
+  int i,v,nsuccess = 0;
+  double alpha;
   std::string op;
   std::stringstream opstring;
   bool success;
+  const int nc = (signed) candidates.size();
+
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
 
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
