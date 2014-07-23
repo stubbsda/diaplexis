@@ -8,7 +8,8 @@ void Spacetime::read_parameters(const char* filename)
   pugi::xml_node global,gsolver;
   std::string name,value,hfile;
   unsigned int rs;
-  int q,n_is = 0,n_so = 0;
+  int q,n_is = 0,n_so = 0,D = 0;
+  bool euclidean = false,relational = false,uniform = false;
 
   // Open the file
   if (!(pfile.load_file(filename))) {
@@ -47,28 +48,13 @@ void Spacetime::read_parameters(const char* filename)
       input_file = value;
     }
     else if (name == "EuclideanGeometry") {
-      if (value == "True") {
-        geometry->set_euclidean(true);
-      }
-      else {
-        geometry->set_euclidean(false);
-      }
+      if (value == "True") euclidean = true;
     }
     else if (name == "RelationalGeometry") {
-      if (value == "True") {
-        geometry->set_relational(true);
-      }
-      else {
-        geometry->set_relational(false);
-      }
+      if (value == "True") relational = true;
     }
     else if (name == "DimensionalUniformity") {
-      if (value == "True") {
-        geometry->set_uniform(true);
-      }
-      else {
-        geometry->set_uniform(false);
-      }
+      if (value == "True") uniform = true;
     }
     else if (name == "RandomSeed") {
       rs = boost::lexical_cast<unsigned int>(value);
@@ -78,6 +64,9 @@ void Spacetime::read_parameters(const char* filename)
       else {
         RND.set_seed(rs);
       }
+    }
+    else if (name == "BackgroundDimension") {
+      D = boost::lexical_cast<int>(value);
     }
     else if (name == "EdgeProbability") {
       edge_probability = boost::lexical_cast<double>(value);
@@ -255,6 +244,11 @@ void Spacetime::read_parameters(const char* filename)
   assert(n_is == 1);
   // And similarly for the solver type...
   assert(n_so == 1);
+  // Finally for the background dimension...
+  assert(D > 0);
+
+  delete geometry;
+  geometry = new Geometry(euclidean,relational,uniform,D);
 
   if (weaving == FILE) hyphansis_file = hfile;
 
@@ -267,8 +261,8 @@ void Spacetime::read_parameters(const char* filename)
     std::vector<std::pair<long,int> > factors;
     factorize(initial_size,factors);
     for(q=0; q<(signed) factors.size(); ++q) {
-      if (factors[q].second%Geometry::background_dimension != 0) {
-        std::cerr << "Grid size is not consistent with background dimension." << std::endl;
+      if (factors[q].second % D != 0) {
+        std::cerr << "The grid size " << initial_size << " is not consistent with the background dimension " << D << "." << std::endl;
         std::cerr << "Exiting..." << std::endl;
         std::exit(1);
       }
@@ -296,7 +290,7 @@ void Spacetime::read_parameters(const char* filename)
     assert(thermal_sweep > 0);
   }
   else if (solver == MECHANICAL) {
-    if (!geometry->get_relational() && !geometry->get_uniform()) {
+    if (!relational && !uniform) {
       std::cerr << "If the geometry model is absolute it must be dimensionally uniform in order to use the MECHANICAL geometry solver!" << std::endl;
       std::exit(1);
     }
@@ -362,7 +356,6 @@ void Spacetime::write_log() const
     s << "<CompileTimeParameters>" << std::endl;
     s << "<MaximumDimension>" << ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
-    s << "<BackgroundDimension>" << Geometry::background_dimension << "</BackgroundDimension>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
@@ -377,6 +370,7 @@ void Spacetime::write_log() const
     s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
     s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
+    s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<SheetDynamics>" << bvalue[foliodynamics] << "</SheetDynamics>" << std::endl;
     s << "<RandomSeed>" << RND.get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
@@ -1017,14 +1011,6 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Geometry::background_dimension) {
-    s.close();
-    std::cerr << "The compiled background dimension " << Geometry::background_dimension << " does not match that (" << n << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-
-  s.read((char*)(&n),sizeof(int));
   if (n != Spacetime::topological_radius) {
     s.close();
     std::cerr << "The compiled binary's topological radius " << Spacetime::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
@@ -1246,7 +1232,6 @@ void Spacetime::write_state() const
   // First the global parameters...
   s.write((char*)(&ND),sizeof(int));
   s.write((char*)(&NP),sizeof(int));
-  s.write((char*)(&Geometry::background_dimension),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
   s.write((char*)(&Spacetime::epsilon),sizeof(double));

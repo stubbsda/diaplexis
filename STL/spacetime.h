@@ -300,7 +300,7 @@ class Spacetime {
   void get_coordinates(int,std::vector<double>&) const;
   void get_coordinates(std::vector<double>&) const;
   double get_geometric_distance(int,int,bool) const;
-  inline int get_background_dimension() const {return Geometry::background_dimension;};
+  inline int get_background_dimension() const {return geometry->dimension();};
   inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
   inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
   inline double get_event_obliquity(int n) const {return events[n].obliquity;};

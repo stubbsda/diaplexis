@@ -155,7 +155,6 @@ void Spacetime::clear()
   codex.clear();
   H->clear();
   pi->clear();
-  geometry->clear();
   for(int i=1; i<=ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
@@ -643,11 +642,11 @@ void Spacetime::test_harness(int type,int n)
     }
 
     // Randomize the 2D coordinates of the initial vertices...
-    for(i=0; i<Geometry::background_dimension; ++i) {
+    for(i=0; i<geometry->dimension(); ++i) {
       xc.push_back(0.0);
     }
     for(i=0; i<nv; ++i) {
-      for(j=0; j<Geometry::background_dimension; ++j) {
+      for(j=0; j<geometry->dimension(); ++j) {
         xc[j] = RND.nrandom(0.0,2.5);
       }
       geometry->set_coordinates(i,xc);
@@ -1539,7 +1538,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
-  for(i=0; i<Geometry::background_dimension; ++i) {
+  for(i=0; i<geometry->dimension(); ++i) {
     svalue.push_back(0.0);
   }
 
@@ -1553,10 +1552,10 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     factorize(initial_size,factors);
     j = 1;
     for(i=0; i<(signed) factors.size(); ++i) {
-      j *= ipow(factors[i].first,factors[i].second/Geometry::background_dimension);
+      j *= ipow(factors[i].first,factors[i].second/geometry->dimension());
     }
     const int n = j;
-    const int nd = ipow(n,Geometry::background_dimension-1);
+    const int nd = ipow(n,geometry->dimension()-1);
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*RND.irandom(initial_size));
     const double dx = 1.0;
@@ -1567,7 +1566,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     std::set<int> N;
     std::set<int>::const_iterator it,jt;
 
-    for(i=0; i<Geometry::background_dimension; ++i) {
+    for(i=0; i<geometry->dimension(); ++i) {
       entourage.push_back(0);
     }
     // First the vertices, making sure (if this is a non-relational
@@ -1578,7 +1577,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       entourage[0] = in1;
       rvalue = l - in1*nd;
       svalue[0] = dx*(double(in1) - 0.5*double(nm1));
-      for(m=1; m<Geometry::background_dimension; ++m) {
+      for(m=1; m<geometry->dimension(); ++m) {
         k /= n;
         in1 = rvalue/k;
         entourage[m] = in1;
@@ -1586,7 +1585,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         svalue[m] = dx*(double(in1) - 0.5*double(nm1));
       }
       if (!relational) geometry->add_vertex(svalue);
-      for(m=0; m<Geometry::background_dimension; ++m) {
+      for(m=0; m<geometry->dimension(); ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
       events.push_back(vt);
@@ -1602,7 +1601,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       if (v[0] > 0) {
         in1 = (v[0]-1)*nd;
         k = nd;
-        for(j=0; j<Geometry::background_dimension-1; ++j) {
+        for(j=0; j<geometry->dimension()-1; ++j) {
           k /= n;
           in1 += v[j+1]*k;
         }
@@ -1618,7 +1617,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       if (v[0] < nm1) {
         in1 = (v[0]+1)*nd;
         k = nd;
-        for(j=0; j<Geometry::background_dimension-1; ++j) {
+        for(j=0; j<geometry->dimension()-1; ++j) {
           k /= n;
           in1 += v[j+1]*k;
         }
@@ -1631,12 +1630,12 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           S.vertices.clear();
         }
       }
-      for(j=1; j<Geometry::background_dimension; ++j) {
+      for(j=1; j<geometry->dimension(); ++j) {
         if (v[j] > 0) {
           v[j] -= 1;
           in1 = v[0]*nd;
           k = nd;
-          for(l=0; l<Geometry::background_dimension-1; ++l) {
+          for(l=0; l<geometry->dimension()-1; ++l) {
             k /= n;
             in1 += v[l+1]*k;
           }
@@ -1654,7 +1653,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           v[j] += 1;
           in1 = v[0]*nd;
           k = nd;
-          for(l=0; l<Geometry::background_dimension-1; ++l) {
+          for(l=0; l<geometry->dimension()-1; ++l) {
             k /= n;
             in1 += v[l+1]*k;
           }
@@ -1679,8 +1678,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       k = int(double(n)/2.0);
       for(i=0; i<nperturbed; ++i) {
         j = 0;
-        for(l=0; l<Geometry::background_dimension; ++l) {
-          j += ipow(n,Geometry::background_dimension-1-l)*RND.irandom(k-2,k+2);
+        for(l=0; l<geometry->dimension(); ++l) {
+          j += ipow(n,geometry->dimension()-1-l)*RND.irandom(k-2,k+2);
         }
         v.push_back(j);
         // Now add some edges among the neighbours of this
@@ -1707,8 +1706,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         k = int(double(n)/2.0);
         for(i=0; i<nperturbed; ++i) {
           j = 0;
-          for(l=0; l<Geometry::background_dimension; ++l) {
-            j += ipow(n,Geometry::background_dimension-1-i)*RND.irandom(k-2,k+2);
+          for(l=0; l<geometry->dimension(); ++l) {
+            j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
           }
           v.push_back(j);
         }
@@ -1723,8 +1722,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         // near the centre of the Cartesian network...
         j = 0;
         k = int(double(n)/2.0);
-        for(i=0; i<Geometry::background_dimension; ++i) {
-          j += ipow(n,Geometry::background_dimension-1-i)*RND.irandom(k-2,k+2);
+        for(i=0; i<geometry->dimension(); ++i) {
+          j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
         }
         events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
       }
@@ -1750,8 +1749,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
   else if (initial_state == MONOPLEX) {
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
-    int ulimit = Geometry::background_dimension;
-    if (initial_dim > Geometry::background_dimension) ulimit = initial_dim;
+    int ulimit = geometry->dimension();
+    if (initial_dim > geometry->dimension()) ulimit = initial_dim;
     if (perturb_energy) vt.energy = 500.0 + (2000.0/double(initial_dim))*RND.drandom();
 
     if (!relational) {
@@ -1811,7 +1810,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           vt.energy = 10.0*RND.drandom();
           k++;
         }
-        for(j=0; j<Geometry::background_dimension; ++j) {
+        for(j=0; j<geometry->dimension(); ++j) {
           svalue[j] = -10.0 + 20.0*RND.drandom();
         }
         geometry->add_vertex(svalue);

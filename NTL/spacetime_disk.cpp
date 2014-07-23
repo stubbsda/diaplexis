@@ -355,7 +355,6 @@ void Spacetime::write_log() const
     s << "<CompileTimeParameters>" << std::endl;
     s << "<MaximumDimension>" << ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
-    s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
@@ -370,6 +369,7 @@ void Spacetime::write_log() const
     s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
     s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
+    s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<SheetDynamics>" << bvalue[foliodynamics] << "</SheetDynamics>" << std::endl;
     s << "<RandomSeed>" << RND.get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;

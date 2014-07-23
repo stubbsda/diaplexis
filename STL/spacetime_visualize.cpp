@@ -357,23 +357,23 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
   }
   if (D == 1) {
     for(i=0; i<nv; ++i) {
-      vcoords.push_back(float(x[Geometry::background_dimension*i]));
+      vcoords.push_back(float(x[geometry->dimension()*i]));
       vcoords.push_back(0.0);
       vcoords.push_back(0.0);
     }
   }
   else if (D == 2) {
     for(i=0; i<nv; ++i) {
-      vcoords.push_back(float(x[Geometry::background_dimension*i]));
-      vcoords.push_back(float(x[Geometry::background_dimension*i+1]));
+      vcoords.push_back(float(x[geometry->dimension()*i]));
+      vcoords.push_back(float(x[geometry->dimension()*i+1]));
       vcoords.push_back(0.0);
     }
   }
   else if (D >= 3) {
     for(i=0; i<nv; ++i) {
-      vcoords.push_back(float(x[Geometry::background_dimension*i]));
-      vcoords.push_back(float(x[Geometry::background_dimension*i+1]));
-      vcoords.push_back(float(x[Geometry::background_dimension*i+2]));
+      vcoords.push_back(float(x[geometry->dimension()*i]));
+      vcoords.push_back(float(x[geometry->dimension()*i+1]));
+      vcoords.push_back(float(x[geometry->dimension()*i+2]));
     }
   }
   for(i=0; i<ne; ++i) {
