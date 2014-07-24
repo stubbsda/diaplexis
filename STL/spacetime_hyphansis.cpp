@@ -2850,125 +2850,122 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
-void Spacetime::diskfile_hyphansis(int sheet)
+void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
-  int i,d,n,v;
-  double lambda;
-  bool success;
-  std::string val1,val2,opstring,ovalue;
-  std::vector<std::string> weaving,elements,pvalues;
-  std::vector<std::vector<std::string> > params;
-  pugi::xml_document hfile;
-  pugi::xml_node its,feuille;  
-  boost::char_separator<char> sep(",");
+  int i,j,v,d = 0,opcount = 0;
+  double lambda = 1.0;
+  bool implicative,success;
+  std::string op;
+  std::stringstream opstring;
+  const int nc = (signed) candidates.size();
 
-  codex[sheet].ops = "";
-
-  // Open the file
-  if (!hfile.load_file(hyphansis_file.c_str())) {
-    std::cerr << "The file " << hyphansis_file << " either does not exist or could not be loaded correctly." << std::endl;
+  // Open the file containing the hyphantic score 
+  std::ifstream mscore(hyphansis_score.c_str());
+  if (!mscore.good()) {
+    std::cerr << "The file " << hyphansis_score << " either does not exist or could not be opened correctly." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
+  // Now read the measure that corresponds to this iteration and sheet...
 
-  // Parse it for the hyphantic operators we need...
-  for(pugi::xml_node branch = hfile.first_child(); branch; branch = branch.next_sibling()) {
-    its = branch.child("Index");
-    val1 = its.first_child().value();
-    // Get the right iteration...
-    if (boost::lexical_cast<int>(val1) == iterations) {
-      for(pugi::xml_node leaf = branch.child("Sheet"); leaf; leaf = leaf.next_sibling()) {
-        feuille = leaf.child("Index");
-        val2 = feuille.first_child().value();
-        // Now the right sheet...
-        if (boost::lexical_cast<int>(val2) == sheet) {
-          // We can finally grab the hyphantic operators...
-          for(pugi::xml_node op = leaf.child("Operator"); op; op = op.next_sibling()) {
-            opstring = op.first_child().value();
-            // Break it up at the commas
-            boost::tokenizer<boost::char_separator<char> > tok(opstring,sep);
-            for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-              elements.push_back(*beg);
-            }
-            weaving.push_back(elements[0]);
-            for(i=1; i<(signed) elements.size(); ++i) {
-              pvalues.push_back(elements[i]);
-            }
-            params.push_back(pvalues);
-            elements.clear();
-            pvalues.clear();
-          }
-        }
+  // Close the score file
+  mscore.close();
+
+  // Open the hyphantic log file
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
+  for(i=0; i<opcount; ++i) {
+    implicative = true;
+    if (implicative) {
+      for(j=nc-1; j>0; --j) {
+        v = candidates[j].first;
+        if (events[v].ubiquity[sheet] == 0) continue;
+        if (events[v].deficiency < Spacetime::epsilon) break;
       }
     }
-  }
-  // If there are no operators exit the method...
-  if (weaving.empty()) return;
-  // Get the number of weaving attempts to be made and then perform them...
-  n = (signed) weaving.size();
-  for(i=0; i<n; ++i) {
-    // The first parameter is always the vertex
-    v = boost::lexical_cast<int>(params[i][0]);
-    std::cout << "Hyphansis attempt with " << weaving[i] << "  " << v << std::endl;
-    if (weaving[i] == "F") {
-      lambda = boost::lexical_cast<double>(params[i][1]);
-      success = fission(v,lambda,sheet);
+    else {
+      for(j=nc-1; j>0; --j) {
+        v = candidates[j].first;
+        if (events[v].ubiquity[sheet] == 0) continue;
+        if (events[v].deficiency > Spacetime::epsilon) break;
+      }
     }
-    else if (weaving[i] == "Um") {
+    // Now we have the base vertex v
+    opstring << op << "," << v;
+    if (op == "F") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = fission(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "Um") {
       success = fusion_m(v,sheet);
     }
-    else if (weaving[i] == "Om") {
+    else if (op == "Om") {
       success = foliation_m(v,sheet);
     }
-    else if (weaving[i] == "E") {
+    else if (op == "E") {
       success = expansion(v,sheet);
     }
-    else if (weaving[i] == "I") {
-      lambda = boost::lexical_cast<double>(params[i][1]);
+    else if (op == "I") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
       success = inflation(v,lambda,sheet);
+      opstring << "," << lambda; 
     }
-    else if (weaving[i] == "P") {
-      d = boost::lexical_cast<int>(params[i][1]);
+    else if (op == "P") {
+      //d = boost::lexical_cast<int>(params[i][1]);
       success = perforation(v,d,sheet);
+      opstring << "," << d; 
     }
-    else if (weaving[i] == "V") {
+    else if (op == "V") {
       success = circumvolution(v,sheet);
     }
-    else if (weaving[i] == "D") {
+    else if (op == "D") {
       success = deflation(v,sheet);
     }
-    else if (weaving[i] == "Ux") {
-      lambda = boost::lexical_cast<double>(params[i][1]);
+    else if (op == "Ux") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
       success = fusion_x(v,lambda,sheet);
+      opstring << "," << lambda; 
     }
-    else if (weaving[i] == "Sg") {
+    else if (op == "Sg") {
       success = compensation_g(v,sheet);
     }
-    else if (weaving[i] == "Sm") {
+    else if (op == "Sm") {
       success = compensation_m(v,sheet);
     }
-    else if (weaving[i] == "R") {
+    else if (op == "R") {
       success = reduction(v,sheet);
     }
-    else if (weaving[i] == "C") {
+    else if (op == "C") {
       success = correction(v,sheet);
     }
-    else if (weaving[i] == "N") {
-      lambda = boost::lexical_cast<double>(params[i][1]);
+    else if (op == "N") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
       success = contraction(v,lambda,sheet);
+      opstring << "," << lambda; 
     }
-    else if (weaving[i] == "A") {
-      lambda = boost::lexical_cast<double>(params[i][1]);
+    else if (op == "A") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
       success = amputation(v,lambda,sheet);
+      opstring << "," << lambda; 
     }
-    else if (weaving[i] == "G") {
+    else if (op == "G") {
       success = germination(v,sheet);
     }
-    if (success) codex[sheet].ops += weaving[i];
+    if (success) {
+      s << "    <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      regularization(false,sheet);
+      codex[sheet].ops += op;
+    }
+    opstring.str("");
   }
+
+  // We're done, so close the hyphantic log file and return
+  s << "  </Sheet>" << std::endl;
+  s.close();
 }
 
-void Spacetime::dynamic_hyphansis(int sheet)
+void Spacetime::hyphansis(int sheet)
 {
   int i,v;
   double alpha;
@@ -3007,8 +3004,7 @@ void Spacetime::dynamic_hyphansis(int sheet)
     return;
   }
 
-  const int nc = (signed) candidates.size();
-  if (nc == 1) {
+  if (candidates.size() == 1) {
     v = candidates[0].first;
     if (events[v].deficiency < -Spacetime::epsilon) {
       assert(expansion(v,sheet));
@@ -3020,12 +3016,28 @@ void Spacetime::dynamic_hyphansis(int sheet)
       return;
     }
   }
-  int nsuccess = 0;
+  s.close();
+
+  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+
+  if (weaving == DYNAMIC) {
+    dynamic_hyphansis(candidates,sheet);
+  }
+  else {
+    musical_hyphansis(candidates,sheet);
+  }
+}
+
+void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+{
+  int i,v,nsuccess = 0;
+  double alpha;
   std::string op;
   std::stringstream opstring;
   bool success;
+  const int nc = (signed) candidates.size();
 
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
 
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;

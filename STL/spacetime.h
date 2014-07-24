@@ -190,8 +190,8 @@ class Spacetime {
   void compute_simplex_energy(int,int);
   // The various methods needed for the hyphantic operators
   void hyphansis(int);
-  void dynamic_hyphansis(int);
-  void musical_hyphansis(int);
+  void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
+  void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);

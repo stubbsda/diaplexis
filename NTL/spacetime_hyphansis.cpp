@@ -2741,9 +2741,119 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
-void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int voice)
+void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
+  int i,j,v,d = 0,opcount = 0;
+  double lambda = 1.0;
+  bool implicative,success;
+  std::string op;
+  std::stringstream opstring;
+  const int nc = (signed) candidates.size();
 
+  // Open the file containing the hyphantic score 
+  std::ifstream mscore(hyphansis_score.c_str());
+  if (!mscore.good()) {
+    std::cerr << "The file " << hyphansis_score << " either does not exist or could not be opened correctly." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+  // Now read the measure that corresponds to this iteration and sheet...
+
+  // Close the score file
+  mscore.close();
+
+  // Open the hyphantic log file
+  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
+  for(i=0; i<opcount; ++i) {
+    implicative = true;
+    if (implicative) {
+      for(j=nc-1; j>0; --j) {
+        v = candidates[j].first;
+        if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
+        if (events[v].deficiency < Spacetime::epsilon) break;
+      }
+    }
+    else {
+      for(j=nc-1; j>0; --j) {
+        v = candidates[j].first;
+        if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
+        if (events[v].deficiency > Spacetime::epsilon) break;
+      }
+    }
+    // Now we have the base vertex v
+    opstring << op << "," << v;
+    if (op == "F") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = fission(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "Um") {
+      success = fusion_m(v,sheet);
+    }
+    else if (op == "Om") {
+      success = foliation_m(v,sheet);
+    }
+    else if (op == "E") {
+      success = expansion(v,sheet);
+    }
+    else if (op == "I") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = inflation(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "P") {
+      //d = boost::lexical_cast<int>(params[i][1]);
+      success = perforation(v,d,sheet);
+      opstring << "," << d; 
+    }
+    else if (op == "V") {
+      success = circumvolution(v,sheet);
+    }
+    else if (op == "D") {
+      success = deflation(v,sheet);
+    }
+    else if (op == "Ux") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = fusion_x(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "Sg") {
+      success = compensation_g(v,sheet);
+    }
+    else if (op == "Sm") {
+      success = compensation_m(v,sheet);
+    }
+    else if (op == "R") {
+      success = reduction(v,sheet);
+    }
+    else if (op == "C") {
+      success = correction(v,sheet);
+    }
+    else if (op == "N") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = contraction(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "A") {
+      //lambda = boost::lexical_cast<double>(params[i][1]);
+      success = amputation(v,lambda,sheet);
+      opstring << "," << lambda; 
+    }
+    else if (op == "G") {
+      success = germination(v,sheet);
+    }
+    if (success) {
+      s << "    <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      regularization(false,sheet);
+      codex[sheet].ops += op;
+    }
+    opstring.str("");
+  }
+
+  // We're done, so close the hyphantic log file and return
+  s << "  </Sheet>" << std::endl;
+  s.close(); 
 }
 
 /*
@@ -2868,7 +2978,7 @@ void Spacetime::diskfile_hyphansis(int sheet)
 
 void Spacetime::hyphansis(int sheet)
 {
-  int i,v;
+  int v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
   const int nvertex = (signed) events.size();
