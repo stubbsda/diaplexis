@@ -2743,12 +2743,13 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 
 void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
-  int i,j,its,v,d = 0,opcount = 0;
-  double lambda = 1.0;
+  int i,j,v,d,its,opcount;
   bool implicative,success;
   std::string line,op;
   std::stringstream opstring;
   std::vector<std::string> elements;
+  std::vector<double> pvalue;
+  std::vector<std::vector<double> > op_params;
   std::vector<std::pair<std::string,bool> > oplist;
   boost::char_separator<char> sp("/");
   const int nc = (signed) candidates.size();
@@ -2783,8 +2784,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     }
     // Now the parameters, if any...
     for(i=3; i<elements.size()-1; ++i) {
- 
-    }    
+      // We assume all of the parameters are doubles, which is the safest approach
+      pvalue.push_back(boost::lexical_cast<double>(elements[i]));
+    }
+    op_params.push_back(pvalue);
+    pvalue.clear();
   }
   // Close the score file
   mscore.close();
@@ -2821,9 +2825,8 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     // Now we have the base vertex v
     opstring << op << "," << v;
     if (op == "F") {
-      //lambda = boost::lexical_cast<double>(params[i][1]);
-      success = fission(v,lambda,sheet);
-      opstring << "," << lambda; 
+      success = fission(v,op_params[i][0],sheet);
+      opstring << "," << op_params[i][0]; 
     }
     else if (op == "Um") {
       success = fusion_m(v,sheet);
@@ -2835,12 +2838,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = expansion(v,sheet);
     }
     else if (op == "I") {
-      //lambda = boost::lexical_cast<double>(params[i][1]);
-      success = inflation(v,lambda,sheet);
-      opstring << "," << lambda; 
+      success = inflation(v,op_params[i][0],sheet);
+      opstring << "," << op_params[i][0]; 
     }
     else if (op == "P") {
-      //d = boost::lexical_cast<int>(params[i][1]);
+      d = int(op_params[i][0]);
       success = perforation(v,d,sheet);
       opstring << "," << d; 
     }
@@ -2851,9 +2853,8 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = deflation(v,sheet);
     }
     else if (op == "Ux") {
-      //lambda = boost::lexical_cast<double>(params[i][1]);
-      success = fusion_x(v,lambda,sheet);
-      opstring << "," << lambda; 
+      success = fusion_x(v,op_params[i][0],sheet);
+      opstring << "," << op_params[i][0]; 
     }
     else if (op == "Sg") {
       success = compensation_g(v,sheet);
@@ -2868,14 +2869,12 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = correction(v,sheet);
     }
     else if (op == "N") {
-      //lambda = boost::lexical_cast<double>(params[i][1]);
-      success = contraction(v,lambda,sheet);
-      opstring << "," << lambda; 
+      success = contraction(v,op_params[i][0],sheet);
+      opstring << "," << op_params[i][0]; 
     }
     else if (op == "A") {
-      //lambda = boost::lexical_cast<double>(params[i][1]);
-      success = amputation(v,lambda,sheet);
-      opstring << "," << lambda; 
+      success = amputation(v,op_params[i][0],sheet);
+      opstring << "," << op_params[i][0]; 
     }
     else if (op == "G") {
       success = germination(v,sheet);
