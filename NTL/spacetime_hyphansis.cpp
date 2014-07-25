@@ -2783,7 +2783,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       oplist.push_back(std::pair<std::string,bool>(elements[2],false));
     }
     // Now the parameters, if any...
-    for(i=3; i<elements.size()-1; ++i) {
+    for(i=3; i<(signed) elements.size()-1; ++i) {
       // We assume all of the parameters are doubles, which is the safest approach
       pvalue.push_back(boost::lexical_cast<double>(elements[i]));
     }
