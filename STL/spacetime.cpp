@@ -98,7 +98,7 @@ void Spacetime::set_default_values()
   state_file = std::string("data/spacetime");
   log_file = std::string("data/spacetime");
   input_file = std::string("");
-  initial_size = 500;
+  initial_size = 10;
   initial_dim = 4;
   initial_state = RANDOM;
   solver = MINIMAL;
