@@ -118,7 +118,7 @@ class Spacetime {
   int annealing_steps;
 
   // Stuff for the implicative/explicative operators:
-  static const int N_EXP = 9;
+  static const int N_EXP = 10;
   static const int N_IMP = 7;
   static const std::string EXP_OP[N_EXP];
   static const std::string IMP_OP[N_IMP];
@@ -193,6 +193,8 @@ class Spacetime {
   void hyphansis(int);
   void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
   void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+  std::string hyphantic_scale(int,std::vector<double>&) const;
+  int select_vertex(const std::vector<int>&,double,int) const;
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);

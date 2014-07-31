@@ -2850,16 +2850,48 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
+std::string Spacetime::hyphantic_scale(int key,std::vector<double>& parameters) const
+{
+  std::string output = "";
+
+  parameters.clear();
+  return output;
+}
+
+int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity,int sheet) const
+{
+  if (candidates.empty()) return -1;
+  // The closer the intensity is to unity, the more we should try to choose an element 
+  // of candidates close to the beginning
+  int i,output,n = (signed) candidates.size();
+  double cdeficit,tdeficit;
+  std::vector<int> vcandidates;
+
+  for(i=0; i<n; ++i) {
+    if (events[candidates[i]].ubiquity[sheet] == 0) continue;
+    vcandidates.push_back(candidates[i]);
+  }
+  if (vcandidates.empty()) return -1;
+  if (vcandidates.size() == 1) return vcandidates[0];
+  n = (signed) vcandidates.size();
+  tdeficit = std::abs(events[vcandidates[0]].deficiency - events[vcandidates[n-1]].deficiency);
+  for(i=0; i<n; ++i) {
+    output = vcandidates[i];
+    cdeficit = std::abs(events[output].deficiency - events[vcandidates[0]].deficiency);
+    if (intensity <= cdeficit/tdeficit) break;
+  }
+  return output;
+}
+
 void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
   int i,j,v,d,its,opcount;
-  bool implicative,success;
+  bool success = false;
   std::string line,op;
   std::stringstream opstring;
+  std::vector<int> key_list,m_vertices,x_vertices,m_keys,x_keys;
   std::vector<std::string> elements;
-  std::vector<double> pvalue;
-  std::vector<std::vector<double> > op_params;
-  std::vector<std::pair<std::string,bool> > oplist;
+  std::vector<double> pvalues;
   boost::char_separator<char> sp("/");
   const int nc = (signed) candidates.size();
 
@@ -2884,20 +2916,8 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     // So this is a line for this relaxation step, check if it is the right sheet/voice...
     v = boost::lexical_cast<int>(elements[1]);
     if (v != sheet) continue;
-    // So, grab the operator, any parameters and the type...
-    if (elements.back() == "m") {
-      oplist.push_back(std::pair<std::string,bool>(elements[2],true));
-    }
-    else {
-      oplist.push_back(std::pair<std::string,bool>(elements[2],false));
-    }
-    // Now the parameters, if any...
-    for(i=3; i<(signed) elements.size()-1; ++i) {
-      // We assume all of the parameters are doubles, which is the safest approach
-      pvalue.push_back(boost::lexical_cast<double>(elements[i]));
-    }
-    op_params.push_back(pvalue);
-    pvalue.clear();
+    // So, grab the piano key...
+    key_list.push_back(boost::lexical_cast<int>(elements[2]));
   }
   // Close the score file
   mscore.close();
@@ -2905,7 +2925,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   // Open the hyphantic log file
   std::ofstream s(hyphansis_file.c_str(),std::ios::app);
 
-  if (oplist.empty()) {
+  if (key_list.empty()) {
     // We're done!
     s << "  </Sheet>" << std::endl;
     s.close();
@@ -2913,29 +2933,54 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   }
 
   // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
-  opcount = (signed) oplist.size();
+  opcount = (signed) key_list.size();
+
+  // This is a fairly complicated operation - we need to play the notes the in the right order, 
+  // while at the same time highest pitched key above 44 is assigned to the vertex with the most 
+  // negative deficiency, the next highest pitched key above 44 acts upon the vertex with the  
+  // second most negative deficiency etc.
+  // We need to create a list of the distinct explicative and implicative piano keys in this measure, 
+  // paired to the appropriate vertex
   for(i=0; i<opcount; ++i) {
-    op = oplist[i].first;
-    implicative = oplist[i].second;
-    if (implicative) {
-      for(j=nc-1; j>0; --j) {
-        v = candidates[j].first;
-        if (events[v].ubiquity[sheet] == 0) continue;
-        if (events[v].deficiency < Spacetime::epsilon) break;
-      }
+    if (key_list[i] > 44) {
+      if (std::count(m_keys.begin(),m_keys.end(),key_list[i]) == 0) m_keys.push_back(key_list[i]);
     }
     else {
-      for(j=nc-1; j>0; --j) {
-        v = candidates[j].first;
-        if (events[v].ubiquity[sheet] == 0) continue;
-        if (events[v].deficiency > Spacetime::epsilon) break;
-      }
+      if (std::count(x_keys.begin(),x_keys.end(),key_list[i]) == 0) x_keys.push_back(key_list[i]);
     }
-    // Now we have the base vertex v
+  }
+  // Now sort these piano key values in the correct order, meaning ascending 
+  // for explicative (1 to 44) and descending for implicative (88 to 45)
+  std::sort(m_keys.begin(),m_keys.end(),std::greater<int>());
+  std::sort(x_keys.begin(),x_keys.end());
+
+  for(i=nc-1; i>0; --i) {
+    v = candidates[i].first;
+    if (events[v].ubiquity[sheet] == 0) continue;
+    if (events[v].deficiency < Spacetime::epsilon) {
+      m_vertices.push_back(v);
+    }
+    else {
+      x_vertices.push_back(v);
+    }
+  }
+
+  for(i=0; i<opcount; ++i) {
+    j = key_list[i];
+    if (j > 44) {
+      v = select_vertex(m_vertices,double(j)/double(m_keys[0]),sheet);
+    }
+    else {
+      v = select_vertex(x_vertices,double(j)/double(x_keys.back()),sheet);
+    }
+    if (v == -1) continue;
+    // Now we have the base vertex v, next we need to get the operator and 
+    // parameters for this piano key
+    op = hyphantic_scale(j,pvalues);
     opstring << op << "," << v;
     if (op == "F") {
-      success = fission(v,op_params[i][0],sheet);
-      opstring << "," << op_params[i][0]; 
+      success = fission(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
     }
     else if (op == "Um") {
       success = fusion_m(v,sheet);
@@ -2947,11 +2992,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = expansion(v,sheet);
     }
     else if (op == "I") {
-      success = inflation(v,op_params[i][0],sheet);
-      opstring << "," << op_params[i][0]; 
+      success = inflation(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
     }
     else if (op == "P") {
-      d = int(op_params[i][0]);
+      d = int(pvalues[0]);
       success = perforation(v,d,sheet);
       opstring << "," << d; 
     }
@@ -2962,8 +3007,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = deflation(v,sheet);
     }
     else if (op == "Ux") {
-      success = fusion_x(v,op_params[i][0],sheet);
-      opstring << "," << op_params[i][0]; 
+      success = fusion_x(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "Ox") {
+      success = foliation_x(v,sheet);
     }
     else if (op == "Sg") {
       success = compensation_g(v,sheet);
@@ -2978,12 +3026,12 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = correction(v,sheet);
     }
     else if (op == "N") {
-      success = contraction(v,op_params[i][0],sheet);
-      opstring << "," << op_params[i][0]; 
+      success = contraction(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
     }
     else if (op == "A") {
-      success = amputation(v,op_params[i][0],sheet);
-      opstring << "," << op_params[i][0]; 
+      success = amputation(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
     }
     else if (op == "G") {
       success = germination(v,sheet);
@@ -2998,7 +3046,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
 
   // We're done, so close the hyphantic log file and return
   s << "  </Sheet>" << std::endl;
-  s.close();
+  s.close(); 
 }
 
 void Spacetime::hyphansis(int sheet)

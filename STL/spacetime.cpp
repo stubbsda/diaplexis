@@ -8,8 +8,8 @@ const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
-const std::string Spacetime::EXP_OP[] = {"D","Ux","Sg","Sm","R","C","N","A","G"};
-const std::string Spacetime::IMP_OP[] = {"F","Um","Om","E","I","P","V"};
+const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm"};
+const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V"};
 const int Spacetime::topological_radius;
 
 const double seqn_weights[] = {1.0,0.0,0.2,0.2};
