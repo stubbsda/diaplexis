@@ -2741,14 +2741,6 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   return true;
 }
 
-std::string Spacetime::hyphantic_scale(int key,std::vector<double>& parameters) const
-{
-  std::string output = "";
-
-  parameters.clear();
-  return output;
-}
-
 int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity,int sheet) const
 {
   if (candidates.empty()) return -1;
@@ -2867,7 +2859,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     if (v == -1) continue;
     // Now we have the base vertex v, next we need to get the operator and 
     // parameters for this piano key
-    op = hyphantic_scale(j,pvalues);
+    op = (j > 44) ? implicative_scale(j,pvalues) : explicative_scale(j,pvalues);
     opstring << op << "," << v;
     if (op == "F") {
       success = fission(v,pvalues[0],sheet);

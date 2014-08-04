@@ -450,6 +450,58 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
   }
 }
 
+std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
+{
+  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // (diatonic notes) and four chromatic notes
+  // The implicative scale is the treble clef in the F major scale, so the following 
+  // twelve piano keys in ascending pitch, 
+  // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
+  // The four chromatic notes are B4, C5 sharp, F5 sharp and G5
+  // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
+  // V <=> G5
+  // P <=> F5 sharp
+  // E3 <=> F5
+  // F3 <=> E5
+  // Om <=> D5
+  // F2 <=> C5 sharp
+  // F1 <=> C5 
+  // E2 <=> A4 sharp
+  // Um <=> A4
+  // I2 <=> G4 sharp
+  // E1 <=> G4
+  // I1 <=> F4 
+  std::string output = "NULL";
+
+  return output;
+}
+
+std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters) const
+{
+  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // (diatonic notes) and four chromatic notes
+  // The explicative scale is the bass clef in the F major scale, so the following 
+  // twelve piano keys in descending pitch, 
+  // A3, G3, F3 sharp, F3, E3, D3, C3 sharp, C3, A2 sharp, A2, G2, F2 
+  // The four chromatic notes are A3, G3, F3 sharp and C3 sharp
+  // The twelve explicative operations are D, Ox, R, C, G, Sg, Sm, A, N1, N2, Ux1 and Ux2
+  // G <=> F2
+  // A <=> G2
+  // D <=> A2
+  // C <=> A2 sharp
+  // Sg <=> C3
+  // N2 <=> C3 sharp
+  // Ux2 <=> D3 
+  // Sm <=> E3
+  // R <=> F3
+  // Ox <=> F3 sharp
+  // N1 <=> G3
+  // Ux1 <=> A3
+  std::string output = "NULL";
+
+  return output;
+}
+
 void Spacetime::implication(std::string& output) const
 {
   // Should return one of {F,Um,Om,E,I,P,V}
