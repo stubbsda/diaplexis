@@ -192,7 +192,8 @@ class Spacetime {
   void hyphansis(int);
   void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
   void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
-  std::string hyphantic_scale(int,std::vector<double>&) const;
+  std::string implicative_scale(int,std::vector<double>&) const;
+  std::string explicative_scale(int,std::vector<double>&) const;
   int select_vertex(const std::vector<int>&,double,int) const;
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);

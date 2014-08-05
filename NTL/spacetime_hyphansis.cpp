@@ -2768,7 +2768,8 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
 
 void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
-  int i,j,v,d,its,opcount;
+  int i,j,v,its,opcount;
+  double m_width,x_width;
   bool success = false;
   std::string line,op;
   std::stringstream opstring;
@@ -2789,11 +2790,14 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   while(mscore.good()) {
     getline(mscore,line);
     // Break the line up at the forward slash
+    elements.clear();
     boost::tokenizer<boost::char_separator<char> > tok(line,sp);
     for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
       elements.push_back(*beg);
     }
-    its = boost::lexical_cast<int>(elements[0]);
+    if (elements.empty()) continue;
+    assert(elements.size() == 3);
+    its = boost::lexical_cast<int>(elements[0]) - 1;
     if (its < iterations) continue;
     if (its > iterations) break;
     // So this is a line for this relaxation step, check if it is the right sheet/voice...
@@ -2848,13 +2852,15 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     }
   }
 
+  if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
+  if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
   for(i=0; i<opcount; ++i) {
     j = key_list[i];
     if (j > 44) {
-      v = select_vertex(m_vertices,double(j)/double(m_keys[0]),sheet);
+      v = select_vertex(m_vertices,double(j - m_keys.back())/m_width,sheet);
     }
     else {
-      v = select_vertex(x_vertices,double(j)/double(x_keys.back()),sheet);
+      v = select_vertex(x_vertices,double(j - x_keys[0])/x_width,sheet);
     }
     if (v == -1) continue;
     // Now we have the base vertex v, next we need to get the operator and 
@@ -2872,16 +2878,16 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = foliation_m(v,sheet);
     }
     else if (op == "E") {
-      success = expansion(v,sheet);
+      success = expansion(v,pvalues[0],sheet);
+      opstring << "," << pvalues[0]; 
     }
     else if (op == "I") {
       success = inflation(v,pvalues[0],sheet);
       opstring << "," << pvalues[0]; 
     }
     else if (op == "P") {
-      d = int(pvalues[0]);
-      success = perforation(v,d,sheet);
-      opstring << "," << d; 
+      success = perforation(v,0,sheet);
+      opstring << ",0"; 
     }
     else if (op == "V") {
       success = circumvolution(v,sheet);
@@ -2913,8 +2919,8 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       opstring << "," << pvalues[0]; 
     }
     else if (op == "A") {
-      success = amputation(v,pvalues[0],sheet);
-      opstring << "," << pvalues[0]; 
+      success = amputation(v,10.0,sheet);
+      opstring << ",10.0"; 
     }
     else if (op == "G") {
       success = germination(v,sheet);

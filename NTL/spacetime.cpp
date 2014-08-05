@@ -457,22 +457,73 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
   // The implicative scale is the treble clef in the F major scale, so the following 
   // twelve piano keys in ascending pitch, 
   // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
-  // The four chromatic notes are B4, C5 sharp, F5 sharp and G5
+  // The four chromatic notes are G4 sharp, C5 sharp, F5 sharp and G5
   // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
-  // V <=> G5
-  // P <=> F5 sharp
+  // V <=> G5*
+  // P <=> F5 sharp*
   // E3 <=> F5
   // F3 <=> E5
   // Om <=> D5
-  // F2 <=> C5 sharp
+  // F2 <=> C5 sharp*
   // F1 <=> C5 
   // E2 <=> A4 sharp
   // Um <=> A4
-  // I2 <=> G4 sharp
+  // I2 <=> G4 sharp*
   // E1 <=> G4
   // I1 <=> F4 
   std::string output = "NULL";
-
+  parameters.clear();
+  switch (key) {
+    case 45:
+      output = "I";
+      parameters.push_back(0.25);
+      break;
+    case 47:
+      output = "E";
+      parameters.push_back(0.25);
+      break;
+    case 48:
+      output = "I";
+      parameters.push_back(0.75);
+      break;
+    case 49:
+      output = "Um";
+      break;
+    case 50:
+      output = "E";
+      parameters.push_back(0.5);
+      break;
+    case 52:
+      output = "F";
+      parameters.push_back(0.25);
+      break;
+    case 53:
+      output = "F";
+      parameters.push_back(0.5);
+      break;
+    case 54:
+      output = "Om";
+      break;
+    case 56:
+      output = "F";
+      parameters.push_back(0.75);
+      break;
+    case 57:
+      output = "E";
+      parameters.push_back(0.75);
+      break;
+    case 58:
+      output = "P";
+      parameters.push_back(double(3));
+      break;
+    case 59:
+      output = "V";
+      break;
+    default:
+      std::cerr << "Illegal key value in implicative scale!" << std::endl;
+      std::exit(2);
+      break;
+  }
   return output;
 }
 
@@ -490,15 +541,61 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
   // D <=> A2
   // C <=> A2 sharp
   // Sg <=> C3
-  // N2 <=> C3 sharp
+  // N2 <=> C3 sharp*
   // Ux2 <=> D3 
   // Sm <=> E3
   // R <=> F3
-  // Ox <=> F3 sharp
-  // N1 <=> G3
-  // Ux1 <=> A3
+  // Ox <=> F3 sharp*
+  // N1 <=> G3*
+  // Ux1 <=> A3*
   std::string output = "NULL";
-
+  parameters.clear();
+  switch (key) {
+    case 36:
+      output = "Ux";
+      parameters.push_back(0.2);
+      break;
+    case 34:
+      output = "N";
+      parameters.push_back(2.5);
+      break;
+    case 33:
+      output = "Ox";
+      break;
+    case 32:
+      output = "R";
+      break;
+    case 31:
+      output = "Sm";
+      break;
+    case 29:
+      output = "Ux";
+      parameters.push_back(0.5);
+      break;
+    case 28:
+      output = "N";
+      parameters.push_back(1.2);
+      break;
+    case 27:
+      output = "Sg";
+      break;
+    case 25:
+      output = "C";
+      break;
+    case 24:
+      output = "D";
+      break;
+    case 22:
+      output = "A";
+      break;
+    case 20:
+      output = "G";
+      break;
+    default:
+      std::cerr << "Illegal key value in explicative scale!" << std::endl;
+      std::exit(2);
+      break;
+  }
   return output;
 }
 
