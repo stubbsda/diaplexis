@@ -120,7 +120,8 @@ void Spacetime::set_default_values()
   orientable = false;
   diskless = false;
   original_state = RANDOM;
-  // Default geometry (Euclidean, absolute and dimensionally uniform) is fine
+  // Default geometry (Euclidean, absolute, dimensionally 
+  // uniform, background dimension = 3)
   geometry = new Geometry;
   H = new Homology(GF2,NATIVE);
   pi = new Homotopy;
