@@ -12,7 +12,7 @@ const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg",
 const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V"};
 const int Spacetime::topological_radius;
 
-const double seqn_weights[] = {1.0,0.0,0.2,0.2};
+const double seqn_weights[] = {1.0,1.0,1.0,1.0};
 
 Spacetime::Spacetime()
 {
@@ -1116,11 +1116,9 @@ void Spacetime::structural_deficiency()
         events[i].entwinement.push_back(0.0);
         continue;
       }
-      //compute_graph(G,i,j);
-      //sum = seqn_weights[0]*G->completeness();
-      //compute_graph(G,i,j);
-      //sum += seqn_weights[1]*G->entwinement()/double(G->nvertex - 1);
-      sum = 0.5*double(vertex_dimension(i,j) - 1); // *G->entwinement();
+      compute_graph(G,i,j);
+      sum = seqn_weights[0]*G->completeness() + seqn_weights[1]*G->entwinement()/double(G->order() - 1);
+      //sum = 0.5*double(vertex_dimension(i,j) - 1); 
       events[i].entwinement.push_back(sum);
     }
     events[i].global_dimension = vertex_dimension(i,-1);
