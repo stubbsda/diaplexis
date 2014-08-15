@@ -1113,10 +1113,8 @@ void Spacetime::structural_deficiency()
         continue;
       }
       //compute_graph(G,i,j);
-      //sum = seqn_weights[0]*G->completeness();
-      //compute_graph(G,i,j);
-      //sum += seqn_weights[1]*G->entwinement()/double(G->nvertex - 1);
-      sum = 0.5*double(vertex_dimension(i,j) - 1); // *G->entwinement();
+      //sum = seqn_weights[0]*G->completeness() + seqn_weights[1]*G->entwinement()/double(G->order() - 1);
+      sum = 0.5*double(vertex_dimension(i,j) - 1); 
       events[i].entwinement.push_back(sum);
     }
     events[i].global_dimension = vertex_dimension(i,-1);

@@ -143,13 +143,89 @@ void Spacetime::compute_delta()
 void Spacetime::energy_diffusion()
 {
   const int nv = (signed) events.size();
-  double Enew[nv],E,Z;
-  int i,v,n,m,d1,d2;
+  double Enew[nv],E,En,l,tvalue; //Z;
+  int i,v,n,nc; //,m,d1,d2;
+  bool donator;
   std::set<int>::const_iterator it;
-  std::vector<int> vx,dimensions;
-  std::vector<double> vdimension;
+  //std::vector<int> vx,dimensions;
+  //std::vector<double> vdimension;
+  std::set<int> tvertex;
   std::vector<std::pair<int,double> > candidates;
 
+  // I want to try a new method here that begins by considering 
+  // those vertices that have non-zero energy. If such a vertex 
+  // has a negative deficiency, that means I want to lose energy, 
+  // so I next look for a neighbour with positive deficiency (so 
+  // it needs energy), with a transfer that is dependent on both 
+  // the geometric distance and the relative energy delta. 
+  double Esum1 = 0.0;
+  for(i=0; i<nv; ++i) {
+    Enew[i] = -1.0;
+    Esum1 += events[i].energy;
+    // Inactive vertex...
+    if (events[i].ubiquity == 1) continue;
+    if (std::abs(events[i].deficiency) > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,std::abs(events[i].deficiency)));
+  }
+  if (candidates.empty()) return;  
+  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+  nc = (signed) candidates.size();
+  for(i=nc-1; i>=0; --i) {    
+    v = candidates[i].first;
+    if (Enew[v] > 0.0) continue;
+    E = events[v].energy;
+    //if (E < 0.0) continue;
+    // If the deficiency > 0, this vertex needs to absorb energy, while 
+    // if the deficiency < 0 it wants to donate energy
+    donator = (events[v].deficiency > 0.0) ? false : true;
+    // Look for neighbours with an energy value less than 
+    // mine that don't already have a new energy value...
+    tvertex.clear();
+    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+      n = *it;
+      if (Enew[n] > 0.0) continue;
+      if (donator) {
+        // This vertex wants to donate energy so it looks for neighbour whose deficiency is positive
+        if (events[n].deficiency > 0.0) tvertex.insert(n);
+      }
+      else {
+        // This vertex wants to absorb energy so it needs a neighbour with energy
+        if (events[n].energy > 0.0) tvertex.insert(n);
+      }
+    }
+    if (tvertex.empty()) continue;
+    std::cout << "For " << v << " there are " << tvertex.size() << " candidates." << std::endl;
+    n = RND.irandom(tvertex);
+    En = events[n].energy;
+    // Need to make sure that we don't transfer too much energy - we want to avoid becoming 
+    // a positive deficiency vertex or transforming this neighbour into a negative deficiency 
+    // vertex...
+    if (donator) {
+      tvalue = -events[v].deficiency;
+      if (tvalue/E > 0.85) tvalue = 0.85*E;
+    }
+    else {
+      tvalue = events[n].energy;
+      if (tvalue/En > 0.85) tvalue = 0.85*En; 
+    }
+    // How much gets transferred also depends on the geometry - the further away the vertex, 
+    // the less
+    l = geometry->get_distance(v,n,false);
+    if (l > 1.0) {
+      tvalue *= (0.1 + 0.9/(1.0 + (l-1.0)*(l-1.0)));
+    }
+    // Do the transfer...
+    if (donator) {
+      std::cout << "Performing energy transfer of " << tvalue << " from " << v << " to " << n << std::endl;
+      Enew[v] = E - tvalue;
+      Enew[n] = En + tvalue;
+    }
+    else {
+      std::cout << "Performing energy transfer of " << tvalue << " from " << n << " to " << v << std::endl;
+      Enew[v] = E + tvalue;
+      Enew[n] = En - tvalue;
+    }
+  }
+  /*
   for(i=0; i<nv; ++i) {
     Enew[i] = -1.0;
     vdimension.push_back(double(events[i].global_dimension));
@@ -206,9 +282,19 @@ void Spacetime::energy_diffusion()
       Enew[vx[n]] = double(dimensions[n])*E/Z;
     }
   }
+  */
   for(i=0; i<nv; ++i) {
     if (Enew[i] > 0.0) events[i].energy = Enew[i];
   }
+  double Esum2 = 0.0;
+  for(i=0; i<nv; ++i) {
+    Esum2 += events[i].energy;
+  }
+  if (std::abs(Esum2 - Esum1) > Spacetime::epsilon) {
+    std::cout << "Energy conservation error " << Esum1 << "  " << Esum2 << std::endl;
+    std::exit(1);
+  }
+  //if (iterations > 2) std::exit(1);
 }
 
 bool Spacetime::adjust_dimension()

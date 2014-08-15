@@ -737,7 +737,7 @@ bool Spacetime::step_forwards()
  
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
-    hyphansis(order[i]);
+    //hyphansis(order[i]);
   }
 
   std::ofstream s2(hyphansis_file.c_str(),std::ios::app);
@@ -1224,12 +1224,15 @@ void Spacetime::structural_deficiency()
   global_deficiency =  E_G + 2.0*M_PI*double(euler_characteristic(-1)) - E_total;
 
   error = 0.0;
+  double terror = 0.0;
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     delta = events[i].deficiency;
     error += delta*delta;
+    terror += std::abs(delta);
   }
   error = std::sqrt(error)/na;
+  std::cout << "The total error is " << terror << std::endl;
 
   // Sanity check...
   int nv_test = 0;
@@ -1428,7 +1431,7 @@ bool Spacetime::global_operations()
   }
 #endif
 
-  optimize();
+  //optimize();
 
 #ifdef VERBOSE
   int ninitial = 0,ntouch = 0;
@@ -1861,7 +1864,10 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         for(i=0; i<geometry->dimension(); ++i) {
           j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
         }
-        events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
+        // The exact amount of energy needed to counter-balance the structural deficiency 
+        // of an 8 x 8 orthonormal lattice...
+        events[j].energy = 49.0765;
+        //events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
       }
       else {
         for(i=0; i<(signed) v.size(); ++i) {
