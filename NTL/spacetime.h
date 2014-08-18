@@ -134,6 +134,9 @@ class Spacetime {
   // The combinatorial size of the subgraph used to compute
   // the topological entwinement at a vertex
   static const int topological_radius = 4;
+  // The coupling constant between the topological-geometric torsion 
+  // and the energy
+  static const double Lambda;
 
   inline std::string sheet_activity() const;
   inline bool edge_exists(int,int,int) const;
