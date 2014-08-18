@@ -144,7 +144,7 @@ void Spacetime::energy_diffusion()
 {
   const int nv = (signed) events.size();
   int i,j,v,n,m,nc; 
-  double Enew[nv],E,En,l,d,tvalue,E_tx,Ex; 
+  double Enew[nv],E,En,l,d,E_tx,residue; 
   std::set<int>::const_iterator it;
   std::vector<boost::tuple<int,double,double> > tvertex;
   std::vector<std::pair<int,double> > candidates,ivertex;
@@ -161,11 +161,6 @@ void Spacetime::energy_diffusion()
     Esum1 += events[i].energy;
     // Inactive vertex...
     if (events[i].ubiquity == 1) continue;
-    if (events[i].energy < 0.0) {
-      std::cout << "Error, negative energy!" << std::endl;
-      std::cout << i << "  " << events[i].energy << std::endl;
-      std::exit(1);
-    }
     l = std::abs(events[i].deficiency);
     if (l > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,l));
   }
@@ -199,51 +194,40 @@ void Spacetime::energy_diffusion()
        d = tvertex[j].get<2>();
        if (d > Spacetime::epsilon) ivertex.push_back(std::pair<int,double>(n,d));
       }
-      std::cout << "Doing donator vertex " << v << " with " << ivertex.size() << " good candidates" << std::endl;
+      d = -events[v].deficiency/Spacetime::Lambda;
+      E_tx = (E < d) ? E : d;
       if (ivertex.empty()) {
         // Just do this the mindless way - a fraction of the vertex's energy is divided amongst 
         // itself and its neighbours, with the fraction decreasing as the energy 
-        //percent = 1.0/(1.0 + E);
-        //tvalue = percent*E/double(1 + m);
-        std::cout << "Mindless uniform distribution" << std::endl;
-        Ex = -events[v].deficiency/Spacetime::Lambda;
-        E_tx = (E < Ex) ? E : Ex;
-        tvalue = E_tx/double(1 + m);
-        Enew[v] = E - double(m)*tvalue;
+        E_tx = E_tx/double(1 + m);
+        Enew[v] = E - double(m)*E_tx;
         for(j=0; j<m; ++j) {
           n = tvertex[j].get<0>();
-          Enew[n] = events[n].energy + tvalue;
+          Enew[n] = events[n].energy + E_tx;
         }
       }
       else {
         // We have some likely candidates
-        double dsum = 0.0,residue;
-        Ex = -events[v].deficiency/Spacetime::Lambda;
-        E_tx = (E < Ex) ? E : Ex;
         m = (signed) ivertex.size();
         // Sum up the outstanding energy need among the neighbours...
+        d = 0.0;
         for(j=0; j<m; ++j) {
-          dsum += ivertex[j].second/Spacetime::Lambda;
+          d += ivertex[j].second/Spacetime::Lambda;
         }
         // If it's less than the total energy this vertex can donate...
-        std::cout << "We now have " << dsum << " and " << E_tx << std::endl;
-        if (dsum < E_tx) {
+        if (d < E_tx) {
           // We will eliminate each neighbour's need and then spread the remainder equally around
-          std::cout << "Distributing extra surplus" << std::endl;
-          residue = (E_tx - dsum)/double(1 + m);
+          residue = (E_tx - d)/double(1 + m);
           for(j=0; j<m; ++j) {
             n = ivertex[j].first;
             Enew[n] = events[n].energy + ivertex[j].second/Spacetime::Lambda + residue;
           }
-          Enew[v] = E - dsum - double(m)*residue;
-          //assert(!(Enew[v] < 0.0));
+          Enew[v] = E - d - double(m)*residue;
         }
         else {
           // Here there isn't enough to go around, so we will choose random neighbours to 
           // transfer energy to until we exhaust this vertex's spare energy
-          std::cout << "Not enough to go around" << std::endl;
           Enew[v] = E - E_tx;
-          //assert(!(Enew[v] < 0.0));
           residue = E_tx;
           do {
             j = RND.irandom(m);
@@ -274,23 +258,21 @@ void Spacetime::energy_diffusion()
       // If none of my neighbours have any energy there is nothing to do but 
       // skip to another vertex
       if (ivertex.empty()) continue;
-      std::cout << "Doing acceptor vertex " << v << " with " << ivertex.size() << " good candidates" << std::endl;
       // This vertex needs to grab as much energy as it can from its neighbours, 
       // giving priority to those neighbours with a negative deficiency
-      double residue,dsum = 0.0;
       m = (signed) ivertex.size();
+      d = 0.0;
       for(j=0; j<m; ++j) {
         n = ivertex[j].first;
-        if (events[n].deficiency < Spacetime::epsilon) {
-          En = events[n].energy;
-          E_tx = -events[n].deficiency/Spacetime::Lambda;
-          dsum += (En < E_tx) ? En : E_tx;
-        }
+        if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
+        En = events[n].energy;
+        E_tx = -events[n].deficiency/Spacetime::Lambda;
+        d += (En < E_tx) ? En : E_tx;
       }
-      if (dsum < (events[v].deficiency/Spacetime::Lambda)) {
-        std::cout << "Not energy neighbour energy, taking everything" << std::endl;
+      if (d < (events[v].deficiency/Spacetime::Lambda)) {
         for(j=0; j<m; ++j) {
           n = ivertex[j].first;
+          if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
           En = events[n].energy;
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           if (En < E_tx) {
@@ -299,23 +281,21 @@ void Spacetime::energy_diffusion()
           else {
             Enew[n] = events[n].energy - E_tx;
           }
-          //std::cout << "New energy is " << Enew[n] << std::endl;
         }
-        Enew[v] = E + dsum;
+        Enew[v] = E + d;
       }
       else {
         Enew[v] = E + events[v].deficiency/Spacetime::Lambda;
         residue = events[v].deficiency/Spacetime::Lambda;
-        std::cout << "Too much energy neighbour energy, taking what I need." << std::endl;
         do {
           j = RND.irandom(m);
           n = ivertex[j].first;
-          if (Enew[n] > 0.0) continue;
+          if (Enew[n] > 0.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
           En = events[n].energy;
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           l = (En < E_tx) ? En : E_tx;
           if (l < residue) {
-            Enew[n] = events[n].energy - l;
+            Enew[n] = (En < E_tx) ? 0.0 : events[n].energy - l;
             residue -= l;
           }
           else {
@@ -325,38 +305,6 @@ void Spacetime::energy_diffusion()
         } while(true);
       }
     }
-    /*
-    n = RND.irandom(tvertex);
-    En = events[n].energy;
-    // Need to make sure that we don't transfer too much energy - we want to avoid becoming 
-    // a positive deficiency vertex or transforming this neighbour into a negative deficiency 
-    // vertex...
-    if (donator) {
-      tvalue = -events[v].deficiency;
-      if (tvalue/E > 0.85) tvalue = 0.85*E;
-    }
-    else {
-      tvalue = events[n].energy;
-      if (tvalue/En > 0.85) tvalue = 0.85*En; 
-    }
-    // How much gets transferred also depends on the geometry - the further away the vertex, 
-    // the less
-    l = geometry->get_distance(v,n,false);
-    if (l > 1.0) {
-      tvalue *= (0.1 + 0.9/(1.0 + (l-1.0)*(l-1.0)));
-    }
-    // Do the transfer...
-    if (donator) {
-      std::cout << "Performing energy transfer of " << tvalue << " from " << v << " to " << n << std::endl;
-      Enew[v] = E - tvalue;
-      Enew[n] = En + tvalue;
-    }
-    else {
-      std::cout << "Performing energy transfer of " << tvalue << " from " << n << " to " << v << std::endl;
-      Enew[v] = E + tvalue;
-      Enew[n] = En - tvalue;
-    }
-    */
   }
   /*
   for(i=0; i<nv; ++i) {
@@ -417,9 +365,6 @@ void Spacetime::energy_diffusion()
   }
   */
   for(i=0; i<nv; ++i) {
-    std::cout << i << "  " << events[i].energy << "  " << Enew[i] << std::endl;
-  }
-  for(i=0; i<nv; ++i) {
     if (Enew[i] > -1.0) events[i].energy = Enew[i];
   }
   for(i=0; i<nv; ++i) {
@@ -437,7 +382,6 @@ void Spacetime::energy_diffusion()
     std::cout << "Energy conservation error " << Esum1 << "  " << Esum2 << std::endl;
     std::exit(1);
   }
-  //if (iterations > 2) std::exit(1);
 }
 
 bool Spacetime::adjust_dimension()
