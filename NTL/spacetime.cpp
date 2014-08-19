@@ -738,7 +738,7 @@ bool Spacetime::step_forwards()
  
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
-    //hyphansis(order[i]);
+    hyphansis(order[i]);
   }
 
   std::ofstream s2(hyphansis_file.c_str(),std::ios::app);
@@ -1430,7 +1430,7 @@ bool Spacetime::global_operations()
   }
 #endif
 
-  //optimize();
+  optimize();
 
 #ifdef VERBOSE
   int ninitial = 0,ntouch = 0;
