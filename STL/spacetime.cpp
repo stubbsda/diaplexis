@@ -6,6 +6,7 @@ const double Spacetime::ramosity = 0.15;
 const double Spacetime::epsilon = 0.00001;
 const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
+const double Spacetime::Lambda = 0.2;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
 const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm"};
@@ -1082,16 +1083,14 @@ void Spacetime::structural_deficiency()
   std::set<int>::const_iterator it;
   hash_map::const_iterator qt;
   Graph* G = new Graph;
-  const double lambda = 1.0;
-  const double pfactor = 5.5;
   const double na = double(cardinality(0,-1));
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
-  double R[nv],gvalue[nv],Lambda[nv],rho[nv];
+  double R[nv],gvalue[nv],length_deviation[nv],rho[nv];
 
   for(i=0; i<nv; ++i) {
     events[i].deficiency = 0.0;
-    Lambda[i] = 0.0;
+    length_deviation[i] = 0.0;
     gvalue[i] = 0.0;
     R[i] = 0.0;
     rho[i] = 0.0;
@@ -1168,7 +1167,7 @@ void Spacetime::structural_deficiency()
     sum1 = 0.0;
     sum2 = 0.0;
     k = 0;
-    Lambda[i] = 0.0;
+    length_deviation[i] = 0.0;
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
       j = *it;
       qt = index_table[1].find(make_key(i,j));
@@ -1179,10 +1178,10 @@ void Spacetime::structural_deficiency()
       sum2 += events[j].energy*l_inv;
       if (l < 1.0) {
         // To handle the case of null edges...
-        Lambda[i] += 10.0*(l - 1.0)*(l - 1.0);
+        length_deviation[i] += 10.0*(l - 1.0)*(l - 1.0);
       }
       else {
-        Lambda[i] += std::log(l)*std::log(l);
+        length_deviation[i] += std::log(l)*std::log(l);
       }
       k++;
       /*
@@ -1194,7 +1193,7 @@ void Spacetime::structural_deficiency()
       sum2 += double(sigma)*events[j].energy*l_inv;
       */
     }
-    Lambda[i] = Lambda[i]/double(k);
+    length_deviation[i] = length_deviation[i]/double(k);
     R[i] = gvalue[i]; // - sum1/double(k);
     rho[i] = events[i].energy; // + sum2/double(k);
   }
@@ -1202,8 +1201,8 @@ void Spacetime::structural_deficiency()
   // The local part of the structure equations
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
-    events[i].deficiency = pfactor*(R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*Lambda[i] + events[i].curvature) - lambda*rho[i];
-    events[i].geometric_deficiency = pfactor*(seqn_weights[3]*events[i].obliquity + seqn_weights[2]*Lambda[i] + events[i].curvature);
+    events[i].deficiency = R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
+    events[i].geometric_deficiency = seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature;
   }
 
   // Now the chromatic energy sum...

@@ -143,71 +143,186 @@ void Spacetime::compute_delta()
 void Spacetime::energy_diffusion()
 {
   const int nv = (signed) events.size();
-  double Enew[nv],E,Z;
-  int i,v,n,m,d1,d2;
-  std::vector<int> vx,dimensions;
-  std::vector<double> vdimension;
-  std::vector<std::pair<int,double> > esort,impedance;
+  int i,j,v,n,m,nc; 
+  double Enew[nv],E,En,l,d,E_tx,residue; 
   std::set<int>::const_iterator it;
+  std::vector<boost::tuple<int,double,double> > tvertex;
+  std::vector<std::pair<int,double> > candidates,ivertex;
 
+  // I want to try a new method here that begins by considering 
+  // those vertices that have non-zero energy. If such a vertex 
+  // has a negative deficiency, that means I want to lose energy, 
+  // so I next look for a neighbour with positive deficiency (so 
+  // it needs energy), with a transfer that is dependent on both 
+  // the geometric distance and the relative energy delta. 
+  double Esum1 = 0.0;
   for(i=0; i<nv; ++i) {
     Enew[i] = -1.0;
-    vdimension.push_back(double(vertex_dimension(i,-1)));
-    if (events[i].energy < Spacetime::epsilon) {
-      esort.push_back(std::pair<double,int>(i,-1.0));
-      continue;
-    }
-    if (ghost(events[i].ubiquity)) {
-      esort.push_back(std::pair<double,int>(i,-1.0));
-    }
-    else {
-      esort.push_back(std::pair<int,double>(i,std::abs(events[i].deficiency)));
-    }
+    Esum1 += events[i].energy;
+    // Inactive vertex...
+    if (ghost(events[i].ubiquity)) continue;
+    l = std::abs(events[i].deficiency);
+    if (l > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,l));
   }
-  std::sort(esort.begin(),esort.end(),pair_predicate_dbl);
-  for(i=nv-1; i>0; --i) {
-    vx.clear();
-    dimensions.clear();
-    v = esort[i].first;
+  if (candidates.empty()) return;  
+  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+  nc = (signed) candidates.size();
+  for(i=nc-1; i>=0; --i) {    
+    v = candidates[i].first;
     if (Enew[v] > 0.0) continue;
     E = events[v].energy;
-    d1 = events[v].global_dimension;
-    dimensions.push_back(d1);
-    vx.push_back(v);
-    // We need to reject neighbours if their dimensionality is different and/or
-    // they are far away
-    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); it++) {
-      m = *it;
-      if (Enew[m] > 0.0) continue;
-      // How to handle the dimensionality issue?
-      d2 = events[m].global_dimension;
-      // 1) Forbid all inter-dimensional energy transfer...
-      //if (d1 != d2) continue;
-      // 2) Forbid it across certain "special" frontiers like 2/1...
-      //if ((d1 > 1 && d2 == 1) || (d1 == 1 && d2 > 1)) continue;
-      // 3) Forbid it according to a Boltzmann criterion...
-      Z = 0.25*double(std::abs(d1 - d2));
-      if (RND.drandom() > std::exp(-Z)) continue;
-      // Now the geometric criterion: the farther away the vertex, the less
-      // likely that it participates in energy transfer...
-      Z = 0.5*(geometry->get_distance(v,m,false) - 1.0);
-      if (RND.drandom() > std::exp(-Z)) continue;
-      dimensions.push_back(d2);
-      E += events[m].energy;
-      vx.push_back(m);
+    // Look for neighbours with an energy value less than 
+    // mine that don't already have a new energy value...
+    tvertex.clear();
+    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+      n = *it;
+      if (Enew[n] > 0.0) continue;
+      tvertex.push_back(boost::tuple<int,double,double>(n,events[n].energy,events[n].deficiency));
     }
-    if (vx.size() < 2) continue;
-    m = (signed) vx.size();
-    Z = 0.0;
-    for(n=0; n<m; ++n) {
-      Z += double(dimensions[n]);
+    if (tvertex.empty()) continue;
+    m = (signed) tvertex.size();
+    // If the deficiency > 0, this vertex needs to absorb energy, while 
+    // if the deficiency < 0 it wants to donate energy
+    if (events[v].deficiency < 0.0) {
+      // The greater my deficiency the more energy I want to transfer and ideally it needs to be 
+      // transferred to the vertices with the largest deficiency
+      if (E < Spacetime::epsilon) continue;
+      ivertex.clear();
+      for(j=0; j<m; ++j) {
+       n = tvertex[j].get<0>();
+       En = tvertex[j].get<1>();
+       d = tvertex[j].get<2>();
+       if (d > Spacetime::epsilon) ivertex.push_back(std::pair<int,double>(n,d));
+      }
+      d = -events[v].deficiency/Spacetime::Lambda;
+      E_tx = (E < d) ? E : d;
+      if (ivertex.empty()) {
+        // Just do this the mindless way - a fraction of the vertex's energy is divided amongst 
+        // itself and its neighbours, with the fraction decreasing as the energy 
+        E_tx = E_tx/double(1 + m);
+        Enew[v] = E - double(m)*E_tx;
+        for(j=0; j<m; ++j) {
+          n = tvertex[j].get<0>();
+          Enew[n] = events[n].energy + E_tx;
+        }
+      }
+      else {
+        // We have some likely candidates
+        m = (signed) ivertex.size();
+        // Sum up the outstanding energy need among the neighbours...
+        d = 0.0;
+        for(j=0; j<m; ++j) {
+          d += ivertex[j].second/Spacetime::Lambda;
+        }
+        // If it's less than the total energy this vertex can donate...
+        if (d < E_tx) {
+          // We will eliminate each neighbour's need and then spread the remainder equally around
+          residue = (E_tx - d)/double(1 + m);
+          for(j=0; j<m; ++j) {
+            n = ivertex[j].first;
+            Enew[n] = events[n].energy + ivertex[j].second/Spacetime::Lambda + residue;
+          }
+          Enew[v] = E - d - double(m)*residue;
+        }
+        else {
+          // Here there isn't enough to go around, so we will choose random neighbours to 
+          // transfer energy to until we exhaust this vertex's spare energy
+          Enew[v] = E - E_tx;
+          residue = E_tx;
+          do {
+            j = RND.irandom(m);
+            if (Enew[ivertex[j].first] > 0.0) continue;
+            l = ivertex[j].second/Spacetime::Lambda;
+            n = ivertex[j].first;
+            if (l < residue) {
+              Enew[n] = events[n].energy + l;
+              residue -= l;
+            }
+            else {
+              Enew[n] = events[n].energy + residue;
+              break;
+            }
+          } while(true);
+        } 
+      }
     }
-    for(n=0; n<m; ++n) {
-      Enew[vx[n]] = double(dimensions[n])*E/Z;
+    else {
+      // Look for a candidate which has a positive deficiency
+      ivertex.clear();
+      for(j=0; j<m; ++j) {
+       n = tvertex[j].get<0>();
+       En = tvertex[j].get<1>();
+       d = tvertex[j].get<2>();
+       if (En > Spacetime::epsilon) ivertex.push_back(std::pair<int,double>(n,En));
+      }
+      // If none of my neighbours have any energy there is nothing to do but 
+      // skip to another vertex
+      if (ivertex.empty()) continue;
+      // This vertex needs to grab as much energy as it can from its neighbours, 
+      // giving priority to those neighbours with a negative deficiency
+      m = (signed) ivertex.size();
+      d = 0.0;
+      for(j=0; j<m; ++j) {
+        n = ivertex[j].first;
+        if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
+        En = events[n].energy;
+        E_tx = -events[n].deficiency/Spacetime::Lambda;
+        d += (En < E_tx) ? En : E_tx;
+      }
+      if (d < (events[v].deficiency/Spacetime::Lambda)) {
+        for(j=0; j<m; ++j) {
+          n = ivertex[j].first;
+          if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
+          En = events[n].energy;
+          E_tx = -events[n].deficiency/Spacetime::Lambda;
+          if (En < E_tx) {
+            Enew[n] = 0.0;
+          }
+          else {
+            Enew[n] = events[n].energy - E_tx;
+          }
+        }
+        Enew[v] = E + d;
+      }
+      else {
+        Enew[v] = E + events[v].deficiency/Spacetime::Lambda;
+        residue = events[v].deficiency/Spacetime::Lambda;
+        do {
+          j = RND.irandom(m);
+          n = ivertex[j].first;
+          if (Enew[n] > 0.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
+          En = events[n].energy;
+          E_tx = -events[n].deficiency/Spacetime::Lambda;
+          l = (En < E_tx) ? En : E_tx;
+          if (l < residue) {
+            Enew[n] = (En < E_tx) ? 0.0 : events[n].energy - l;
+            residue -= l;
+          }
+          else {
+            Enew[n] = events[n].energy - residue;
+            break;
+          }
+        } while(true);
+      }
     }
   }
   for(i=0; i<nv; ++i) {
-    if (Enew[i] > 0.0) events[i].energy = Enew[i];
+    if (Enew[i] > -1.0) events[i].energy = Enew[i];
+  }
+  for(i=0; i<nv; ++i) {
+   if (events[i].energy < 0.0) {
+      std::cout << "Error, negative energy!" << std::endl;
+      std::cout << i << "  " << events[i].energy << std::endl;
+      std::exit(1);
+    }
+  }
+  double Esum2 = 0.0;
+  for(i=0; i<nv; ++i) {
+    Esum2 += events[i].energy;
+  }
+  if (std::abs(Esum2 - Esum1) > Spacetime::epsilon) {
+    std::cout << "Energy conservation error " << Esum1 << "  " << Esum2 << std::endl;
+    std::exit(1);
   }
 }
 

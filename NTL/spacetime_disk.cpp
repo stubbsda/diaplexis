@@ -353,6 +353,7 @@ void Spacetime::write_log() const
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
     s << "<InitialAnnealingTemperature>" << Spacetime::T_zero << "</InitialAnnealingTemperature>" << std::endl;
     s << "<ThermalDecayRate>" << Spacetime::kappa << "</ThermalDecayRate>" << std::endl;
+    s << "<EnergyCouplingConstant>" << Spacetime::Lambda << "</EnergyCouplingConstant>" << std::endl;
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
     s << "<Global>" << std::endl;
@@ -1048,6 +1049,14 @@ void Spacetime::read_state(const std::string& filename)
     std::exit(1);
   }
 
+  s.read((char*)(&x),sizeof(double));
+  if (!double_equality(x,Spacetime::Lambda)) {
+    s.close();
+    std::cerr << "The compiled binary's Lambda " << Spacetime::Lambda << " does not match that (" << x << ") of the data file." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+
   s.read((char*)(&initial_size),sizeof(int));
   s.read((char*)(&nt_initial),sizeof(int));
   s.read((char*)(&initial_dim),sizeof(int));
@@ -1236,6 +1245,7 @@ void Spacetime::write_state() const
   s.write((char*)(&Spacetime::epsilon),sizeof(double));
   s.write((char*)(&Spacetime::T_zero),sizeof(double));
   s.write((char*)(&Spacetime::kappa),sizeof(double));
+  s.write((char*)(&Spacetime::Lambda),sizeof(double));
 
   // Now the global runtime parameters specific to the
   // single Spacetime instance...
