@@ -2584,6 +2584,19 @@ bool Spacetime::deflation(int base,int sheet)
   return true;
 }
 
+bool Spacetime::vertex_deletion(int n,int sheet)
+{
+  if (NTL::divide(events[n].ubiquity,codex[sheet].colour) == 0) return false;
+  int i,vx[2],ne = (signed) simplices[1].size();
+  events[n].ubiquity = events[n].ubiquity/codex[sheet].colour;
+  for(i=0; i<ne; ++i) {
+    if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (vx[0] == n || vx[1] == n) simplex_deletion(1,i,sheet);
+  }
+  return true;  
+}
+
 int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
 {
   int n = (signed) events.size();

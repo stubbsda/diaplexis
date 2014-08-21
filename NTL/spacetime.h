@@ -202,6 +202,7 @@ class Spacetime {
   int vertex_addition(const std::vector<double>&,int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
+  bool vertex_deletion(int,int);
   void simplex_addition(const std::set<int>&,int);
   void simplex_deletion(int,int,int);
   bool circumvolution(int);
@@ -281,7 +282,6 @@ class Spacetime {
   void analyze_convergence();
   void test_harness(int,int);
   void initialize();
-  void initialize(const char*);
   void clear();
   void write(Spacetime&) const;
   void read(const Spacetime&);
@@ -292,8 +292,8 @@ class Spacetime {
   Spacetime(bool);
   Spacetime(const char*);
   Spacetime(const char*,bool);
-  Spacetime(const char*,const char*);
   ~Spacetime();
+  void make_bhole();
   void read_state(const std::string&);
   bool step_forwards();
   void evolve();
