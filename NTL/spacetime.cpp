@@ -2087,6 +2087,7 @@ void Spacetime::initialize(const char* cfile)
 
   std::ifstream s(cfile,std::ios::binary | std::ios::in);
   s.read((char*)(&n),sizeof(int));
+  std::cout << "The vertex number is " << n << std::endl;
   for(i=0; i<n; ++i) {
     s.read((char*)(&k),sizeof(int));
     for(j=0; j<k; ++j) {
@@ -2097,12 +2098,15 @@ void Spacetime::initialize(const char* cfile)
     xc.clear();
   }
   s.read((char*)(&dmax),sizeof(int));
+  std::cout << "The maximum simplicial dimension is " << dmax << std::endl;
   for(i=dmax; i>=1; --i) {
     s.read((char*)(&k),sizeof(int));
     if (k != i) continue;
+    std::cout << "Doing dimension " << i << std::endl;
     s.read((char*)(&n),sizeof(int));
+    std::cout << "There are " << n << " such " << i << "-simplices" << std::endl;
     for(j=0; j<n; ++j) {
-      for(k=0; k<1+n; ++k) {
+      for(k=0; k<1+i; ++k) {
         s.read((char*)(&v),sizeof(int));
         vx.insert(v);
       }
@@ -2111,7 +2115,7 @@ void Spacetime::initialize(const char* cfile)
     }
   }
   s.close();
-
+  regularization(true,0);
   write_state();  
 }
 
