@@ -2584,6 +2584,18 @@ bool Spacetime::deflation(int base,int sheet)
   return true;
 }
 
+int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
+{
+  int n = (signed) events.size();
+  Vertex vt;
+
+  geometry->add_vertex(xc);
+  vt.ubiquity = codex[sheet].colour;
+  events.push_back(vt);
+
+  return n;
+}
+
 int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
 {
   int n = (signed) events.size();

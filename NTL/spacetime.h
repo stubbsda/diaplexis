@@ -199,6 +199,7 @@ class Spacetime {
   std::string implicative_scale(int,std::vector<double>&) const;
   std::string explicative_scale(int,std::vector<double>&) const;
   int select_vertex(const std::vector<int>&,double,int) const;
+  int vertex_addition(const std::vector<double>&,int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   void simplex_addition(const std::set<int>&,int);
@@ -280,6 +281,7 @@ class Spacetime {
   void analyze_convergence();
   void test_harness(int,int);
   void initialize();
+  void initialize(const char*);
   void clear();
   void write(Spacetime&) const;
   void read(const Spacetime&);
@@ -290,6 +292,7 @@ class Spacetime {
   Spacetime(bool);
   Spacetime(const char*);
   Spacetime(const char*,bool);
+  Spacetime(const char*,const char*);
   ~Spacetime();
   void read_state(const std::string&);
   bool step_forwards();

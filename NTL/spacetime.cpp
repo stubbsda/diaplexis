@@ -45,6 +45,13 @@ Spacetime::Spacetime(const char* filename,bool no_disk)
   initialize();
 }
 
+Spacetime::Spacetime(const char* parameter_file,const char* complex_file)
+{
+  set_default_values();
+  read_parameters(parameter_file);
+  initialize(complex_file);
+}
+
 Spacetime::~Spacetime()
 {
   events.clear();
@@ -2030,6 +2037,82 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     if (NTL::divide(locale,codex[i].colour) == 1) regularization(false,i);
   }
   regularization(false,-1);
+}
+void Spacetime::initialize(const char* cfile)
+{
+  // Some sanity checks for this use case...
+  assert(nt_initial == 1);
+
+  int i,j,k,n,v,dmax,pid;
+  double l;
+  std::stringstream s1,s2,s3,s4;
+  std::set<int> vx;
+  std::vector<double> xc;
+
+  if (std::system("mkdir -p data") < 0) {
+    std::cerr << "Unable to create data directory." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+
+  // Get the date and the process ID so that we can construct the
+  // state_file and log_file names...
+  start_time = boost::posix_time::second_clock::local_time();
+  boost::gregorian::date d = start_time.date();
+  boost::gregorian::date::ymd_type ymd = d.year_month_day();
+
+  s1.width(2);
+  s1 << std::setfill('0') << ymd.day.as_number();
+  s2.width(2);
+  s2 << std::setfill('0') << ymd.month.as_number();
+  s3.width(4);
+  s3 << ymd.year;
+  date_string = s1.str() + s2.str() + s3.str();
+
+  pid = getpid();
+  s4.width(5);
+  s4 << std::setfill('0') << pid;
+  pid_string = s4.str();
+
+  state_file += "_" + date_string + "_" + pid_string;
+
+  nactive = nt_initial;
+  codex.push_back(Sheet(0,psequence.next(),H->get_field(),H->get_method()));
+
+  events.clear();
+  for(i=1; i<=ND; ++i) {
+    simplices[i].clear();
+    index_table[i].clear();
+  }
+
+  std::ifstream s(cfile,std::ios::binary | std::ios::in);
+  s.read((char*)(&n),sizeof(int));
+  for(i=0; i<n; ++i) {
+    s.read((char*)(&k),sizeof(int));
+    for(j=0; j<k; ++j) {
+      s.read((char*)(&l),sizeof(double));
+      xc.push_back(l);
+    }
+    vertex_addition(xc,0);
+    xc.clear();
+  }
+  s.read((char*)(&dmax),sizeof(int));
+  for(i=dmax; i>=1; --i) {
+    s.read((char*)(&k),sizeof(int));
+    if (k != i) continue;
+    s.read((char*)(&n),sizeof(int));
+    for(j=0; j<n; ++j) {
+      for(k=0; k<1+n; ++k) {
+        s.read((char*)(&v),sizeof(int));
+        vx.insert(v);
+      }
+      simplex_addition(vx,0);
+      vx.clear();
+    }
+  }
+  s.close();
+
+  write_state();  
 }
 
 void Spacetime::initialize()
