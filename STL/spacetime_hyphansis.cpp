@@ -2685,6 +2685,31 @@ bool Spacetime::deflation(int base,int sheet)
   return true;
 }
 
+bool Spacetime::vertex_deletion(int n,int sheet)
+{
+  if (events[n].ubiquity[sheet] == 0) return false;
+  int i,vx[2],ne = (signed) simplices[1].size();
+  events[n].ubiquity[sheet] = 0; 
+  for(i=0; i<ne; ++i) {
+    if (simplices[1][i].ubiquity[sheet] == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (vx[0] == n || vx[1] == n) simplex_deletion(1,i,sheet);
+  }
+  return true;  
+}
+
+int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
+{
+  int n = (signed) events.size();
+  Vertex vt;
+
+  geometry->add_vertex(xc);
+  vt.ubiquity[sheet] = 1; 
+  events.push_back(vt);
+
+  return n;
+}
+
 int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
 {
   int i,n = (signed) events.size();

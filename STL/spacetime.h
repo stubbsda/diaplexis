@@ -198,8 +198,10 @@ class Spacetime {
   std::string implicative_scale(int,std::vector<double>&) const;
   std::string explicative_scale(int,std::vector<double>&) const;
   int select_vertex(const std::vector<int>&,double,int) const;
+  int vertex_addition(const std::vector<double>&,int);
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
+  bool vertex_deletion(int,int);
   void simplex_addition(const std::set<int>&,int);
   void simplex_deletion(int,int,int);
   bool circumvolution(int);

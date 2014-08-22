@@ -293,7 +293,7 @@ class Spacetime {
   Spacetime(const char*);
   Spacetime(const char*,bool);
   ~Spacetime();
-  void make_bhole();
+  void make_black_hole();
   void read_state(const std::string&);
   bool step_forwards();
   void evolve();
