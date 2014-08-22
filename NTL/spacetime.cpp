@@ -1176,6 +1176,7 @@ void Spacetime::structural_deficiency()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
       j = *it;
       l = geometry->get_distance(i,j,true);
+      //if (i == 8) std::cout << i << "  " << j << "  " << l << std::endl;
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += events[j].energy*l_inv;
@@ -1200,14 +1201,20 @@ void Spacetime::structural_deficiency()
     R[i] = gvalue[i]; // - sum1/double(k);
     rho[i] = events[i].energy; // + sum2/double(k);
   }
-
+  
   // The local part of the structure equations
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     events[i].deficiency = R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
     events[i].geometric_deficiency = seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature;
   }
-
+  /*
+  std::vector<double> xx;
+  for(i=0; i<nv; ++i) {
+    geometry->get_coordinates(i,xx);
+    std::cout << i << "  " << xx[0] << "  " << xx[1] << "  " << events[i].ubiquity << "  " << R[i] << "  " << length_deviation[i] << "  " << events[i].obliquity << "  " << events[i].curvature << "  " << events[i].deficiency << std::endl;
+  }
+  */
   // Now the chromatic energy sum...
   for(i=0; i<nv; ++i) {
     c = 0;
@@ -2051,13 +2058,14 @@ void Spacetime::make_bhole()
   regularization(true,-1);
 
   // Now add the black hole itself
-  int i,j;
+  int i,j,k;
+  double width = 2.0;
   std::vector<double> xc;
   std::set<int> S,bridge;
 
   for(i=0; i<7; ++i) {
-    xc.push_back(0.0 + RND.nrandom(0.0,0.5));
-    xc.push_back(0.0 + RND.nrandom(0.0,0.5));
+    xc.push_back(-width/2.0 + width*RND.drandom());
+    xc.push_back(-width/2.0 + width*RND.drandom());
     for(j=2; j<6; ++j) {
       xc.push_back(-2.0 + 4.0*RND.drandom());
     }
@@ -2065,12 +2073,95 @@ void Spacetime::make_bhole()
     xc.clear();
   }
   simplex_addition(S,0);
+  
+  do {
+    j = RND.irandom(S);
+    if (bridge.count(j) == 1) continue;
+    bridge.insert(j);
+    if (bridge.size() > 2) break;
+  } while(true);
+  for(i=0; i<2; ++i) {
+    xc.push_back(-width/2.0 + width*RND.drandom());
+    xc.push_back(-width/2.0 + width*RND.drandom());
+    for(j=2; j<5; ++j) {
+      xc.push_back(-2.0 + 4.0*RND.drandom());
+    }
+    j = vertex_addition(xc,0);
+    bridge.insert(j);
+    xc.clear();
+    S.insert(j);
+  }
+  simplex_addition(bridge,0);
 
+  bridge.clear();
+  bridge.insert(RND.irandom(S));
+  for(i=0; i<3; ++i) {
+    xc.push_back(-width/2.0 + width*RND.drandom());
+    xc.push_back(-width/2.0 + width*RND.drandom());
+    for(j=2; j<3; ++j) {
+      xc.push_back(-2.0 + 4.0*RND.drandom());
+    }
+    j = vertex_addition(xc,0);
+    bridge.insert(j);
+    xc.clear();
+    S.insert(j);
+  }
+  simplex_addition(bridge,0);
+
+  for(i=0; i<5; ++i) {
+    bridge.clear();
+    for(k=0; k<3; ++k) {
+      j = RND.irandom(S);
+      if (RND.drandom() < 0.3) {
+        xc.push_back(-width/2.0 + width*RND.drandom());
+        xc.push_back(-width/2.0 + width*RND.drandom());
+        j = vertex_addition(xc,0);
+        xc.clear();
+      }
+      else {
+        do {
+          j = RND.irandom(S);
+          if (bridge.count(j) == 1) continue;
+          break;
+        } while(true);
+      }
+      bridge.insert(j);
+    }
+    simplex_addition(bridge,0);
+  } 
+
+  bridge.clear();
   j = RND.irandom(S);
   bridge.insert(j); bridge.insert(21);
   simplex_addition(bridge,0);
+
+  bridge.clear();
+  j = RND.irandom(S);
+  bridge.insert(j); bridge.insert(38);
+  simplex_addition(bridge,0);
+
+  bridge.clear();
+  j = RND.irandom(S);
+  bridge.insert(j); bridge.insert(29);
+  simplex_addition(bridge,0);
+
+  bridge.clear();
+  j = RND.irandom(S);
+  bridge.insert(j); bridge.insert(51);
+  simplex_addition(bridge,0);
+
   for(i=0; i<(signed) events.size(); ++i) {
     events[i].topology_modified = true;
+  }
+  geometry->compute_distances();
+  compute_simplicial_dimension();
+  adjust_dimension();
+  compute_volume();
+  compute_curvature();
+  compute_obliquity();
+  compute_global_topology(-1);
+  for(i=0; i<nt_initial; ++i) {
+    compute_global_topology(i);
   }
   structural_deficiency();
 
