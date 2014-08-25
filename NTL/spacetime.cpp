@@ -1870,10 +1870,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         for(i=0; i<geometry->dimension(); ++i) {
           j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
         }
-        // The exact amount of energy needed to counter-balance the structural deficiency 
-        // of an 8 x 8 orthonormal lattice...
-        events[j].energy = 49.0765;
-        //events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
+        events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
       }
       else {
         for(i=0; i<(signed) v.size(); ++i) {
