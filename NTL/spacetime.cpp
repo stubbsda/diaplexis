@@ -1176,7 +1176,6 @@ void Spacetime::structural_deficiency()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
       j = *it;
       l = geometry->get_distance(i,j,true);
-      //if (i == 8) std::cout << i << "  " << j << "  " << l << std::endl;
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += events[j].energy*l_inv;
@@ -1207,14 +1206,12 @@ void Spacetime::structural_deficiency()
     if (events[i].ubiquity == 1) continue;
     events[i].deficiency = R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
     events[i].geometric_deficiency = seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature;
+    if (std::isnan(events[i].deficiency)) {
+      std::cout << i << "  " << R[i] << "  " << events[i].obliquity << "  " << length_deviation[i] << "  " << events[i].curvature << std::endl;
+      std::exit(1);
+    }
   }
-  /*
-  std::vector<double> xx;
-  for(i=0; i<nv; ++i) {
-    geometry->get_coordinates(i,xx);
-    std::cout << i << "  " << xx[0] << "  " << xx[1] << "  " << events[i].ubiquity << "  " << R[i] << "  " << length_deviation[i] << "  " << events[i].obliquity << "  " << events[i].curvature << "  " << events[i].deficiency << std::endl;
-  }
-  */
+
   // Now the chromatic energy sum...
   for(i=0; i<nv; ++i) {
     c = 0;
@@ -1706,8 +1703,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     const int n = j;
     const int nd = ipow(n,geometry->dimension()-1);
     const int nm1 = n - 1;
-    //const int nperturbed = 10 + int(0.01*RND.irandom(initial_size));
-    const int nperturbed = 2;
+    const int nperturbed = 10 + int(0.01*RND.irandom(initial_size));
     const double dx = 1.0;
     int m,k,l,d,rvalue;
     hash_map::const_iterator qt;
@@ -2036,193 +2032,6 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
   regularization(false,-1);
 }
 
-void Spacetime::make_black_hole()
-{
-  // Method to construct a combinatorial black in a 9 x 9 single-sheet Cartesian lattice
-  assert(nt_initial == 1);
-  assert(events.size() == 81);
-
-  // We begin by eliminating the nine vertices in the centre of the lattice, which is where 
-  // the black hole will go
-  assert(vertex_deletion(30,0));
-  assert(vertex_deletion(31,0));
-  assert(vertex_deletion(32,0));
-  
-  assert(vertex_deletion(39,0));
-  assert(vertex_deletion(40,0));
-  assert(vertex_deletion(41,0));
-
-  assert(vertex_deletion(48,0));
-  assert(vertex_deletion(49,0));
-  assert(vertex_deletion(50,0));
-  regularization(true,-1);
-
-  // Now add the black hole itself, beginning with a 6-simplex
-  int i,j,k;
-  double width = 1.5;
-  std::vector<double> xc;
-  std::set<int> S,bridge;
-
-  for(i=0; i<7; ++i) {
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    for(j=2; j<6; ++j) {
-      xc.push_back(-2.0 + 4.0*RND.drandom());
-    }
-    S.insert(vertex_addition(xc,0));
-    xc.clear();
-  }
-  simplex_addition(S,0);
-  
-  // Add a 4-simplex with three vertices borrowed from the 
-  // 6-simplex and two new vertices 
-  width = 2.0;
-  do {
-    j = RND.irandom(S);
-    if (bridge.count(j) == 1) continue;
-    bridge.insert(j);
-    if (bridge.size() == 3) break;
-  } while(true);
-  for(i=0; i<2; ++i) {
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    for(j=2; j<5; ++j) {
-      xc.push_back(-2.0 + 4.0*RND.drandom());
-    }
-    j = vertex_addition(xc,0);
-    bridge.insert(j);
-    xc.clear();
-    S.insert(j);
-  }
-  simplex_addition(bridge,0);
-
-  // Add a 3-simplex using an existing "black hole" vertex 
-  // and three newly created ones
-  bridge.clear();
-  bridge.insert(RND.irandom(S));
-  for(i=0; i<3; ++i) {
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    xc.push_back(-width/2.0 + width*RND.drandom());
-    for(j=2; j<3; ++j) {
-      xc.push_back(-2.0 + 4.0*RND.drandom());
-    }
-    j = vertex_addition(xc,0);
-    bridge.insert(j);
-    xc.clear();
-    S.insert(j);
-  }
-  simplex_addition(bridge,0);
-
-  // Add five triangles created from black hole vertices 
-  // and 30% of the time a newly created vertex
-  width = 3.0;
-  for(i=0; i<5; ++i) {
-    bridge.clear();
-    for(k=0; k<3; ++k) {
-      j = RND.irandom(S);
-      if (RND.drandom() < 0.3) {
-        xc.push_back(-width/2.0 + width*RND.drandom());
-        xc.push_back(-width/2.0 + width*RND.drandom());
-        j = vertex_addition(xc,0);
-        xc.clear();
-      }
-      else {
-        do {
-          j = RND.irandom(S);
-          if (bridge.count(j) == 1) continue;
-          break;
-        } while(true);
-      }
-      bridge.insert(j);
-    }
-    simplex_addition(bridge,0);
-  } 
-
-  // Now finally add several edges to connect the black hole 
-  // to the Cartesian lattice vertices that border it
-  double cutoff = 20.0;
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(21,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(21);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(38,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(38);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(23,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(23);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(33,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(33);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(29,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(29);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(51,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(51);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  do {
-    j = RND.irandom(S);
-    if (geometry->get_distance(58,j,false) < cutoff) break;
-  } while(true);
-  bridge.insert(j); bridge.insert(58);
-  simplex_addition(bridge,0);
-
-  bridge.clear();
-  bridge.insert(j); bridge.insert(57);
-  simplex_addition(bridge,0);
-
-  // Recompute the topology and geometry of the spacetime 
-  // complex along with the structure equations, then write 
-  // it to disk
-  regularization(true,-1);
-  for(i=0; i<(signed) events.size(); ++i) {
-    events[i].topology_modified = true;
-  }
-  geometry->compute_distances();
-  compute_simplicial_dimension();
-  adjust_dimension();
-  compute_volume();
-  compute_curvature();
-  compute_obliquity();
-  compute_global_topology(-1);
-  for(i=0; i<nt_initial; ++i) {
-    compute_global_topology(i);
-  }
-  structural_deficiency();
-
-  write_state();
-}
-
 void Spacetime::initialize()
 {
   int i,pid;
@@ -2340,6 +2149,25 @@ void Spacetime::initialize()
 
   write_state();
   write_log();
+
+  knot_insertion(41,3.5,7,0);
+  regularization(true,-1);
+
+  for(i=0; i<(signed) events.size(); ++i) {
+    if (events[i].ubiquity == 1) continue;
+    events[i].topology_modified = true;
+  }
+
+  compute_simplicial_dimension();
+  adjust_dimension();
+  geometry->compute_distances();
+  compute_volume();
+  compute_curvature();
+  compute_obliquity();
+  structural_deficiency();
+  
+  write_state();
+
   if (iterations == 0) {
     std::ofstream s(hyphansis_file.c_str(),std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
