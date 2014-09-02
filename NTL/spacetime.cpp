@@ -810,7 +810,7 @@ void Spacetime::test_harness(int type,int n)
     vt.ubiquity = sheet;
     for(i=0; i<n; ++i) {
       events.push_back(vt);
-      geometry->add_vertex(-1);
+      geometry->vertex_addition(-1);
     }
   }
 
@@ -1176,6 +1176,7 @@ void Spacetime::structural_deficiency()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
       j = *it;
       l = geometry->get_distance(i,j,true);
+      //if (i == 94) std::cout << i << "  " << j << "  " << l << std::endl;
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += events[j].energy*l_inv;
@@ -1206,10 +1207,6 @@ void Spacetime::structural_deficiency()
     if (events[i].ubiquity == 1) continue;
     events[i].deficiency = R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
     events[i].geometric_deficiency = seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature;
-    if (std::isnan(events[i].deficiency)) {
-      std::cout << i << "  " << R[i] << "  " << events[i].obliquity << "  " << length_deviation[i] << "  " << events[i].curvature << std::endl;
-      std::exit(1);
-    }
   }
 
   // Now the chromatic energy sum...
@@ -1731,7 +1728,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         rvalue -= k*in1;
         svalue[m] = dx*(double(in1) - 0.5*double(nm1));
       }
-      if (!relational) geometry->add_vertex(svalue);
+      if (!relational) geometry->vertex_addition(svalue);
       for(m=0; m<geometry->dimension(); ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
@@ -1834,7 +1831,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         for(l=0; l<j; ++l) {
           N.insert(events.size());
           v.push_back(events.size());
-          geometry->add_vertex(v[i]);
+          geometry->vertex_addition(v[i]);
           events.push_back(vt);
         }
         d = N.size() - 1;
@@ -1854,7 +1851,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         }
       }
       for(i=0; i<(signed) v.size(); ++i) {
-        geometry->perturb_vertex(v[i]);
+        geometry->vertex_perturbation(v[i]);
       }
     }
     if (perturb_energy) {
@@ -1882,7 +1879,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
       geometry->initialize(0,"SINGLETON");
     }
     else {
-      geometry->add_vertex(svalue);
+      geometry->vertex_addition(svalue);
     }
     vt.energy = 5000.0*(0.5 + RND.drandom()/2.0);
     events.push_back(vt);
@@ -1899,7 +1896,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
       for(i=0; i<ulimit; ++i) {
         svalue.push_back(0.0);
       }
-      geometry->add_vertex(svalue);
+      geometry->vertex_addition(svalue);
     }
     events.push_back(vt);
     vx.insert(0);
@@ -1907,7 +1904,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     for(i=1; i<=initial_dim; ++i) {
       if (!relational) {
         svalue[i-1] = 1.0;
-        geometry->add_vertex(svalue);
+        geometry->vertex_addition(svalue);
         svalue[i-1] = 0.0;
       }
       events.push_back(vt);
@@ -1954,7 +1951,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         for(j=0; j<geometry->dimension(); ++j) {
           svalue[j] = -10.0 + 20.0*RND.drandom();
         }
-        geometry->add_vertex(svalue);
+        geometry->vertex_addition(svalue);
         events.push_back(vt);
       }
     }
@@ -2157,10 +2154,10 @@ void Spacetime::initialize()
     if (events[i].ubiquity == 1) continue;
     events[i].topology_modified = true;
   }
-
   compute_simplicial_dimension();
   adjust_dimension();
   geometry->compute_distances();
+  assert(geometry->consistent());
   compute_volume();
   compute_curvature();
   compute_obliquity();

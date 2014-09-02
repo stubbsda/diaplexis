@@ -2,6 +2,190 @@
 
 extern Random RND;
 
+bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
+{
+  // Method to construct a highly-entwined knot after carving out a hole for 
+  // in the spacetime complex - it really only makes sense if D is large 
+  // enough...  
+  if (D <= 3) return false;
+
+  const double dm = double(D);
+
+  int i,j,k,d,p,q,m,nc,nbridge,its;
+  double l,alpha,width = size/dm;
+  std::vector<double> xc,cvertex;
+  std::vector<std::pair<int,double> > ambient;
+  std::set<int> S,base,nvertex,bvertex,kvertex;
+  std::set<int>::const_iterator it;
+
+  // We begin by eliminating the central vertex along with any vertices on this 
+  // sheet that are within the a sphere of radius "size"
+  geometry->get_coordinates(centre,cvertex); 
+  assert(vertex_deletion(centre,sheet));
+  for(i=0; i<(signed) events.size(); ++i) {
+    if (events[i].ubiquity[sheet] == 0) continue;
+    l = geometry->get_distance(centre,i,false);
+    if (l < size) {
+      assert(vertex_deletion(i,sheet));
+      continue;
+    }
+    ambient.push_back(std::pair<int,double>(i,l - size));
+  }
+  std::sort(ambient.begin(),ambient.end(),pair_predicate_dbl);
+
+  // Ideally the number of boundary vertices should be the surface area of a d-sphere
+  d = geometry->dimension();
+  alpha = double(d)/2.0;
+  l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/std::tgamma(1.0 + alpha);  
+  d *= int(l);
+  for(i=0; i<d; ++i) {
+    // If we can't get enough boundary vertices that are close enough, exit
+    if (ambient[i].second > 1.5*size) break;
+    bvertex.insert(ambient[i].first);
+  }
+  assert(bvertex.size() > 1);
+
+  // First add the central element of the knot, a D-simplex
+  for(i=0; i<1+D; ++i) {
+    for(j=0; j<geometry->dimension(); ++j) {
+      xc.push_back(cvertex[j] + width*(RND.drandom() - 0.5));
+    }
+    if (!geometry->get_uniform()) {
+      for(j=geometry->dimension(); j<D; ++j) {
+        xc.push_back(-dm + dm/2.0*RND.drandom()); 
+      }
+    }
+    S.insert(vertex_addition(xc,sheet));
+    xc.clear();
+  }
+  simplex_addition(S,sheet);
+
+  // Now add a set of lower-dimensional simplices to this knot and also tie it 
+  // in to the existing spacetime complex...
+  base = S;
+  kvertex = S;
+  S.clear();
+  for(i=D-1; i>=3; --i) {
+    // As the dimension shrinks, the number of simplices should grow
+    l = double(i);
+    m = int(RND.nrandom(dm - l,2.0));
+#ifdef VERBOSE
+    std::cout << "Adding " << m << " " << i << "-simplices to this complex" << std::endl;
+#endif
+    if (m <= 0) continue;
+    nc = 0;
+    width = 2.0*size/l;
+    if (width > size) width = size;
+    do {    
+      for(j=0; j<1+i; ++j) {
+        q = -1;
+        if (RND.drandom() < (0.5*l/dm)) {
+          for(k=0; k<geometry->dimension(); ++k) {
+            xc.push_back(cvertex[k] + width*(RND.drandom() - 0.5));
+          }
+          if (!geometry->get_uniform()) {
+            for(k=geometry->dimension(); k<i; ++k) {
+              alpha = RND.nrandom(-l,dm);
+              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND.drandom();
+              if (alpha > -0.1) alpha = -0.1 + RND.drandom();
+              xc.push_back(alpha); 
+            }
+          }
+          q = vertex_addition(xc,sheet);
+          xc.clear();
+          nvertex.insert(q);
+          kvertex.insert(q);
+        }
+        else {
+          its = 0;
+          do {
+            its++;
+            q = RND.irandom(base);
+            // Make sure it isn't already in S,
+            if (S.count(q) == 0) break;
+          } while(its < 2*base.size());
+        }
+        if (q == -1) {
+          // Create a new vertex from scratch
+          for(k=0; k<geometry->dimension(); ++k) {
+            xc.push_back(cvertex[k] + width*(RND.drandom() - 0.5));
+          }
+          if (!geometry->get_uniform()) {
+            for(k=geometry->dimension(); k<i; ++k) {
+              alpha = RND.nrandom(-l,dm);
+              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND.drandom();
+              if (alpha > -0.1) alpha = -0.1 + RND.drandom();
+              xc.push_back(alpha); 
+            }
+          }
+          q = vertex_addition(xc,sheet);
+          xc.clear();
+          nvertex.insert(q);
+          kvertex.insert(q);          
+        }
+        S.insert(q);
+      }
+#ifdef VERBOSE
+      std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
+#endif
+      simplex_addition(S,sheet);
+      S.clear();
+      nc++;
+    } while(nc < m);
+    base = nvertex;
+    nvertex.clear();
+  }
+
+  // Finally the 2-simplexes to bridge the knot with the ambient spacetime complex
+  d = bvertex.size()*(bvertex.size() - 1)/2;
+  nbridge = int((0.1 + 0.15*RND.drandom())*d);
+  ambient.clear();
+#ifdef VERBOSE
+  std::cout << "Adding " << nbridge << " 2-simplices" << std::endl;
+#endif
+  d = 0;
+  do {
+    q = RND.irandom(bvertex);
+    if (RND.drandom() < 0.33) {
+      do { 
+        p = RND.irandom(bvertex);
+        if (p != q) break;
+      } while(true);
+    }
+    else {
+      alpha = 10.0*size;
+      for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
+        l = geometry->get_distance(q,*it,false);
+        if (l < alpha) {
+          p = *it;
+          alpha = l;
+        }
+      }
+    }
+    S.insert(q);
+    S.insert(p);
+    // Find the closest new vertex...
+    for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
+      if (p == *it) continue;
+      l = geometry->get_distance(q,*it,false);
+      alpha = geometry->get_distance(p,*it,false);
+      ambient.push_back(std::pair<int,double>(*it,l + alpha));
+    }
+    std::sort(ambient.begin(),ambient.end(),pair_predicate_dbl);
+    if (RND.drandom() < 0.5) {
+      S.insert(ambient[0].first);
+    }
+    else {
+      S.insert(ambient[1].first);
+    }
+    if (simplex_addition(S,sheet)) d++;
+    S.clear();
+  } while(d < nbridge);
+
+  regularization(true,sheet);
+  return true;
+}
+
 bool Spacetime::germination(int base,int sheet)
 {
   // This method constructs new neighbour vertices w_i for the vertex base which are
@@ -1562,7 +1746,7 @@ bool Spacetime::fission(int base,double density,int sheet)
   }
 }
 
-void Spacetime::simplex_addition(const std::set<int>& S,int sheet)
+bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
 {
   int i,j;
   std::set<int> fc;
@@ -1579,12 +1763,7 @@ void Spacetime::simplex_addition(const std::set<int>& S,int sheet)
   chi[sheet] = 1;
 
   Simplex s(S,chi);
-#ifdef VERBOSE
-  std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
-#endif
-  for(it=S.begin(); it!=S.end(); it++) {
-    codex[sheet].vx_delta.insert(*it);
-  }
+
   fx = s.key;
   qt = index_table[d].find(fx);
   if (qt == index_table[d].end()) {
@@ -1592,14 +1771,28 @@ void Spacetime::simplex_addition(const std::set<int>& S,int sheet)
     index_table[d][fx] = simplices[d].size() - 1;
   }
   else {
-    simplices[d][qt->second].ubiquity[sheet] = 1;
+    if (simplices[d][qt->second].ubiquity[sheet] == 1) {
+      return false;
+    }
+    else {
+      simplices[d][qt->second].ubiquity[sheet] = 1;
+    }
   }
+
+#ifdef VERBOSE
+  std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
+#endif
+
+  for(it=S.begin(); it!=S.end(); it++) {
+    codex[sheet].vx_delta.insert(*it);
+  }
+
   if (d == 1) {
     int vn[2];
     s.get_vertices(vn);
     events[vn[0]].neighbours.insert(vn[1]);
     events[vn[1]].neighbours.insert(vn[0]);
-    return;
+    return true;
   }
   for(it=S.begin(); it!=S.end(); it++) {
     vx.push_back(*it);
@@ -1638,7 +1831,8 @@ void Spacetime::simplex_addition(const std::set<int>& S,int sheet)
     }
     vec.clear();
   }
-  regularization(true,sheet);
+  simplicial_implication(sheet);
+  return true;
 }
 
 void Spacetime::simplex_deletion(int d,int n,int sheet)
@@ -2518,7 +2712,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
         S.clear();
       }
       vmodified.insert(nc);
-      geometry->add_vertex(i);
+      geometry->vertex_addition(i);
       events.push_back(vx);
       change = true;
       break;
@@ -2703,7 +2897,7 @@ int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
   int n = (signed) events.size();
   Vertex vt;
 
-  geometry->add_vertex(xc);
+  geometry->vertex_addition(xc);
   vt.ubiquity[sheet] = 1; 
   events.push_back(vt);
 
@@ -2716,7 +2910,7 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
   Vertex vt;
   const int nt = (signed) codex.size();
 
-  geometry->add_vertex(antecedents);
+  geometry->vertex_addition(antecedents);
   for(i=0; i<nt; ++i) {
     vt.ubiquity.push_back(0);
   }
@@ -2736,7 +2930,7 @@ int Spacetime::vertex_addition(int base,int sheet)
     vt.ubiquity.push_back(0);
   }
   vt.ubiquity[sheet] = 1;
-  geometry->add_vertex(base);
+  geometry->vertex_addition(base);
   events.push_back(vt);
 
   return n;

@@ -202,7 +202,7 @@ class Spacetime {
   int vertex_addition(const std::set<int>&,int);
   int vertex_addition(int,int);
   bool vertex_deletion(int,int);
-  void simplex_addition(const std::set<int>&,int);
+  bool simplex_addition(const std::set<int>&,int);
   void simplex_deletion(int,int,int);
   bool knot_insertion(int,double,int,int);
   bool circumvolution(int);

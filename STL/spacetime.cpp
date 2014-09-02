@@ -808,7 +808,7 @@ void Spacetime::test_harness(int type,int n)
     vt.ubiquity = sheet;
     for(i=0; i<n; ++i) {
       events.push_back(vt);
-      geometry->add_vertex(-1);
+      geometry->vertex_addition(-1);
     }
   }
   S.ubiquity = sheet;
@@ -1727,7 +1727,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         rvalue -= k*in1;
         svalue[m] = dx*(double(in1) - 0.5*double(nm1));
       }
-      if (!relational) geometry->add_vertex(svalue);
+      if (!relational) geometry->vertex_addition(svalue);
       for(m=0; m<geometry->dimension(); ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
@@ -1832,7 +1832,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         for(k=0; k<j; ++k) {
           N.insert(events.size());
           v.push_back(events.size());
-          geometry->add_vertex(v[i]);
+          geometry->vertex_addition(v[i]);
           events.push_back(vt);
         }
         d = N.size() - 1;
@@ -1856,7 +1856,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         }
       }
       for(i=0; i<(signed) v.size(); ++i) {
-        geometry->perturb_vertex(v[i]);
+        geometry->vertex_perturbation(v[i]);
       }
     }
     if (perturb_energy) {
@@ -1884,7 +1884,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       geometry->initialize(0,"SINGLETON");
     }
     else {
-      geometry->add_vertex(svalue);
+      geometry->vertex_addition(svalue);
     }
     vt.energy = 5000.0*(0.5 + RND.drandom()/2.0);
     events.push_back(vt);
@@ -1901,7 +1901,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       for(i=0; i<ulimit; ++i) {
         svalue.push_back(0.0);
       }
-      geometry->add_vertex(svalue);
+      geometry->vertex_addition(svalue);
     }
     events.push_back(vt);
     vx.insert(0);
@@ -1909,7 +1909,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     for(i=1; i<=initial_dim; ++i) {
       if (!relational) {
         svalue[i-1] = 1.0;
-        geometry->add_vertex(svalue);
+        geometry->vertex_addition(svalue);
         svalue[i-1] = 0.0;
       }
       events.push_back(vt);
@@ -1956,7 +1956,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         for(j=0; j<geometry->dimension(); ++j) {
           svalue[j] = -10.0 + 20.0*RND.drandom();
         }
-        geometry->add_vertex(svalue);
+        geometry->vertex_addition(svalue);
         events.push_back(vt);
       }
     }
