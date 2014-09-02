@@ -117,7 +117,7 @@ void Vertex::serialize(std::ofstream& s,int nt) const
 
   in1 = (signed) neighbours.size();
   s.write((char*)(&in1),sizeof(int));
-  for(it=neighbours.begin(); it!=neighbours.end(); it++) {
+  for(it=neighbours.begin(); it!=neighbours.end(); ++it) {
     in1 = *it;
     s.write((char*)(&in1),sizeof(int));
   }
