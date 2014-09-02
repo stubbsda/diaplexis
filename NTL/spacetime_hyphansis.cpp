@@ -36,7 +36,7 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
   // Ideally the number of boundary vertices should be the surface area of a d-sphere
   d = geometry->dimension();
   alpha = double(d)/2.0;
-  l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/std::tgamma(1.0 + alpha);  
+  l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/boost::math::tgamma(1.0 + alpha);  
   d *= int(l);
   for(i=0; i<d; ++i) {
     // If we can't get enough boundary vertices that are close enough, exit
@@ -103,7 +103,7 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
             q = RND.irandom(base);
             // Make sure it isn't already in S,
             if (S.count(q) == 0) break;
-          } while(its < 2*base.size());
+          } while(its < 2*((signed) base.size()));
         }
         if (q == -1) {
           // Create a new vertex from scratch
