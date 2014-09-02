@@ -87,7 +87,7 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
             for(k=geometry->dimension(); k<i; ++k) {
               alpha = RND.nrandom(-l,dm);
               if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND.drandom();
-              if (alpha > -0.1) alpha = -0.1 + RND.drandom();
+              if (alpha > -0.1) alpha = -0.1 - RND.drandom();
               xc.push_back(alpha); 
             }
           }
@@ -114,7 +114,7 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
             for(k=geometry->dimension(); k<i; ++k) {
               alpha = RND.nrandom(-l,dm);
               if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND.drandom();
-              if (alpha > -0.1) alpha = -0.1 + RND.drandom();
+              if (alpha > -0.1) alpha = -0.1 - RND.drandom();
               xc.push_back(alpha); 
             }
           }
