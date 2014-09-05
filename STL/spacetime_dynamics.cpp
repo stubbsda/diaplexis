@@ -1004,10 +1004,6 @@ void Spacetime::optimize()
   else if (solver == SIMPLEX) {
     int in1,j,k,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
-    const bool euclidean = geometry->get_euclidean();
-    const bool relational = geometry->get_relational();
-    const bool uniform = geometry->get_uniform();
-    const int D = geometry->dimension();
     Geometry SR(*geometry),SE(*geometry);
     Geometry* initial_state = new Geometry(*geometry);
     std::vector<std::pair<int,double> > fitness;
