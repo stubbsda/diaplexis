@@ -116,7 +116,7 @@ void Vertex::serialize(std::ofstream& s) const
   }
   in1 = (signed) neighbours.size();
   s.write((char*)(&in1),sizeof(int));
-  for(it=neighbours.begin(); it!=neighbours.end(); it++) {
+  for(it=neighbours.begin(); it!=neighbours.end(); ++it) {
     in1 = *it;
     s.write((char*)(&in1),sizeof(int));
   }
@@ -127,13 +127,13 @@ void Vertex::serialize(std::ofstream& s) const
   }
   in1 = (signed) past.size();
   s.write((char*)(&in1),sizeof(int));
-  for(it=past.begin(); it!=past.end(); it++) {
+  for(it=past.begin(); it!=past.end(); ++it) {
     in1 = *it;
     s.write((char*)(&in1),sizeof(int));
   }
   in1 = (signed) future.size();
   s.write((char*)(&in1),sizeof(int));
-  for(it=future.begin(); it!=future.end(); it++) {
+  for(it=future.begin(); it!=future.end(); ++it) {
     in1 = *it;
     s.write((char*)(&in1),sizeof(int));
   }

@@ -271,7 +271,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
       geometry->get_implied_vertices(i,current);
       compute_geometric_dependency(current);
       vmodified = last;
-      for(it=current.begin(); it!=current.end(); it++) {
+      for(it=current.begin(); it!=current.end(); ++it) {
         vmodified.insert(*it);
       }
       geometry->compute_distances(vmodified);
@@ -405,7 +405,7 @@ void Spacetime::compute_obliquity()
 
     rho = 0.0;
     first = true;
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       if (first) {
         first = false;
         continue;
@@ -628,7 +628,7 @@ void Spacetime::compute_volume()
       if (info > 0) {
         std::set<int>::const_iterator it;
         std::cout << "Null simplex: " << i << "  " << V << std::endl;
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           std::cout << "[ ";
           for(k=0; k<(signed) events[*it].x.size(); ++k) {
             std::cout << events[*it].x[k] << " ";

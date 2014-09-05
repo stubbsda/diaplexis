@@ -81,7 +81,7 @@ void Spacetime::compute_delta()
     // And all the new d-simplices (d >= 1)...
     for(j=0; j<n; ++j) {
       if (simplices[i][j].incept >= 0) continue;
-      for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+      for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
         vx.insert(*it);
       }
     }
@@ -89,7 +89,7 @@ void Spacetime::compute_delta()
 
   for(i=0; i<nt; ++i) {
     if (!codex[i].active) continue;
-    for(it=codex[i].vx_delta.begin(); it!=codex[i].vx_delta.end(); it++) {
+    for(it=codex[i].vx_delta.begin(); it!=codex[i].vx_delta.end(); ++it) {
       vx.insert(*it);
     }
   }
@@ -101,7 +101,7 @@ void Spacetime::compute_delta()
 #ifdef VERBOSE
   std::cout << "There are " << vx.size() << " vertices directly implicated" << std::endl;
 #endif
-  for(it=vx.begin(); it!=vx.end(); it++) {
+  for(it=vx.begin(); it!=vx.end(); ++it) {
     n = *it;
     nhop = 0;
     // Every vertex within topological_radius hops of n is labelled as
@@ -109,15 +109,15 @@ void Spacetime::compute_delta()
     current.insert(n);
     done[n] = 1;
     do {
-      for(jt=current.begin(); jt!=current.end(); jt++) {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
         m = *jt;
-        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); kt++) {
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
           l = *kt;
           if (done[l] == 0) next.insert(l);
         }
       }
       if (next.empty()) break;
-      for(jt=next.begin(); jt!=next.end(); jt++) {
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
         done[*jt] = 1;
       }
       current = next;
@@ -400,7 +400,7 @@ void Spacetime::optimize()
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
       found = false;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         if (std::abs(events[*it].geometric_deficiency) < Spacetime::epsilon) {
           found = true;
           break;
@@ -452,16 +452,12 @@ void Spacetime::optimize()
     int j,n,in1,vc,joust,generation = 1;
     bool viable;
     double p,f1,f2,severity,fbest,fitness[2*pool_size],ftemp[pool_size];
-    const bool euclidean = geometry->get_euclidean();
-    const bool relational = geometry->get_relational();
-    const bool uniform = geometry->get_uniform();
-    const int D = geometry->dimension();
     std::vector<std::pair<int,int> > vcount;
     std::set<int> vmodified,vx;
     std::set<int>::const_iterator it;
     std::vector<Geometry> pool,ptemp;
-    Geometry* optimal = new Geometry(euclidean,relational,uniform,D);
-    Geometry* initial_state = new Geometry(euclidean,relational,uniform,D);
+    Geometry* optimal = new Geometry(*geometry); 
+    Geometry* initial_state = new Geometry(*geometry); 
     const int pmagnitude = int(0.15*system_size);
     const double initial_error = error;
 
@@ -470,11 +466,11 @@ void Spacetime::optimize()
 #endif
 
     for(i=0; i<2*pool_size; ++i) {
-      pool.push_back(Geometry(euclidean,relational,uniform,D));
+      pool.push_back(Geometry(*geometry));
       vcount.push_back(std::pair<int,int>(0,0));
     }
     for(i=0; i<pool_size; ++i) {
-      ptemp.push_back(Geometry(euclidean,relational,uniform,D));
+      ptemp.push_back(Geometry(*geometry));
     }
 
     geometry->store(initial_state);
@@ -494,7 +490,7 @@ void Spacetime::optimize()
         }
         if (!viable) continue;
         pool[i].geometry_modification(n,0.0,0.05);
-        for(it=vx.begin(); it!=vx.end(); it++) {
+        for(it=vx.begin(); it!=vx.end(); ++it) {
           vmodified.insert(*it);
         }
         vx.clear();
@@ -542,7 +538,7 @@ void Spacetime::optimize()
           }
           if (!viable) continue;
           pool[i].geometry_modification(j,0.0,severity);
-          for(it=vx.begin(); it!=vx.end(); it++) {
+          for(it=vx.begin(); it!=vx.end(); ++it) {
             vmodified.insert(*it);
           }
           vx.clear();
@@ -617,7 +613,7 @@ void Spacetime::optimize()
     std::set<int> vmodified;
     std::set<int>::const_iterator it;
     std::vector<double> E,lengths,base,output,output1,output2;
-    Geometry* optimal = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform(),geometry->dimension());
+    Geometry* optimal = new Geometry(*geometry); 
     const double initial_error = error;
 
     geometry->store(optimal);
@@ -884,7 +880,7 @@ void Spacetime::optimize()
     compute_volume();
     if (!cgradient_refinement) return;
     double d,q,E,prior,alpha,beta,E_initial,n = 0.0,sigma = 0.1;
-    Geometry* initial_state = new Geometry(geometry->get_euclidean(),geometry->get_relational(),geometry->get_uniform(),geometry->dimension());
+    Geometry* initial_state = new Geometry(*geometry); 
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
     determine_flexible_edges();
@@ -1012,8 +1008,8 @@ void Spacetime::optimize()
     const bool relational = geometry->get_relational();
     const bool uniform = geometry->get_uniform();
     const int D = geometry->dimension();
-    Geometry SR(euclidean,relational,uniform,D),SE(euclidean,relational,uniform,D);
-    Geometry* initial_state = new Geometry(euclidean,relational,uniform,D);
+    Geometry SR(*geometry),SE(*geometry);
+    Geometry* initial_state = new Geometry(*geometry);
     std::vector<std::pair<int,double> > fitness;
     std::set<int> vmodified;
     std::vector<Geometry> S;

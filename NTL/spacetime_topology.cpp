@@ -339,7 +339,7 @@ bool Spacetime::logical_conformity(int v) const
 {
   std::set<int>::const_iterator it;
   Proposition Q = events[v].theorem;
-  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); it++) {
+  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
     Q = Q*events[*it].theorem;
   }
   return Q.satisfiable();
@@ -450,9 +450,9 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
   offset[base] = G->add_vertex();
 
   do {
-    for(it=current.begin(); it!=current.end(); it++) {
+    for(it=current.begin(); it!=current.end(); ++it) {
       v = *it;
-      for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); jt++) {
+      for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); ++jt) {
         w = *jt;
         qt = index_table[1].find(make_key(v,w));
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -489,9 +489,9 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
 
   if (sheet == -1) {
     do {
-      for(v_it=current.begin(); v_it!=current.end(); v_it++) {
+      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
         v = *v_it;
-        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); it++) {
+        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
           j = *it;
           qt = index_table[1].find(make_key(v,j));
           if (simplices[1][qt->second].ubiquity == 1) continue;
@@ -514,9 +514,9 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
   }
   else {
     do {
-      for(v_it=current.begin(); v_it!=current.end(); v_it++) {
+      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
         v = *v_it;
-        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); it++) {
+        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
           j = *it;
           qt = index_table[1].find(make_key(v,j));
           l = qt->second;
@@ -561,7 +561,7 @@ void Spacetime::compute_global_nexus(Nexus* NX,int sheet) const
     for(i=n; i>=1; --i) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity == 1) continue;
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           vx.insert(offset[*it]);
         }
         NX->paste(vx);
@@ -577,7 +577,7 @@ void Spacetime::compute_global_nexus(Nexus* NX,int sheet) const
     for(i=n; i>=1; --i) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           vx.insert(offset[*it]);
         }
         NX->paste(vx);
@@ -607,7 +607,7 @@ void Spacetime::compute_local_nexus(Nexus* NX,int base,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity == 1) continue;
         if (simplices[i][j].contains(base)) {
-          for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+          for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
             if (offset[*it] == -1) offset[*it] = NX->add_vertex();
             vx.insert(offset[*it]);
           }
@@ -622,7 +622,7 @@ void Spacetime::compute_local_nexus(Nexus* NX,int base,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
         if (simplices[i][j].contains(base)) {
-          for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+          for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
             if (offset[*it] == -1) offset[*it] = NX->add_vertex();
             vx.insert(offset[*it]);
           }
@@ -652,7 +652,7 @@ void Spacetime::compute_lightcones()
     if (events[i].ubiquity == 1) continue;
     pcurrent.clear();
     fcurrent.clear();
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       qt = index_table[1].find(make_key(i,j));
       lcone = simplices[1][qt->second].orientation;
@@ -669,10 +669,10 @@ void Spacetime::compute_lightcones()
     }
     else {
       do {
-        for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+        for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
           j = *it;
           if (j == i) continue;
-          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
             lcone = simplices[1][qt->second].orientation;
@@ -683,7 +683,7 @@ void Spacetime::compute_lightcones()
             }
           }
         }
-        for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+        for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
           old.insert(*it);
         }
         if (v.empty()) break;
@@ -698,10 +698,10 @@ void Spacetime::compute_lightcones()
       continue;
     }
     do {
-      for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+      for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
         j = *it;
         if (j == i) continue;
-        for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+        for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
           k = *jt;
           qt = index_table[1].find(make_key(j,k));
           lcone = simplices[1][qt->second].orientation;
@@ -711,7 +711,7 @@ void Spacetime::compute_lightcones()
           }
         }
       }
-      for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+      for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
         old.insert(*it);
       }
       if (v.empty()) break;
@@ -753,7 +753,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   n1 = events[v].neighbours;
   tipsy = 0.0;
   if (sheet == -1) {
-    for(it=n1.begin(); it!=n1.end(); it++) {
+    for(it=n1.begin(); it!=n1.end(); ++it) {
       in1 = *it;
       qt = index_table[1].find(make_key(v,in1));
       l = simplices[1][qt->second].volume;
@@ -763,7 +763,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       std::set_intersection(n1.begin(),n1.end(),n2.begin(),n2.end(),jset.begin());
       if (jset.empty()) continue;
       tcount = 0;
-      for(vit=jset.begin(); vit!=jset.end(); vit++) {
+      for(vit=jset.begin(); vit!=jset.end(); ++vit) {
         in2 = *vit;
 
         qt = index_table[1].find(make_key(v,in2));
@@ -777,7 +777,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
     }
   }
   else {
-    for(it=n1.begin(); it!=n1.end(); it++) {
+    for(it=n1.begin(); it!=n1.end(); ++it) {
       in1 = *it;
       qt = index_table[1].find(make_key(v,in1));
       if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -788,7 +788,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       std::set_intersection(n1.begin(),n1.end(),n2.begin(),n2.end(),jset.begin());
       if (jset.empty()) continue;
       tcount = 0;
-      for(vit=jset.begin(); vit!=jset.end(); vit++) {
+      for(vit=jset.begin(); vit!=jset.end(); ++vit) {
         in2 = *vit;
 
         qt = index_table[1].find(make_key(v,in2));
@@ -830,7 +830,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       // Now calculate the future and past lightcones for this vertex on this sheet...
       pcurrent.clear();
       fcurrent.clear();
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         j = *it;
         qt = index_table[1].find(make_key(i,j));
         lcone = simplices[1][qt->second].orientation;
@@ -847,10 +847,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       }
       else {
         do {
-          for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+          for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
             j = *it;
             if (j == i) continue;
-            for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+            for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
               k = *jt;
               qt = index_table[1].find(make_key(j,k));
               lcone = simplices[1][qt->second].orientation;
@@ -861,7 +861,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
               }
             }
           }
-          for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+          for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
             old.insert(*it);
           }
           if (v.empty()) break;
@@ -876,10 +876,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
         continue;
       }
       do {
-        for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+        for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
           j = *it;
           if (j == i) continue;
-          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
             lcone = simplices[1][qt->second].orientation;
@@ -889,7 +889,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             }
           }
         }
-        for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+        for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
           old.insert(*it);
         }
         if (v.empty()) break;
@@ -924,7 +924,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       // Now calculate the future and past lightcones for this vertex on this sheet...
       pcurrent.clear();
       fcurrent.clear();
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         j = *it;
         qt = index_table[1].find(make_key(i,j));
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -942,10 +942,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       }
       else {
         do {
-          for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+          for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
             j = *it;
             if (j == i) continue;
-            for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+            for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
               k = *jt;
               qt = index_table[1].find(make_key(j,k));
               if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -957,7 +957,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
               }
             }
           }
-          for(it=pcurrent.begin(); it!=pcurrent.end(); it++) {
+          for(it=pcurrent.begin(); it!=pcurrent.end(); ++it) {
             old.insert(*it);
           }
           if (v.empty()) break;
@@ -972,10 +972,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
         continue;
       }
       do {
-        for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+        for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
           j = *it;
           if (j == i) continue;
-          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); jt++) {
+          for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
             qt = index_table[1].find(make_key(j,k));
             if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -986,7 +986,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             }
           }
         }
-        for(it=fcurrent.begin(); it!=fcurrent.end(); it++) {
+        for(it=fcurrent.begin(); it!=fcurrent.end(); ++it) {
           old.insert(*it);
         }
         if (v.empty()) break;
@@ -1125,7 +1125,7 @@ int Spacetime::combinatorial_distance(int v1,int v2) const
       break;
     }
     visited[base] = true;
-    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); it++) {
+    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
       v = *it;
       n = distance[base] + 1;
       if (distance[v] < 0 || distance[v] > n) distance[v] = n;
@@ -1174,7 +1174,7 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
       break;
     }
     visited[base] = true;
-    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); it++) {
+    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
       v = *it;
       qt = index_table[1].find(make_key(base,v));
       if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) continue;
@@ -1308,7 +1308,7 @@ int Spacetime::vertex_valence(int v,int sheet) const
 {
   int nd = 0;
   std::set<int>::const_iterator it;
-  for(it=events[v].entourage.begin(); it!=events[v].entourage.end(); it++) {
+  for(it=events[v].entourage.begin(); it!=events[v].entourage.end(); ++it) {
     if (NTL::divide(simplices[1][*it].ubiquity,codex[sheet].colour) == 1) nd++;
   }
   return nd;
@@ -1402,7 +1402,7 @@ bool Spacetime::consistent(int sheet) const
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (simplices[i][j].ubiquity == 1) continue;
-        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); it++) {
+        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
           if (simplices[i+1][*it].ubiquity == 1) {
             std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
             return false;
@@ -1437,7 +1437,7 @@ bool Spacetime::consistent(int sheet) const
             return false;
           }
         }
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           l = *it;
           if (l < 0 || l >= nv) {
             std::cout << "Nonexistent vertex: " << l << std::endl;
@@ -1466,13 +1466,13 @@ bool Spacetime::consistent(int sheet) const
     }
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
-      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
+      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
         if (simplices[1][*it].ubiquity == 1) {
           std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
           return false;
         }
       }
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         n = *it;
         if (n == i) {
           std::cout << "Illegal link: " << i << "  " << i << std::endl;
@@ -1517,7 +1517,7 @@ bool Spacetime::consistent(int sheet) const
             return false;
           }
         }
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           l = *it;
           if (l < 0 || l >= nv) {
             std::cout << "Nonexistent vertex: " << l << std::endl;
@@ -1546,7 +1546,7 @@ bool Spacetime::consistent(int sheet) const
     }
     for(i=0; i<nv; ++i) {
       if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         n = *it;
         if (n == i) {
           std::cout << "Illegal link: " << i << "  " << i << std::endl;

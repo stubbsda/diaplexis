@@ -174,7 +174,7 @@ void Simplex::serialize(std::ofstream& s) const
   }
   n = (signed) vertices.size();
   s.write((char*)(&n),sizeof(int));
-  for(it=vertices.begin(); it!=vertices.end(); it++) {
+  for(it=vertices.begin(); it!=vertices.end(); ++it) {
     n = *it;
     s.write((char*)(&n),sizeof(int));
   }
@@ -220,7 +220,7 @@ void Simplex::get_faces(std::vector<Simplex>& F) const
 
   for(i=0; i<n; ++i) {
     j = -1;
-    for(it=vertices.begin(); it!=vertices.end(); it++) {
+    for(it=vertices.begin(); it!=vertices.end(); ++it) {
       j++;
       if (j == i) continue;
       vx.insert(*it);
@@ -267,7 +267,7 @@ Simplex operator ^(const Simplex& s1,const Simplex& s2)
   const int n = (signed) s1.ubiquity.size();
   std::set<int> vx;
 
-  for(it=s1.vertices.begin(); it!=s1.vertices.end(); it++) {
+  for(it=s1.vertices.begin(); it!=s1.vertices.end(); ++it) {
     jt = std::find(s2.vertices.begin(),s2.vertices.end(),*it);
     if (jt != s2.vertices.end()) vx.insert(*it);
   }
@@ -284,7 +284,7 @@ std::ostream& operator <<(std::ostream& s,const Simplex& S)
   std::set<int>::const_iterator it;
   s << S.dimension() << std::endl;
   s << S.key << std::endl;
-  for(it=S.vertices.begin(); it!=S.vertices.end(); it++) {
+  for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
     s << *it << std::endl;
   }
   return s;

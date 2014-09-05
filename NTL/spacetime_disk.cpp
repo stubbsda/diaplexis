@@ -242,8 +242,8 @@ void Spacetime::read_parameters(const char* filename)
   // Finally for the background dimension...
   assert(D > 0);
 
-  delete geometry;
-  geometry = new Geometry(euclidean,relational,uniform,D);
+  geometry->initialize(euclidean,relational,uniform,D);
+  anterior.geometry.initialize(euclidean,relational,uniform,D);
 
   if (initial_state == RANDOM) {
     assert(edge_probability > 0.0 && edge_probability < 1.0);
@@ -475,7 +475,7 @@ void Spacetime::write_log() const
     nf = 0;
     np = 0;
     atemporal = true;
-    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
+    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       in1 = *it;
       if (simplices[1][in1].sq_volume > 0.0) continue;
       lcone = simplices[1][in1].orientation;
@@ -736,7 +736,7 @@ void Spacetime::write_log() const
       nf = 0;
       np = 0;
       atemporal = true;
-      for(it=events[j].entourage.begin(); it!=events[j].entourage.end(); it++) {
+      for(it=events[j].entourage.begin(); it!=events[j].entourage.end(); ++it) {
         in1 = *it;
         if (simplices[1][in1].sq_volume > 0.0) continue;
         lcone = simplices[1][in1].orientation;

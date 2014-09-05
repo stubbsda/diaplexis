@@ -1168,7 +1168,7 @@ void Spacetime::structural_deficiency()
     sum2 = 0.0;
     k = 0;
     length_deviation[i] = 0.0;
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       qt = index_table[1].find(make_key(i,j));
       n = qt->second;
@@ -1259,7 +1259,7 @@ void Spacetime::sheet_dynamics()
     }
   }
 
-  for(it=candidates.begin(); it!=candidates.end(); it++) {
+  for(it=candidates.begin(); it!=candidates.end(); ++it) {
     p = *it;
     if (RND.poisson_variate()) {
       n = RND.irandom(1,4);
@@ -1636,7 +1636,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
     }
     delta = n*hdistance;
     if (delta > 0) {
-      for(it=simplices[n][m].vertices.begin(); it!=simplices[n][m].vertices.end(); it++) {
+      for(it=simplices[n][m].vertices.begin(); it!=simplices[n][m].vertices.end(); ++it) {
         vmodified.insert(*it);
       }
     }
@@ -1736,7 +1736,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       arrangement[l] = entourage;
     }
 
-    if (relational) geometry->initialize(n,"CARTESIAN");
+    if (relational) geometry->create(n,"CARTESIAN");
 
     // Now the edges...
     for(i=0; i<initial_size; ++i) {
@@ -1881,7 +1881,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     // An initial spacetime consisting of a single isolated vertex, though with very
     // high energy
     if (relational) {
-      geometry->initialize(0,"SINGLETON");
+      geometry->create(0,"SINGLETON");
     }
     else {
       geometry->vertex_addition(svalue);
@@ -1916,7 +1916,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       vx.insert(i);
     }
 
-    if (relational) geometry->initialize(initial_dim,"MONOPLEX");
+    if (relational) geometry->create(initial_dim,"MONOPLEX");
 
     S.vertices = vx;
     S.string_assembly();
@@ -1945,7 +1945,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
         }
         events.push_back(vt);
       }
-      geometry->initialize(initial_size,"RANDOM");
+      geometry->create(initial_size,"RANDOM");
     }
     else {
       for(i=0; i<initial_size; ++i) {
@@ -1985,11 +1985,11 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       for(j=0; j<ulimit; ++j) {
         v = simplices[level-1][j].vertices;
         i = 0;
-        for(it=v.begin(); it!=v.end(); it++) {
+        for(it=v.begin(); it!=v.end(); ++it) {
           N[i] = events[*it].neighbours;
           i++;
         }
-        for(it=N[0].begin(); it!=N[0].end(); it++) {
+        for(it=N[0].begin(); it!=N[0].end(); ++it) {
           found = true;
           for(i=1; i<level; ++i) {
             chk = std::find(N[i].begin(),N[i].end(),*it);
@@ -2000,7 +2000,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           }
           if (found) vx.insert(*it);
         }
-        for(it=vx.begin(); it!=vx.end(); it++) {
+        for(it=vx.begin(); it!=vx.end(); ++it) {
           in1 = *it;
           current = v;
           current.insert(in1);
@@ -2013,7 +2013,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       }
       delete[] N;
       if (svector.empty()) break;
-      for(vit=svector.begin(); vit!=svector.end(); vit++) {
+      for(vit=svector.begin(); vit!=svector.end(); ++vit) {
         qt = index_table[level].find(vit->key);
         if (qt == index_table[level].end()) {
           simplices[level].push_back(*vit);

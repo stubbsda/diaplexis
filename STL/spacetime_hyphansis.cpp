@@ -38,6 +38,8 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
   alpha = double(d)/2.0;
   l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/boost::math::tgamma(1.0 + alpha);  
   d *= int(l);
+  q = (signed) ambient.size();
+  if (d > q) d = q;
   for(i=0; i<d; ++i) {
     // If we can't get enough boundary vertices that are close enough, exit
     if (ambient[i].second > 1.5*size) break;
@@ -135,11 +137,10 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
     base = nvertex;
     nvertex.clear();
   }
-
+  geometry->compute_distances();
   // Finally the 2-simplexes to bridge the knot with the ambient spacetime complex
   d = bvertex.size()*(bvertex.size() - 1)/2;
   nbridge = int((0.1 + 0.15*RND.drandom())*d);
-  ambient.clear();
 #ifdef VERBOSE
   std::cout << "Adding " << nbridge << " 2-simplices" << std::endl;
 #endif
@@ -165,6 +166,7 @@ bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
     S.insert(q);
     S.insert(p);
     // Find the closest new vertex...
+    ambient.clear();
     for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
       if (p == *it) continue;
       l = geometry->get_distance(q,*it,false);
@@ -191,16 +193,18 @@ bool Spacetime::germination(int base,int sheet)
   // This method constructs new neighbour vertices w_i for the vertex base which are
   // unit distance from v and orthogonal to v's existing edges, if possible.
   if (events[base].boundary) return false;
+
   bool good,modified = false;
   double a,b,d_min,delta;
   std::vector<int> chi;
-  std::set<int> Dm2,Dm1,current,tset,free_dims;
+  std::set<int> N,Dm2,Dm1,current,tset,free_dims;
   std::set<int>::const_iterator it,jt;
   std::vector<double> x,y,z,xc,bvector;
   hash_map::const_iterator qt;
   Simplex S;
-  int i,j,D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
+  int i,j,vx[2],D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
   const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
@@ -208,7 +212,14 @@ bool Spacetime::germination(int base,int sheet)
   }
   chi[sheet] = 1;
 
-  for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
+  for(i=0; i<ne; ++i) {
+    if (simplices[1][i].ubiquity[sheet] == 0) continue;
+    simplices[1][i].get_vertices(vx);
+    if (base != vx[0] && base != vx[1]) continue;
+    j = (vx[0] == base) ? vx[1] : vx[0];
+    N.insert(j);
+  }
+  for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
     if (!ghost(events[n].ubiquity)) break;
   }
@@ -395,7 +406,7 @@ bool Spacetime::germination(int base,int sheet)
         mi = *jt;
         x[2] = y[mi];
         delta = norm(x);
-        if (delta > epsilon) {
+        if (delta > Spacetime::epsilon) {
           good = true;
           break;
         }
@@ -420,7 +431,7 @@ bool Spacetime::germination(int base,int sheet)
       y.push_back(z[D2]);
       y.push_back(z[mi]);
       delta = norm(y);
-      if (delta > epsilon) {
+      if (delta > Spacetime::epsilon) {
         good = true;
         break;
       }
@@ -528,7 +539,7 @@ bool Spacetime::germination(int base,int sheet)
       index_table[1][S.key] = (signed) simplices[1].size() - 1;
     }
 
-    for(it=free_dims.begin(); it!=free_dims.end(); it++) {
+    for(it=free_dims.begin(); it!=free_dims.end(); ++it) {
       if (*it == mi) continue;
       tset.insert(*it);
     }
@@ -740,14 +751,14 @@ void Spacetime::simplicial_implication(int base,int sheet) const
     std::set<int>::const_iterator jt;
 
     d = 0;
-    for(jt=events[base].entourage.begin(); jt!=events[base].entourage.end(); jt++) {
+    for(jt=events[base].entourage.begin(); jt!=events[base].entourage.end(); ++jt) {
       if (simplices[1][*jt].ubiquity[sheet] == 0) continue;
       d++;
     }
     M = 1 + d;
     implied_simplex = new std::vector<std::string>[M+1];
 
-    for(jt=events[base].neighbours.begin(); jt!=events[base].neighbours.end(); jt++) {
+    for(jt=events[base].neighbours.begin(); jt!=events[base].neighbours.end(); ++jt) {
       if (events[*jt].ubiquity[sheet] == 0) continue;
       S.insert(*jt);
     }
@@ -794,7 +805,7 @@ void Spacetime::simplicial_implication(int base,int sheet) const
   for(i=M; i>2; --i) {
     nsimp = 0;
     nfound = 0;
-    for(it=implied_simplex[i].begin(); it!=implied_simplex[i].end(); it++) {
+    for(it=implied_simplex[i].begin(); it!=implied_simplex[i].end(); ++it) {
       qt = index_table[i-1].find(*it);
       if (qt != index_table[i-1].end()) {
         if (!ghost(simplices[i-1][qt->second].ubiquity)) nfound++;
@@ -1019,7 +1030,7 @@ bool Spacetime::unravel(int base,int sheet)
 
   if (base >= 0) {
     n1 = (signed) events[base].entourage.size();
-    for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); it++) {
+    for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
       j = *it;
       if (simplices[1][j].ubiquity[sheet] == 0) continue;
       vf = double(simplices[1][j].entourage.size());
@@ -1047,7 +1058,7 @@ bool Spacetime::unravel(int base,int sheet)
   if (base >= 0) {
     n1 = (signed) events[base].entourage.size();
     if (n1 <= 2*geometry->dimension()) return false;
-    for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); it++) {
+    for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
       j = *it;
       if (simplices[1][j].ubiquity[sheet] == 0) continue;
       simplices[1][j].get_vertices(vx);
@@ -1097,14 +1108,14 @@ void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
 #endif
   // We assume that the cardinality of vmodified is small relative
   // to the total number of vertices in the spacetime complex
-  for(it=vx.begin(); it!=vx.end(); it++) {
+  for(it=vx.begin(); it!=vx.end(); ++it) {
     n = *it;
     current = events[n].entourage;
     for(i=1; i<=ND; ++i) {
-      for(jt=current.begin(); jt!=current.end(); jt++) {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
         m = *jt;
         simplices[i][m].modified = true;
-        for(kt=simplices[i][m].entourage.begin(); kt!=simplices[i][m].entourage.end(); kt++) {
+        for(kt=simplices[i][m].entourage.begin(); kt!=simplices[i][m].entourage.end(); ++kt) {
           next.insert(*kt);
         }
       }
@@ -1126,7 +1137,7 @@ void Spacetime::compute_topological_dependency(const std::set<int>& vx)
   for(i=0; i<nv; ++i) {
     done[i] = 0;
   }
-  for(it=vx.begin(); it!=vx.end(); it++) {
+  for(it=vx.begin(); it!=vx.end(); ++it) {
     n = *it;
     nhop = 0;
     // Every vertex within topological_radius hops of n is labelled as
@@ -1134,15 +1145,15 @@ void Spacetime::compute_topological_dependency(const std::set<int>& vx)
     current.insert(n);
     done[n] = 1;
     do {
-      for(jt=current.begin(); jt!=current.end(); jt++) {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
         m = *jt;
-        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); kt++) {
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
           l = *kt;
           if (done[l] == 0) next.insert(l);
         }
       }
       if (next.empty()) break;
-      for(jt=next.begin(); jt!=next.end(); jt++) {
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
         done[*jt] = 1;
       }
       current = next;
@@ -1177,7 +1188,7 @@ void Spacetime::compute_entourages(int sheet)
   for(i=1; i<=ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (ghost(simplices[i][j].ubiquity)) continue;
-      for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); it++) {
+      for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
         if (ghost(simplices[i+1][*it].ubiquity)) continue;
         s.insert(*it);
       }
@@ -1187,7 +1198,7 @@ void Spacetime::compute_entourages(int sheet)
   }
   for(i=0; i<(signed) events.size(); ++i) {
     if (ghost(events[i].ubiquity)) continue;
-    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); it++) {
+    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       if (ghost(simplices[1][*it].ubiquity)) continue;
       s.insert(*it);
     }
@@ -1440,7 +1451,7 @@ void Spacetime::inversion()
   simplices[1].clear();
   index_table[1].clear();
   for(i=0; i<nvertex; ++i) {
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); it++) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       if (i < j) {
         p = RND.irandom(nt);
@@ -1783,7 +1794,7 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
   std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
 #endif
 
-  for(it=S.begin(); it!=S.end(); it++) {
+  for(it=S.begin(); it!=S.end(); ++it) {
     codex[sheet].vx_delta.insert(*it);
   }
 
@@ -1794,7 +1805,7 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
     events[vn[1]].neighbours.insert(vn[0]);
     return true;
   }
-  for(it=S.begin(); it!=S.end(); it++) {
+  for(it=S.begin(); it!=S.end(); ++it) {
     vx.push_back(*it);
   }
 
@@ -1849,12 +1860,12 @@ void Spacetime::simplex_deletion(int d,int n,int sheet)
   else {
     if (simplices[d][n].ubiquity[sheet] == 0) return;
     simplices[d][n].ubiquity[sheet] = 0;
-    for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); it++) {
+    for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); ++it) {
       codex[sheet].vx_delta.insert(*it);
     }
   }
   parents = simplices[d][n].entourage;
-  for(it=parents.begin(); it!=parents.end(); it++) {
+  for(it=parents.begin(); it!=parents.end(); ++it) {
     i = *it;
     simplex_deletion(dp1,i,sheet);
   }
@@ -2160,9 +2171,9 @@ bool Spacetime::circumvolution(int sheet)
 #ifdef VERBOSE
   std::cout << "There are " << edge_set.size() << " boundary edges." << std::endl;
 #endif
-  for(it=edge_set.begin(); it!=edge_set.end(); it++) {
+  for(it=edge_set.begin(); it!=edge_set.end(); ++it) {
     n1 = *it;
-    for(jt=edge_set.begin(); jt!=edge_set.end(); jt++) {
+    for(jt=edge_set.begin(); jt!=edge_set.end(); ++jt) {
       n2 = *jt;
       if (n1 <= n2) continue;
 
@@ -2239,7 +2250,7 @@ bool Spacetime::circumvolution(int base,int sheet)
     std::set<int>::const_iterator it;
 
     simplices[d][s1].get_vertices(vx1);
-    for(it=candidates.begin(); it!=candidates.end(); it++) {
+    for(it=candidates.begin(); it!=candidates.end(); ++it) {
       simplices[d][*it].get_vertices(vx2);
       D1 = 0.0;
       for(i=0; i<=d; ++i) {
@@ -2410,7 +2421,7 @@ bool Spacetime::expansion(int base,int sheet)
     u = (vtx[0] == base) ? vtx[1] : vtx[0];
     if (events[u].deficiency < -Spacetime::epsilon) N.insert(u);
   }
-  for(it=N.begin(); it!=N.end(); it++) {
+  for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
     m = RND.irandom(vx);
     qt = index_table[1].find(make_key(base,n));
@@ -2460,7 +2471,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
         in1 = mutation[i][j];
         if (simplices[i][in1].dimension() == im1) duplicate.insert(in1);
       }
-      for(it=duplicate.rbegin(); it!=duplicate.rend(); it++) {
+      for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
         in1 = *it;
         simplices[im1].push_back(simplices[i][in1]);
         mutation[im1].push_back(n);
@@ -2486,7 +2497,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
       in1 = mutation[1][i];
       if (simplices[1][in1].dimension() == 0) duplicate.insert(in1);
     }
-    for(it=duplicate.rbegin(); it!=duplicate.rend(); it++) {
+    for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
       in1 = *it;
       simplices[1].erase(simplices[1].begin() + in1);
       for(j=0; j<m; ++j) {
@@ -2520,7 +2531,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
           }
         }
       }
-      for(it=duplicate.rbegin(); it!=duplicate.rend(); it++) {
+      for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
         in1 = *it;
         simplices[i].erase(simplices[i].begin() + in1);
       }
@@ -2557,7 +2568,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
         // multiply its colour by sheet otherwise add the new simplex.
         simplices[i][j].get_vertices(v);
         found = false;
-        for(it=v.begin(); it!=v.end(); it++) {
+        for(it=v.begin(); it!=v.end(); ++it) {
           if (*it == n2) {
             found = true;
             vx.insert(n1);
@@ -2570,7 +2581,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
           continue;
         }
         simplices[i][j].ubiquity[sheet] = 0;
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); it++) {
+        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           codex[sheet].vx_delta.insert(*it);
         }
         l = (signed) vx.size() - 1;
@@ -2695,7 +2706,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
       }
       // Check that vx.ubiquity > 1
       if (ghost(vx.ubiquity)) vx.ubiquity[RND.irandom(nt)] = 1;
-      for(it=vx.neighbours.begin(); it!=vx.neighbours.end(); it++) {
+      for(it=vx.neighbours.begin(); it!=vx.neighbours.end(); ++it) {
         j = *it;
         events[j].neighbours.insert(nc);
         vmodified.insert(j);
@@ -2981,7 +2992,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       N.insert(j);
     }
     vx = simplices[n1][RND.irandom(candidates)].vertices;
-    for(it=N.begin(); it!=N.end(); it++) {
+    for(it=N.begin(); it!=N.end(); ++it) {
       jt = std::find(vx.begin(),vx.end(),*it);
       if (jt == vx.end()) {
         if (events[*it].deficiency < -Spacetime::epsilon) M.insert(*it);
