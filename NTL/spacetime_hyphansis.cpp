@@ -2,7 +2,7 @@
 
 extern Random RND;
 
-bool Spacetime::knot_insertion(int centre,double size,int D,int sheet)
+bool Spacetime::interplication(int centre,double size,int D,int sheet)
 {
   // Method to construct a highly-entwined knot after carving out a hole for 
   // in the spacetime complex - it really only makes sense if D is large 

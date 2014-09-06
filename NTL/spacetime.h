@@ -205,7 +205,7 @@ class Spacetime {
   bool vertex_deletion(int,int);
   bool simplex_addition(const std::set<int>&,int);
   void simplex_deletion(int,int,int);
-  bool knot_insertion(int,double,int,int);
+  bool interplication(int,double,int,int);
   bool circumvolution(int);
   bool circumvolution(int,int);
   int compression(double,std::set<int>&);
