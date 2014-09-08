@@ -137,7 +137,6 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     base = nvertex;
     nvertex.clear();
   }
-  geometry->compute_distances();
   // Finally the 2-simplexes to bridge the knot with the ambient spacetime complex
   d = bvertex.size()*(bvertex.size() - 1)/2;
   nbridge = int((0.1 + 0.15*RND.drandom())*d);

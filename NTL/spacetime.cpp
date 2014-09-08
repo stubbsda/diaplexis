@@ -746,7 +746,6 @@ bool Spacetime::step_forwards()
   s2.close();
 
   regularization(false,-1);
-  geometry->compute_distances();
   gettimeofday(&Z,NULL);
   t2 = Z.tv_sec + (Z.tv_usec/1000000.0);
   htime += (t2 - t1);
