@@ -937,7 +937,7 @@ void Spacetime::optimize()
         nx += dx[j]*(dx[j] - dx_old[j]);
         d += dx_old[j]*dx_old[j];
       }
-      beta = std::max(0.0,n/d);
+      beta = std::max(0.0,nx/d);
       for(j=0; j<system_size; ++j) {
         snew[j] = dx[j] + beta*s[j];
       }
