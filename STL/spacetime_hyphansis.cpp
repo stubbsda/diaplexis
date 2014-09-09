@@ -2966,7 +2966,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     n1 = vertex_dimension(base,sheet);
     if (n1 == ND) return false;
     int j,vtx[2];
-    std::set<int>::const_iterator it,jt;
+    std::set<int>::const_iterator jt;
     std::set<int> M,N;
     double tau;
     const int ne = (signed) simplices[1].size();

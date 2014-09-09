@@ -504,7 +504,7 @@ void Spacetime::optimize()
     } while(its < solver_its);
   }
   else if (solver == EVOLUTIONARY) {
-    int j,n,in1,vc,joust,generation = 1;
+    int j,in1,vc,joust,generation = 1;
     bool viable;
     double p,f1,f2,severity,fbest,fitness[2*pool_size],ftemp[pool_size];
     std::vector<std::pair<int,int> > vcount;
@@ -935,7 +935,7 @@ void Spacetime::optimize()
     geometry->compute_distances();
     compute_volume();
     if (!cgradient_refinement) return;
-    double d,q,E,prior,alpha,beta,E_initial,n = 0.0,sigma = 0.1;
+    double d,q,E,prior,alpha,beta,E_initial,nx = 0.0,sigma = 0.1;
     Geometry* initial_state = new Geometry(*geometry); 
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
@@ -954,7 +954,7 @@ void Spacetime::optimize()
     for(i=0; i<system_size; ++i) {
       fx.push_back(-dx[i]);
       c.push_back(dx[i]*fx[i]);
-      n += c[i];
+      nx += c[i];
     }
     for(i=0; i<max_LS_steps; ++i) {
       for(j=0; j<system_size; ++j) {
@@ -966,7 +966,7 @@ void Spacetime::optimize()
       for(j=0; j<system_size; ++j) {
         d += dy[j]*dx[j] - c[j];
       }
-      q = n/d;
+      q = nx/d;
       alpha = -sigma*q;
       sigma = -alpha;
     }
@@ -987,10 +987,10 @@ void Spacetime::optimize()
 #endif
     for(i=1; i<max_CG_steps; ++i) {
       compute_geometric_gradient(dx,true);
-      n = 0.0;
+      nx = 0.0;
       d = 0.0;
       for(j=0; j<system_size; ++j) {
-        n += dx[j]*(dx[j] - dx_old[j]);
+        nx += dx[j]*(dx[j] - dx_old[j]);
         d += dx_old[j]*dx_old[j];
       }
       beta = std::max(0.0,n/d);
@@ -998,11 +998,11 @@ void Spacetime::optimize()
         snew[j] = dx[j] + beta*s[j];
       }
       // Now begin the line search...
-      n = 0.0;
+      nx = 0.0;
       for(j=0; j<system_size; ++j) {
         fx[j] = -dx[j];
         c[j] = snew[j]*fx[j];
-        n += c[j];
+        nx += c[j];
       }
       sigma = 0.1;
       for(j=0; j<max_LS_steps; ++j) {
@@ -1015,7 +1015,7 @@ void Spacetime::optimize()
         for(k=0; k<system_size; ++k) {
           d += dy[k]*snew[k] - c[k];
         }
-        q = n/d;
+        q = nx/d;
         alpha = -sigma*q;
         sigma = -alpha;
       }

@@ -194,7 +194,6 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
           chi.push_back(255);
           chi.push_back(255);
           continue;
-          continue;
         }
         chi.push_back(0);
         chi.push_back(0);

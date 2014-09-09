@@ -161,8 +161,8 @@ double Spacetime::dimensional_stress(int d,int n,int sheet) const
   // This method measures the standard deviation of the
   // simplicial dimensions of the vertices of a given
   // d-simplex
-  int i,vx[1+d],v[1+d];
-  double alpha,sigma = 0.0,mu = 0.0;
+  int i,vx[1+d];
+  double alpha,v[1+d],sigma = 0.0,mu = 0.0;
 
   simplices[d][n].get_vertices(vx);
 
