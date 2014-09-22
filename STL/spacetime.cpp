@@ -195,7 +195,9 @@ void Spacetime::distribute(int nprocs) const
   for(i=0; i<nprocs; ++i) {
     volume[i] = 0;
   }
+#ifdef VERBOSE
   std::cout << "Distributing " << nreal << " vertices across " << nprocs << " processor elements, with maximum simplicial dimension of " << max_dim << "." << std::endl;
+#endif
   // First do the higher-dimensional vertices...
   do {
     // So take all of the n-simplices (n > 1) that are active and which 
@@ -266,6 +268,9 @@ void Spacetime::distribute(int nprocs) const
   } while(!done);
   // Now everything else, adding vertices to equilibrate the population counts 
   // and minimize the number of boundary edges...
+#ifdef VERBOSE
+  std::cout << "Done handling higher-dimensional vertices, now doing edges and vertices..." << std::endl;
+#endif
   for(i=0; i<nprocs; ++i) {
     if (volume[i] == 0) {
       // Find an initial vertex, ideally far from any existing vertices that have 
@@ -305,9 +310,8 @@ void Spacetime::distribute(int nprocs) const
           done = true;
           break;
         }
-      }
-      if (done) break;  
-    } while(true);
+      }  
+    } while(!done);
   }
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
@@ -323,7 +327,9 @@ void Spacetime::distribute(int nprocs) const
     }
   }
   current_cost = distribution_fitness(volume,affinity,nprocs);
+#ifdef VERBOSE
   std::cout << "At iteration 0 the cost is " << current_cost << std::endl;
+#endif
   do {
     do {
       n = RND.irandom(nv);
@@ -349,7 +355,9 @@ void Spacetime::distribute(int nprocs) const
       volume[p_old] += 1;
     }
     its++;
+#ifdef VERBOSE
     if (its % 250 == 0) std::cout << "At iteration " << its << " the cost is " << current_cost << std::endl; 
+#endif
   } while(its < 10000);
   // Some basic sanity checks: every vertex has a processor...
   n = 0;
@@ -380,7 +388,9 @@ void Spacetime::distribute(int nprocs) const
         }
       }
     } 
+#ifdef VERBOSE
     std::cout << "Processor " << i << " owns " << volume[i] << " vertices and " << ecount << " edges, with " << bcount << " boundary edges." << std::endl;
+#endif
   }
 }
 
