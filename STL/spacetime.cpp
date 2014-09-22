@@ -175,8 +175,10 @@ void Spacetime::distribute(int nprocs) const
   assert(nprocs > 0);
   const int nv = (signed) events.size();
   int i,j,k,n,p,p_old,ecount,bcount,its = 0,affinity[nv],volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
-  bool done,good,bdry;
+  int cneighbour;
+  bool done,bdry;
   double cost,current_cost;
+  std::vector<std::pair<int,int> > candidates;
   std::set<int> vx,neg,next;
   std::set<int>::const_iterator it;
   const int D = dimension(-1);
@@ -275,19 +277,19 @@ void Spacetime::distribute(int nprocs) const
     if (volume[i] == 0) {
       // Find an initial vertex, ideally far from any existing vertices that have 
       // been assigned to a processor...
-      do {
-        n = RND.irandom(nv);
-        if (ghost(events[n].ubiquity)) continue;
-        if (affinity[n] > -1) continue;
-        good = true;
-        for(it=events[n].neighbours.begin(); it!=events[n].neighbours.end(); ++it) {
-          if (affinity[*it] > -1) {
-            good = false;
-            break;
-          }
+      candidates.clear();
+      for(j=0; j<nv; ++j) {
+        if (ghost(events[j].ubiquity)) continue;
+        if (affinity[j] > -1) continue;
+        cneighbour = 0;
+        for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+          if (affinity[*it] > -1) cneighbour++;
         }
-        if (good) break;
-      } while(true);
+        candidates.push_back(std::pair<int,int>(j,cneighbour));
+      }
+      if (candidates.empty()) break;
+      std::sort(candidates.begin(),candidates.end(),pair_predicate_int);
+      n = candidates[0].first;
       affinity[n] = i;
       volume[i] += 1;
     }
