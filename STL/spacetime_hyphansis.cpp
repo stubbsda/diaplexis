@@ -1110,7 +1110,7 @@ void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
   for(it=vx.begin(); it!=vx.end(); ++it) {
     n = *it;
     current = events[n].entourage;
-    for(i=1; i<=ND; ++i) {
+    for(i=1; i<=Spacetime::ND; ++i) {
       for(jt=current.begin(); jt!=current.end(); ++jt) {
         m = *jt;
         simplices[i][m].modified = true;
@@ -1184,7 +1184,7 @@ void Spacetime::compute_entourages(int sheet)
 
   // What about removing items from the entourage of a d-simplex, when this item has
   // changed its ubiquity?
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (ghost(simplices[i][j].ubiquity)) continue;
       for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
@@ -1705,9 +1705,9 @@ bool Spacetime::fission(int base,double density,int sheet)
         nsimplex.insert(n);
       }
       d = (signed) nsimplex.size() - 1;
-      if (d >= ND) {
+      if (d >= Spacetime::ND) {
         std::set<int> S;
-        d = RND.irandom(2,ND);
+        d = RND.irandom(2,Spacetime::ND);
         do {
           n = RND.irandom(nsimplex);
           S.insert(n);
@@ -2310,13 +2310,13 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 
   if (base >= 0) {
     int n1 = vertex_dimension(base,sheet);
-    if (n1 == ND) return false;
+    if (n1 == Spacetime::ND) return false;
     int u,vtx[2],its = 0;
     std::set<int> M;
     double tau = std::abs(events[base].deficiency) + 25.0;
     const int ne = (signed) simplices[1].size();
 
-    d = int(double(ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
+    d = int(double(Spacetime::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity[sheet] == 0) continue;
@@ -2330,7 +2330,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 
     do {
       its++;
-      if (its == ND) creativity = 1.0;
+      if (its == Spacetime::ND) creativity = 1.0;
       if (RND.drandom() < creativity) {
         // Create a new vertex...
         k = vertex_addition(base,sheet);
@@ -2386,7 +2386,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 bool Spacetime::expansion(int base,int sheet)
 {
   int i,u,d,m,vtx[2],n = vertex_dimension(base,sheet);
-  if (n == ND) return false;
+  if (n == Spacetime::ND) return false;
   std::string clef;
   std::vector<int> chi;
   std::set<int> vx,N;
@@ -2401,7 +2401,7 @@ bool Spacetime::expansion(int base,int sheet)
   }
   chi[sheet] = 1;
 
-  d = int(double(ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
+  d = int(double(Spacetime::ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
 
   vx.insert(base);
   for(i=0; i<d; ++i) {
@@ -2558,7 +2558,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
 
     codex[sheet].vx_delta.insert(n1);
     codex[sheet].vx_delta.insert(n2);
-    for(i=1; i<=ND; ++i) {
+    for(i=1; i<=Spacetime::ND; ++i) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity[sheet] == 0) continue;
         // Check of this simplex contains the vertex "n2", if so
@@ -2834,7 +2834,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
     }
   }
   else {
-    if (d < 2 || d >= ND) return false;
+    if (d < 2 || d >= Spacetime::ND) return false;
     if (simplices[d].empty()) return false;
     nd = (signed) simplices[d].size();
     for(i=0; i<nd; ++i) {
@@ -2964,7 +2964,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 
   if (base >= 0) {
     n1 = vertex_dimension(base,sheet);
-    if (n1 == ND) return false;
+    if (n1 == Spacetime::ND) return false;
     int j,vtx[2];
     std::set<int>::const_iterator jt;
     std::set<int> M,N;
@@ -2975,7 +2975,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     // 1+n1 and ND - the greater the magnitude of v's deficiency,
     // the higher the dimension d should be...
     tau = std::abs(events[base].deficiency) + 25.0;
-    delta = int(double(ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
+    delta = int(double(Spacetime::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<(signed) simplices[n1].size(); ++i) {
       if (simplices[n1][i].ubiquity[sheet] == 0) continue;

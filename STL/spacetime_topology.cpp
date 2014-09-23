@@ -378,7 +378,7 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
   int i,j,m,k = 0;
 
   output.clear();
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
       if (ghost(simplices[i][j].ubiquity)) continue;
@@ -1036,7 +1036,7 @@ int Spacetime::entourage(int v,int sheet) const
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     n = 0;
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
@@ -1204,7 +1204,7 @@ int Spacetime::dimension(int sheet) const
   int i,j;
 
   if (sheet == -1) {
-    for(i=ND; i>0; i--) {
+    for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (!ghost(simplices[i][j].ubiquity)) return i;
       }
@@ -1214,7 +1214,7 @@ int Spacetime::dimension(int sheet) const
     }
   }
   else {
-    for(i=ND; i>0; i--) {
+    for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity[sheet] == 1) return i;
       }
@@ -1285,7 +1285,7 @@ int Spacetime::weighted_entourage(int n1,int n2) const
   bool f1,f2;
   std::set<int>::const_iterator it;
 
-  for(i=2; i<=ND; ++i) {
+  for(i=2; i<=Spacetime::ND; ++i) {
     nfound = 0;
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n1);
@@ -1317,7 +1317,7 @@ int Spacetime::vertex_dimension(int v,int sheet) const
   if (v < 0 || v >= (signed) events.size()) return -1;
 
   if (sheet == -1) {
-    for(i=ND; i>=1; i--) {
+    for(i=Spacetime::ND; i>=1; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (ghost(simplices[i][j].ubiquity)) continue;
         if (simplices[i][j].contains(v)) return i;
@@ -1326,7 +1326,7 @@ int Spacetime::vertex_dimension(int v,int sheet) const
     if (!ghost(events[v].ubiquity)) return 0;
   }
   else {
-    for(i=ND; i>=1; i--) {
+    for(i=Spacetime::ND; i>=1; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity[sheet] == 0) continue;
         if (simplices[i][j].contains(v)) return i;
@@ -1392,7 +1392,7 @@ bool Spacetime::consistent(int sheet) const
   assert(index_table[0].empty());
 
   if (sheet == -1) {
-    for(i=ND; i>=2; i--) {
+    for(i=Spacetime::ND; i>=2; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (ghost(simplices[i][j].ubiquity)) continue;
@@ -1486,7 +1486,7 @@ bool Spacetime::consistent(int sheet) const
     }
   }
   else {
-    for(i=ND; i>=2; i--) {
+    for(i=Spacetime::ND; i>=2; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (simplices[i][j].ubiquity[sheet] == 0) continue;
@@ -1563,7 +1563,7 @@ bool Spacetime::consistent(int sheet) const
     }
   }
   // Make sure that each n-simplex only exists once...
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       fx = simplices[i][j].key;

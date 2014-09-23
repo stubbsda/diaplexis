@@ -262,7 +262,7 @@ void Spacetime::read_parameters(const char* filename)
     }
   }
   else if (initial_state == MONOPLEX) {
-    assert(initial_dim <= ND);
+    assert(initial_dim <= Spacetime::ND);
   }
   else if (initial_state == SINGLETON) {
     assert(initial_size == 1);
@@ -346,7 +346,7 @@ void Spacetime::write_log() const
     s << "<StartDate>" << start_time.date() << "</StartDate>" << std::endl;
     s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
-    s << "<MaximumDimension>" << ND << "</MaximumDimension>" << std::endl;
+    s << "<MaximumDimension>" << Spacetime::ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
@@ -670,7 +670,7 @@ void Spacetime::write_log() const
   for(i=0; i<Nt; ++i) {
     sum = 0;
     mx = 0;
-    mn = ND;
+    mn = Spacetime::ND;
     for(j=0; j<Nv; ++j) {
       v = vdimension[Nt*j+i];
       if (v == -1) continue;
@@ -943,7 +943,7 @@ void Spacetime::read_complex(std::ifstream& s)
     events.push_back(v);
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     s.read((char*)(&n),sizeof(int));
     for(j=0; j<n; ++j) {
       S.deserialize(s);
@@ -951,7 +951,7 @@ void Spacetime::read_complex(std::ifstream& s)
     }
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       index_table[i][simplices[i][j].key] = j;
     }
@@ -994,9 +994,9 @@ void Spacetime::read_state(const std::string& filename)
   s.seekg(0,std::ios_base::beg);
 
   s.read((char*)(&n),sizeof(int));
-  if (n != ND) {
+  if (n != Spacetime::ND) {
     s.close();
-    std::cerr << "The compiled binary's maximum simplicial dimension " << ND << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's maximum simplicial dimension " << Spacetime::ND << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -1119,7 +1119,7 @@ void Spacetime::read_state(const std::string& filename)
     anterior.events.push_back(v);
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     s.read((char*)(&n),sizeof(int));
     for(j=0; j<n; ++j) {
       S.deserialize(s);
@@ -1128,7 +1128,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   // Regenerate the anterior index table...
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
       anterior.index_table[i][anterior.simplices[i][j].key] = j;
     }
@@ -1206,7 +1206,7 @@ void Spacetime::write_complex(std::ofstream& s) const
     events[i].serialize(s,nt);
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     n = (signed) simplices[i].size();
     s.write((char*)(&n),sizeof(int));
     for(j=0; j<n; ++j) {
@@ -1238,7 +1238,7 @@ void Spacetime::write_state() const
   s.seekp(0,std::ios_base::beg);
 
   // First the global parameters...
-  s.write((char*)(&ND),sizeof(int));
+  s.write((char*)(&Spacetime::ND),sizeof(int));
   s.write((char*)(&NP),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
@@ -1313,7 +1313,7 @@ void Spacetime::write_state() const
     anterior.events[i].serialize(s,nt);
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     n = (signed) anterior.simplices[i].size();
     s.write((char*)(&n),sizeof(int));
     for(j=0; j<n; ++j) {

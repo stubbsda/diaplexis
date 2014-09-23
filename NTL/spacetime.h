@@ -7,8 +7,8 @@
 
 typedef struct {
   std::vector<Vertex> events;
-  std::vector<Simplex> simplices[1+ND];
-  hash_map index_table[1+ND];
+  std::vector<Simplex>* simplices;
+  hash_map* index_table;
   Geometry geometry;
 } Plegma;
 
@@ -48,8 +48,8 @@ class Spacetime {
   double geometry_delta;
   double energy_delta;
   Plegma anterior;
-  std::vector<Simplex> simplices[1+ND];
-  hash_map index_table[1+ND];
+  std::vector<Simplex>* simplices;
+  hash_map* index_table;
   std::vector<Vertex> events;
   std::vector<Sheet> codex;
   Geometry* geometry;
@@ -122,6 +122,11 @@ class Spacetime {
   static const int N_IMP = 7;
   static const std::string EXP_OP[N_EXP];
   static const std::string IMP_OP[N_IMP];
+  // The combinatorial size of the subgraph used to compute
+  // the topological entwinement at a vertex
+  static const int topological_radius = 4;
+  // Maximum combinatorial dimension of the spacetime
+  static const int ND = 10;
 
   // The intensity of branching in the polycosmos, 0 < x < 1
   static const double ramosity;
@@ -131,9 +136,6 @@ class Spacetime {
   static const double T_zero;
   // The rate of thermal decay in the annealing schedule
   static const double kappa;
-  // The combinatorial size of the subgraph used to compute
-  // the topological entwinement at a vertex
-  static const int topological_radius = 4;
   // The coupling constant between the topological-geometric torsion 
   // and the energy
   static const double Lambda;

@@ -76,7 +76,7 @@ void Spacetime::compute_delta()
   for(i=0; i<nv; ++i) {
     if (events[i].incept == -1) vx.insert(i);
   }
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     n = (signed) simplices[i].size();
     // And all the new d-simplices (d >= 1)...
     for(j=0; j<n; ++j) {
@@ -1088,7 +1088,7 @@ void Spacetime::optimize()
       for(j=0; j<nvertex; ++j) {
         events[j].geometry_modified = false;
       }
-      for(j=1; j<=ND; ++j) {
+      for(j=1; j<=Spacetime::ND; ++j) {
         for(k=0; k<(signed) simplices[j].size(); ++k) {
           simplices[j][k].modified = false;
         }

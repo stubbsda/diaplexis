@@ -566,9 +566,9 @@ bool Spacetime::realizable(int d,int n) const
 
 void Spacetime::compute_volume()
 {  
-  int i,j,k,l,n,m,parity,info,vx[3],pivots[ND+3];
+  int i,j,k,l,n,m,parity,info,vx[3],pivots[Spacetime::ND+3];
   UINT64 q,p = 8;
-  double prefactor,V,l1,l2,l3,A[(ND+3)*(ND+3)];
+  double prefactor,V,l1,l2,l3,A[(Spacetime::ND+3)*(Spacetime::ND+3)];
   hash_map::const_iterator qt;
 
   compute_lengths();
@@ -590,7 +590,7 @@ void Spacetime::compute_volume()
     simplices[2][i].modified = false;
   }
 
-  for(i=3; i<=ND; ++i) {
+  for(i=3; i<=Spacetime::ND; ++i) {
     if (simplices[i].empty()) continue;
     m = i + 2;
     n = (signed) simplices[i].size();

@@ -7,13 +7,12 @@ const double Spacetime::epsilon = 0.00001;
 const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
+const int Spacetime::topological_radius;
+const int Spacetime::ND;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
 const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm"};
 const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V"};
-const int Spacetime::topological_radius;
-
-const double seqn_weights[] = {1.0,1.0,1.0,1.0};
 
 Spacetime::Spacetime()
 {
@@ -49,18 +48,16 @@ Spacetime::~Spacetime()
 {
   events.clear();
   codex.clear();
-  for(int i=1; i<=ND; ++i) {
-    simplices[i].clear();
-    index_table[i].clear();
-  }
   anterior.events.clear();
-  for(int i=1; i<=ND; ++i) {
-    anterior.simplices[i].clear();
-    anterior.index_table[i].clear();
-  }
+
   delete H;
   delete pi;
   delete geometry;
+
+  delete[] simplices;
+  delete[] index_table;
+  delete[] anterior.simplices;
+  delete[] anterior.index_table;
 }
 
 void Spacetime::set_default_values()
@@ -158,12 +155,12 @@ void Spacetime::clear()
   codex.clear();
   H->clear();
   pi->clear();
-  for(int i=1; i<=ND; ++i) {
+  for(int i=1; i<=Spacetime::ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
   }
   anterior.events.clear();
-  for(int i=1; i<=ND; ++i) {
+  for(int i=1; i<=Spacetime::ND; ++i) {
     anterior.simplices[i].clear();
     anterior.index_table[i].clear();
   }
@@ -723,7 +720,7 @@ void Spacetime::clean() const
   for(i=0; i<(signed) events.size(); ++i) {
     assert(!events[i].topology_modified);
   }
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       assert(!simplices[i][j].modified);
     }
@@ -787,7 +784,7 @@ void Spacetime::test_harness(int type,int n)
   unsigned long sheet = 2;
   Simplex S;
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
   }
@@ -924,7 +921,7 @@ bool Spacetime::correctness()
     events[i].topology_modified = true;
     events[i].geometry_modified = true;
   }
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       simplices[i][j].modified = true;
     }
@@ -968,7 +965,7 @@ void Spacetime::write_topology(int sheet) const
       }
       std::cout << vx[ulimit-1] << "]" << std::endl;
     }
-    for(i=ND; i>=1; i--) {
+    for(i=Spacetime::ND; i>=1; i--) {
       n = cardinality(i,sheet);
       if (n > 0) {
         if (i > 0) {
@@ -995,7 +992,7 @@ void Spacetime::write_topology(int sheet) const
       }
       std::cout << vx[ulimit-1] << "]" << std::endl;
     }
-    for(i=ND; i>=1; i--) {
+    for(i=Spacetime::ND; i>=1; i--) {
       n = cardinality(i,sheet);
       if (n > 0) {
         if (i > 0) {
@@ -1029,7 +1026,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
 
   s << "digraph G {" << std::endl;
   if (sheet == -1) {
-    for(i=ND; i>0; i--) {
+    for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity == 1) continue;
         nm = simplices[i][j].key;
@@ -1044,7 +1041,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
     }
   }
   else {
-    for(i=ND; i>0; i--) {
+    for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
         nm = simplices[i][j].key;
@@ -1127,7 +1124,7 @@ void Spacetime::structural_deficiency()
         continue;
       }
       compute_graph(G,i,j);
-      sum = seqn_weights[0]*G->completeness() + seqn_weights[1]*G->entwinement()/double(G->order() - 1);
+      sum = G->completeness() + G->entwinement()/double(G->order() - 1);
       sum += 0.5*double(vertex_dimension(i,j) - 1); 
       events[i].entwinement.push_back(sum);
     }
@@ -1215,8 +1212,8 @@ void Spacetime::structural_deficiency()
   // The local part of the structure equations
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
-    events[i].deficiency = R[i] + seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
-    events[i].geometric_deficiency = seqn_weights[3]*events[i].obliquity + seqn_weights[2]*length_deviation[i] + events[i].curvature;
+    events[i].deficiency = R[i] + events[i].obliquity + length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
+    events[i].geometric_deficiency = events[i].obliquity + length_deviation[i] + events[i].curvature;
   }
 
   // Now the chromatic energy sum...
@@ -1272,7 +1269,7 @@ int Spacetime::sheet_fission(int parent)
     for(i=0; i<nv; ++i) {
       if (NTL::divide(events[i].ubiquity,codex[parent].colour) == 1) events[i].ubiquity *= codex[nt+l].colour;
     }
-    for(i=1; i<=ND; ++i) {
+    for(i=1; i<=Spacetime::ND; ++i) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[parent].colour) == 1) simplices[i][j].ubiquity *= codex[nt+l].colour;
@@ -1340,7 +1337,7 @@ void Spacetime::write(Spacetime& state) const
   state.error = error;
   state.global_deficiency = global_deficiency;
   state.events = events;
-  for(int i=0; i<=ND; ++i) {
+  for(int i=0; i<=Spacetime::ND; ++i) {
     state.simplices[i] = simplices[i];
     state.index_table[i] = index_table[i];
   }
@@ -1352,7 +1349,7 @@ void Spacetime::read(const Spacetime& source)
   error = source.error;
   global_deficiency = source.global_deficiency;
   events = source.events;
-  for(int i=0; i<=ND; ++i) {
+  for(int i=0; i<=Spacetime::ND; ++i) {
     simplices[i] = source.simplices[i];
     index_table[i] = source.index_table[i];
   }
@@ -1381,7 +1378,7 @@ bool Spacetime::global_operations()
   for(i=0; i<nv; ++i) {
     if (events[i].incept == -1) events[i].incept = iterations;
   }
-  for(i=0; i<=ND; ++i) {
+  for(i=0; i<=Spacetime::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (simplices[i][j].incept == -1) simplices[i][j].incept = iterations;
@@ -1425,8 +1422,8 @@ bool Spacetime::global_operations()
   std::cout << "Standard deviation of vertex energy is " << sigma << std::endl;
 
   // Analyze the distribution of vertex dimensionalities...
-  int histogram[ND+1],histo2[1+ND];
-  for(i=0; i<=ND; ++i) {
+  int histogram[1 + Spacetime::ND],histo2[1 + Spacetime::ND];
+  for(i=0; i<=Spacetime::ND; ++i) {
     histogram[i] = 0;
     histo2[i] = 0;
   }
@@ -1436,7 +1433,7 @@ bool Spacetime::global_operations()
     if (events[i].energy < Spacetime::epsilon) continue;
     histogram[vertex_dimension(i,-1)] += 1;
   }
-  for(i=0; i<=ND; ++i) {
+  for(i=0; i<=Spacetime::ND; ++i) {
     std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional vertices." << std::endl;
   }
 #endif
@@ -1567,7 +1564,7 @@ void Spacetime::analyze_convergence()
     }
   }
   tdelta += (nv - nva);
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
       qt = anterior.index_table[i].find(simplices[i][j].key);
@@ -1594,14 +1591,14 @@ void Spacetime::analyze_convergence()
 
   anterior.events = events;
   anterior.geometry.load(geometry);
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     anterior.simplices[i].clear();
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       anterior.simplices[i].push_back(simplices[i][j]);
     }
   }
 
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     anterior.index_table[i].clear();
     for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
       anterior.index_table[i][anterior.simplices[i][j].key] = j;
@@ -1658,7 +1655,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   }
   if (jz == 0) return 0;
   // Now regularize...
-  for(i=ND; i>1; i--) {
+  for(i=Spacetime::ND; i>1; i--) {
     if (simplices[i].empty()) continue;
     nd = (signed) simplices[i].size();
     for(j=0; j<nd; ++j) {
@@ -2050,6 +2047,13 @@ void Spacetime::initialize()
   gettimeofday(&Z,NULL);
   t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
 #endif
+
+  // Allocate the memory for the simplices and index tables...
+  simplices = new std::vector<Simplex>[1 + Spacetime::ND];
+  index_table = new hash_map[1 + Spacetime::ND];
+  anterior.simplices = new std::vector<Simplex>[1 + Spacetime::ND];
+  anterior.index_table = new hash_map[1 + Spacetime::ND];
+
   if (!diskless) {
     if (std::system("mkdir -p data") < 0) {
       std::cerr << "Unable to create data directory." << std::endl;
@@ -2123,7 +2127,7 @@ void Spacetime::initialize()
   assert(energy_check());
 
   anterior.events = events;
-  for(i=1; i<=ND; ++i) {
+  for(i=1; i<=Spacetime::ND; ++i) {
     anterior.simplices[i] = simplices[i];
     anterior.index_table[i] = index_table[i];
   }
