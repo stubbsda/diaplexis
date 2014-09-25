@@ -265,6 +265,7 @@ class Spacetime {
   int sheet_fission(int);
   void sheet_dynamics();
   bool global_operations();
+  void write_distribution(const std::vector<int>&) const;
   void compute_colours(std::vector<unsigned char>&,bool,bool) const;
   void compute_global_topology(int);
   void build_initial_state(const std::vector<int>&);
@@ -287,7 +288,7 @@ class Spacetime {
   void clear();
   void write(Spacetime&) const;
   void read(const Spacetime&);
-  inline double distribution_fitness(int*,int*,int) const;
+  inline double distribution_fitness(int*,const std::vector<int>&,int) const;
 
  public:
   Spacetime();
@@ -401,7 +402,7 @@ inline bool Spacetime::is_pseudomanifold(bool* bdry,int sheet) const
   }
 }
 
-double Spacetime::distribution_fitness(int* volume,int* affinity,int nprocs) const
+double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
 {
   int i,sum = 0,bcount = 0;
   double mu,sigma = 0.0;

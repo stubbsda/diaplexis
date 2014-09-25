@@ -171,20 +171,21 @@ void Spacetime::clear()
 void Spacetime::distribute(int nprocs) const
 {
   assert(nprocs > 0);
-  const int nv = (signed) events.size();
-  int i,j,k,n,p,p_old,ecount,bcount,its = 0,affinity[nv],volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
+  int i,j,k,n,p,p_old,ecount,bcount,its = 0,volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
   int cneighbour;
   bool done,bdry;
   double cost,current_cost;
+  std::vector<int> affinity;
   std::vector<std::pair<int,int> > candidates;
   std::set<int> vx,neg,next;
   std::set<int>::const_iterator it;
+  const int nv = (signed) events.size();
   const int D = dimension(-1);
 
   // The algorithm should begin by making current equal to the 
   // vertex with the highest simplicial dimension...
   for(i=0; i<nv; ++i) {
-    affinity[i] = -1;
+    affinity.push_back(-1);
     if (events[i].ubiquity == 1) continue;
     nreal++;
     if (events[i].global_dimension > max_dim) {
@@ -392,6 +393,7 @@ void Spacetime::distribute(int nprocs) const
     std::cout << "Processor " << i << " owns " << volume[i] << " vertices and " << ecount << " edges, with " << bcount << " boundary edges." << std::endl;
 #endif
   }
+  write_distribution(affinity);
 }
 
 void Spacetime::get_ubiquity_vector(std::vector<int>& output) const

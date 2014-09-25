@@ -1,5 +1,198 @@
 #include "spacetime.h"
 
+void Spacetime::write_distribution(const std::vector<int>& affinity) const
+{
+  // First determine the number of distinct processors in this distribution...
+  int i,j,l,nproc,nv_real,ne_real,vx[2];
+  std::vector<unsigned char> chi;
+  std::vector<int> pvector,offset,naffinity;
+  std::set<int> processors;
+  std::set<int>::const_iterator it;
+  const int nv = (signed) affinity.size();
+  const int ne = (signed) simplices[1].size();
+
+  for(i=0; i<nv; ++i) {
+    naffinity.push_back(affinity[i]);
+    if (affinity[i] == -1) continue;
+    processors.insert(affinity[i]);
+  }
+  nproc = (signed) processors.size();
+  assert(nproc > 0 && nproc <= 8);
+  // We go through this on the off chance that the processor 
+  // affinities are not a straight sequence (0,..,np-1)
+  for(it=processors.begin(); it!=processors.end(); ++it) {
+    pvector.push_back(*it);
+  }
+  nv_real = 0;
+  for(i=0; i<nv; ++i) {
+    if (affinity[i] == -1) {
+      offset.push_back(-1);
+      continue;
+    }
+    offset.push_back(nv_real);
+    nv_real++;
+    for(j=0; j<nproc; ++j) {
+      if (affinity[i] == pvector[j]) {
+        naffinity[i] = j;
+        break;
+      }
+    }
+  }
+  // Now that we're sure about the affinity values we can 
+  // go about calculating the colour vector...
+  for(i=0; i<nv; ++i) {
+    if (affinity[i] == -1) continue;
+    switch (naffinity[i]) {
+      case 0:
+        // Red
+        chi.push_back(205);
+        chi.push_back(0);
+        chi.push_back(0);
+        break;
+      case 1:
+        // Dark blue
+        chi.push_back(0);
+        chi.push_back(0);
+        chi.push_back(205);
+        break;
+      case 2:
+        // Green
+        chi.push_back(0);
+        chi.push_back(205);
+        chi.push_back(0);
+        break;
+      case 3:
+        // Purple
+        chi.push_back(138);
+        chi.push_back(43);
+        chi.push_back(226);
+        break;
+      case 4:
+        // Pink
+        chi.push_back(255);
+        chi.push_back(20);
+        chi.push_back(147);
+        break;
+      case 5:
+        // Light blue
+        chi.push_back(152);
+        chi.push_back(245);
+        chi.push_back(255);
+        break;
+      case 6:
+        // Brown
+        chi.push_back(139);
+        chi.push_back(69);
+        chi.push_back(0);
+        break;
+      case 7:
+        // Orange
+        chi.push_back(255);
+        chi.push_back(127);
+        chi.push_back(36);
+        break;
+    }
+  }
+  ne_real = 0;
+  for(i=0; i<ne; ++i) {
+    if (simplices[1][i].ubiquity == 1) continue;
+    ne_real++;
+    simplices[1][i].get_vertices(vx);
+    if (naffinity[vx[0]] != naffinity[vx[1]]) {
+      // Colour this edge black
+      chi.push_back(0);
+      chi.push_back(0);
+      chi.push_back(0);
+      continue;
+    }
+    switch (naffinity[vx[0]]) {
+      case 0:
+        // Red
+        chi.push_back(205);
+        chi.push_back(0);
+        chi.push_back(0);
+        break;
+      case 1:
+        // Dark blue
+        chi.push_back(0);
+        chi.push_back(0);
+        chi.push_back(205);
+        break;
+      case 2:
+        // Green
+        chi.push_back(0);
+        chi.push_back(205);
+        chi.push_back(0);
+        break;
+      case 3:
+        // Purple
+        chi.push_back(138);
+        chi.push_back(43);
+        chi.push_back(226);
+        break;
+      case 4:
+        // Pink
+        chi.push_back(255);
+        chi.push_back(20);
+        chi.push_back(147);
+        break;
+      case 5:
+        // Light blue
+        chi.push_back(152);
+        chi.push_back(245);
+        chi.push_back(255);
+        break;
+      case 6:
+        // Brown
+        chi.push_back(139);
+        chi.push_back(69);
+        chi.push_back(0);
+        break;
+      case 7:
+        // Orange
+        chi.push_back(255);
+        chi.push_back(127);
+        chi.push_back(36);
+        break;
+    }
+  }
+  float x;
+  std::vector<double> xv;
+  std::ofstream s("vx_distribution.dat",std::ios::binary | std::ios::trunc);
+  s.write((char*)(&nv_real),sizeof(int));
+  s.write((char*)(&ne_real),sizeof(int));
+  for(i=0; i<nv; ++i) {
+    if (affinity[i] == -1) continue;
+    geometry->get_coordinates(i,xv);
+    l = (signed) xv.size();
+    for(j=0; j<l; ++j) {
+      x = float(xv[j]);
+      s.write((char*)(&x),sizeof(float));
+    }
+    x = 0.0;
+    for(j=l; j<3; ++j) {
+      s.write((char*)(&x),sizeof(float));
+    }
+    for(j=0; j<3; ++j) {
+      x = float(chi[3*i+j])/255.0;
+      s.write((char*)(&x),sizeof(float));
+    }
+  }
+  for(i=0; i<ne; ++i) {
+    if (simplices[1][i].ubiquity == 1) continue;
+    simplices[1][i].get_vertices(vx);
+    j = offset[vx[0]];
+    s.write((char*)(&j),sizeof(int));
+    j = offset[vx[1]];
+    s.write((char*)(&j),sizeof(int));
+    for(j=0; j<3; ++j) {
+      x = float(chi[3*nv+3*i+j])/255.0;
+      s.write((char*)(&x),sizeof(float));
+    }
+  }
+  s.close();
+}
+
 void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,bool use_energy) const
 {
   int i,j;
