@@ -5,7 +5,7 @@
 
 class Vertex {
  // For the event structure, the nodes of spacetime...
- private:
+ protected:
   int incept;
   int global_dimension;
   bool boundary;
@@ -27,9 +27,9 @@ class Vertex {
  public:
   Vertex();
   Vertex(const Vertex&);
-  Vertex& operator =(const Vertex&);
   Vertex(const std::set<int>&);
-  ~Vertex();
+  Vertex& operator =(const Vertex&);
+  virtual ~Vertex();
   void serialize(std::ofstream&,int) const;
   void deserialize(std::ifstream&);
   void write2screen() const;

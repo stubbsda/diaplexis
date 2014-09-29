@@ -11,7 +11,7 @@ enum CAUSALITY
 };
 
 class Simplex: public Cell {
- private:
+ protected:
   double volume;
   double sq_volume;
   double energy;
