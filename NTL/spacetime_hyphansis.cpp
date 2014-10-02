@@ -655,7 +655,7 @@ bool Spacetime::correction(int base,int sheet)
   }
   // Add something to check here if this new vertex is within 0.5 of an existing vertex...
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (geometry->get_distance(i,xc,false) <= 0.5) return false;
   }
 #ifdef VERBOSE
@@ -844,7 +844,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
 
   if (sheet == -1) {
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       simplices[i][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       u = (vx[0] == base) ? vx[1] : vx[0];
@@ -1167,7 +1167,7 @@ void Spacetime::compute_entourages(int sheet)
   // changed its ubiquity?
   for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
-      if (simplices[i][j].ubiquity == 1) continue;
+      if (!simplices[i][j].active()) continue;
       for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
         if (simplices[i+1][*it].ubiquity == 1) continue;
         s.insert(*it);
@@ -1177,7 +1177,7 @@ void Spacetime::compute_entourages(int sheet)
     }
   }
   for(i=0; i<(signed) events.size(); ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       if (simplices[1][*it].ubiquity == 1) continue;
       s.insert(*it);
@@ -1191,7 +1191,7 @@ void Spacetime::compute_entourages(int sheet)
     for(i=ulimit; i>=2; i--) {
       ns = (signed) simplices[i].size();
       for(j=0; j<ns; ++j) {
-        if (simplices[i][j].ubiquity == 1) continue;
+        if (!simplices[i][j].active()) continue;
         chi = simplices[i][j].ubiquity;
         for(k=0; k<1+i; ++k) {
           fx = simplices[i][j].faces[k];
@@ -1209,7 +1209,7 @@ void Spacetime::compute_entourages(int sheet)
     // Now the edges...
     ns = (signed) simplices[1].size();
     for(i=0; i<ns; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       chi = simplices[1][i].ubiquity;
       simplices[1][i].get_vertices(vx);
 
@@ -1263,7 +1263,7 @@ void Spacetime::compute_neighbours()
     events[i].neighbours.clear();
   }
   for(i=0; i<(signed) simplices[1].size(); ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
     events[vx[0]].neighbours.insert(vx[1]);
     events[vx[1]].neighbours.insert(vx[0]);
@@ -1281,7 +1281,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   const int nt = (signed) codex.size();
 
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     alpha = std::abs(simplices[1][i].volume);
     if (alpha > threshold) {
       s = std::exp(-(alpha - threshold));
@@ -1324,7 +1324,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
 #endif
     std::vector<int>* cvertex = new std::vector<int>[ncomp];
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       cvertex[component[i]].push_back(i);
     }
 
@@ -1820,7 +1820,7 @@ void Spacetime::simplicial_implication(int sheet)
       n = (signed) simplices[i].size();
       m = (signed) simplices[i-1].size();
       for(j=0; j<n; ++j) {
-        if (simplices[i][j].ubiquity == 1) continue;
+        if (!simplices[i][j].active()) continue;
         chi = simplices[i][j].ubiquity;
         for(k=0; k<1+i; ++k) {
           qt = index_table[i-1].find(simplices[i][j].faces[k]);
@@ -1839,7 +1839,7 @@ void Spacetime::simplicial_implication(int sheet)
     }
     n = (signed) simplices[1].size();
     for(i=0; i<n; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       chi = simplices[1][i].ubiquity;
       simplices[1][i].get_vertices(vx);
       tau = events[vx[0]].ubiquity;
@@ -1933,7 +1933,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   std::vector<int>* cvertex = new std::vector<int>[nc];
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       cvertex[component[i]].push_back(i);
     }
   }
@@ -2521,7 +2521,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   // should coalesce.
   for(i=0; i<nv; ++i) {
     modified.push_back(0);
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (events[i].energy > Spacetime::epsilon) continue;
     for(j=1+i; j<nv; ++j) {
       if (events[j].ubiquity == 1) continue;

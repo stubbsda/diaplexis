@@ -186,7 +186,7 @@ void Spacetime::distribute(int nprocs) const
   // vertex with the highest simplicial dimension...
   for(i=0; i<nv; ++i) {
     affinity.push_back(-1);
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     nreal++;
     if (events[i].global_dimension > max_dim) {
       current = i;
@@ -210,7 +210,7 @@ void Spacetime::distribute(int nprocs) const
       // Need to loop over all d-simplices, d > 1
       for(i=2; i<=events[current].global_dimension; ++i) {
         for(j=0; j<(signed) simplices[i].size(); ++j) {
-          if (simplices[i][j].ubiquity == 1) continue;
+          if (!simplices[i][j].active()) continue;
           if (simplices[i][j].contains(current)) {
             simplices[i][j].get_vertices(vx);
             for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -229,7 +229,7 @@ void Spacetime::distribute(int nprocs) const
       do {
         for(i=2; i<=D; ++i) {
           for(j=0; j<(signed) simplices[i].size(); ++j) {
-            if (simplices[i][j].ubiquity == 1) continue;
+            if (!simplices[i][j].active()) continue;
             simplices[i][j].get_vertices(vx);
             bdry = false;
             for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -258,7 +258,7 @@ void Spacetime::distribute(int nprocs) const
     }    
     done = true;
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       if (affinity[i] == -1 && events[i].global_dimension > 1) {
         done = false;
         current = i;
@@ -278,7 +278,7 @@ void Spacetime::distribute(int nprocs) const
       // been assigned to a processor...
       candidates.clear();
       for(j=0; j<nv; ++j) {
-        if (events[j].ubiquity == 1) continue;
+        if (!events[j].active()) continue;
         if (affinity[j] > -1) continue;
         cneighbour = 0;
         for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
@@ -296,7 +296,7 @@ void Spacetime::distribute(int nprocs) const
     do {
       next.clear();
       for(j=0; j<nv; ++j) {
-        if (events[j].ubiquity == 1) continue;
+        if (!events[j].active()) continue;
         if (affinity[j] > -1) continue;
         for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
           if (affinity[*it] == i) next.insert(j);
@@ -315,7 +315,7 @@ void Spacetime::distribute(int nprocs) const
     } while(!done);
   }
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (affinity[i] == -1) {
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         p = affinity[*it];
@@ -334,7 +334,7 @@ void Spacetime::distribute(int nprocs) const
   do {
     do {
       n = RND.irandom(nv);
-      if (events[n].ubiquity == 1) continue;
+      if (!events[n].active()) continue;
       if (events[n].global_dimension > 1) continue;
       break;
     } while(true);
@@ -363,7 +363,7 @@ void Spacetime::distribute(int nprocs) const
   // Some basic sanity checks: every vertex has a processor...
   n = 0;
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (affinity[i] == -1) n++;
   }
   assert(n == 0);
@@ -377,7 +377,7 @@ void Spacetime::distribute(int nprocs) const
   for(i=0; i<nprocs; ++i) {
     ecount = 0; bcount = 0;
     for(j=0; j<nv; ++j) {
-      if (events[j].ubiquity == 1) continue;
+      if (!events[j].active()) continue;
       if (affinity[j] != i) continue;
       for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
         k = *it;
@@ -406,16 +406,16 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
   output.clear();
 
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     for(j=0; j<nt; ++j) {
-      n = (NTL::divide(events[i].ubiquity,codex[j].colour) == 1) ? 1 : 0;
+      n = events[i].active(j) ? 1 : 0;
       output.push_back(n);
     }
   }
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     for(j=0; j<nt; ++j) {
-      n = (NTL::divide(simplices[1][i].ubiquity,codex[j].colour) == 1) ? 1 : 0;
+      n = simplices[1][i].active(j) ? 1 : 0;
       output.push_back(n);
     }
   }
@@ -430,13 +430,13 @@ void Spacetime::get_energy_values(std::vector<double>& output,int sheet) const
 
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       output.push_back(events[i].energy);
     }
   } 
   else {
     for(i=0; i<nv; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!events[i].active(sheet)) continue;
       output.push_back(events[i].energy);
     }
   }
@@ -451,13 +451,13 @@ void Spacetime::get_deficiency_values(std::vector<double>& output,int sheet) con
 
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       output.push_back(events[i].deficiency);
     }
   }
   else {
     for(i=0; i<nv; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!events[i].active(sheet)) continue;
       output.push_back(events[i].deficiency);
     }
   }
@@ -782,9 +782,11 @@ void Spacetime::test_harness(int type,int n)
   double alpha;
   hash_map::const_iterator qt;
   std::set<int> vx;
+  std::vector<int> locale;
   std::vector<double> xc;
-  unsigned long sheet = 2;
   Simplex S;
+
+  locale.push_back(1);
 
   for(i=1; i<=Spacetime::ND; ++i) {
     simplices[i].clear();
@@ -817,14 +819,14 @@ void Spacetime::test_harness(int type,int n)
     nv = n;
     events.clear();
 
-    vt.ubiquity = sheet;
+    vt.set_active(0);
     for(i=0; i<n; ++i) {
       events.push_back(vt);
       geometry->vertex_addition(-1);
     }
   }
 
-  S.ubiquity = sheet;
+  S.set_active(0);
   do {
     alpha = RND.drandom();
     if (alpha < 0.5) {
@@ -845,7 +847,7 @@ void Spacetime::test_harness(int type,int n)
     do {
       vx.insert(RND.irandom(nv));
     } while((signed) vx.size() < (1+d));
-    S.initialize(vx,sheet);
+    S.initialize(vx,locale);
     qt = index_table[d].find(S.key);
     if (qt == index_table[d].end()) {
       simplices[d].push_back(S);
@@ -959,7 +961,7 @@ void Spacetime::write_topology(int sheet) const
 
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       simplex_membership(i,vx);
       std::cout << i+1 << ": [";
       for(j=1; j<ulimit; ++j) {
@@ -986,7 +988,7 @@ void Spacetime::write_topology(int sheet) const
   }
   else {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!events[i].active(sheet)) continue;
       simplex_membership(i,vx);
       std::cout << i+1 << ": [";
       for(j=1; j<ulimit; ++j) {
@@ -1030,7 +1032,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
   if (sheet == -1) {
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (simplices[i][j].ubiquity == 1) continue;
+        if (!simplices[i][j].active()) continue;
         nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
           s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
@@ -1038,14 +1040,14 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       }
     }
     for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       s << "  \"" << i << "\" -> \"NULL\";" << std::endl;
     }
   }
   else {
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
+        if (!simplices[i][j].active(sheet)) continue;
         nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
           s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
@@ -1053,7 +1055,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       }
     }
     for(i=0; i<(signed) events.size(); ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!events[i].active(sheet)) continue;
       s << "  \"" << i << "\" -> \"NULL\";" << std::endl;
     }
   }
@@ -1068,7 +1070,7 @@ bool Spacetime::energy_check() const
 
   for(int i=0; i<nvertex; ++i) {
     if (events[i].energy > 0.0) {
-      if (events[i].ubiquity == 1) {
+      if (!events[i].active()) {
         std::cout << "Potential problem here: " << i << "  " << events[i].energy << std::endl;
         output = false;
       }
@@ -1111,7 +1113,7 @@ void Spacetime::structural_deficiency()
   }
 
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) {
+    if (!events[i].active()) {
       n = (signed) events[i].entwinement.size();
       for(j=n; j<nt; ++j) {
         events[i].entwinement.push_back(0.0);
@@ -1121,7 +1123,7 @@ void Spacetime::structural_deficiency()
     if (!events[i].topology_modified) continue;
     events[i].entwinement.clear();
     for(j=0; j<nt; ++j) {
-      if (NTL::divide(events[i].ubiquity,codex[j].colour) == 0) {
+      if (!events[i].active(j)) {
         events[i].entwinement.push_back(0.0);
         continue;
       }
@@ -1146,15 +1148,15 @@ void Spacetime::structural_deficiency()
   #pragma omp parallel for default(shared) private(i,j,k,l,found,d1,d2) schedule(dynamic,1)
 #endif
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     for(j=1+i; j<nv; ++j) {
-      if (events[j].ubiquity == 1) continue;
+      if (!events[j].active()) continue;
       l = geometry->get_distance(i,j,false);
       if (l < 3.8025 || l > 4.2025) continue;
       // See if there is a third vertex that lies between these two...
       found = false;
       for(k=0; k<nv; ++k) {
-        if (events[k].ubiquity == 1) continue;
+        if (!events[k].active()) continue;
         if (k == i || k == j) continue;
         d1 = geometry->get_distance(i,k,false);
         d2 = geometry->get_distance(j,k,false);
@@ -1173,7 +1175,7 @@ void Spacetime::structural_deficiency()
   }
 
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (events[i].neighbours.empty()) {
       R[i] = gvalue[i];
       rho[i] = events[i].energy;
@@ -1213,7 +1215,7 @@ void Spacetime::structural_deficiency()
   
   // The local part of the structure equations
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     events[i].deficiency = R[i] + events[i].obliquity + length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
     events[i].geometric_deficiency = events[i].obliquity + length_deviation[i] + events[i].curvature;
   }
@@ -1222,7 +1224,7 @@ void Spacetime::structural_deficiency()
   for(i=0; i<nv; ++i) {
     c = 0;
     for(j=0; j<nt; ++j) {
-      if (NTL::divide(events[i].ubiquity,codex[j].colour) == 1) c++;
+      if (events[i].active(j)) c++;
     }
     E_total += double(c)*events[i].energy;
   }
@@ -1235,7 +1237,7 @@ void Spacetime::structural_deficiency()
   error = 0.0;
   double terror = 0.0;
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     delta = events[i].deficiency;
     error += delta*delta;
     terror += std::abs(delta);
@@ -1246,7 +1248,7 @@ void Spacetime::structural_deficiency()
   // Sanity check...
   int nv_test = 0;
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
     nv_test++;
   }
@@ -1269,7 +1271,7 @@ int Spacetime::sheet_fission(int parent)
   for(l=0; l<offspring; ++l) {
     codex.push_back(Sheet(nt+l,parent,psequence.next(),H->get_field(),H->get_method()));
     for(i=0; i<nv; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[parent].colour) == 1) events[i].ubiquity *= codex[nt+l].colour;
+      if (events[i].active(parent)) events[i].ubiquity *= codex[nt+l].colour;
     }
     for(i=1; i<=Spacetime::ND; ++i) {
       n = (signed) simplices[i].size();
@@ -1388,7 +1390,7 @@ bool Spacetime::global_operations()
   }
 
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     if (events[i].topology_modified) events[i].global_dimension = vertex_dimension(i,-1);
   }
 
@@ -1411,13 +1413,13 @@ bool Spacetime::global_operations()
   double E_avg = 0.0;
   double nc = double(cardinality(0,-1));
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     E_avg += events[i].energy;
   }
   E_avg = E_avg/nc;
   sigma = 0.0;
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     sigma += (events[i].energy - E_avg)*(events[i].energy - E_avg);
   }
   sigma = std::sqrt(sigma/nc);
@@ -1430,7 +1432,7 @@ bool Spacetime::global_operations()
     histo2[i] = 0;
   }
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     histo2[vertex_dimension(i,-1)] += 1;
     if (events[i].energy < Spacetime::epsilon) continue;
     histogram[vertex_dimension(i,-1)] += 1;
@@ -1463,13 +1465,13 @@ bool Spacetime::global_operations()
     // Eliminate excessively long edges...
     // First calculate the average edge length and its variance...
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       delta += std::abs(simplices[1][i].volume);
       k++;
     }
     mu = delta/double(k);
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       delta = (std::abs(simplices[1][i].volume) - mu);
       sigma += delta*delta;
     }
@@ -1483,7 +1485,7 @@ bool Spacetime::global_operations()
     for(i=1; i<nd; ++i) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (simplices[i][j].ubiquity == 1) continue;
+        if (!simplices[i][j].active()) continue;
         compute_simplex_energy(i,j);
       }
     }
@@ -1661,7 +1663,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
     if (simplices[i].empty()) continue;
     nd = (signed) simplices[i].size();
     for(j=0; j<nd; ++j) {
-      if (simplices[i][j].ubiquity == 1) continue;
+      if (!simplices[i][j].active()) continue;
       chi = simplices[i][j].ubiquity;
       for(k=0; k<1+i; ++k) {
         qt = index_table[i-1].find(simplices[i][j].faces[k]);
@@ -1672,7 +1674,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   }
   n = (signed) simplices[1].size();
   for(i=0; i<n; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     chi = simplices[1][i].ubiquity;
     simplices[1][i].get_vertices(vx);
     tau = events[vx[0]].ubiquity;
@@ -1683,7 +1685,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   return jz;
 }
 
-void Spacetime::build_initial_state(const NTL::ZZ locale)
+void Spacetime::build_initial_state(const std::vector<int>& locale)
 {
   int i,j,in1;
   Vertex vt;
@@ -1695,8 +1697,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     svalue.push_back(0.0);
   }
   vt.incept = 0;
-  vt.ubiquity = locale;
-  S.ubiquity = locale;
+  vt.set_ubiquity(locale);
+  S.set_ubiquity(locale);
   S.incept = 0;
 
   if (initial_state == CARTESIAN) {
@@ -2033,7 +2035,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
   }
  
   for(i=0; i<(signed) codex.size(); ++i) {
-    if (NTL::divide(locale,codex[i].colour) == 1) regularization(false,i);
+    if (locale[i] == 1) regularization(false,i);
   }
   regularization(false,-1);
 }
@@ -2103,13 +2105,12 @@ void Spacetime::initialize()
     }
   }
   else {
-    NTL::ZZ locale;
+    std::vector<int> locale;
 
-    locale = 1;
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
       codex.push_back(Sheet(i,psequence.next(),H->get_field(),H->get_method()));
-      locale *= codex[i].colour;
+      locale.push_back(1);
     }
     build_initial_state(locale);
     geometry->compute_distances();

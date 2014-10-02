@@ -298,11 +298,6 @@ void Simplex::deserialize(std::ifstream& s)
   string_assembly();
 }
 
-NTL::ZZ Simplex::get_ubiquity() const
-{
-  return ubiquity;
-}
-
 void Simplex::get_faces(std::vector<Simplex>& F) const
 {
   // This method grabs the 1+n faces of this n-simplex...

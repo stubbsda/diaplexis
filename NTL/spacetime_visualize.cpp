@@ -95,7 +95,7 @@ void Spacetime::write_distribution(const std::vector<int>& affinity) const
   }
   ne_real = 0;
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     ne_real++;
     simplices[1][i].get_vertices(vx);
     if (naffinity[vx[0]] != naffinity[vx[1]]) {
@@ -179,7 +179,7 @@ void Spacetime::write_distribution(const std::vector<int>& affinity) const
     }
   }
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
     j = offset[vx[0]];
     s.write((char*)(&j),sizeof(int));
@@ -203,7 +203,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     if (codex.size() == 1) {
       // A monocosmos, so everything is black...
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) {
+        if (!events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -214,7 +214,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         chi.push_back(0);
       }
       for(i=0; i<ne; ++i) {
-        if (simplices[1][i].ubiquity == 1) {
+        if (!simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -229,7 +229,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       // Very special case: 2^2 - 1 = 3, the number of elements of
       // an RGB colour vector
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) {
+        if (!events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -241,19 +241,19 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       }
 
       for(i=0; i<ne; ++i) {
-        if (simplices[1][i].ubiquity == 1) {
+        if (!simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
           continue;
         }
-        if (NTL::divide(simplices[1][i].ubiquity,codex[0].colour) == 1 && NTL::divide(simplices[1][i].ubiquity,codex[1].colour) == 1) {
+        if (simplices[1][i].active(0) && simplices[1][i].active(1)) {
           chi.push_back(0);
           chi.push_back(0);
           chi.push_back(255);
         }
         else {
-          if (NTL::divide(simplices[1][i].ubiquity,codex[0].colour) == 1) {
+          if (simplices[1][i].active(0)) {
             chi.push_back(255);
             chi.push_back(0);
             chi.push_back(0);
@@ -273,7 +273,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       float cbasis[3*nt],cvalues[3];
 
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) {
+        if (!events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -307,7 +307,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         }
       }
       for(i=0; i<ne; ++i) {
-        if (simplices[1][i].ubiquity == 1) {
+        if (!simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -320,7 +320,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         divisors[1] = 0;
         divisors[2] = 0;
         for(j=0; j<nt; ++j) {
-          if (NTL::divide(simplices[1][i].ubiquity,codex[j].colour) == 1) {
+          if (simplices[1][i].active(j)) {
             cvalues[0] += cbasis[3*j];
             cvalues[1] += cbasis[3*j+1];
             cvalues[2] += cbasis[3*j+2];
@@ -343,7 +343,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     double x,x_max,x_min,delta,theta,xvalue[nv];
 
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       x_min = (use_energy) ? events[i].energy : events[i].deficiency;
       x_max = x_min;
       break;
@@ -351,7 +351,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
 
     if (use_energy) {
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) continue;
+        if (!events[i].active()) continue;
         x = events[i].energy;
         xvalue[i] = x;
         if (x > x_max) x_max = x;
@@ -360,7 +360,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
     else {
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) continue;
+        if (!events[i].active()) continue;
         x = events[i].deficiency;
         xvalue[i] = x;
         if (x > x_max) x_max = x;
@@ -371,7 +371,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     if (delta < 0.05) {
       // In this case just paint everything black...
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) {
+        if (!events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -382,7 +382,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         chi.push_back(0);
       }
       for(i=0; i<ne; ++i) {
-        if (simplices[1][i].ubiquity == 1) {
+        if (!simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -396,7 +396,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
 
     for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) {
+      if (!events[i].active()) {
         chi.push_back(255);
         chi.push_back(255);
         chi.push_back(255);
@@ -411,7 +411,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
 
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) {
+      if (!simplices[1][i].active()) {
         chi.push_back(255);
         chi.push_back(255);
         chi.push_back(255);
@@ -442,13 +442,13 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       offset[i] = j; j++;
     }
     vdata[0] = j;
     if (D == 1) {
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) continue;
+        if (!events[i].active()) continue;
         vcoords.push_back(float(x[i]));
         vcoords.push_back(0.0);
         vcoords.push_back(0.0);
@@ -456,7 +456,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D == 2) {
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) continue;
+        if (!events[i].active()) continue;
         vcoords.push_back(float(x[2*i]));
         vcoords.push_back(float(x[2*i+1]));
         vcoords.push_back(0.0);
@@ -464,7 +464,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D >= 3) {
       for(i=0; i<nv; ++i) {
-        if (events[i].ubiquity == 1) continue;
+        if (!events[i].active()) continue;
         vcoords.push_back(float(x[D*i]));
         vcoords.push_back(float(x[D*i+1]));
         vcoords.push_back(float(x[D*i+2]));
@@ -473,7 +473,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     // Now the neighbour table...
     j = 0;
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       simplices[1][i].get_vertices(vx);
       evertex.push_back(offset[vx[0]]);
       evertex.push_back(offset[vx[1]]);
@@ -484,13 +484,13 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   else {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!events[i].active(sheet)) continue;
       offset[i] = j; j++;
     }
     vdata[0] = j;
     if (D == 1) {
       for(i=0; i<nv; ++i) {
-        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        if (!events[i].active(sheet)) continue;
         vcoords.push_back(float(x[i]));
         vcoords.push_back(0.0);
         vcoords.push_back(0.0);
@@ -498,7 +498,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D == 2) {
       for(i=0; i<nv; ++i) {
-        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        if (!events[i].active(sheet)) continue;
         vcoords.push_back(float(x[2*i]));
         vcoords.push_back(float(x[2*i+1]));
         vcoords.push_back(0.0);
@@ -506,7 +506,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D >= 3) {
       for(i=0; i<nv; ++i) {
-        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        if (!events[i].active(sheet)) continue;
         vcoords.push_back(float(x[D*i]));
         vcoords.push_back(float(x[D*i+1]));
         vcoords.push_back(float(x[D*i+2]));
@@ -515,7 +515,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     // Now the neighbour table...
     j = 0;
     for(i=0; i<ne; ++i) {
-      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
+      if (!simplices[1][i].active(sheet)) continue;
       simplices[1][i].get_vertices(vx);
       evertex.push_back(offset[vx[0]]);
       evertex.push_back(offset[vx[1]]);
@@ -569,7 +569,7 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
     }
   }
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) {
+    if (!simplices[1][i].active()) {
       vx[0] = 0;
       vx[1] = 0;
     }

@@ -15,7 +15,7 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
 
   x.clear();
   for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     get_coordinates(i,vx);
     for(j=0; j<geometry->dimension(); ++j) {
       x.push_back(vx[j]);
@@ -35,12 +35,12 @@ double Spacetime::total_energy(int sheet) const
 
   if (sheet == -1) {
     for(int i=0; i<nv; ++i) {
-      if (events[i].ubiquity > 1) sum += events[i].energy;
+      if (events[i].active()) sum += events[i].energy;
     }
   }
   else {
     for(int i=0; i<nv; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 1) sum += events[i].energy;
+      if (events[i].active(sheet)) sum += events[i].energy;
     }
   }
   return sum;
@@ -101,7 +101,7 @@ void Spacetime::chorogenesis(int nsteps)
   do {
     iterations += 1;
     for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       simplices[1][i].get_vertices(vx);
       d = (signed) events[vx[0]].neighbours.size();
       if (d <= 2*geometry->dimension()) continue;
@@ -127,7 +127,7 @@ void Spacetime::chorogenesis(int nsteps)
       j = candidates[reorder[i]];
       simplex_deletion(1,j,-1);
       if (!connected(-1)) {
-        simplices[1][j].ubiquity = 2;
+        simplices[1][j].set_active(0);
         continue;
       }
       d++;
@@ -177,7 +177,7 @@ void Spacetime::determine_flexible_edges()
   }
 
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
     if (events[vx[0]].energy > 0.0 || events[vx[1]].energy > 0.0) continue;
     // Now check to see if one of these vertices has a neighbour with energy > 0
@@ -207,7 +207,7 @@ double Spacetime::compute_abnormality() const
   const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
 
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
     d = geometry->get_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
@@ -238,7 +238,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x) const
   geometry->compute_distances();
 
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1) continue;
+    if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
     d = geometry->get_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
@@ -300,7 +300,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     double alpha[D];
 
     for(i=0; i<nvertex; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       na++;
     }
 
@@ -310,7 +310,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,qt)
 #endif
     for(i=0; i<nvertex; ++i) {
-      if (events[i].ubiquity == 1) continue;
+      if (!events[i].active()) continue;
       geometry->get_coordinates(i,x1);
       for(j=0; j<D; ++j) {
         alpha[j] = 0.0;
@@ -406,7 +406,7 @@ void Spacetime::compute_obliquity()
   const double A = 2.5;
 
   for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1 || events[i].neighbours.size() < 2 || !events[i].geometry_modified) continue;
+    if (!events[i].active() || events[i].neighbours.size() < 2 || !events[i].geometry_modified) continue;
 
     j = *(events[i].neighbours.begin());
 
@@ -444,7 +444,7 @@ void Spacetime::compute_curvature()
     // To calculate the curvature of v, we need to find the greatest
     // simplicial dimension of v subject to the requirement that its
     // entourage at this dimensionality be greater than one.
-    if (events[i].ubiquity == 1) continue;
+    if (!events[i].active()) continue;
     alpha = 0.0;
     events[i].curvature = alpha;
   }
@@ -464,7 +464,7 @@ double Spacetime::representational_energy(bool weighted) const
   if (dimension(-1) < 1) return energy;
 
   for(i=0; i<nvertex; ++i) {
-    if (events[i].ubiquity == 1) {
+    if (!events[i].active()) {
       offset.push_back(-1);
       continue;
     }
@@ -483,7 +483,7 @@ double Spacetime::representational_energy(bool weighted) const
     double w;
     l = 0;
     for(i=0; i<nedge; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       value = std::abs(simplices[1][i].volume);
       w = double(1+l)/value;
       simplices[1][i].get_vertices(vx);
@@ -501,7 +501,7 @@ double Spacetime::representational_energy(bool weighted) const
     // We can construct the Laplacian of the spacetime graph directly in this
     // case
     for(i=0; i<nedge; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
+      if (!simplices[1][i].active()) continue;
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       k = offset[vx[1]];
@@ -587,7 +587,7 @@ void Spacetime::compute_volume()
   for(i=0; i<(signed) simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
     // without LAPACK
-    if (simplices[2][i].ubiquity == 1 || !simplices[2][i].modified) continue;
+    if (!simplices[2][i].active() || !simplices[2][i].modified) continue;
     simplices[2][i].get_vertices(vx);
     qt = index_table[1].find(make_key(vx[0],vx[1]));
     l1 = simplices[1][qt->second].sq_volume;
@@ -616,7 +616,7 @@ void Spacetime::compute_volume()
       A[m*j] = 1.0;
     }
     for(j=0; j<n; ++j) {
-      if (simplices[i][j].ubiquity == 1 || !simplices[i][j].modified) continue;
+      if (!simplices[i][j].active() || !simplices[i][j].modified) continue;
       simplices[i][j].get_vertices(pivots);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
@@ -664,7 +664,7 @@ void Spacetime::compute_lengths()
   const int ne = (signed) simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].ubiquity == 1 || !simplices[1][i].modified) continue;
+    if (!simplices[1][i].active() || !simplices[1][i].modified) continue;
     simplices[1][i].get_vertices(vx);
     delta = geometry->get_distance(vx[0],vx[1],true);
     simplices[1][i].sq_volume = delta;
