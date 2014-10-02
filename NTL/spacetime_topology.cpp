@@ -8,7 +8,7 @@ void Spacetime::compute_simplicial_dimension()
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     events[i].global_dimension = vertex_dimension(i,-1);
   }
 }
@@ -20,7 +20,7 @@ void Spacetime::get_edge_topology(std::vector<std::set<int> >& vx) const
 
   vx.clear();
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     vx.push_back(events[i].neighbours);
   }
 }
@@ -96,7 +96,7 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
 #pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
 #endif
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       for(j=1+i; j<nv; ++j) {
         if (events[j].ubiquity == 1) continue;
         l = combinatorial_distance(i,j);
@@ -289,7 +289,7 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
 
   if (sheet == -1) {
     for(i=0; i<Ne; ++i) {
-      if (!simplices[1][i].active()) continue;
+      if (simplices[1][i].ubiquity == 1) continue;
       wm = simplices[1][i].volume;
       avg_length += wm;
       if (wm > max_length) max_length = wm;
@@ -370,7 +370,7 @@ double Spacetime::dimensional_stress(int v,int sheet) const
   for(i=nd; i>0; i--) {
     ds = (signed) simplices[i].size();
     for(j=0; j<ds; ++j) {
-      if (!simplices[i][j].active()) continue;
+      if (simplices[i][j].ubiquity == 1) continue;
       if (simplices[i][j].contains(v)) sum += dimensional_stress(i,j,sheet);
     }
   }
@@ -385,7 +385,7 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
   for(i=1; i<=Spacetime::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
-      if (!simplices[i][j].active()) continue;
+      if (simplices[i][j].ubiquity == 1) continue;
       if (simplices[i][j].contains(v)) ++k;
     }
     output.push_back(k);
@@ -405,13 +405,13 @@ void Spacetime::compute_graph(Graph* G,int sheet) const
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       offset[i] = in1;
       in1++;
       G->add_vertex();
     }
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
+      if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
       G->foliation_m(offset[vx[0]],offset[vx[1]]);
     }
@@ -555,12 +555,12 @@ void Spacetime::compute_global_nexus(Nexus* NX,int sheet) const
   }
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       offset[i] = NX->add_vertex();
     }
     for(i=n; i>=1; --i) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (simplices[i][j].ubiquity == 1) continue;
         for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
           vx.insert(offset[*it]);
         }
@@ -605,7 +605,7 @@ void Spacetime::compute_local_nexus(Nexus* NX,int base,int sheet) const
   if (sheet == -1) {
     for(i=1; i<=n; ++i) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (simplices[i][j].ubiquity == 1) continue;
         if (simplices[i][j].contains(base)) {
           for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
             if (offset[*it] == -1) offset[*it] = NX->add_vertex();
@@ -649,7 +649,7 @@ void Spacetime::compute_lightcones()
 
   // First we compute the past of each vertex
   for(i=0; i<nvertex; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     pcurrent.clear();
     fcurrent.clear();
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
@@ -826,7 +826,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
 #pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       // Now calculate the future and past lightcones for this vertex on this sheet...
       pcurrent.clear();
       fcurrent.clear();
@@ -1056,7 +1056,7 @@ int Spacetime::max_degree() const
 {
   int i,n,output = 0;
   for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     n = (signed) events[i].neighbours.size();
     if (output < n) output = n;
   }
@@ -1235,7 +1235,7 @@ int Spacetime::total_dimension(int sheet) const
 
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       sum += dimension(i);
     }
   }
@@ -1253,14 +1253,14 @@ int Spacetime::structural_index(int sheet) const
 
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       sum++;
     }
     for(i=1; i<d; ++i) {
       l = 0;
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (simplices[i][j].ubiquity == 1) continue;
         l++;
       }
       sum += (1+i)*l;
@@ -1322,7 +1322,7 @@ int Spacetime::vertex_dimension(int v,int sheet) const
     for(i=Spacetime::ND; i>=1; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (simplices[i][j].ubiquity == 1) continue;
         if (simplices[i][j].contains(v)) return i;
       }
     }
@@ -1364,7 +1364,7 @@ double Spacetime::dimensional_uniformity(int sheet) const
   nv = 0;
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       n = vertex_dimension(i,sheet);
       n = (n < D) ? D : n;
       sum += sdimension - n;
@@ -1400,7 +1400,7 @@ bool Spacetime::consistent(int sheet) const
     for(i=Spacetime::ND; i>=2; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (simplices[i][j].ubiquity == 1) continue;
         for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
           if (simplices[i+1][*it].ubiquity == 1) {
             std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
@@ -1450,7 +1450,7 @@ bool Spacetime::consistent(int sheet) const
       }
     }
     for(i=0; i<(signed) simplices[1].size(); ++i) {
-      if (!simplices[1][i].active()) continue;
+      if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
       if (vx[0] < 0 || vx[0] >= nv) return false;
       if (vx[1] < 0 || vx[0] >= nv) return false;
@@ -1464,7 +1464,7 @@ bool Spacetime::consistent(int sheet) const
       }
     }
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
         if (simplices[1][*it].ubiquity == 1) {
           std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
@@ -1605,7 +1605,7 @@ int Spacetime::component_analysis(std::vector<int>& component,int sheet) const
   component.clear();
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) {
+      if (events[i].ubiquity == 1) {
         component.push_back(-1);
         continue;
       }

@@ -456,7 +456,7 @@ void Spacetime::write_log() const
   max_ven = 0.0;
   min_ven = 10000.0;
   for(i=0; i<Nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     w = events[i].energy;
     if (w > max_ven) max_ven = w;
     if (w < min_ven) min_ven = w;
@@ -471,7 +471,7 @@ void Spacetime::write_log() const
   for(i=0; i<Nv; ++i) {
     // Is this vertex atemporal (no timelike edges) or chiral
     // (number of FUTURE edges != number of PAST edges)?
-    if (!events[i].active()) continue;
+    if (events[1].ubiquity == 1) continue;
     nf = 0;
     np = 0;
     atemporal = true;
@@ -502,7 +502,7 @@ void Spacetime::write_log() const
   ntime = 0;
   nnull = 0;
   for(i=0; i<Ne; ++i) {
-    if (!simplices[1][i].active()) continue;
+    if (simplices[1][i].ubiquity == 1) continue;
     wm = simplices[1][i].volume;
     if (wm < Spacetime::epsilon) {
       nnull++;
@@ -663,7 +663,7 @@ void Spacetime::write_log() const
 #endif
   for(i=0; i<Nv; ++i) {
     for(j=0; j<Nt; ++j) {
-      vdimension[Nt*i+j] = (!events[i].active(j)) ? -1 : vertex_dimension(i,j);
+      vdimension[Nt*i+j] = (NTL::divide(events[i].ubiquity,codex[j].colour) == 0) ? -1 : vertex_dimension(i,j);
     }
   }
 
@@ -706,13 +706,13 @@ void Spacetime::write_log() const
     min_ven = 10000.0;
     min_val = 1000;
     for(j=0; j<Nv; ++j) {
-      if (!events[j].active(i)) continue;
+      if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
       min_ven = events[j].energy;
       min_val = vertex_valence(j,i);
       break;
     }
     for(j=0; j<Nv; ++j) {
-      if (!events[j].active(i)) continue;
+      if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
       w = events[j].energy;
       if (w > max_ven) max_ven = w;
       if (w < min_ven) min_ven = w;
@@ -732,7 +732,7 @@ void Spacetime::write_log() const
     for(j=0; j<Nv; ++j) {
       // Is this vertex atemporal (no timelike edges) or chiral
       // (number of FUTURE edges != number of PAST edges)?
-      if (!events[j].active(i)) continue;
+      if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
       nf = 0;
       np = 0;
       atemporal = true;
@@ -767,7 +767,7 @@ void Spacetime::write_log() const
     avg_length = 0.0;
     if (ne > 0) {
       for(j=0; j<Ne; ++j) {
-        if (!simplices[1][j].active(i)) continue;
+        if (NTL::divide(simplices[1][j].ubiquity,codex[i].colour) == 0) continue;
         wm = simplices[1][j].volume;
         avg_length += wm;
         if (wm < Spacetime::epsilon) {
@@ -782,7 +782,7 @@ void Spacetime::write_log() const
       }
       avg_length /= double(ne);
       for(j=0; j<Ne; ++j) {
-        if (!simplices[1][j].active(i)) continue;
+        if (NTL::divide(simplices[1][j].ubiquity,codex[i].colour) == 0) continue;
         wm = simplices[1][j].volume;
         if (wm > max_length) max_length = wm;
         if (wm < min_length) min_length = wm;
@@ -1157,7 +1157,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
   if (sheet == -1) {
     // First calculate the appropriate vertex offset and write out the energy...
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       offset[i] = N1;
       N1++;
       E = events[i].energy;
@@ -1165,7 +1165,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
     }
     // Finally the edges...
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
+      if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       s.write((char*)(&j),sizeof(int));
@@ -1176,7 +1176,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
   else {
     // First calculate the appropriate vertex offset and write out the energy...
     for(i=0; i<nv; ++i) {
-      if (!events[i].active(sheet)) continue;
+      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
       offset[i] = N1;
       N1++;
       E = events[i].energy;
@@ -1184,7 +1184,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
     }
     // Finally the edges...
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
+      if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       s.write((char*)(&j),sizeof(int));

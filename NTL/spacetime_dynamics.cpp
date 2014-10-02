@@ -17,7 +17,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
 #pragma omp parallel for default(shared) private(i,j,k,m,l,r_true,it,delta)
 #endif 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     k = offset[i];
     // This vertex's force begins at zero...
     for(j=0; j<D; ++j) {
@@ -25,7 +25,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
     }
     // Vertex-Vertex Repulsion...
     for(j=0; j<nv; ++j) {
-      if (!events[j].active()) continue;
+      if (events[j].ubiquity == 1) continue;
       m = offset[j];
       if (k == m) continue;
       r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(events[i].energy + events[j].energy)));
@@ -160,7 +160,7 @@ void Spacetime::energy_diffusion()
     Enew[i] = -1.0;
     Esum1 += events[i].energy;
     // Inactive vertex...
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     l = std::abs(events[i].deficiency);
     if (l > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,l));
   }
@@ -314,7 +314,7 @@ void Spacetime::energy_diffusion()
       candidates.push_back(std::pair<int,double>(i,-1.0));
       continue;
     }
-    if (!events[i].active()) {
+    if (events[i].ubiquity == 1) {
       candidates.push_back(std::pair<int,double>(i,-1.0));
     }
     else {
@@ -398,7 +398,7 @@ bool Spacetime::adjust_dimension()
 
   if (uniform) {
     for(i=0; i<nvertex; ++i) {
-      if (!events[i].active()) {
+      if (events[i].ubiquity == 1) {
         vdimension.push_back(-1);
         continue;
       }
@@ -409,7 +409,7 @@ bool Spacetime::adjust_dimension()
   }
   else {
     for(i=0; i<nvertex; ++i) {
-      if (!events[i].active()) {
+      if (events[i].ubiquity == 1) {
         vdimension.push_back(-1);
         continue;
       }
@@ -430,7 +430,7 @@ void Spacetime::optimize()
   const int nvertex = (signed) events.size();
 
   for(i=0; i<nvertex; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     if (std::abs(events[i].deficiency) >= Spacetime::epsilon) {
       deficient = true;
       break;
@@ -450,7 +450,7 @@ void Spacetime::optimize()
     structural_deficiency();
 
     for(i=0; i<nvertex; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       if (std::abs(events[i].geometric_deficiency) < Spacetime::epsilon) continue;
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
@@ -862,7 +862,7 @@ void Spacetime::optimize()
 #endif
 
     for(i=0; i<nvertex; ++i) {
-      if (!events[i].active()) continue;
+      if (events[i].ubiquity == 1) continue;
       offset.push_back(m);
       m++;
     }
@@ -1050,7 +1050,7 @@ void Spacetime::optimize()
       geometry->load(initial_state);
       geometry->compute_distances();
       for(i=0; i<nvertex; ++i) {
-        if (!events[i].active()) continue;
+        if (events[i].ubiquity == 1) continue;
         events[i].geometry_modified = true;
       }
       compute_volume();
@@ -1130,7 +1130,7 @@ void Spacetime::optimize()
       geometry->load(&SR);
       geometry->compute_distances();
       for(i=0; i<nvertex; ++i) {
-        if (events[i].active()) events[i].geometry_modified = true;
+        if (events[i].ubiquity > 1) events[i].geometry_modified = true;
       }
       compute_volume();
       compute_curvature();
@@ -1147,7 +1147,7 @@ void Spacetime::optimize()
         geometry->load(&SE);
         geometry->compute_distances();
         for(i=0; i<nvertex; ++i) {
-          if (events[i].active()) events[i].geometry_modified = true;
+          if (events[i].ubiquity > 1) events[i].geometry_modified = true;
         }
         compute_volume();
         compute_curvature();
@@ -1176,7 +1176,7 @@ void Spacetime::optimize()
         geometry->load(&SE);
         geometry->compute_distances();
         for(i=0; i<nvertex; ++i) {
-          if (events[i].active()) events[i].geometry_modified = true;
+          if (events[i].ubiquity > 1) events[i].geometry_modified = true;
         }
         compute_volume();
         compute_curvature();
@@ -1196,7 +1196,7 @@ void Spacetime::optimize()
             geometry->load(&S[in1]);
             geometry->compute_distances();
             for(j=0; j<nvertex; ++j) {
-              if (events[j].active()) events[j].geometry_modified = true;
+              if (events[j].ubiquity > 1) events[j].geometry_modified = true;
             }
             compute_volume();
             compute_curvature();
@@ -1216,7 +1216,7 @@ void Spacetime::optimize()
         geometry->load(&SE);
         geometry->compute_distances();
         for(i=0; i<nvertex; ++i) {
-          if (events[i].active()) events[i].geometry_modified = true;
+          if (events[i].ubiquity > 1) events[i].geometry_modified = true;
         }
         compute_volume();
         compute_curvature();
@@ -1236,7 +1236,7 @@ void Spacetime::optimize()
             geometry->load(&S[in1]);
             geometry->compute_distances();
             for(j=0; j<nvertex; ++j) {
-              if (events[j].active()) events[j].geometry_modified = true;
+              if (events[j].ubiquity > 1) events[j].geometry_modified = true;
             }
             compute_volume();
             compute_curvature();

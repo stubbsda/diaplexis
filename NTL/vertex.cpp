@@ -58,11 +58,7 @@ Vertex::~Vertex()
 
 void Vertex::clear()
 {
-#ifdef UBQ_NTL
   ubiquity = 1;
-#else
-  ubiquity.clear();
-#endif
   boundary = false;
   neighbours.clear();
   entourage.clear();
@@ -89,15 +85,7 @@ void Vertex::write2screen() const
   std::cout << curvature << std::endl;
   std::cout << obliquity << std::endl;
   std::cout << geometric_deficiency << std::endl;
-#ifdef UBQ_NTL
   std::cout << ubiquity << std::endl;
-#else
-  std::cout << "[";
-  for(int i=0; i<(signed) ubiquity.size()-1; ++i) {
-    std::cout << ubiquity[i] << ",";
-  }
-  std::cout << ubiquity[ubiquity.size()-1] << "]" << std::endl;
-#endif
   std::cout << theorem << std::endl;
 }
 
@@ -107,9 +95,7 @@ void Vertex::serialize(std::ofstream& s,int nt) const
   long q;
   double l;
   std::set<int>::const_iterator it;
-#ifdef UBQ_NTL
   NTL::PrimeSeq pseq;
-#endif
   const int one = 1;
   const int zero = 0;
 
@@ -138,7 +124,6 @@ void Vertex::serialize(std::ofstream& s,int nt) const
 
   s.write((char*)(&nt),sizeof(int));
   for(i=0; i<nt; ++i) {
-#ifdef UBQ_NTL
     q = pseq.next();
     if (NTL::divide(ubiquity,q) == 1) {
       s.write((char*)(&one),sizeof(int));
@@ -146,9 +131,6 @@ void Vertex::serialize(std::ofstream& s,int nt) const
     else {
       s.write((char*)(&zero),sizeof(int));
     }
-#else
-   s.write((char*)(&ubiquity[i]),sizeof(int));
-#endif
   }
 
   in1 = (signed) past.size();
@@ -172,9 +154,7 @@ void Vertex::deserialize(std::ifstream& s)
   int i,j,in1;
   long q;
   double xc;
-#ifdef UBQ_NTL
   NTL::PrimeSeq pseq;
-#endif
 
   clear();
 
@@ -200,14 +180,11 @@ void Vertex::deserialize(std::ifstream& s)
   }
 
   s.read((char*)(&j),sizeof(int));
+  ubiquity = 1;
   for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-#ifdef UBQ_NTL
     q = pseq.next();
+    s.read((char*)(&in1),sizeof(int));
     if (in1 == 1) ubiquity *= q;    
-#else
-    ubiquity.push_back(in1);
-#endif
   }
 
   s.read((char*)(&j),sizeof(int));

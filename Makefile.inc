@@ -4,7 +4,7 @@ DEBUG      = -g
 
 OPT        = $(CXX_OPT)
 
-CXX_FLAGS += -I$(SYNARMOSMA)/include -fPIC -DUBQ_NTL -DVERBOSE
+CXX_FLAGS += -I$(SYNARMOSMA)/include -fPIC -DVERBOSE
 LD_FLAGS  += -L$(SYNARMOSMA)/lib -shared
 
 CXX_FLAGS += $(DEBUG) 

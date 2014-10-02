@@ -269,7 +269,7 @@ class Spacetime {
   void write_distribution(const std::vector<int>&) const;
   void compute_colours(std::vector<unsigned char>&,bool,bool) const;
   void compute_global_topology(int);
-  void build_initial_state(const std::vector<int>&);
+  void build_initial_state(const NTL::ZZ);
   void write_log() const;
   void write_plectogram() const;
   void read_complex(std::ifstream&);
@@ -359,21 +359,12 @@ class Spacetime {
   friend class Vertex;
 };
 
-inline bool ghost(const std::vector<int>& v)
-{
-  std::vector<int>::const_iterator it;
-  for(it=v.begin(); it!=v.end(); ++it) {
-    if (*it == 1) return false;
-  }
-  return true;
-}
-
 inline bool Spacetime::edge_exists(int u,int v,int sheet) const
 {
   hash_map::const_iterator qt = index_table[1].find(make_key(u,v));
   if (qt == index_table[1].end()) return false;
   if (sheet == -1) {
-    if (!simplices[1][qt->second].active()) return false;
+    if (simplices[1][qt->second].ubiquity == 1) return false;
   }
   else {
     if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
@@ -420,7 +411,7 @@ double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affin
   }
   sigma = std::sqrt(sigma/double(nprocs));
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       if (*it < i) continue;
       if (affinity[*it] != affinity[i]) bcount++;
@@ -436,13 +427,13 @@ void Spacetime::get_energy_extrema(double* output) const
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     u_ex = events[i].energy;
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     if (u_ex < events[i].energy) u_ex = events[i].energy;
     if (l_ex > events[i].energy) l_ex = events[i].energy;
   }
@@ -457,13 +448,13 @@ void Spacetime::get_deficiency_extrema(double* output) const
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     u_ex = events[i].deficiency;
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (events[i].ubiquity == 1) continue;
     if (u_ex < events[i].deficiency) u_ex = events[i].deficiency;
     if (l_ex > events[i].deficiency) l_ex = events[i].deficiency;
   }
@@ -483,14 +474,14 @@ int Spacetime::cardinality(int d,int sheet) const
     if (d == 0) {
       const int M = (signed) events.size();
       for(i=0; i<M; ++i) {
-        if (!events[i].active()) continue;
+        if (events[i].ubiquity == 1) continue;
         n++;
       }
     }
     else {
       const int M = (signed) simplices[d].size();
       for(i=0; i<M; ++i) {
-        if (!simplices[d][i].active()) continue;
+        if (simplices[d][i].ubiquity == 1) continue;
         n++;
       }
     }
