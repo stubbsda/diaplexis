@@ -2445,6 +2445,23 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
     events[n1].ubiquity = (events[n1].ubiquity*chi)/NTL::GCD(events[n1].ubiquity,chi);
     events[n2].ubiquity = 1;
     delete[] mutation;
+
+    // Then recalculate the index_table hash map..
+    for(i=1; i<=ulimit; ++i) {
+      index_table[i].clear();
+      m = (signed) simplices[i].size();
+      for(j=0; j<m; ++j) {
+        simplices[i][j].entourage.clear();
+        index_table[i][simplices[i][j].key] = j;
+      }
+    }
+    for(i=0; i<(signed) events.size(); ++i) {
+      events[i].entourage.clear();
+    }
+
+    // Then recalculate the entourages...
+    compute_entourages(-1);
+    compute_neighbours();
   }
   else {
     bool found;
