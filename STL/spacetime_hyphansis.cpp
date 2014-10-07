@@ -562,7 +562,7 @@ bool Spacetime::correction(int base,int sheet)
   // This method needs to loop over all vertices in a given sheet and find those which
   // are capable of adding another vertex at a distance of (roughly) one and which is
   // orthogonal to the vertex's current set of edges.
-  int i,j,n,in1;
+  int i,j,n,m,in1;
   bool active,modified = false;
   double l,d1,d2,dbest;
   hash_map::const_iterator qt;
@@ -659,8 +659,6 @@ bool Spacetime::correction(int base,int sheet)
   n = RND.irandom(candidates);
   std::vector<double> xc,x1,x2;
   // Perform the vertex fission on the n'th vertex pair...
-  Vertex vt;
-  vt.ubiquity = chi;
   geometry->get_coordinates(base,x1);
   geometry->get_coordinates(n,x2);
   for(i=0; i<geometry->dimension(); ++i) {
@@ -675,14 +673,14 @@ bool Spacetime::correction(int base,int sheet)
 #ifdef VERBOSE
   std::cout << "Adding vertex between " << base << " and " << n << std::endl;
 #endif
-
-  events.push_back(vt);
-  Simplex s1(base,nv,chi);
+  m = vertex_addition(xc,sheet);
+  Simplex s1(base,m,chi);
   simplices[1].push_back(s1);
   index_table[1][s1.key] = (signed) simplices[1].size() - 1;
-  Simplex s2(n,nv,chi);
+  Simplex s2(n,m,chi);
   simplices[1].push_back(s2);
   index_table[1][s2.key] = (signed) simplices[1].size() - 1;
+
   return true;
 }
 
@@ -2921,10 +2919,14 @@ bool Spacetime::vertex_deletion(int n,int sheet)
 
 int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
 {
-  int n = (signed) events.size();
+  int i,n = (signed) events.size();
   Vertex vt;
+  const int nt = (signed) codex.size();
 
   geometry->vertex_addition(xc);
+  for(i=0; i<nt; ++i) {
+    vt.ubiquity.push_back(0);
+  }
   vt.ubiquity[sheet] = 1; 
   events.push_back(vt);
 
