@@ -263,12 +263,12 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       events[in1].ubiquity *= codex[sheet].colour;
     }
-    qt = index_table[1].find(make_key(base,in1));
+    S.initialize(base,in1,codex[sheet].colour);
+    qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      S.initialize(base,in1,codex[sheet].colour);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
     else {
       if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
@@ -284,7 +284,7 @@ bool Spacetime::germination(int base,int sheet)
     geometry->set_coordinates(m,xc);
     S.initialize(base,m,codex[sheet].colour);
     simplices[1].push_back(S);
-    index_table[1][S.key] = (signed) simplices[1].size() - 1;
+    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
 
   // Second, a 180 degree rotation...
@@ -306,12 +306,12 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       events[in1].ubiquity *= codex[sheet].colour;
     }
-    qt = index_table[1].find(make_key(base,in1));
+    S.initialize(base,in1,codex[sheet].colour);
+    qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      S.initialize(base,in1,codex[sheet].colour);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
     else {
       if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
@@ -326,7 +326,7 @@ bool Spacetime::germination(int base,int sheet)
     geometry->set_coordinates(m,xc);
     S.initialize(base,m,codex[sheet].colour);
     simplices[1].push_back(S);
-    index_table[1][S.key] = (signed) simplices[1].size() - 1;
+    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
 
   // And finally the 270 degree rotation...
@@ -348,12 +348,12 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       events[in1].ubiquity *= codex[sheet].colour;
     }
-    qt = index_table[1].find(make_key(base,in1));
+    S.initialize(base,in1,codex[sheet].colour);
+    qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      S.initialize(base,in1,codex[sheet].colour);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
     else {
       if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
@@ -368,7 +368,7 @@ bool Spacetime::germination(int base,int sheet)
     Dm1.insert(m);
     S.initialize(base,m,codex[sheet].colour);
     simplices[1].push_back(S);
-    index_table[1][S.key] = (signed) simplices[1].size() - 1;
+    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
 
   if (modified) {
@@ -465,12 +465,12 @@ bool Spacetime::germination(int base,int sheet)
         modified = true;
         events[in1].ubiquity *= codex[sheet].colour;
       }
-      qt = index_table[1].find(make_key(base,in1));
+      S.initialize(base,in1,codex[sheet].colour);
+      qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
-        S.initialize(base,in1,codex[sheet].colour);
         simplices[1].push_back(S);
-        index_table[1][S.key] = (signed) simplices[1].size() - 1;
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
       else {
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
@@ -485,7 +485,7 @@ bool Spacetime::germination(int base,int sheet)
       geometry->set_coordinates(m,xc);
       S.initialize(base,m,codex[sheet].colour);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
 
     // Now the mirror image in a three-dimensional subspace...
@@ -508,12 +508,12 @@ bool Spacetime::germination(int base,int sheet)
         modified = true;
         events[in1].ubiquity *= codex[sheet].colour;
       }
-      qt = index_table[1].find(make_key(base,in1));
+      S.initialize(base,in1,codex[sheet].colour);
+      qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
-        S.initialize(base,in1,codex[sheet].colour);
         simplices[1].push_back(S);
-        index_table[1][S.key] = (signed) simplices[1].size() - 1;
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
       else {
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
@@ -528,7 +528,7 @@ bool Spacetime::germination(int base,int sheet)
       geometry->set_coordinates(m,xc);
       S.initialize(base,m,codex[sheet].colour);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
 
     for(it=free_dims.begin(); it!=free_dims.end(); ++it) {
@@ -560,6 +560,7 @@ bool Spacetime::correction(int base,int sheet)
   double l,d1,d2,dbest;
   hash_map::const_iterator qt;
   std::set<int> candidates;
+  Simplex s1;
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
@@ -598,39 +599,39 @@ bool Spacetime::correction(int base,int sheet)
         modified = true;
       }
       // Connect this vertex to v and i if necessary
-      qt = index_table[1].find(make_key(base,in1));
+      s1.initialize(base,in1,codex[sheet].colour);
+      qt = index_table[1].find(s1.vertices);
       if (qt == index_table[1].end()) {
 #ifdef VERBOSE
         std::cout << "Adding edge connecting " << base << " and " << in1 << " in orthonormal fission" << std::endl;
 #endif
-        Simplex s1(base,in1,codex[sheet].colour);
         simplices[1].push_back(s1);
-        index_table[1][s1.key] = (signed) simplices[1].size() - 1;
+        index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
         modified = true;
       }
       else {
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
 #ifdef VERBOSE
-          std::cout << "Restoring edge with key " << simplices[1][qt->second].key << " in orthonormal fission" << std::endl;
+          std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in orthonormal fission" << std::endl;
 #endif
           simplices[1][qt->second].ubiquity *= codex[sheet].colour;
           modified = true;
         }
       }
-      qt = index_table[1].find(make_key(i,in1));
+      s1.initialize(i,in1,codex[sheet].colour);
+      qt = index_table[1].find(s1.vertices);
       if (qt == index_table[1].end()) {
 #ifdef VERBOSE
         std::cout << "Adding edge connecting " << i << " and " << in1 << " in orthonormal fission" << std::endl;
 #endif
-        Simplex s1(i,in1,codex[sheet].colour);
         simplices[1].push_back(s1);
-        index_table[1][s1.key] = (signed) simplices[1].size() - 1;
+        index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
         modified = true;
       }
       else {
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
 #ifdef VERBOSE
-          std::cout << "Restoring edge with key " << simplices[1][qt->second].key << " in orthonormal fission" << std::endl;
+          std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in orthonormal fission" << std::endl;
 #endif
           simplices[1][qt->second].ubiquity *= codex[sheet].colour;
           modified = true;
@@ -660,12 +661,12 @@ bool Spacetime::correction(int base,int sheet)
   std::cout << "Adding vertex between " << base << " and " << n << std::endl;
 #endif
   m = vertex_addition(xc,sheet);
-  Simplex s1(base,m,codex[sheet].colour);
+  s1.initialize(base,m,codex[sheet].colour);
   simplices[1].push_back(s1);
-  index_table[1][s1.key] = (signed) simplices[1].size() - 1;
-  Simplex s2(n,m,codex[sheet].colour);
-  simplices[1].push_back(s2);
-  index_table[1][s2.key] = (signed) simplices[1].size() - 1;
+  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+  s1.initialize(n,m,codex[sheet].colour);
+  simplices[1].push_back(s1);
+  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
 
   return true;
 }
@@ -680,16 +681,16 @@ void Spacetime::simplicial_implication(int base,int sheet) const
   // "regularize".
   int i,j,k,n,l,d,M,nsimp,nfound,w1,w2;
   std::vector<int> vx,C;
-  std::vector<std::string>* implied_simplex;
-  std::vector<std::string>::const_iterator it;
+  std::vector<std::set<int> >* implied_simplex;
+  std::vector<std::set<int> >::const_iterator it;
   bool failure;
   hash_map::const_iterator qt;
-  std::set<int> S;
+  std::set<int> S,sc;
 
   if (sheet == -1) {
     d = (signed) events[base].entourage.size();
     M = 1 + d;
-    implied_simplex = new std::vector<std::string>[M+1];
+    implied_simplex = new std::vector<std::set<int> >[M+1];
 
     S = events[base].neighbours;
     S.insert(base);
@@ -708,7 +709,10 @@ void Spacetime::simplicial_implication(int base,int sheet) const
           for(k=1+j; k<i; ++k) {
             w1 = vx[j];
             w2 = vx[k];
-            qt = index_table[1].find(make_key(w1,w2));
+            sc.clear();
+            sc.insert(w1);
+            sc.insert(w2);
+            qt = index_table[1].find(sc);
             if (qt == index_table[1].end()) {
               failure = true;
               break;
@@ -723,7 +727,11 @@ void Spacetime::simplicial_implication(int base,int sheet) const
           if (failure) break;
         }
         if (!failure) {
-          implied_simplex[i].push_back(make_key(vx));
+          sc.clear();
+          for(j=0; j<i; ++j) {
+            sc.insert(vx[i]);
+          }
+          implied_simplex[i].push_back(sc);
         }
         vx.clear();
       }
@@ -739,7 +747,7 @@ void Spacetime::simplicial_implication(int base,int sheet) const
       d++;
     }
     M = 1 + d;
-    implied_simplex = new std::vector<std::string>[M+1];
+    implied_simplex = new std::vector<std::set<int> >[M+1];
 
     for(jt=events[base].neighbours.begin(); jt!=events[base].neighbours.end(); ++jt) {
       if (NTL::divide(events[*jt].ubiquity,codex[sheet].colour) == 0) continue;
@@ -761,7 +769,10 @@ void Spacetime::simplicial_implication(int base,int sheet) const
           for(k=1+j; k<i; ++k) {
             w1 = vx[j];
             w2 = vx[k];
-            qt = index_table[1].find(make_key(w1,w2));
+            sc.clear();
+            sc.insert(w1);
+            sc.insert(w2);
+            qt = index_table[1].find(sc);
             if (qt == index_table[1].end()) {
               failure = true;
               break;
@@ -776,7 +787,11 @@ void Spacetime::simplicial_implication(int base,int sheet) const
           if (failure) break;
         }
         if (!failure) {
-          implied_simplex[i].push_back(make_key(vx));
+          sc.clear();
+          for(j=0; j<i; ++j) {
+            sc.insert(vx[i]);
+          }
+          implied_simplex[i].push_back(sc);
         }
         vx.clear();
       }
@@ -807,7 +822,7 @@ bool Spacetime::reduction(int base,int sheet)
   const int d = vertex_dimension(base,sheet);
   if (d < 2) return false;
   int i,n,m,vx[1+d];
-  std::set<int> candidates;
+  std::set<int> candidates,S;
   hash_map::const_iterator qt;
   const int N = (signed) simplices[d].size();
 
@@ -827,7 +842,9 @@ bool Spacetime::reduction(int base,int sheet)
 #ifdef VERBOSE
   std::cout << "Deleting edge with key " << base << ":" << vx[n] << std::endl;
 #endif
-  qt = index_table[1].find(make_key(base,vx[n]));
+  S.insert(base);
+  S.insert(vx[n]);
+  qt = index_table[1].find(S);
   simplex_deletion(1,qt->second,sheet);
   return true;
 }
@@ -860,7 +877,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
   if (pool.empty()) return false;
   i = RND.irandom(pool);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << simplices[1][i].key << " in localization" << std::endl;
+  std::cout << "Deleting edge with key " << make_key(simplices[1][i].vertices) << " in localization" << std::endl;
 #endif
   simplex_deletion(1,i,sheet);
   return true;
@@ -870,7 +887,7 @@ bool Spacetime::compensation_m(int base,int sheet)
 {
   int i,j,vx[2];
   double l;
-  std::set<int> candidates;
+  std::set<int> candidates,S;
   hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
@@ -891,7 +908,10 @@ bool Spacetime::compensation_m(int base,int sheet)
     if (events[j].deficiency < -Spacetime::epsilon) continue;
     l = geometry->get_computed_distance(base,j,false);
     if (l >= 0.81 && l <= 1.21) continue;
-    qt = index_table[1].find(make_key(base,j));
+    S.clear();
+    S.insert(base);
+    S.insert(j);
+    qt = index_table[1].find(S);
     candidates.insert(qt->second);
   }
 
@@ -903,7 +923,7 @@ bool Spacetime::compensation_m(int base,int sheet)
   }
   j = RND.irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << simplices[1][j].key << " to reduce the complex's dimensionality" << std::endl;
+  std::cout << "Deleting edge with key " << make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
 #endif
   simplex_deletion(1,j,sheet);
   return true;
@@ -913,7 +933,7 @@ bool Spacetime::compensation_g(int base,int sheet)
 {
   int i,j,vx[2];
   double l;
-  std::set<int> candidates;
+  std::set<int> candidates,S;
   hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
@@ -953,11 +973,13 @@ bool Spacetime::compensation_g(int base,int sheet)
     j = RND.irandom(candidates);
     codex[sheet].vx_delta.insert(base);
     codex[sheet].vx_delta.insert(j);
-    qt = index_table[1].find(make_key(base,j));
+    S.insert(base);
+    S.insert(j);
+    qt = index_table[1].find(S);
     if (qt != index_table[1].end()) {
       assert(NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0);
 #ifdef VERBOSE
-      std::cout << "Restoring edge with key " << simplices[1][qt->second].key << " in positive compensation" << std::endl;
+      std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
 #endif
       simplices[1][qt->second].ubiquity *= codex[sheet].colour;
     }
@@ -965,10 +987,9 @@ bool Spacetime::compensation_g(int base,int sheet)
 #ifdef VERBOSE
       std::cout << "Adding edge connecting " << base << " and " << j << " in positive compensation" << std::endl;
 #endif
-      Simplex S(base,j,codex[sheet].colour);
       // Now add this simplex to the spacetime complex...
-      simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      simplices[1].push_back(Simplex(S,codex[sheet].colour));
+      index_table[1][S] = (signed) simplices[1].size() - 1;
     }
   }
   else {
@@ -981,7 +1002,10 @@ bool Spacetime::compensation_g(int base,int sheet)
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = geometry->get_computed_distance(base,j,false);
       if (l >= 0.81 && l <= 1.21) continue;
-      qt = index_table[1].find(make_key(base,j));
+      S.clear();
+      S.insert(base);
+      S.insert(j);
+      qt = index_table[1].find(S);
       candidates.insert(qt->second);
     }
     if (candidates.empty()) {
@@ -992,7 +1016,7 @@ bool Spacetime::compensation_g(int base,int sheet)
     }
     i = RND.irandom(candidates);
 #ifdef VERBOSE
-    std::cout << "Deleting edge with key " << simplices[1][i].key << " in negative compensation" << std::endl;
+    std::cout << "Deleting edge with key " << make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
 #endif
     simplex_deletion(1,i,sheet);
   }
@@ -1154,11 +1178,10 @@ void Spacetime::compute_topological_dependency(const std::set<int>& vx)
 void Spacetime::compute_entourages(int sheet)
 {
   int i,j,k,ns,vx[2];
-  std::set<int> s;
+  std::set<int> S;
   std::set<int>::const_iterator it;
-  const int ulimit = dimension(sheet);
-  std::string fx;
   hash_map::const_iterator qt;
+  const int ulimit = dimension(sheet);
 
   // What about removing items from the entourage of a d-simplex, when this item has
   // changed its ubiquity?
@@ -1167,20 +1190,20 @@ void Spacetime::compute_entourages(int sheet)
       if (simplices[i][j].ubiquity == 1) continue;
       for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
         if (simplices[i+1][*it].ubiquity == 1) continue;
-        s.insert(*it);
+        S.insert(*it);
       }
-      simplices[i][j].entourage = s;
-      s.clear();
+      simplices[i][j].entourage = S;
+      S.clear();
     }
   }
   for(i=0; i<(signed) events.size(); ++i) {
     if (events[i].ubiquity == 1) continue;
     for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       if (simplices[1][*it].ubiquity == 1) continue;
-      s.insert(*it);
+      S.insert(*it);
     }
-    events[i].entourage = s;
-    s.clear();
+    events[i].entourage = S;
+    S.clear();
   }
 
   if (sheet == -1) {
@@ -1191,10 +1214,10 @@ void Spacetime::compute_entourages(int sheet)
         if (simplices[i][j].ubiquity == 1) continue;
         chi = simplices[i][j].ubiquity;
         for(k=0; k<1+i; ++k) {
-          fx = simplices[i][j].faces[k];
-          qt = index_table[i-1].find(fx);
+          S = simplices[i][j].faces[k];
+          qt = index_table[i-1].find(S);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Entourage error: " << i << "  " << j << "  " << simplices[i][j].key << "  "<< fx << std::endl;
+            std::cout << "Entourage error: " << i << "  " << j << "  " << make_key(simplices[i][j].vertices) << "  "<< make_key(S) << std::endl;
             std::exit(1);
           }
           tau = simplices[i-1][qt->second].ubiquity;
@@ -1225,10 +1248,10 @@ void Spacetime::compute_entourages(int sheet)
       for(j=0; j<ns; ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
         for(k=0; k<1+i; ++k) {
-          fx = simplices[i][j].faces[k];
-          qt = index_table[i-1].find(fx);
+          S = simplices[i][j].faces[k];
+          qt = index_table[i-1].find(S);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Entourage error: " << i << "  " << j << "  " << simplices[i][j].key << "  "<< fx << std::endl;
+            std::cout << "Entourage error: " << i << "  " << j << "  " << make_key(simplices[i][j].vertices) << "  "<< make_key(S) << std::endl;
             std::exit(1);
           }
           if (NTL::divide(simplices[i-1][qt->second].ubiquity,codex[sheet].colour) == 0) simplices[i-1][qt->second].ubiquity *= codex[sheet].colour;
@@ -1314,6 +1337,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::set<int> linked;
     std::vector<int> component,sedge;
     std::vector<boost::tuple<int,int,double> > connect;
+    Simplex S;
 
     ncomp = component_analysis(component,-1);
 #ifdef VERBOSE
@@ -1375,8 +1399,9 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<nsedge; ++i) {
       j = sedge[2*i];
       k = sedge[2*i+1];
-      simplices[1].push_back(Simplex(j,k,codex[RND.irandom(nt)].colour));
-      index_table[1][make_key(j,k)] = (signed) simplices[1].size() - 1;
+      S.initialize(j,k,codex[RND.irandom(nt)].colour);
+      simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       events[j].neighbours.insert(k);
       events[k].neighbours.insert(j);
       vmodified.insert(k);
@@ -1392,8 +1417,9 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
 void Spacetime::inversion()
 {
   int i,j,p;
-  std::set<int>::const_iterator it;
   std::set<int> hold;
+  std::set<int>::const_iterator it;
+  Simplex S;
   const int nt = (signed) codex.size();
   const int nv = (signed) events.size();
   for(i=0; i<nv; ++i) {
@@ -1414,8 +1440,9 @@ void Spacetime::inversion()
       j = *it;
       if (i < j) {
         p = RND.irandom(nt);
-        simplices[1].push_back(Simplex(i,j,codex[p].colour));
-        index_table[1][make_key(i,j)] = (signed) simplices[1].size() - 1;
+        S.initialize(i,j,codex[p].colour);
+        simplices[1].push_back(S);
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
     }
   }
@@ -1424,7 +1451,7 @@ void Spacetime::inversion()
 bool Spacetime::foliation_m(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
-  std::set<int> candidates;
+  std::set<int> candidates,s;
   hash_map::iterator qt;
   const int ne = (signed) simplices[1].size();
 
@@ -1450,15 +1477,17 @@ bool Spacetime::foliation_m(int base,int sheet)
   leaf.insert(n1);
   leaf.insert(n2);
   Simplex S(leaf,codex[sheet].colour);
-  qt = index_table[2].find(S.key);
+  qt = index_table[2].find(S.vertices);
   if (qt == index_table[2].end()) {
     simplices[2].push_back(S);
-    index_table[2][S.key] = (signed) simplices[2].size() - 1;
+    index_table[2][S.vertices] = (signed) simplices[2].size() - 1;
     return true;
   }
   if (NTL::divide(simplices[2][qt->second].ubiquity,codex[sheet].colour) == 1) return false;
   simplices[2][qt->second].ubiquity *= codex[sheet].colour;
-  qt = index_table[1].find(make_key(n1,n2));
+  s.insert(n1);
+  s.insert(n2);
+  qt = index_table[1].find(s);
   if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) {
     simplices[1][qt->second].ubiquity *= codex[sheet].colour;
   }
@@ -1470,7 +1499,7 @@ bool Spacetime::foliation_m(int base,int sheet)
 bool Spacetime::foliation_x(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
-  std::set<int> candidates;
+  std::set<int> candidates,S;
   hash_map::iterator qt;
   const int ne = (signed) simplices[1].size();
 
@@ -1488,7 +1517,9 @@ bool Spacetime::foliation_x(int base,int sheet)
     n2 = RND.irandom(candidates);
     if (n2 != n1) break;
   } while(true);
-  qt = index_table[1].find(make_key(n1,n2));
+  S.insert(n1);
+  S.insert(n2);
+  qt = index_table[1].find(S);
   if (qt == index_table[1].end()) return false;
   if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) return false;
   simplex_deletion(1,qt->second,sheet);
@@ -1598,14 +1629,14 @@ bool Spacetime::fission(int base,double density,int sheet)
       if (RND.drandom() < density) {
         s.initialize(q,p,codex[sheet].colour);
         simplices[1].push_back(s);
-        index_table[1][s.key] = (signed) simplices[1].size() - 1;
+        index_table[1][s.vertices] = (signed) simplices[1].size() - 1;
         s.clear();
         n++;
       }
     }
     s.initialize(base,p,codex[sheet].colour);
     simplices[1].push_back(s);
-    index_table[1][s.key] = (signed) simplices[1].size() - 1;
+    index_table[1][s.vertices] = (signed) simplices[1].size() - 1;
 #ifdef VERBOSE
     std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
 #endif
@@ -1655,7 +1686,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       std::cout << "Vertex fission on " << p << " with new vertex " << q << " and simplex dimension " << d << std::endl;
 #endif
       simplices[d].push_back(S1);
-      index_table[d][S1.key] = simplices[d].size() - 1;
+      index_table[d][S1.vertices] = simplices[d].size() - 1;
     }
     else {
       // The plot thickens: we must create a new 1-simplex out of an existing one, perhaps by forming
@@ -1678,7 +1709,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       nsimplex.insert(q);
       Simplex S1(nsimplex,codex[sheet].colour);
       simplices[2].push_back(S1);
-      index_table[2][S1.key] = simplices[2].size() - 1;
+      index_table[2][S1.vertices] = simplices[2].size() - 1;
       nsimplex.clear();
 
       nsimplex.insert(vx[1]);
@@ -1686,7 +1717,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       nsimplex.insert(q);
       Simplex S2(nsimplex,codex[sheet].colour);
       simplices[2].push_back(S2);
-      index_table[2][S2.key] = simplices[2].size() - 1;
+      index_table[2][S2.vertices] = simplices[2].size() - 1;
     }
     return true;
   }
@@ -1720,17 +1751,15 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
   int i,j;
   std::set<int> fc;
   std::set<int>::const_iterator it;
-  std::string fx;
   std::vector<int> vec,vx;
   hash_map::const_iterator qt;
   const int d = (signed) S.size() - 1;
   Simplex s(S,codex[sheet].colour);
 
-  fx = s.key;
-  qt = index_table[d].find(fx);
+  qt = index_table[d].find(s.vertices);
   if (qt == index_table[d].end()) {
     simplices[d].push_back(s);
-    index_table[d][fx] = simplices[d].size() - 1;
+    index_table[d][s.vertices] = simplices[d].size() - 1;
   }
   else {
     if (NTL::divide(simplices[d][qt->second].ubiquity,codex[sheet].colour) == 1) {
@@ -1766,11 +1795,10 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
       fc.insert(vx[j]);
     }
     // Add this simplex...
-    fx = make_key(fc);
-    qt = index_table[i].find(fx);
+    qt = index_table[i].find(fc);
     if (qt == index_table[i].end()) {
       simplices[i].push_back(Simplex(fc,codex[sheet].colour));
-      index_table[i][fx] = simplices[i].size() - 1;
+      index_table[i][fc] = simplices[i].size() - 1;
     }
     else {
       if (NTL::divide(simplices[i][qt->second].ubiquity,codex[sheet].colour) == 0) simplices[i][qt->second].ubiquity *= codex[sheet].colour;
@@ -1780,11 +1808,10 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
       for(j=0; j<=i; ++j) {
         fc.insert(vx[vec[j]]);
       }
-      fx = make_key(fc);
-      qt = index_table[i].find(fx);
+      qt = index_table[i].find(fc);
       if (qt == index_table[i].end()) {
         simplices[i].push_back(Simplex(fc,codex[sheet].colour));
-        index_table[i][fx] = simplices[i].size() - 1;
+        index_table[i][fc] = simplices[i].size() - 1;
       }
       else {
         if (NTL::divide(simplices[i][qt->second].ubiquity,codex[sheet].colour) == 0) simplices[i][qt->second].ubiquity *= codex[sheet].colour;
@@ -1824,7 +1851,7 @@ void Spacetime::simplicial_implication(int sheet)
           if (qt == index_table[i-1].end()) {
             S.initialize(simplices[i][j].faces[k],chi);
             simplices[i-1].push_back(S);
-            index_table[i-1][S.key] = m;
+            index_table[i-1][S.vertices] = m;
             m++;
           }
           else {
@@ -1855,17 +1882,17 @@ void Spacetime::simplicial_implication(int sheet)
           qt = index_table[i-1].find(simplices[i][j].faces[k]);
           if (qt == index_table[i-1].end()) {
 #ifdef VERBOSE
-            std::cout << "Adding simplex with key " << simplices[i][j].faces[k] << " to regularize the complex" << std::endl;
+            std::cout << "Adding simplex with key " << make_key(simplices[i][j].faces[k]) << " to regularize the complex" << std::endl;
 #endif
             S.initialize(simplices[i][j].faces[k],codex[sheet].colour);
             simplices[i-1].push_back(S);
-            index_table[i-1][S.key] = m;
+            index_table[i-1][S.vertices] = m;
             m++;
           }
           else {
             if (NTL::divide(simplices[i-1][qt->second].ubiquity,codex[sheet].colour) == 0) {
 #ifdef VERBOSE
-              std::cout << "Restoring simplex with key " << simplices[i-1][qt->second].key << " to regularize the complex" << std::endl;
+              std::cout << "Restoring simplex with key " << make_key(simplices[i-1][qt->second].vertices) << " to regularize the complex" << std::endl;
 #endif
               simplices[i-1][qt->second].ubiquity *= codex[sheet].colour;
             }
@@ -1983,21 +2010,20 @@ void Spacetime::regularization(bool minimal,int sheet)
       }
       assert(v1 > -1);
       assert(v2 > -1);
-      sx = make_key(v1,v2);
       j = RND.irandom(colours);
-      qt = index_table[1].find(sx);
+      S.initialize(v1,v2,codex[j].colour);
+      qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
 #ifdef VERBOSE
         std::cout << "Adding edge connecting " << v1 << " and " << v2 << " to maintain the complex's connectedness" << std::endl;
 #endif
-        S = Simplex(v1,v2,codex[j].colour);
         simplices[1].push_back(S);
-        index_table[1][S.key] = (signed) simplices[1].size() - 1;
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
       else {
         assert(simplices[1][qt->second].ubiquity == 1);
 #ifdef VERBOSE
-        std::cout << "Restoring the simplex with key " << simplices[1][qt->second].key << " to maintain the complex's connectedness" << std::endl;
+        std::cout << "Restoring the simplex with key " << make_key(simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
 #endif
         simplices[1][qt->second].ubiquity *= codex[j].colour;
       }
@@ -2029,12 +2055,11 @@ void Spacetime::regularization(bool minimal,int sheet)
 #endif
       assert(v1 > -1);
       assert(v2 > -1);
-      sx = make_key(v1,v2);
-      qt = index_table[1].find(sx);
+      S.initialize(v1,v2,codex[sheet].colour);
+      qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
-        S = Simplex(v1,v2,codex[sheet].colour);
         simplices[1].push_back(S);
-        index_table[1][S.key] = (signed) simplices[1].size() - 1;
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
       else {
         if (NTL::divide(simplices[1][qt->second].ubiquity,codex[sheet].colour) == 0) simplices[1][qt->second].ubiquity *= codex[sheet].colour;
@@ -2052,7 +2077,7 @@ bool Spacetime::circumvolution(int sheet)
   // This method attempts a circumvolution using boundary edges, it is
   // normally only called when the global energy reaches a critical threshold.
   int i,j,k,l,u[2],w[2];
-  std::set<int> edge_set;
+  std::set<int> edge_set,S;
   std::set<int>::const_iterator it,jt;
   hash_map::const_iterator qt;
   const int D = dimension(sheet);
@@ -2066,7 +2091,10 @@ bool Spacetime::circumvolution(int sheet)
         simplices[D-1][qt->second].get_vertices(vx);
         for(k=0; k<D; ++k) {
           for(l=k+1; l<D; ++l) {
-            qt = index_table[1].find(make_key(vx[k],vx[l]));
+            S.clear();
+            S.insert(vx[k]);
+            S.insert(vx[l]);
+            qt = index_table[1].find(S);
             edge_set.insert(qt->second);
           }
         }
@@ -2193,7 +2221,7 @@ bool Spacetime::circumvolution(int base,int sheet)
     } while(true);
   }
 #ifdef VERBOSE
-  std::cout << "Circumvolving the " << d << "-simplices: " << simplices[d][s2].key << " => " << simplices[d][s1].key << std::endl;
+  std::cout << "Circumvolving the " << d << "-simplices: " << make_key(simplices[d][s2].vertices) << " => " << make_key(simplices[d][s1].vertices) << std::endl;
 #endif
   int v1[d+1],v2[d+1];
   for(i=0; i<=d; ++i) {
@@ -2299,10 +2327,10 @@ bool Spacetime::expansion(int base,int sheet)
   int n = vertex_dimension(base,sheet);
   if (n == Spacetime::ND) return false;
   int i,u,d,m,vtx[2];
-  std::string clef;
-  std::set<int> vx,N;
+  std::set<int> vx,N,s;
   std::set<int>::const_iterator it;
   hash_map::const_iterator qt;
+  Simplex S;
   const int ne = (signed) simplices[1].size();
   double tau = std::abs(events[base].deficiency) + 25.0;
 
@@ -2329,13 +2357,16 @@ bool Spacetime::expansion(int base,int sheet)
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
     m = RND.irandom(vx);
-    qt = index_table[1].find(make_key(base,n));
+    s.clear();
+    s.insert(base);
+    s.insert(n);
+    qt = index_table[1].find(s);
     simplices[1][qt->second].ubiquity /= codex[sheet].colour;
-    clef = make_key(m,n);
-    qt = index_table[1].find(clef);
+    S.initialize(m,n,codex[sheet].colour);
+    qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
-      simplices[1].push_back(Simplex(m,n,codex[sheet].colour));
-      index_table[1][clef] = simplices[1].size() - 1;
+      simplices[1].push_back(S);
+      index_table[1][S.vertices] = simplices[1].size() - 1;
     }
     else {
       simplices[1][qt->second].ubiquity *= codex[sheet].colour;
@@ -2449,7 +2480,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
       m = (signed) simplices[i].size();
       for(j=0; j<m; ++j) {
         simplices[i][j].entourage.clear();
-        index_table[i][simplices[i][j].key] = j;
+        index_table[i][simplices[i][j].vertices] = j;
       }
     }
     for(i=0; i<(signed) events.size(); ++i) {
@@ -2462,7 +2493,6 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
   }
   else {
     bool found;
-    std::string k;
     std::set<int>::const_iterator it;
     hash_map::const_iterator qt;
     std::set<int> v;
@@ -2496,14 +2526,13 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
         }
         l = (signed) vx.size() - 1;
         if (l >= 1) {
-          k = make_key(vx);
-          qt = index_table[l].find(k);
+          qt = index_table[l].find(vx);
           if (qt != index_table[l].end()) {
             if (NTL::divide(simplices[l][qt->second].ubiquity,codex[sheet].colour) == 0) simplices[l][qt->second].ubiquity *= codex[sheet].colour;
           }
           else {
             simplices[l].push_back(Simplex(vx,codex[sheet].colour));
-            index_table[l][k] = (signed) simplices[l].size() - 1;
+            index_table[l][vx] = (signed) simplices[l].size() - 1;
           }
         }
         else {
@@ -2573,7 +2602,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
       simplices[i][j].entourage.clear();
-      index_table[i][simplices[i][j].key] = j;
+      index_table[i][simplices[i][j].vertices] = j;
     }
   }
   for(i=0; i<nv; ++i) {
@@ -2626,7 +2655,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
       rho = (tau*chi)/NTL::GCD(tau,chi);
       S.initialize(nc,i,rho);
       simplices[1].push_back(S);
-      index_table[1][S.key] = (signed) simplices[1].size() - 1;
+      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       S.clear();
     }
     vmodified.insert(nc);
@@ -2703,8 +2732,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
 {
   int i,j,k,n,nd;
   bool good,found;
-  std::string fx;
-  std::set<int> candidates;
+  std::set<int> candidates,S;
 
   if (base >= 0) {
     // This call of the perforation operator is localized
@@ -2720,10 +2748,10 @@ bool Spacetime::perforation(int base,int d,int sheet)
       good = true;
       for(j=0; j<1+d; ++j) {
         found = false;
-        fx = simplices[d][i].faces[j];
+        S = simplices[d][i].faces[j];
         for(k=0; k<nd; ++k) {
           if (k == i || NTL::divide(simplices[d][k].ubiquity,codex[sheet].colour) == 0) continue;
-          if (simplices[d][k].face(fx)) {
+          if (simplices[d][k].face(S)) {
             found = true;
             break;
           }
@@ -2747,10 +2775,10 @@ bool Spacetime::perforation(int base,int d,int sheet)
       good = true;
       for(j=0; j<1+d; ++j) {
         found = false;
-        fx = simplices[d][i].faces[j];
+        S = simplices[d][i].faces[j];
         for(k=0; k<nd; ++k) {
           if (k == i || NTL::divide(simplices[d][k].ubiquity,codex[sheet].colour) == 0) continue;
-          if (simplices[d][k].face(fx)) {
+          if (simplices[d][k].face(S)) {
             found = true;
             break;
           }

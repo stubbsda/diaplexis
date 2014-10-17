@@ -22,14 +22,12 @@ class Simplex: public Cell {
 
  public:
   Simplex();
-  Simplex(const std::string&,const std::vector<int>&);
   Simplex(const Simplex&);
   Simplex(int,const std::vector<int>&);
   Simplex(int,int,const std::vector<int>&);
   Simplex(const std::set<int>&,const std::vector<int>&);
   virtual ~Simplex();
   Simplex& operator =(const Simplex&);
-  void initialize(const std::string&,const std::vector<int>&);
   void initialize(int,int,const std::vector<int>&);
   void initialize(const std::set<int>&,const std::vector<int>&);
   virtual void clear();

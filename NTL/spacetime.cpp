@@ -846,10 +846,10 @@ void Spacetime::test_harness(int type,int n)
       vx.insert(RND.irandom(nv));
     } while((signed) vx.size() < (1+d));
     S.initialize(vx,sheet);
-    qt = index_table[d].find(S.key);
+    qt = index_table[d].find(S.vertices);
     if (qt == index_table[d].end()) {
       simplices[d].push_back(S);
-      index_table[d][S.key] = (signed) simplices[d].size() - 1;
+      index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
       simplicial_implication(0);
       simplicial_implication(-1);
       compute_neighbours();
@@ -1022,7 +1022,6 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
   // PDF "hasse.pdf"; the method assumes that the Graphviz library
   // has been installed on the system.
   int i,j,k;
-  std::string nm;
 
   std::ofstream s(filename.c_str(),std::ios::trunc);
 
@@ -1031,9 +1030,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity == 1) continue;
-        nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
+          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1046,9 +1044,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (NTL::divide(simplices[i][j].ubiquity,codex[sheet].colour) == 0) continue;
-        nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
+          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1569,7 +1566,7 @@ void Spacetime::analyze_convergence()
   for(i=1; i<=Spacetime::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
-      qt = anterior.index_table[i].find(simplices[i][j].key);
+      qt = anterior.index_table[i].find(simplices[i][j].vertices);
       if (qt == anterior.index_table[i].end()) {
         tdelta++;
         continue;
@@ -1603,7 +1600,7 @@ void Spacetime::analyze_convergence()
   for(i=1; i<=Spacetime::ND; ++i) {
     anterior.index_table[i].clear();
     for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-      anterior.index_table[i][anterior.simplices[i][j].key] = j;
+      anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
     }
   }
 }
@@ -1759,10 +1756,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.vertices.insert(i);
-          S.vertices.insert(in1);
-          S.string_assembly();
-          index_table[1][S.key] = (signed) simplices[1].size();
+          S.initialize(i,in1,locale);
+          index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
         }
@@ -1775,10 +1770,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.vertices.insert(i);
-          S.vertices.insert(in1);
-          S.string_assembly();
-          index_table[1][S.key] = (signed) simplices[1].size();
+          S.initialize(i,in1,locale);
+          index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
         }
@@ -1793,10 +1786,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.vertices.insert(i);
-            S.vertices.insert(in1);
-            S.string_assembly();
-            index_table[1][S.key] = (signed) simplices[1].size();
+            S.initialize(i,in1,locale);
+            index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
           }
@@ -1811,10 +1802,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.vertices.insert(i);
-            S.vertices.insert(in1);
-            S.string_assembly();
-            index_table[1][S.key] = (signed) simplices[1].size();
+            S.initialize(i,in1,locale);
+            index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
           }
@@ -1846,7 +1835,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
         d = N.size() - 1;
         S.initialize(N,locale);
         simplices[d].push_back(S);
-        index_table[d][S.key] = (signed) simplices[d].size() - 1;
+        index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
         N.clear();
       }
     }
@@ -1922,10 +1911,9 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
 
     if (relational) geometry->create(initial_dim,"MONOPLEX");
 
-    S.vertices = vx;
-    S.string_assembly();
+    S.initialize(vx,locale);
     simplices[initial_dim].push_back(S);
-    index_table[initial_dim][S.key] = 0;
+    index_table[initial_dim][S.vertices] = 0;
   }
   else if (initial_state == RANDOM) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
@@ -1971,10 +1959,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (RND.bernoulli_variate() == false) continue;
-        S.vertices.insert(i);
-        S.vertices.insert(j);
-        S.string_assembly();
-        index_table[1][S.key] = (signed) simplices[1].size();
+        S.initialize(i,j,locale);
+        index_table[1][S.vertices] = (signed) simplices[1].size();
         simplices[1].push_back(S);
         events[i].neighbours.insert(j);
         events[j].neighbours.insert(i);
@@ -2008,8 +1994,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 = *it;
           current = v;
           current.insert(in1);
-          S.vertices = current;
-          S.string_assembly();
+          S.initialize(current,locale);
           svector.push_back(S);
         }
         vx.clear();
@@ -2018,10 +2003,10 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
       delete[] N;
       if (svector.empty()) break;
       for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = index_table[level].find(vit->key);
+        qt = index_table[level].find(vit->vertices);
         if (qt == index_table[level].end()) {
           simplices[level].push_back(*vit);
-          index_table[level][vit->key] = (signed) simplices[level].size() - 1;
+          index_table[level][vit->vertices] = (signed) simplices[level].size() - 1;
         }
       }
       svector.clear();

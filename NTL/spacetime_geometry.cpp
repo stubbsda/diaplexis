@@ -291,6 +291,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
   else {
     int j,k,na = 0;
     double l,ell;
+    std::set<int> S;
     std::vector<double> x1,x2;
     hash_map::const_iterator qt;
     const int nvertex = (signed) events.size();
@@ -307,7 +308,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     assert(system_size == D*na);
 
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,qt)
+#pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
     for(i=0; i<nvertex; ++i) {
       if (events[i].ubiquity == 1) continue;
@@ -319,7 +320,10 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
         k = *it;
         geometry->get_coordinates(k,x2);
         l = geometry->get_distance(i,k,false);
-        qt = index_table[1].find(make_key(i,k));
+        S.clear();
+        S.insert(i);
+        S.insert(k);
+        qt = index_table[1].find(S);
         if (flexible_edge[qt->second] == 1) {
           if (l > sq_cutoff) {
             l = std::sqrt(l);
@@ -532,6 +536,7 @@ bool Spacetime::realizable(int d,int n) const
   // An edge or vertex is always geometrically realizable...
   if (d < 2) return true;
   int i,j,info,dp1 = d + 1;
+  std::set<int> S;
   hash_map::const_iterator qt;
   double alpha;
   bool output = true;
@@ -548,15 +553,24 @@ bool Spacetime::realizable(int d,int n) const
   for(i=0; i<dp1; ++i) {
     alpha = 0.0;
     if (i != 0) {
-      qt = index_table[1].find(make_key(vx[i],vx[0]));
+      S.clear();
+      S.insert(vx[i]);
+      S.insert(vx[0]);
+      qt = index_table[1].find(S);
       alpha = simplices[1][qt->second].volume;
     }
     for(j=0; j<dp1; ++j) {
       if (j != 0) {
-        qt = index_table[1].find(make_key(vx[j],vx[0]));
+        S.clear();
+        S.insert(vx[j]);
+        S.insert(vx[0]);
+        qt = index_table[1].find(S);
         alpha += simplices[1][qt->second].volume;
       }
-      qt = index_table[1].find(make_key(vx[i],vx[j]));
+      S.clear();
+      S.insert(vx[i]);
+      S.insert(vx[j]);
+      qt = index_table[1].find(S);
       alpha -= simplices[1][qt->second].volume;
       A[dp1*i+j] = alpha;
     }
@@ -577,9 +591,10 @@ bool Spacetime::realizable(int d,int n) const
 
 void Spacetime::compute_volume()
 {
-  int i,j,k,l,n,m,parity,info,vx[3],pivots[Spacetime::ND+3];
+  int i,j,k,l,n,m,parity,info,pivots[Spacetime::ND+3];
   UINT64 q,p = 8;
   double prefactor,V,l1,l2,l3,A[(Spacetime::ND+3)*(Spacetime::ND+3)];
+  std::set<int> S;
   hash_map::const_iterator qt;
 
   compute_lengths();
@@ -587,13 +602,12 @@ void Spacetime::compute_volume()
   for(i=0; i<(signed) simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
     // without LAPACK
-    if (simplices[2][i].ubiquity == 1 || !simplices[2][i].modified) continue;
-    simplices[2][i].get_vertices(vx);
-    qt = index_table[1].find(make_key(vx[0],vx[1]));
+    if (simplices[2][i].ubiquity == 1 || !simplices[2][i].modified) continue;    
+    qt = index_table[1].find(simplices[2][i].faces[0]);
     l1 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(make_key(vx[0],vx[2]));
+    qt = index_table[1].find(simplices[2][i].faces[1]);
     l2 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(make_key(vx[1],vx[2]));
+    qt = index_table[1].find(simplices[2][i].faces[2]);
     l3 = simplices[1][qt->second].sq_volume;
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
     simplices[2][i].volume = std::sqrt(std::abs(V));
@@ -620,7 +634,10 @@ void Spacetime::compute_volume()
       simplices[i][j].get_vertices(pivots);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
-          qt = index_table[1].find(make_key(pivots[k],pivots[l]));
+          S.clear();
+          S.insert(pivots[k]);
+          S.insert(pivots[l]);
+          qt = index_table[1].find(S);
           V = simplices[1][qt->second].sq_volume;
           A[m*(1+k)+1+l] = V;
           A[m*(1+l)+1+k] = V;

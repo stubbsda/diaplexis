@@ -22,8 +22,6 @@ class Simplex: public Cell {
 
  public:
   Simplex();
-  Simplex(const std::string&,unsigned long);
-  Simplex(const std::string&,const NTL::ZZ);
   Simplex(const Simplex&);
   Simplex(int,unsigned long);
   Simplex(int,int,unsigned long);
@@ -31,8 +29,6 @@ class Simplex: public Cell {
   Simplex(const std::set<int>&,const NTL::ZZ);
   virtual ~Simplex();
   Simplex& operator =(const Simplex&);
-  void initialize(const std::string&,unsigned long);
-  void initialize(const std::string&,const NTL::ZZ);
   void initialize(int,int,unsigned long);
   void initialize(int,int,const NTL::ZZ);
   void initialize(const std::set<int>&,unsigned long);

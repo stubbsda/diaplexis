@@ -324,7 +324,7 @@ class Spacetime {
   inline double get_event_deficiency(int n) const {return events[n].deficiency;};
   inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
   inline std::string get_state_file() const {return state_file;};
-  inline std::string get_simplex_key(int d,int n) const {return simplices[d][n].key;};
+  inline std::string get_simplex_key(int d,int n) const {return make_key(simplices[d][n].vertices);};
   inline std::string get_sheet_ops(int n) const {return codex[n].ops;};
   inline std::string get_sheet_activity() const {return sheet_activity();};
   inline unsigned long get_sheet_colour(int n) const {return codex[n].colour;};
@@ -334,7 +334,7 @@ class Spacetime {
   inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const {compute_fvector(f,fstar,sheet);};
   inline void get_delta(double* output) const {output[0] = topology_delta; output[1] = geometry_delta; output[2] = energy_delta;};
   inline int get_codex_size() const {return (signed) codex.size();};
-  inline int get_edge_index(const std::string& s) const {hash_map::const_iterator qt = index_table[1].find(s); return qt->second;};
+  inline int get_edge_index(const std::set<int>& s) const {hash_map::const_iterator qt = index_table[1].find(s); return qt->second;};
   inline int get_iterations() const {return iterations;};
   inline int get_dimension(int sheet) const {return dimension(sheet);};
   inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
@@ -361,7 +361,10 @@ class Spacetime {
 
 inline bool Spacetime::edge_exists(int u,int v,int sheet) const
 {
-  hash_map::const_iterator qt = index_table[1].find(make_key(u,v));
+  std::set<int> S;
+  S.insert(u);
+  S.insert(v);
+  hash_map::const_iterator qt = index_table[1].find(S);
   if (qt == index_table[1].end()) return false;
   if (sheet == -1) {
     if (simplices[1][qt->second].ubiquity == 1) return false;

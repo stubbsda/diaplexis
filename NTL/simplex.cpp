@@ -11,30 +11,6 @@ Simplex::Simplex()
   modified = true;
 }
 
-Simplex::Simplex(const std::string& vx,unsigned long colour) : Cell(vx)
-{
-  // Given a key, create the corresponding simplex...
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
-  ubiquity = colour;
-}
-
-Simplex::Simplex(const std::string& vx,const NTL::ZZ locale) : Cell(vx)
-{
-  // Given a key, create the corresponding simplex...
-  ubiquity = locale;
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
-}
-
 Simplex::Simplex(int n,unsigned long colour) : Cell(n)
 {
   ubiquity = colour;
@@ -83,7 +59,6 @@ Simplex::Simplex(const std::set<int>& v,const NTL::ZZ locale) : Cell(v)
 Simplex::Simplex(const Simplex& source) : Cell()
 {
   vertices = source.vertices;
-  key = source.key;
   ubiquity = source.ubiquity;
   entourage = source.entourage;
   faces = source.faces;
@@ -100,7 +75,6 @@ Simplex& Simplex::operator =(const Simplex& source)
   if (this == &source) return *this;
 
   vertices = source.vertices;
-  key = source.key;
   ubiquity = source.ubiquity;
   entourage = source.entourage;
   faces = source.faces;
@@ -121,114 +95,35 @@ Simplex::~Simplex()
 
 void Simplex::initialize(int v1,int v2,unsigned long colour)
 {
-  std::stringstream s;
-
   clear();
-
-  if (v1 == -1) {
-    vertices.insert(v2);
-    s << v2;
-  }
-  else {
-    std::stringstream s1,s2;
-
-    vertices.insert(v1);
-    vertices.insert(v2);
-    if (v1 < v2) {
-      s << v1 << ":" << v2;
-    }
-    else {
-      s << v2 << ":" << v1;
-    }
-    s1 << v1;
-    s2 << v2;
-    faces.push_back(s1.str());
-    faces.push_back(s2.str());
-  }
-  key = s.str();
+  Cell::initialize(v1,v2);
   ubiquity = colour;
 }
 
 void Simplex::initialize(int v1,int v2,const NTL::ZZ locale)
 {
-  std::stringstream s;
-
   clear();
-
-  if (v1 == -1) {
-    vertices.insert(v2);
-    s << v2;
-  }
-  else {
-    std::stringstream s1,s2;
-
-    vertices.insert(v1);
-    vertices.insert(v2);
-    if (v1 < v2) {
-      s << v1 << ":" << v2;
-    }
-    else {
-      s << v2 << ":" << v1;
-    }
-    s1 << v1;
-    s2 << v2;
-    faces.push_back(s1.str());
-    faces.push_back(s2.str());
-  }
-  key = s.str();
+  Cell::initialize(v1,v2);
   ubiquity = locale;
-}
-
-void Simplex::initialize(const std::string& vx,const NTL::ZZ locale)
-{
-  clear();
-  std::string str;
-  boost::char_separator<char> sep(":");
-  boost::tokenizer<boost::char_separator<char> > tok(vx,sep);
-  for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-    str = *beg;
-    vertices.insert(boost::lexical_cast<int>(str));
-  }
-  ubiquity = locale;
-  string_assembly();
-}
-
-void Simplex::initialize(const std::string& vx,unsigned long locale)
-{
-  clear();
-  std::string str;
-  boost::char_separator<char> sep(":");
-  boost::tokenizer<boost::char_separator<char> > tok(vx,sep);
-  for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-    str = *beg;
-    vertices.insert(boost::lexical_cast<int>(str));
-  }
-  ubiquity = locale;
-  string_assembly();
 }
 
 void Simplex::initialize(const std::set<int>& vx,unsigned long colour)
 {
   clear();
-  vertices = vx;
+  Cell::initialize(vx);
   ubiquity = colour;
-  string_assembly();
 }
 
 void Simplex::initialize(const std::set<int>& vx,const NTL::ZZ locale)
 {
   clear();
-  vertices = vx;
+  Cell::initialize(vx);
   ubiquity = locale;
-  string_assembly();
 }
 
 void Simplex::clear()
 {
-  vertices.clear();
-  entourage.clear();
-  faces.clear();
-  key = "";
+  Cell::clear();
   ubiquity = 1;
   energy = 0.0;
   volume = 0.0;
@@ -295,7 +190,7 @@ void Simplex::deserialize(std::ifstream& s)
   s.read((char*)(&orientation),sizeof(CAUSALITY));
   s.read((char*)(&energy),sizeof(double));
   s.read((char*)(&incept),sizeof(int));
-  string_assembly();
+  Cell::calculate_faces();
 }
 
 NTL::ZZ Simplex::get_ubiquity() const
@@ -348,10 +243,8 @@ bool operator <(const Simplex& s1,const Simplex& s2)
 {
   if (s2.dimension() <= s1.dimension()) return false;
   // So s2 is bigger than s1, let's see if s1 is contained 
-  // in s2, i.e. is s1.key a substring of s2.key?
-  std::string::size_type found = s2.key.find(s1.key);
-  bool output = (found == std::string::npos) ? false : true;
-  return output;
+  // in s2
+  return std::includes(s2.vertices.begin(),s2.vertices.end(),s1.vertices.begin(),s1.vertices.end());  
 }
 
 Simplex operator ^(const Simplex& s1,const Simplex& s2)
@@ -372,11 +265,8 @@ Simplex operator ^(const Simplex& s1,const Simplex& s2)
 
 std::ostream& operator <<(std::ostream& s,const Simplex& S)
 {
-  std::set<int>::const_iterator it;
   s << S.dimension() << std::endl;
-  s << S.key << std::endl;
-  for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
-    s << *it << std::endl;
-  }
+  s << make_key(S.vertices) << std::endl;
+  s << S.ubiquity << std::endl;
   return s;
 }
