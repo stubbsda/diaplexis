@@ -486,11 +486,11 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
   G->clear();
   current.push_back(base);
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     offset.push_back(-1);
   }
   offset[base] = G->add_vertex();
@@ -659,10 +659,10 @@ void Spacetime::compute_lightcones()
   hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
   std::set<int> pcurrent,fcurrent,old,v,null,S;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
   // First we compute the past of each vertex
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     pcurrent.clear();
     fcurrent.clear();

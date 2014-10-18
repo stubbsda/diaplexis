@@ -45,9 +45,9 @@ Simplex::Simplex(const std::set<int>& v,unsigned long colour) : Cell(v)
   modified = true;
 }
 
-Simplex::Simplex(const std::set<int>& v,const NTL::ZZ locale) : Cell(v)
+Simplex::Simplex(const std::set<int>& v,const NTL::ZZ locus) : Cell(v)
 {
-  ubiquity = locale;
+  ubiquity = locus;
   energy = 0.0;
   volume = 0.0;
   sq_volume = 0.0;
@@ -100,11 +100,11 @@ void Simplex::initialize(int v1,int v2,unsigned long colour)
   ubiquity = colour;
 }
 
-void Simplex::initialize(int v1,int v2,const NTL::ZZ locale)
+void Simplex::initialize(int v1,int v2,const NTL::ZZ locus)
 {
   clear();
   Cell::initialize(v1,v2);
-  ubiquity = locale;
+  ubiquity = locus;
 }
 
 void Simplex::initialize(const std::set<int>& vx,unsigned long colour)
@@ -114,11 +114,11 @@ void Simplex::initialize(const std::set<int>& vx,unsigned long colour)
   ubiquity = colour;
 }
 
-void Simplex::initialize(const std::set<int>& vx,const NTL::ZZ locale)
+void Simplex::initialize(const std::set<int>& vx,const NTL::ZZ locus)
 {
   clear();
   Cell::initialize(vx);
-  ubiquity = locale;
+  ubiquity = locus;
 }
 
 void Simplex::clear()
@@ -250,15 +250,15 @@ bool operator <(const Simplex& s1,const Simplex& s2)
 Simplex operator ^(const Simplex& s1,const Simplex& s2)
 {
   std::set<int>::const_iterator it,jt;
-  NTL::ZZ locale;
+  NTL::ZZ locus;
   std::set<int> vx;
 
   for(it=s1.vertices.begin(); it!=s1.vertices.end(); ++it) {
     jt = std::find(s2.vertices.begin(),s2.vertices.end(),*it);
     if (jt != s2.vertices.end()) vx.insert(*it);
   }
-  locale = NTL::GCD(s1.ubiquity,s2.ubiquity);
-  Simplex output(vx,locale);
+  locus = NTL::GCD(s1.ubiquity,s2.ubiquity);
+  Simplex output(vx,locus);
 
   return output;
 }

@@ -333,13 +333,13 @@ bool Spacetime::adjust_dimension()
   int i,n;
   bool modified;
   std::vector<int> vdimension;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
   const bool uniform = geometry->get_uniform();
 
   system_size = 0;
 
   if (uniform) {
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) {
         vdimension.push_back(-1);
         continue;
@@ -350,7 +350,7 @@ bool Spacetime::adjust_dimension()
     }
   }
   else {
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) {
         vdimension.push_back(-1);
         continue;
@@ -369,9 +369,9 @@ void Spacetime::optimize()
   int i,n;
   bool deficient = false;
   std::vector<double> v1;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
     if (events[i].deficiency >= Spacetime::epsilon) {
       deficient = true;
@@ -394,7 +394,7 @@ void Spacetime::optimize()
     compute_obliquity();
     structural_deficiency();
 
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
       if (std::abs(events[i].geometric_deficiency) < Spacetime::epsilon) continue;
       bbarrel.insert(i);
@@ -806,7 +806,7 @@ void Spacetime::optimize()
     std::cout << "Using effective force geometry solver with " << nreal << " active vertices and background dimension = " << D << "." << std::endl;
 #endif
 
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
       offset.push_back(m);
       m++;
@@ -993,7 +993,7 @@ void Spacetime::optimize()
 #endif
       geometry->load(initial_state);
       geometry->compute_distances();
-      for(i=0; i<nvertex; ++i) {
+      for(i=0; i<nv; ++i) {
         if (ghost(events[i].ubiquity)) continue;
         events[i].geometry_modified = true;
       }
@@ -1029,7 +1029,7 @@ void Spacetime::optimize()
       S.push_back(SR);
       geometry->geometry_restoration();
       vmodified.clear();
-      for(j=0; j<nvertex; ++j) {
+      for(j=0; j<nv; ++j) {
         events[j].geometry_modified = false;
       }
       for(j=1; j<=Spacetime::ND; ++j) {
@@ -1073,7 +1073,7 @@ void Spacetime::optimize()
       }
       geometry->load(&SR);
       geometry->compute_distances();
-      for(i=0; i<nvertex; ++i) {
+      for(i=0; i<nv; ++i) {
         if (!ghost(events[i].ubiquity)) events[i].geometry_modified = true;
       }
       compute_volume();
@@ -1090,7 +1090,7 @@ void Spacetime::optimize()
         }
         geometry->load(&SE);
         geometry->compute_distances();
-        for(i=0; i<nvertex; ++i) {
+        for(i=0; i<nv; ++i) {
           if (!ghost(events[i].ubiquity)) events[i].geometry_modified = true;
         }
         compute_volume();
@@ -1119,7 +1119,7 @@ void Spacetime::optimize()
         }
         geometry->load(&SE);
         geometry->compute_distances();
-        for(i=0; i<nvertex; ++i) {
+        for(i=0; i<nv; ++i) {
           if (!ghost(events[i].ubiquity)) events[i].geometry_modified = true;
         }
         compute_volume();
@@ -1139,7 +1139,7 @@ void Spacetime::optimize()
             }
             geometry->load(&S[in1]);
             geometry->compute_distances();
-            for(j=0; j<nvertex; ++j) {
+            for(j=0; j<nv; ++j) {
               if (!ghost(events[j].ubiquity)) events[j].geometry_modified = true;
             }
             compute_volume();
@@ -1159,7 +1159,7 @@ void Spacetime::optimize()
         }
         geometry->load(&SE);
         geometry->compute_distances();
-        for(i=0; i<nvertex; ++i) {
+        for(i=0; i<nv; ++i) {
           if (!ghost(events[i].ubiquity)) events[i].geometry_modified = true;
         }
         compute_volume();
@@ -1179,7 +1179,7 @@ void Spacetime::optimize()
             }
             geometry->load(&S[in1]);
             geometry->compute_distances();
-            for(j=0; j<nvertex; ++j) {
+            for(j=0; j<nv; ++j) {
               if (!ghost(events[j].ubiquity)) events[j].geometry_modified = true;
             }
             compute_volume();

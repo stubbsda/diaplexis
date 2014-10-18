@@ -10,9 +10,9 @@ Simplex::Simplex()
   modified = true;
 }
 
-Simplex::Simplex(int n,const std::vector<int>& locale) : Cell(n)
+Simplex::Simplex(int n,const std::vector<int>& locus) : Cell(n)
 {
-  ubiquity = locale;
+  ubiquity = locus;
   energy = 0.0;
   volume = 0.0;
   sq_volume = 0.0;
@@ -21,10 +21,10 @@ Simplex::Simplex(int n,const std::vector<int>& locale) : Cell(n)
   modified = true;
 }
 
-Simplex::Simplex(int v1,int v2,const std::vector<int>& locale) : Cell(v1,v2)
+Simplex::Simplex(int v1,int v2,const std::vector<int>& locus) : Cell(v1,v2)
 {
   // A specialized constructor for 0-simplices and 1-simplices
-  ubiquity = locale;
+  ubiquity = locus;
   energy = 0.0;
   volume = 0.0;
   sq_volume = 0.0;
@@ -33,9 +33,9 @@ Simplex::Simplex(int v1,int v2,const std::vector<int>& locale) : Cell(v1,v2)
   modified = true;
 }
 
-Simplex::Simplex(const std::set<int>& v,const std::vector<int>& locale) : Cell(v)
+Simplex::Simplex(const std::set<int>& v,const std::vector<int>& locus) : Cell(v)
 {
-  ubiquity = locale;
+  ubiquity = locus;
   energy = 0.0;
   volume = 0.0;
   sq_volume = 0.0;
@@ -81,20 +81,20 @@ Simplex::~Simplex()
 
 }
 
-void Simplex::initialize(int v1,int v2,const std::vector<int>& locale)
+void Simplex::initialize(int v1,int v2,const std::vector<int>& locus)
 {
   std::stringstream s;
 
   clear();
   Cell::initialize(v1,v2);
-  ubiquity = locale;
+  ubiquity = locus;
 }
 
-void Simplex::initialize(const std::set<int>& vx,const std::vector<int>& locale)
+void Simplex::initialize(const std::set<int>& vx,const std::vector<int>& locus)
 {
   clear();
   Cell::initialize(vertices);
-  ubiquity = locale;
+  ubiquity = locus;
 }
 
 void Simplex::clear()
@@ -208,7 +208,7 @@ bool operator <(const Simplex& s1,const Simplex& s2)
 Simplex operator ^(const Simplex& s1,const Simplex& s2)
 {
   std::set<int>::const_iterator it,jt;
-  std::vector<int> locale;
+  std::vector<int> locus;
   const int n = (signed) s1.ubiquity.size();
   std::set<int> vx;
 
@@ -217,9 +217,9 @@ Simplex operator ^(const Simplex& s1,const Simplex& s2)
     if (jt != s2.vertices.end()) vx.insert(*it);
   }
   for(int i=0; i<n; ++i) {
-    locale.push_back(s1.ubiquity[i] & s2.ubiquity[i]);
+    locus.push_back(s1.ubiquity[i] & s2.ubiquity[i]);
   }
-  Simplex output(vx,locale);
+  Simplex output(vx,locus);
 
   return output;
 }

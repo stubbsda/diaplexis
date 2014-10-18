@@ -184,6 +184,7 @@ int Spacetime::simplex_embedding(int d,int n) const
   int i,j,in1,vx[1+d],ns = 0,nt = 0,p = 0,nwork = 3*n - 1;
   double delta,sum,s1,s2,c,dmatrix[n*n],A[n*n],a[n],b[n],w[n],work[nwork];
   char jtype = 'V',uplo = 'U';
+  std::set<int> S;
   std::set<int>::const_iterator it;
   hash_map::const_iterator qt;
 
@@ -197,7 +198,10 @@ int Spacetime::simplex_embedding(int d,int n) const
   // of the same type
   for(i=0; i<n; ++i) {
     for(j=i+1; j<n; ++j) {
-      qt = index_table[1].find(make_key(vx[i],vx[j]));
+      S.clear();
+      S.insert(vx[i]);
+      S.insert(vx[j]);
+      qt = index_table[1].find(S);
       delta = std::abs(simplices[1][qt->second].volume);
       dmatrix[n*i+j] = delta;
       dmatrix[n*j+i] = delta;
@@ -434,7 +438,7 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
   const int nv = (signed) events.size();
   hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
-  std::set<int> current,next;
+  std::set<int> current,next,S;
   std::vector<int> offset;
 
   G->clear();
@@ -450,7 +454,10 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
       v = *it;
       for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); ++jt) {
         w = *jt;
-        qt = index_table[1].find(make_key(v,w));
+        S.clear();
+        S.insert(v);
+        S.insert(w);
+        qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         if (offset[w] == -1) {
           offset[w] = G->add_vertex();
@@ -471,14 +478,15 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
   int i,j,l,v;
   CAUSALITY output;
   hash_map::const_iterator qt;
+  std::set<int> S;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
   G->clear();
   current.push_back(base);
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     offset.push_back(-1);
   }
   offset[base] = G->add_vertex();
@@ -489,7 +497,10 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
         v = *v_it;
         for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
           j = *it;
-          qt = index_table[1].find(make_key(v,j));
+          S.clear();
+          S.insert(v);
+          S.insert(j);
+          qt = index_table[1].find(S);
           if (ghost(simplices[1][qt->second].ubiquity)) continue;
           if (!(simplices[1][qt->second].sq_volume < 0.0)) continue;
           output = simplices[1][qt->second].orientation;
@@ -514,7 +525,10 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
         v = *v_it;
         for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
           j = *it;
-          qt = index_table[1].find(make_key(v,j));
+          S.clear();
+          S.insert(v);
+          S.insert(j);
+          qt = index_table[1].find(S);
           l = qt->second;
           if (simplices[1][l].ubiquity[sheet] == 0) continue;
           if (!(simplices[1][l].sq_volume < 0.0)) continue;
@@ -640,17 +654,20 @@ void Spacetime::compute_lightcones()
   CAUSALITY lcone;
   hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
-  std::set<int> pcurrent,fcurrent,old,v,null;
-  const int nvertex = (signed) events.size();
+  std::set<int> pcurrent,fcurrent,old,v,null,S;
+  const int nv = (signed) events.size();
 
   // First we compute the past of each vertex
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
     pcurrent.clear();
     fcurrent.clear();
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
-      qt = index_table[1].find(make_key(i,j));
+      S.clear();
+      S.insert(i);
+      S.insert(j);
+      qt = index_table[1].find(S);
       lcone = simplices[1][qt->second].orientation;
       if (lcone == SPACELIKE) continue;
       if (lcone == PAST) {
@@ -670,7 +687,10 @@ void Spacetime::compute_lightcones()
           if (j == i) continue;
           for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
-            qt = index_table[1].find(make_key(j,k));
+            S.clear();
+            S.insert(j);
+            S.insert(k);
+            qt = index_table[1].find(S);
             lcone = simplices[1][qt->second].orientation;
             if (lcone == SPACELIKE) continue;
             if (lcone == PAST) {
@@ -699,7 +719,10 @@ void Spacetime::compute_lightcones()
         if (j == i) continue;
         for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
           k = *jt;
-          qt = index_table[1].find(make_key(j,k));
+          S.clear();
+          S.insert(j);
+          S.insert(k);
+          qt = index_table[1].find(S);
           lcone = simplices[1][qt->second].orientation;
           if (lcone == SPACELIKE) continue;
           if (lcone == FUTURE) {
@@ -729,7 +752,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   int in1,in2,tcount;
   double l,w1,w2,tipsy,vorticity;
   CAUSALITY d1,d2;
-  std::set<int> n1,n2;
+  std::set<int> n1,n2,S;
   std::vector<int> jset;
   std::set<int>::const_iterator it;
   std::vector<int>::const_iterator vit;
@@ -751,7 +774,10 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   if (sheet == -1) {
     for(it=n1.begin(); it!=n1.end(); ++it) {
       in1 = *it;
-      qt = index_table[1].find(make_key(v,in1));
+      S.clear();
+      S.insert(v);
+      S.insert(in1);
+      qt = index_table[1].find(S);
       l = simplices[1][qt->second].volume;
       if (!(simplices[1][qt->second].sq_volume > 0.0)) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
@@ -762,10 +788,16 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       for(vit=jset.begin(); vit!=jset.end(); ++vit) {
         in2 = *vit;
 
-        qt = index_table[1].find(make_key(v,in2));
+        S.clear();
+        S.insert(v);
+        S.insert(in2);
+        qt = index_table[1].find(S);
         d1 = simplices[1][qt->second].orientation;
 
-        qt = index_table[1].find(make_key(in1,in2));
+        S.clear();
+        S.insert(in1);
+        S.insert(in2);
+        qt = index_table[1].find(S);
         d2 = simplices[1][qt->second].orientation;
         if (d1 != d2) tcount++;
       }
@@ -775,7 +807,10 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   else {
     for(it=n1.begin(); it!=n1.end(); ++it) {
       in1 = *it;
-      qt = index_table[1].find(make_key(v,in1));
+      S.clear();
+      S.insert(v);
+      S.insert(in1);
+      qt = index_table[1].find(S);
       if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
       l = simplices[1][qt->second].volume;
       if (!(simplices[1][qt->second].sq_volume > 0.0)) continue;
@@ -787,11 +822,17 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       for(vit=jset.begin(); vit!=jset.end(); ++vit) {
         in2 = *vit;
 
-        qt = index_table[1].find(make_key(v,in2));
+        S.clear();
+        S.insert(v);
+        S.insert(in2);
+        qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         d1 = simplices[1][qt->second].orientation;
 
-        qt = index_table[1].find(make_key(in1,in2));
+        S.clear();
+        S.insert(in1);
+        S.insert(in2);
+        qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         d2 = simplices[1][qt->second].orientation;
         if (d1 != d2) tcount++;
@@ -810,7 +851,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   int i,j,k,nsink = 0,nsource = 0,causal_loop = 0;
   double output,nlinearity = 0.0;
   CAUSALITY lcone;
-  std::set<int> past,future,fcurrent,pcurrent,v,null,old;
+  std::set<int> past,future,fcurrent,pcurrent,v,null,old,S;
   std::set<int>::const_iterator it,jt;
   hash_map::const_iterator qt;
   Graph G;
@@ -819,7 +860,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
 
   if (sheet == -1) {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
@@ -828,7 +869,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       fcurrent.clear();
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         j = *it;
-        qt = index_table[1].find(make_key(i,j));
+        S.clear();
+        S.insert(i);
+        S.insert(j);
+        qt = index_table[1].find(S);
         lcone = simplices[1][qt->second].orientation;
         if (lcone == SPACELIKE) continue;
         if (lcone == PAST) {
@@ -848,7 +892,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             if (j == i) continue;
             for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
               k = *jt;
-              qt = index_table[1].find(make_key(j,k));
+              S.clear();
+              S.insert(j);
+              S.insert(k);
+              qt = index_table[1].find(S);
               lcone = simplices[1][qt->second].orientation;
               if (lcone == SPACELIKE) continue;
               if (lcone == PAST) {
@@ -877,7 +924,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
           if (j == i) continue;
           for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
-            qt = index_table[1].find(make_key(j,k));
+            S.clear();
+            S.insert(j);
+            S.insert(k);
+            qt = index_table[1].find(S);
             lcone = simplices[1][qt->second].orientation;
             if (lcone == SPACELIKE) continue;
             if (lcone == FUTURE) {
@@ -913,7 +963,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   }
   else {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity[sheet] == 0) continue;
@@ -922,7 +972,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       fcurrent.clear();
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         j = *it;
-        qt = index_table[1].find(make_key(i,j));
+        S.clear();
+        S.insert(i);
+        S.insert(j);
+        qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         lcone = simplices[1][qt->second].orientation;
         if (lcone == SPACELIKE) continue;
@@ -943,7 +996,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             if (j == i) continue;
             for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
               k = *jt;
-              qt = index_table[1].find(make_key(j,k));
+              S.clear();
+              S.insert(j);
+              S.insert(k);
+              qt = index_table[1].find(S);
               if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
               lcone = simplices[1][qt->second].orientation;
               if (lcone == SPACELIKE) continue;
@@ -973,7 +1029,10 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
           if (j == i) continue;
           for(jt=events[j].neighbours.begin(); jt!=events[j].neighbours.end(); ++jt) {
             k = *jt;
-            qt = index_table[1].find(make_key(j,k));
+            S.clear();
+            S.insert(j);
+            S.insert(k);
+            qt = index_table[1].find(S);
             if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
             lcone = simplices[1][qt->second].orientation;
             if (lcone == SPACELIKE) continue;
@@ -1142,6 +1201,7 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
   // So, we'll have to use Dijkstra's algorithm then...
   int i,n,v,md,base,l = -1;
   std::vector<int> distance;
+  std::set<int> S;
   std::set<int>::const_iterator it;
   hash_map::const_iterator qt;
   const int nv = (signed) events.size();
@@ -1172,7 +1232,10 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
     visited[base] = true;
     for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
       v = *it;
-      qt = index_table[1].find(make_key(base,v));
+      S.clear();
+      S.insert(base);
+      S.insert(v);
+      qt = index_table[1].find(S);
       if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
       n = distance[base] + 1;
       if (distance[v] < 0 || distance[v] > n) distance[v] = n;
@@ -1382,8 +1445,8 @@ bool Spacetime::consistent(int sheet) const
 {
   int i,j,k,l,n,m,vx[2];
   bool found;
+  std::set<int> S;
   std::set<int>::const_iterator it;
-  std::string fx;
   hash_map::const_iterator qt;
   const int nv = (signed) events.size();
   const int ulimit = dimension(sheet);
@@ -1407,29 +1470,29 @@ bool Spacetime::consistent(int sheet) const
           return false;
         }
         for(k=0; k<1+i; ++k) {
-          fx = simplices[i][j].faces[k];
+          S = simplices[i][j].faces[k];
           found = false;
           for(l=0; l<(signed) simplices[i-1].size(); ++l) {
             if (ghost(simplices[i-1][l].ubiquity)) continue;
-            if (fx == simplices[i-1][l].key) {
+            if (S == simplices[i-1][l].vertices) {
               found = true;
               break;
             }
           }
           if (!found) {
-            std::cout << "Can't find face " << fx << " of simplex " << simplices[i][j].key << std::endl;
+            std::cout << "Can't find face " << make_key(S) << " of simplex " << make_key(simplices[i][j].vertices) << std::endl;
             for(l=0; l<(signed) simplices[i-1].size(); ++l) {
               if (ghost(simplices[i-1][l].ubiquity)) continue;
-              std::cout << simplices[i-1][l].key << std::endl;
+              std::cout << make_key(simplices[i-1][l].vertices) << std::endl;
               for(m=0; m<(signed) codex.size(); ++m) {
                 std::cout << m << "  " << simplices[i-1][l].ubiquity[m] << std::endl;
               }
             }
             return false;
           }
-          qt = index_table[i-1].find(fx);
+          qt = index_table[i-1].find(S);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Problem with the index tables for " << simplices[i][j].key << " and " << fx << std::endl;
+            std::cout << "Problem with the index tables for " << make_key(simplices[i][j].vertices) << " and " << make_key(S) << std::endl;
             return false;
           }
         }
@@ -1495,20 +1558,20 @@ bool Spacetime::consistent(int sheet) const
           return false;
         }
         for(k=0; k<1+i; ++k) {
-          fx = simplices[i][j].faces[k];
+          S = simplices[i][j].faces[k];
           found = false;
           for(l=0; l<(signed) simplices[i-1].size(); ++l) {
             if (simplices[i-1][l].ubiquity[sheet] == 0) continue;
-            if (fx == simplices[i-1][l].key) {
+            if (S == simplices[i-1][l].vertices) {
               found = true;
               break;
             }
           }
           if (!found) {
-            std::cout << "For sheet " << sheet << ", can't find face " << fx << " of simplex " << simplices[i][j].key << std::endl;
+            std::cout << "For sheet " << sheet << ", can't find face " << make_key(S) << " of simplex " << make_key(simplices[i][j].vertices) << std::endl;
             for(l=0; l<(signed) simplices[i-1].size(); ++l) {
               if (simplices[i-1][l].ubiquity[sheet] == 0) continue;
-              std::cout << simplices[i-1][l].key << std::endl;
+              std::cout << make_key(simplices[i-1][l].vertices) << std::endl;
               for(m=0; m<(signed) codex.size(); ++m) {
                 std::cout << m << "  " << simplices[i-1][l].ubiquity[m] << std::endl;
               }
@@ -1566,11 +1629,11 @@ bool Spacetime::consistent(int sheet) const
   for(i=1; i<=Spacetime::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
-      fx = simplices[i][j].key;
+      S = simplices[i][j].vertices;
       for(k=0; k<n; ++k) {
         if (k == j) continue;
-        if (fx == simplices[i][k].key) {
-          std::cout << "Illegal " << i << "-simplex duplication with " << fx << std::endl;
+        if (S == simplices[i][k].vertices) {
+          std::cout << "Illegal " << i << "-simplex duplication with " << make_key(S) << std::endl;
           return false;
         }
       }

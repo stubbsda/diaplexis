@@ -288,20 +288,21 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
   else {
     int j,k;
     double l,ell;
+    std::set<int> S;
     std::vector<double> x1,x2;
     hash_map::const_iterator qt;
-    const int nvertex = (signed) events.size();
+    const int nv = (signed) events.size();
     const int D = geometry->dimension();
     const double pfactor = (2.0/M_PI)*5.0;
     const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
     double alpha[D];
 
-    assert(system_size == D*nvertex);
+    assert(system_size == D*nv);
 
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,qt)
+#pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
       geometry->get_coordinates(i,x1);
       for(j=0; j<D; ++j) {
@@ -311,7 +312,10 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
         k = *it;
         geometry->get_coordinates(k,x2);
         l = geometry->get_distance(i,k,false);
-        qt = index_table[1].find(make_key(i,k));
+        S.clear();
+        S.insert(i);
+        S.insert(k);
+        qt = index_table[1].find(S);
         if (flexible_edge[qt->second] == 1) {
           if (l > sq_cutoff) {
             l = std::sqrt(l);
@@ -382,9 +386,9 @@ bool Spacetime::delaunay() const
 
 void Spacetime::compute_obliquity()
 {
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
   if (geometry->get_relational()) {
-    for(int i=0; i<nvertex; ++i) {
+    for(int i=0; i<nv; ++i) {
       events[i].obliquity = 0.0;
     }
     return;
@@ -396,7 +400,7 @@ void Spacetime::compute_obliquity()
   std::set<int>::const_iterator it;
   const double A = 2.5;
 
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity) || events[i].neighbours.size() < 2 || !events[i].geometry_modified) continue;
 
     j = *(events[i].neighbours.begin());
@@ -446,26 +450,26 @@ double Spacetime::representational_energy(bool weighted) const
   // A routine that follows the logic of C. Godsil and G. Royle, "Algebraic 
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
   double value,energy = 0.0;
-  int i,j,k,l,vx[2],nv = 0;
+  int i,j,k,l,vx[2],n = 0;
   std::vector<int> offset;
   std::set<int>::const_iterator it;
-  const int nvertex = (signed) events.size();
-  const int nedge = (signed) simplices[1].size();
+  const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
 
   if (dimension(-1) < 1) return energy;
 
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) {
       offset.push_back(-1);
       continue;
     }
-    offset.push_back(nv);
-    nv++;
+    offset.push_back(n);
+    n++;
   }
 
-  std::vector<double>* laplacian = new std::vector<double>[nv];
-  double diagonal[nv];
-  for(i=0; i<nv; ++i) {
+  std::vector<double>* laplacian = new std::vector<double>[n];
+  double diagonal[n];
+  for(i=0; i<n; ++i) {
     diagonal[i] = 0.0;
   }
 
@@ -473,7 +477,7 @@ double Spacetime::representational_energy(bool weighted) const
     // What is the appropriate value for l?
     double w;
     l = 0;
-    for(i=0; i<nedge; ++i) {
+    for(i=0; i<ne; ++i) {
       if (ghost(simplices[1][i].ubiquity)) continue;
       value = std::abs(simplices[1][i].volume);
       w = double(1+l)/value;
@@ -490,7 +494,7 @@ double Spacetime::representational_energy(bool weighted) const
   else {
     // We can construct the Laplacian of the spacetime graph directly in this 
     // case
-    for(i=0; i<nedge; ++i) {
+    for(i=0; i<ne; ++i) {
       if (ghost(simplices[1][i].ubiquity)) continue;
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]]; k = offset[vx[1]];
@@ -502,13 +506,13 @@ double Spacetime::representational_energy(bool weighted) const
       laplacian[k].push_back(double(vx[1]));
     }
   }
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (offset[i] == -1) continue;
     laplacian[offset[i]].push_back(diagonal[offset[i]]);
     laplacian[offset[i]].push_back(double(i));
   }
 
-  energy = geometry->inner_product(laplacian,offset,nv);
+  energy = geometry->inner_product(laplacian,offset,n);
   delete[] laplacian;
 
   return energy;
@@ -521,6 +525,7 @@ bool Spacetime::realizable(int d,int n) const
   // An edge or vertex is always geometrically realizable...
   if (d < 2) return true;
   int i,j,info,dp1 = d + 1;
+  std::set<int> S;
   hash_map::const_iterator qt;
   double alpha;
   bool output = true;
@@ -537,15 +542,24 @@ bool Spacetime::realizable(int d,int n) const
   for(i=0; i<dp1; ++i) {
     alpha = 0.0;
     if (i != 0) {
-      qt = index_table[1].find(make_key(vx[i],vx[0]));
+      S.clear();
+      S.insert(vx[i]);
+      S.insert(vx[0]);
+      qt = index_table[1].find(S);
       alpha = simplices[1][qt->second].volume;
     }
     for(j=0; j<dp1; ++j) {
       if (j != 0) {
-        qt = index_table[1].find(make_key(vx[j],vx[0]));
+        S.clear();
+        S.insert(vx[j]);
+        S.insert(vx[0]);
+        qt = index_table[1].find(S);
         alpha += simplices[1][qt->second].volume;
       }
-      qt = index_table[1].find(make_key(vx[i],vx[j]));
+      S.clear();
+      S.insert(vx[i]);
+      S.insert(vx[j]);
+      qt = index_table[1].find(S);
       alpha -= simplices[1][qt->second].volume;
       A[dp1*i+j] = alpha;
     }
@@ -566,9 +580,10 @@ bool Spacetime::realizable(int d,int n) const
 
 void Spacetime::compute_volume()
 {  
-  int i,j,k,l,n,m,parity,info,vx[3],pivots[Spacetime::ND+3];
+  int i,j,k,l,n,m,parity,info,pivots[Spacetime::ND+3];
   UINT64 q,p = 8;
   double prefactor,V,l1,l2,l3,A[(Spacetime::ND+3)*(Spacetime::ND+3)];
+  std::set<int> S;
   hash_map::const_iterator qt;
 
   compute_lengths();
@@ -577,12 +592,11 @@ void Spacetime::compute_volume()
     // The triangles are a very simple case we can handle
     // without LAPACK
     if (ghost(simplices[2][i].ubiquity) || !simplices[2][i].modified) continue;
-    simplices[2][i].get_vertices(vx);
-    qt = index_table[1].find(make_key(vx[0],vx[1]));
+    qt = index_table[1].find(simplices[2][i].faces[0]);
     l1 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(make_key(vx[0],vx[2]));
+    qt = index_table[1].find(simplices[2][i].faces[1]);
     l2 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(make_key(vx[1],vx[2]));
+    qt = index_table[1].find(simplices[2][i].faces[2]);
     l3 = simplices[1][qt->second].sq_volume;
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
     simplices[2][i].volume = std::sqrt(std::abs(V));
@@ -609,7 +623,10 @@ void Spacetime::compute_volume()
       simplices[i][j].get_vertices(pivots);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
-          qt = index_table[1].find(make_key(pivots[k],pivots[l]));
+          S.clear();
+          S.insert(pivots[k]);
+          S.insert(pivots[l]);
+          qt = index_table[1].find(S);
           V = simplices[1][qt->second].sq_volume;
           A[m*(1+k)+1+l] = V;
           A[m*(1+l)+1+k] = V;

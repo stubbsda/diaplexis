@@ -1613,10 +1613,10 @@ bool Spacetime::fusion_m(int base,int sheet)
 bool Spacetime::fission(int base,double density,int sheet)
 {
   int i,p,q,n,vx[2];
+  Simplex S;
   const int ne = (signed) simplices[1].size();
 
   if (base >= 0) {
-    Simplex s;
     n = 0;
 
     p = vertex_addition(base,sheet);
@@ -1627,16 +1627,15 @@ bool Spacetime::fission(int base,double density,int sheet)
       if (vx[0] != base && vx[1] != base) continue;
       q = (vx[0] == base) ? vx[1] : vx[0];
       if (RND.drandom() < density) {
-        s.initialize(q,p,codex[sheet].colour);
-        simplices[1].push_back(s);
-        index_table[1][s.vertices] = (signed) simplices[1].size() - 1;
-        s.clear();
+        S.initialize(q,p,codex[sheet].colour);
+        simplices[1].push_back(S);
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
         n++;
       }
     }
-    s.initialize(base,p,codex[sheet].colour);
-    simplices[1].push_back(s);
-    index_table[1][s.vertices] = (signed) simplices[1].size() - 1;
+    S.initialize(base,p,codex[sheet].colour);
+    simplices[1].push_back(S);
+    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
 #ifdef VERBOSE
     std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
 #endif
@@ -1673,20 +1672,20 @@ bool Spacetime::fission(int base,double density,int sheet)
       }
       d = (signed) nsimplex.size() - 1;
       if (d >= Spacetime::ND) {
-        std::set<int> S;
+        std::set<int> s1;
         d = RND.irandom(2,Spacetime::ND);
         do {
           n = RND.irandom(nsimplex);
-          S.insert(n);
-        } while((signed) S.size() < (1+d));
-        nsimplex = S;
+          s1.insert(n);
+        } while((signed) s1.size() < (1+d));
+        nsimplex = s1;
       }
-      Simplex S1(nsimplex,codex[sheet].colour);
+      S.initialize(nsimplex,codex[sheet].colour);
 #ifdef VERBOSE
       std::cout << "Vertex fission on " << p << " with new vertex " << q << " and simplex dimension " << d << std::endl;
 #endif
-      simplices[d].push_back(S1);
-      index_table[d][S1.vertices] = simplices[d].size() - 1;
+      simplices[d].push_back(S);
+      index_table[d][S.vertices] = simplices[d].size() - 1;
     }
     else {
       // The plot thickens: we must create a new 1-simplex out of an existing one, perhaps by forming
@@ -1707,17 +1706,17 @@ bool Spacetime::fission(int base,double density,int sheet)
       nsimplex.insert(vx[0]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      Simplex S1(nsimplex,codex[sheet].colour);
-      simplices[2].push_back(S1);
-      index_table[2][S1.vertices] = simplices[2].size() - 1;
+      S.initialize(nsimplex,codex[sheet].colour);
+      simplices[2].push_back(S);
+      index_table[2][S.vertices] = simplices[2].size() - 1;
       nsimplex.clear();
 
       nsimplex.insert(vx[1]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      Simplex S2(nsimplex,codex[sheet].colour);
-      simplices[2].push_back(S2);
-      index_table[2][S2.vertices] = simplices[2].size() - 1;
+      S.initialize(nsimplex,codex[sheet].colour);
+      simplices[2].push_back(S);
+      index_table[2][S.vertices] = simplices[2].size() - 1;
     }
     return true;
   }
@@ -3204,7 +3203,7 @@ void Spacetime::hyphansis(int sheet)
   int v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
   const double nactive = double(cardinality(0,sheet));
 
   codex[sheet].ops = "";
@@ -3216,7 +3215,7 @@ void Spacetime::hyphansis(int sheet)
 #ifdef VERBOSE
   int npos = 0,nneg = 0,nze = 0;
 #endif
-  for(int i=0; i<nvertex; ++i) {
+  for(int i=0; i<nv; ++i) {
     if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
 #ifdef VERBOSE
     if (events[i].energy > Spacetime::epsilon) nze++;

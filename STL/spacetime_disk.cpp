@@ -956,7 +956,7 @@ void Spacetime::read_complex(std::ifstream& s)
 
   for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
-      index_table[i][simplices[i][j].key] = j;
+      index_table[i][simplices[i][j].vertices] = j;
     }
   }
   compute_entourages(-1);
@@ -1133,7 +1133,7 @@ void Spacetime::read_state(const std::string& filename)
   // Regenerate the anterior index table...
   for(i=1; i<=Spacetime::ND; ++i) {
     for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-      anterior.index_table[i][anterior.simplices[i][j].key] = j;
+      anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
     }
   }
   s.close();

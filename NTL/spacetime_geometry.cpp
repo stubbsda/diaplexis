@@ -294,13 +294,13 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     std::set<int> S;
     std::vector<double> x1,x2;
     hash_map::const_iterator qt;
-    const int nvertex = (signed) events.size();
+    const int nv = (signed) events.size();
     const int D = geometry->dimension();
     const double pfactor = (2.0/M_PI)*5.0;
     const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
     double alpha[D];
 
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
       na++;
     }
@@ -310,7 +310,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
 #ifdef PARALLEL
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
-    for(i=0; i<nvertex; ++i) {
+    for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
       geometry->get_coordinates(i,x1);
       for(j=0; j<D; ++j) {
@@ -394,9 +394,9 @@ bool Spacetime::delaunay() const
 
 void Spacetime::compute_obliquity()
 {
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
   if (geometry->get_relational()) {
-    for(int i=0; i<nvertex; ++i) {
+    for(int i=0; i<nv; ++i) {
       events[i].obliquity = 0.0;
     }
     return;
@@ -409,7 +409,7 @@ void Spacetime::compute_obliquity()
 
   const double A = 2.5;
 
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1 || events[i].neighbours.size() < 2 || !events[i].geometry_modified) continue;
 
     j = *(events[i].neighbours.begin());
@@ -459,26 +459,26 @@ double Spacetime::representational_energy(bool weighted) const
   // A routine that follows the logic of C. Godsil and G. Royle, "Algebraic
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
   double value,energy = 0.0;
-  int i,j,k,l,vx[2],nv = 0;
+  int i,j,k,l,vx[2],n = 0;
   std::vector<int> offset;
   std::set<int>::const_iterator it;
-  const int nvertex = (signed) events.size();
-  const int nedge = (signed) simplices[1].size();
+  const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
 
   if (dimension(-1) < 1) return energy;
 
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) {
       offset.push_back(-1);
       continue;
     }
-    offset.push_back(nv);
-    nv++;
+    offset.push_back(n);
+    n++;
   }
 
-  std::vector<double>* laplacian = new std::vector<double>[nv];
-  double diagonal[nv];
-  for(i=0; i<nv; ++i) {
+  std::vector<double>* laplacian = new std::vector<double>[n];
+  double diagonal[n];
+  for(i=0; i<n; ++i) {
     diagonal[i] = 0.0;
   }
 
@@ -486,7 +486,7 @@ double Spacetime::representational_energy(bool weighted) const
     // What is the appropriate value for l?
     double w;
     l = 0;
-    for(i=0; i<nedge; ++i) {
+    for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity == 1) continue;
       value = std::abs(simplices[1][i].volume);
       w = double(1+l)/value;
@@ -504,7 +504,7 @@ double Spacetime::representational_energy(bool weighted) const
   else {
     // We can construct the Laplacian of the spacetime graph directly in this
     // case
-    for(i=0; i<nedge; ++i) {
+    for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
@@ -517,13 +517,13 @@ double Spacetime::representational_energy(bool weighted) const
       laplacian[k].push_back(double(vx[1]));
     }
   }
-  for(i=0; i<nvertex; ++i) {
+  for(i=0; i<nv; ++i) {
     if (offset[i] == -1) continue;
     laplacian[offset[i]].push_back(diagonal[offset[i]]);
     laplacian[offset[i]].push_back(double(i));
   }
 
-  energy = geometry->inner_product(laplacian,offset,nv);
+  energy = geometry->inner_product(laplacian,offset,n);
   delete[] laplacian;
 
   return energy;

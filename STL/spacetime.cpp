@@ -843,10 +843,10 @@ void Spacetime::test_harness(int type,int n)
       vx.insert(RND.irandom(nv));
     } while((signed) vx.size() < (1+d));
     S.initialize(vx,sheet);
-    qt = index_table[d].find(S.key);
+    qt = index_table[d].find(S.vertices);
     if (qt == index_table[d].end()) {
       simplices[d].push_back(S);
-      index_table[d][S.key] = (signed) simplices[d].size() - 1;
+      index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
       simplicial_implication(0);
       simplicial_implication(-1);
       compute_neighbours();
@@ -1019,7 +1019,6 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
   // PDF "hasse.pdf"; the method assumes that the Graphviz library
   // has been installed on the system.
   int i,j,k;
-  std::string nm;
 
   std::ofstream s(filename.c_str(),std::ios::trunc);
 
@@ -1028,9 +1027,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (ghost(simplices[i][j].ubiquity)) continue;
-        nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
+          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1043,9 +1041,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
     for(i=Spacetime::ND; i>0; i--) {
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity[sheet] == 0) continue;
-        nm = simplices[i][j].key;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << nm << "\" -> \"" << simplices[i][j].faces[k] << "\";" << std::endl;
+          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1061,9 +1058,9 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
 bool Spacetime::energy_check() const
 {
   bool output = true;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
-  for(int i=0; i<nvertex; ++i) {
+  for(int i=0; i<nv; ++i) {
     if (events[i].energy > 0.0) {
       if (ghost(events[i].ubiquity)) {
         std::cout << "Potential problem here: " << i << "  " << events[i].energy << std::endl;
@@ -1180,9 +1177,7 @@ void Spacetime::structural_deficiency()
     length_deviation[i] = 0.0;
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
-      qt = index_table[1].find(make_key(i,j));
-      n = qt->second;
-      l = simplices[1][n].volume;
+      l = geometry->get_distance(i,j,true);
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += events[j].energy*l_inv;
@@ -1575,7 +1570,7 @@ void Spacetime::analyze_convergence()
   for(i=1; i<=Spacetime::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
-      qt = anterior.index_table[i].find(simplices[i][j].key);
+      qt = anterior.index_table[i].find(simplices[i][j].vertices);
       if (qt == anterior.index_table[i].end()) {
         tdelta++;
         continue;
@@ -1609,7 +1604,7 @@ void Spacetime::analyze_convergence()
   for(i=1; i<=Spacetime::ND; ++i) {
     anterior.index_table[i].clear();
     for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-      anterior.index_table[i][anterior.simplices[i][j].key] = j;
+      anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
     }
   }
 }
@@ -1683,7 +1678,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   return jz;
 }
 
-void Spacetime::build_initial_state(const std::vector<int>& locale)
+void Spacetime::build_initial_state(const std::vector<int>& locus)
 {
   int i,j,in1;
   Vertex vt;
@@ -1696,8 +1691,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
   }
 
   vt.incept = 0;
-  vt.ubiquity = locale;
-  S.ubiquity = locale;
+  vt.ubiquity = locus;
+  S.ubiquity = locus;
   S.incept = 0;
 
   if (initial_state == CARTESIAN) {
@@ -1759,10 +1754,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.vertices.insert(i);
-          S.vertices.insert(in1);
-          S.string_assembly();
-          index_table[1][S.key] = (signed) simplices[1].size();
+          S.initialize(i,in1,locus);
+          index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
         }
@@ -1775,10 +1768,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.vertices.insert(i);
-          S.vertices.insert(in1);
-          S.string_assembly();
-          index_table[1][S.key] = (signed) simplices[1].size();
+          S.initialize(i,in1,locus);
+          index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
         }
@@ -1793,10 +1784,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.vertices.insert(i);
-            S.vertices.insert(in1);
-            S.string_assembly();
-            index_table[1][S.key] = (signed) simplices[1].size();
+            S.initialize(i,in1,locus);
+            index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
           }
@@ -1811,10 +1800,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.vertices.insert(i);
-            S.vertices.insert(in1);
-            S.string_assembly();
-            index_table[1][S.key] = (signed) simplices[1].size();
+            S.initialize(i,in1,locus);
+            index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
           }
@@ -1846,9 +1833,9 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           events.push_back(vt);
         }
         d = N.size() - 1;
-        S.initialize(N,locale);
+        S.initialize(N,locus);
         simplices[d].push_back(S);
-        index_table[d][S.key] = (signed) simplices[d].size() - 1;
+        index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
         N.clear();
       }
     }
@@ -1928,10 +1915,9 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
 
     if (relational) geometry->create(initial_dim,"MONOPLEX");
 
-    S.vertices = vx;
-    S.string_assembly();
+    S.initialize(vx,locus);
     simplices[initial_dim].push_back(S);
-    index_table[initial_dim][S.key] = 0;
+    index_table[initial_dim][S.vertices] = 0;
   }
   else if (initial_state == RANDOM) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
@@ -1977,10 +1963,8 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (RND.bernoulli_variate() == false) continue;
-        S.vertices.insert(i);
-        S.vertices.insert(j);
-        S.string_assembly();
-        index_table[1][S.key] = (signed) simplices[1].size();
+        S.initialize(i,j,locus);
+        index_table[1][S.vertices] = (signed) simplices[1].size();
         simplices[1].push_back(S);
         events[i].neighbours.insert(j);
         events[j].neighbours.insert(i);
@@ -2014,8 +1998,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
           in1 = *it;
           current = v;
           current.insert(in1);
-          S.vertices = current;
-          S.string_assembly();
+          S.initialize(current,locus);
           svector.push_back(S);
         }
         vx.clear();
@@ -2024,10 +2007,10 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
       delete[] N;
       if (svector.empty()) break;
       for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = index_table[level].find(vit->key);
+        qt = index_table[level].find(vit->vertices);
         if (qt == index_table[level].end()) {
           simplices[level].push_back(*vit);
-          index_table[level][vit->key] = (signed) simplices[level].size() - 1;
+          index_table[level][vit->vertices] = (signed) simplices[level].size() - 1;
         }
       }
       svector.clear();
@@ -2035,7 +2018,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locale)
     } while(true);
   }
   for(i=0; i<(signed) codex.size(); ++i) {
-    if (locale[i] == 1) regularization(false,i);
+    if (locus[i] == 1) regularization(false,i);
   }
   regularization(false,-1);
 }
@@ -2105,14 +2088,14 @@ void Spacetime::initialize()
     }
   }
   else {
-    std::vector<int> locale;
+    std::vector<int> locus;
 
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
       codex.push_back(Sheet(i,H->get_field(),H->get_method()));
-      locale.push_back(1);
+      locus.push_back(1);
     }
-    build_initial_state(locale);
+    build_initial_state(locus);
     geometry->compute_distances();
     compute_simplicial_dimension();
     adjust_dimension();

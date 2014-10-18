@@ -1061,9 +1061,9 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
 bool Spacetime::energy_check() const
 {
   bool output = true;
-  const int nvertex = (signed) events.size();
+  const int nv = (signed) events.size();
 
-  for(int i=0; i<nvertex; ++i) {
+  for(int i=0; i<nv; ++i) {
     if (events[i].energy > 0.0) {
       if (events[i].ubiquity == 1) {
         std::cout << "Potential problem here: " << i << "  " << events[i].energy << std::endl;
@@ -1358,7 +1358,6 @@ bool Spacetime::global_operations()
 {
   int i,j,n,k = 0;
   bool output = false;
-  NTL::ZZ chi;
   std::string filename;
   std::set<int> vmodified;
   hash_map::const_iterator qt;
@@ -1680,7 +1679,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   return jz;
 }
 
-void Spacetime::build_initial_state(const NTL::ZZ locale)
+void Spacetime::build_initial_state(const NTL::ZZ locus)
 {
   int i,j,in1;
   Vertex vt;
@@ -1692,8 +1691,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     svalue.push_back(0.0);
   }
   vt.incept = 0;
-  vt.ubiquity = locale;
-  S.ubiquity = locale;
+  vt.ubiquity = locus;
+  S.ubiquity = locus;
   S.incept = 0;
 
   if (initial_state == CARTESIAN) {
@@ -1756,7 +1755,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.initialize(i,in1,locale);
+          S.initialize(i,in1,locus);
           index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
@@ -1770,7 +1769,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.initialize(i,in1,locale);
+          S.initialize(i,in1,locus);
           index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
@@ -1786,7 +1785,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.initialize(i,in1,locale);
+            S.initialize(i,in1,locus);
             index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
@@ -1802,7 +1801,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
             in1 += v[l+1]*k;
           }
           if (in1 > i) {
-            S.initialize(i,in1,locale);
+            S.initialize(i,in1,locus);
             index_table[1][S.vertices] = (signed) simplices[1].size();
             simplices[1].push_back(S);
             S.vertices.clear();
@@ -1833,7 +1832,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           events.push_back(vt);
         }
         d = N.size() - 1;
-        S.initialize(N,locale);
+        S.initialize(N,locus);
         simplices[d].push_back(S);
         index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
         N.clear();
@@ -1911,7 +1910,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
 
     if (relational) geometry->create(initial_dim,"MONOPLEX");
 
-    S.initialize(vx,locale);
+    S.initialize(vx,locus);
     simplices[initial_dim].push_back(S);
     index_table[initial_dim][S.vertices] = 0;
   }
@@ -1959,7 +1958,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (RND.bernoulli_variate() == false) continue;
-        S.initialize(i,j,locale);
+        S.initialize(i,j,locus);
         index_table[1][S.vertices] = (signed) simplices[1].size();
         simplices[1].push_back(S);
         events[i].neighbours.insert(j);
@@ -1994,7 +1993,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
           in1 = *it;
           current = v;
           current.insert(in1);
-          S.initialize(current,locale);
+          S.initialize(current,locus);
           svector.push_back(S);
         }
         vx.clear();
@@ -2018,7 +2017,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locale)
   }
  
   for(i=0; i<(signed) codex.size(); ++i) {
-    if (NTL::divide(locale,codex[i].colour) == 1) regularization(false,i);
+    if (NTL::divide(locus,codex[i].colour) == 1) regularization(false,i);
   }
   regularization(false,-1);
 }
@@ -2088,15 +2087,15 @@ void Spacetime::initialize()
     }
   }
   else {
-    NTL::ZZ locale;
+    NTL::ZZ locus;
 
-    locale = 1;
+    locus = 1;
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
       codex.push_back(Sheet(i,psequence.next(),H->get_field(),H->get_method()));
-      locale *= codex[i].colour;
+      locus *= codex[i].colour;
     }
-    build_initial_state(locale);
+    build_initial_state(locus);
     geometry->compute_distances();
     compute_simplicial_dimension();
     adjust_dimension();
