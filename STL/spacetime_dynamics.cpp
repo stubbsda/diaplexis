@@ -167,16 +167,16 @@ void Spacetime::energy_diffusion()
   if (candidates.empty()) return;  
   std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
   nc = (signed) candidates.size();
-  for(i=nc-1; i>=0; --i) {    
+  for(i=nc-1; i>=0; --i) {
     v = candidates[i].first;
-    if (Enew[v] > 0.0) continue;
+    if (Enew[v] > -1.0) continue;
     E = events[v].energy;
     // Look for neighbours with an energy value less than 
     // mine that don't already have a new energy value...
     tvertex.clear();
     for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
       n = *it;
-      if (Enew[n] > 0.0) continue;
+      if (Enew[n] > -1.0) continue;
       tvertex.push_back(boost::tuple<int,double,double>(n,events[n].energy,events[n].deficiency));
     }
     if (tvertex.empty()) continue;
@@ -231,7 +231,7 @@ void Spacetime::energy_diffusion()
           residue = E_tx;
           do {
             j = RND.irandom(m);
-            if (Enew[ivertex[j].first] > 0.0) continue;
+            if (Enew[ivertex[j].first] > -1.0) continue;
             l = ivertex[j].second/Spacetime::Lambda;
             n = ivertex[j].first;
             if (l < residue) {
@@ -290,7 +290,7 @@ void Spacetime::energy_diffusion()
         do {
           j = RND.irandom(m);
           n = ivertex[j].first;
-          if (Enew[n] > 0.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
+          if (Enew[n] > -1.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
           En = events[n].energy;
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           l = (En < E_tx) ? En : E_tx;

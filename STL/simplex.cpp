@@ -83,8 +83,6 @@ Simplex::~Simplex()
 
 void Simplex::initialize(int v1,int v2,const std::vector<int>& locus)
 {
-  std::stringstream s;
-
   clear();
   Cell::initialize(v1,v2);
   ubiquity = locus;
@@ -93,7 +91,7 @@ void Simplex::initialize(int v1,int v2,const std::vector<int>& locus)
 void Simplex::initialize(const std::set<int>& vx,const std::vector<int>& locus)
 {
   clear();
-  Cell::initialize(vertices);
+  Cell::initialize(vx);
   ubiquity = locus;
 }
 

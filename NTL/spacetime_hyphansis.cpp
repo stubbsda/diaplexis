@@ -1277,12 +1277,13 @@ void Spacetime::compute_entourages(int sheet)
 void Spacetime::compute_neighbours()
 {
   int i,vx[2];
-  std::set<int> empty;
+  const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
 
-  for(i=0; i<(signed) events.size(); ++i) {
+  for(i=0; i<nv; ++i) {
     events[i].neighbours.clear();
   }
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
+  for(i=0; i<ne; ++i) {
     if (simplices[1][i].ubiquity == 1) continue;
     simplices[1][i].get_vertices(vx);
     events[vx[0]].neighbours.insert(vx[1]);
@@ -1637,7 +1638,7 @@ bool Spacetime::fission(int base,double density,int sheet)
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
 #ifdef VERBOSE
-    std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
+    std::cout << "Added " << 1 + n << " edge(s) to the complex after fission of " << base << " to " << p << std::endl;
 #endif
     return true;
   }
@@ -2837,8 +2838,8 @@ int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
   int n = (signed) events.size();
   Vertex vt;
 
-  geometry->vertex_addition(xc);
   vt.ubiquity = codex[sheet].colour;
+  geometry->vertex_addition(xc);
   events.push_back(vt);
 
   return n;
@@ -2849,8 +2850,8 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
   int n = (signed) events.size();
   Vertex vt;
 
-  geometry->vertex_addition(antecedents);
   vt.ubiquity = codex[sheet].colour;
+  geometry->vertex_addition(antecedents);
   events.push_back(vt);
 
   return n;
@@ -2860,6 +2861,7 @@ int Spacetime::vertex_addition(int base,int sheet)
 {
   int n = (signed) events.size();
   Vertex vt;
+
   vt.ubiquity = codex[sheet].colour;
   if (events[base].energy < Spacetime::epsilon) {
     geometry->vertex_addition(base);

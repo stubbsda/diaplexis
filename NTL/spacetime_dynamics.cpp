@@ -169,14 +169,14 @@ void Spacetime::energy_diffusion()
   nc = (signed) candidates.size();
   for(i=nc-1; i>=0; --i) {    
     v = candidates[i].first;
-    if (Enew[v] > 0.0) continue;
+    if (Enew[v] > -1.0) continue;
     E = events[v].energy;
     // Look for neighbours with an energy value less than 
     // mine that don't already have a new energy value...
     tvertex.clear();
     for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
       n = *it;
-      if (Enew[n] > 0.0) continue;
+      if (Enew[n] > -1.0) continue;
       tvertex.push_back(boost::tuple<int,double,double>(n,events[n].energy,events[n].deficiency));
     }
     if (tvertex.empty()) continue;
@@ -231,7 +231,7 @@ void Spacetime::energy_diffusion()
           residue = E_tx;
           do {
             j = RND.irandom(m);
-            if (Enew[ivertex[j].first] > 0.0) continue;
+            if (Enew[ivertex[j].first] > -1.0) continue;
             l = ivertex[j].second/Spacetime::Lambda;
             n = ivertex[j].first;
             if (l < residue) {
@@ -290,7 +290,7 @@ void Spacetime::energy_diffusion()
         do {
           j = RND.irandom(m);
           n = ivertex[j].first;
-          if (Enew[n] > 0.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
+          if (Enew[n] > -1.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
           En = events[n].energy;
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           l = (En < E_tx) ? En : E_tx;
@@ -306,64 +306,6 @@ void Spacetime::energy_diffusion()
       }
     }
   }
-  /*
-  for(i=0; i<nv; ++i) {
-    Enew[i] = -1.0;
-    vdimension.push_back(double(events[i].global_dimension));
-    if (events[i].energy < Spacetime::epsilon) {
-      candidates.push_back(std::pair<int,double>(i,-1.0));
-      continue;
-    }
-    if (events[i].ubiquity == 1) {
-      candidates.push_back(std::pair<int,double>(i,-1.0));
-    }
-    else {
-      candidates.push_back(std::pair<int,double>(i,std::abs(events[i].deficiency)));
-    }
-  }
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
-  for(i=nv-1; i>0; --i) {
-    vx.clear();
-    dimensions.clear();
-    v = candidates[i].first;
-    if (Enew[v] > 0.0) continue;
-    E = events[v].energy;
-    d1 = events[v].global_dimension;
-    dimensions.push_back(d1);
-    vx.push_back(v);
-    // We need to reject neighbours if their dimensionality is different and/or
-    // they are far away
-    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-      m = *it;
-      if (Enew[m] > 0.0) continue;
-      // How to handle the dimensionality issue?
-      d2 = events[m].global_dimension;
-      // 1) Forbid all inter-dimensional energy transfer...
-      //if (d1 != d2) continue;
-      // 2) Forbid it across certain "special" frontiers like 2/1...
-      //if ((d1 > 1 && d2 == 1) || (d1 == 1 && d2 > 1)) continue;
-      // 3) Forbid it according to a Boltzmann criterion...
-      Z = 0.25*double(std::abs(d1 - d2));
-      if (RND.drandom() > std::exp(-Z)) continue;
-      // Now the geometric criterion: the farther away the vertex, the less
-      // likely that it participates in energy transfer...
-      Z = 0.5*(geometry->get_distance(v,m,false) - 1.0);
-      if (RND.drandom() > std::exp(-Z)) continue;
-      dimensions.push_back(d2);
-      E += events[m].energy;
-      vx.push_back(m);
-    }
-    if (vx.size() < 2) continue;
-    m = (signed) vx.size();
-    Z = 0.0;
-    for(n=0; n<m; ++n) {
-      Z += double(dimensions[n]);
-    }
-    for(n=0; n<m; ++n) {
-      Enew[vx[n]] = double(dimensions[n])*E/Z;
-    }
-  }
-  */
   for(i=0; i<nv; ++i) {
     if (Enew[i] > -1.0) events[i].energy = Enew[i];
   }

@@ -1306,12 +1306,13 @@ void Spacetime::compute_entourages(int sheet)
 void Spacetime::compute_neighbours()
 {
   int i,vx[2];
-  std::set<int> empty;
+  const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
 
-  for(i=0; i<(signed) events.size(); ++i) {
+  for(i=0; i<nv; ++i) {
     events[i].neighbours.clear();
   }
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
+  for(i=0; i<ne; ++i) {
     if (ghost(simplices[1][i].ubiquity)) continue;
     simplices[1][i].get_vertices(vx);
     events[vx[0]].neighbours.insert(vx[1]);
@@ -1701,7 +1702,7 @@ bool Spacetime::fission(int base,double density,int sheet)
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
 #ifdef VERBOSE
-    std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
+    std::cout << "Added " << 1 + n << " edge(s) to the complex after fission of " << base << " to " << p << std::endl;
 #endif
     return true;
   }
@@ -2954,11 +2955,11 @@ int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
   Vertex vt;
   const int nt = (signed) codex.size();
 
-  geometry->vertex_addition(xc);
   for(i=0; i<nt; ++i) {
     vt.ubiquity.push_back(0);
   }
   vt.ubiquity[sheet] = 1; 
+  geometry->vertex_addition(xc);
   events.push_back(vt);
 
   return n;
@@ -2970,11 +2971,11 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
   Vertex vt;
   const int nt = (signed) codex.size();
 
-  geometry->vertex_addition(antecedents);
   for(i=0; i<nt; ++i) {
     vt.ubiquity.push_back(0);
   }
   vt.ubiquity[sheet] = 1;
+  geometry->vertex_addition(antecedents);
   events.push_back(vt);
 
   return n;
@@ -2990,7 +2991,12 @@ int Spacetime::vertex_addition(int base,int sheet)
     vt.ubiquity.push_back(0);
   }
   vt.ubiquity[sheet] = 1;
-  geometry->vertex_addition(base);
+  if (events[base].energy < Spacetime::epsilon) {
+    geometry->vertex_addition(base);
+  }
+  else {
+    geometry->vertex_addition(base,1.0/(1.0 + events[base].energy));
+  }
   events.push_back(vt);
 
   return n;
