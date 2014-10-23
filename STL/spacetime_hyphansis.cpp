@@ -364,7 +364,7 @@ bool Spacetime::germination(int base,int sheet)
     }
     else {
       if (simplices[1][qt->second].ubiquity[sheet] == 0) {
-        simplices[1][qt->second].ubiquity[1] = 1;
+        simplices[1][qt->second].ubiquity[sheet] = 1;
       }
     }
   }

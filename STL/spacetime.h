@@ -1,3 +1,6 @@
+// For XML processing...
+#include <pugixml.hpp>
+
 #include "sheet.h"
 #include "vertex.h"
 #include "simplex.h"
