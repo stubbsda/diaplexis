@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 const double Spacetime::ramosity = 0.15;
 const double Spacetime::epsilon = 0.00001;
@@ -120,9 +122,9 @@ void Spacetime::set_default_values()
   original_state = RANDOM;
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
-  geometry = new Geometry;
-  H = new Homology(GF2,NATIVE);
-  pi = new Homotopy;
+  geometry = new SYNARMOSMA::Geometry;
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::GF2,SYNARMOSMA::NATIVE);
+  pi = new SYNARMOSMA::Homotopy;
   weaving = DYNAMIC;
   hyphansis_file = std::string("data/hyphansis");
   hyphansis_score = std::string("");
@@ -286,7 +288,7 @@ void Spacetime::distribute(int nprocs) const
         candidates.push_back(std::pair<int,int>(j,cneighbour));
       }
       if (candidates.empty()) break;
-      std::sort(candidates.begin(),candidates.end(),pair_predicate_int);
+      std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_int);
       n = candidates[0].first;
       affinity[n] = i;
       volume[i] += 1;
@@ -777,7 +779,7 @@ void Spacetime::test_harness(int type,int n)
 {
   int i,j,d,nv;
   double alpha;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> vx;
   std::vector<double> xc;
   std::vector<int> sheet;
@@ -950,7 +952,7 @@ void Spacetime::write_topology(int sheet) const
 {
   int i,j,n;
   std::vector<int> vx;
-  UINT64 q;
+  SYNARMOSMA::UINT64 q;
   const int ulimit = dimension(sheet);
   const int ns = cardinality(0,sheet);
 
@@ -970,12 +972,12 @@ void Spacetime::write_topology(int sheet) const
         if (i > 0) {
           q = 1;
           for(j=ns; j>=ns-i; j--) {
-            q *= (UINT64) j;
+            q *= (SYNARMOSMA::UINT64) j;
           }
-          q = q/factorial(i+1);
+          q = q/SYNARMOSMA::factorial(i+1);
         }
         else {
-          q = (UINT64) ns;
+          q = (SYNARMOSMA::UINT64) ns;
         }
         std::cout << "There are " << n << " (" << q << ") " << i << "-simplices in this complex." << std::endl;
       }
@@ -997,12 +999,12 @@ void Spacetime::write_topology(int sheet) const
         if (i > 0) {
           q = 1;
           for(j=ns; j>=ns-i; j--) {
-            q *= (UINT64) j;
+            q *= (SYNARMOSMA::UINT64) j;
           }
-          q = q/factorial(i+1);
+          q = q/SYNARMOSMA::factorial(i+1);
         }
         else {
-          q = (UINT64) ns;
+          q = (SYNARMOSMA::UINT64) ns;
         }
         std::cout << "There are " << n << " (" << q << ") " << i << "-simplices in this complex." << std::endl;
       }
@@ -1028,7 +1030,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (ghost(simplices[i][j].ubiquity)) continue;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
+          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"" << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1042,7 +1044,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (simplices[i][j].ubiquity[sheet] == 0) continue;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << make_key(simplices[i][j].vertices) << "\" -> \"" << make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
+          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"" << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1088,8 +1090,8 @@ void Spacetime::structural_deficiency()
   double sum,sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
-  Graph* G = new Graph;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
   const double na = double(cardinality(0,-1));
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
@@ -1311,7 +1313,7 @@ void Spacetime::compute_global_topology(int sheet)
 {
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
-  Nexus* NX = new Nexus;
+  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
 
   compute_global_nexus(NX,sheet);
 
@@ -1365,7 +1367,7 @@ bool Spacetime::global_operations()
   bool output = false;
   std::string filename;
   std::set<int> vmodified;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::vector<int> fusion;
   double mu,sigma = 0.0,delta = 0.0;
   const int nd = dimension(-1);
@@ -1555,7 +1557,7 @@ bool Spacetime::global_operations()
 void Spacetime::analyze_convergence()
 {
   int i,j,m;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   int tdelta = 0;
   double edelta = 0.0;
   const int nv = (signed) events.size();
@@ -1614,7 +1616,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   int i,j,k,l,n,m,nd,vx[2],delta,hdistance,jz = 0;
   std::vector<int> chi,tau;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   double E,alpha;
   // This parameter must be greater than zero and determines the
   // thermo-energy scale at which intercosmic jumps become common...
@@ -1697,18 +1699,18 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
 
   if (initial_state == CARTESIAN) {
     std::vector<std::pair<long,int> > factors;
-    factorize(initial_size,factors);
+    SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
     for(i=0; i<(signed) factors.size(); ++i) {
-      j *= ipow(factors[i].first,factors[i].second/geometry->dimension());
+      j *= SYNARMOSMA::ipow(factors[i].first,factors[i].second/geometry->dimension());
     }
     const int n = j;
-    const int nd = ipow(n,geometry->dimension()-1);
+    const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*RND.irandom(initial_size));
     const double dx = 1.0;
     int m,k,l,d,rvalue;
-    hash_map::const_iterator qt;
+    SYNARMOSMA::hash_map::const_iterator qt;
     std::vector<int> entourage,v;
     std::vector<int>* arrangement = new std::vector<int>[initial_size];
     std::set<int> N;
@@ -1819,7 +1821,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
       for(i=0; i<nperturbed; ++i) {
         j = 0;
         for(l=0; l<geometry->dimension(); ++l) {
-          j += ipow(n,geometry->dimension()-1-l)*RND.irandom(k-2,k+2);
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-l)*RND.irandom(k-2,k+2);
         }
         v.push_back(j);
         // Now add some edges among the neighbours of this
@@ -1847,7 +1849,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
         for(i=0; i<nperturbed; ++i) {
           j = 0;
           for(l=0; l<geometry->dimension(); ++l) {
-            j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
+            j += SYNARMOSMA::ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
           }
           v.push_back(j);
         }
@@ -1863,7 +1865,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
         j = 0;
         k = int(double(n)/2.0);
         for(i=0; i<geometry->dimension(); ++i) {
-          j += ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
         }
         events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
       }
@@ -1926,7 +1928,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
     std::set<int>* N;
     std::vector<Simplex> svector;
     std::vector<Simplex>::const_iterator vit;
-    hash_map::const_iterator qt;
+    SYNARMOSMA::hash_map::const_iterator qt;
     bool found;
     std::set<int> v,vx,current;
     std::set<int>::const_iterator it,chk;
@@ -2037,9 +2039,9 @@ void Spacetime::initialize()
 
   // Allocate the memory for the simplices and index tables...
   simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  index_table = new hash_map[1 + Spacetime::ND];
+  index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
   anterior.simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  anterior.index_table = new hash_map[1 + Spacetime::ND];
+  anterior.index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
 
   if (!diskless) {
     if (std::system("mkdir -p data") < 0) {

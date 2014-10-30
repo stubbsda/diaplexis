@@ -1,5 +1,7 @@
 #include "spacetime.h"
 
+using namespace DIAPLEXIS;
+
 void Spacetime::write_distribution(const std::vector<int>& affinity) const
 {
   int i,j,l,nproc,nv_real,ne_real,vx[2];
@@ -402,7 +404,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         continue;
       }
       theta = (M_PI/2.0)*(xvalue[i] - x_min)/delta;
-      RGB_intensity(theta,out);
+      SYNARMOSMA::RGB_intensity(theta,out);
       xvalue[i] = theta;
       chi.push_back(out[0]);
       chi.push_back(out[1]);
@@ -418,7 +420,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       }
       simplices[1][i].get_vertices(vx);      
       theta = 0.5*(xvalue[vx[0]] + xvalue[vx[1]]);
-      RGB_intensity(theta,out);
+      SYNARMOSMA::RGB_intensity(theta,out);
       chi.push_back(out[0]);
       chi.push_back(out[1]);
       chi.push_back(out[2]);

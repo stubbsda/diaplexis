@@ -1,5 +1,7 @@
 #include "simplex.h"
 
+using namespace DIAPLEXIS;
+
 Simplex::Simplex()
 {
   energy = 0.0;
@@ -175,61 +177,36 @@ void Simplex::get_faces(std::vector<Simplex>& F) const
   }
 }
 
-inline bool operator ==(const Simplex& s1,const Simplex& s2)
-{
-  if (s1.vertices == s2.vertices) return true;
-  return false;  
-}
+namespace DIAPLEXIS {
+  Simplex operator ^(const Simplex& s1,const Simplex& s2)
+  {
+    std::set<int>::const_iterator it,jt;
+    std::vector<int> locus;
+    const int n = (signed) s1.ubiquity.size();
+    std::set<int> vx;
 
-bool operator !=(const Simplex& s1,const Simplex& s2)
-{
-  if (s1 == s2) return false;
-  return true;  
-}
+    for(it=s1.vertices.begin(); it!=s1.vertices.end(); ++it) {
+      jt = std::find(s2.vertices.begin(),s2.vertices.end(),*it);
+      if (jt != s2.vertices.end()) vx.insert(*it);
+    }
+    for(int i=0; i<n; ++i) {
+      locus.push_back(s1.ubiquity[i] & s2.ubiquity[i]);
+    }
+    Simplex output(vx,locus);
 
-bool operator <=(const Simplex& s1,const Simplex& s2)
-{
-  if (s2.dimension() < s1.dimension()) return false;
-  if (s1 == s2) return true;
-  bool output = (s1 < s2) ? true : false;
-  return output;
-}
-
-bool operator <(const Simplex& s1,const Simplex& s2)
-{
-  if (s2.dimension() <= s1.dimension()) return false;
-  // So s2 is bigger than s1, let's see if s1 is contained 
-  // in s2
-  return std::includes(s2.vertices.begin(),s2.vertices.end(),s1.vertices.begin(),s1.vertices.end());
-}
-
-Simplex operator ^(const Simplex& s1,const Simplex& s2)
-{
-  std::set<int>::const_iterator it,jt;
-  std::vector<int> locus;
-  const int n = (signed) s1.ubiquity.size();
-  std::set<int> vx;
-
-  for(it=s1.vertices.begin(); it!=s1.vertices.end(); ++it) {
-    jt = std::find(s2.vertices.begin(),s2.vertices.end(),*it);
-    if (jt != s2.vertices.end()) vx.insert(*it);
+    return output;
   }
-  for(int i=0; i<n; ++i) {
-    locus.push_back(s1.ubiquity[i] & s2.ubiquity[i]);
-  }
-  Simplex output(vx,locus);
 
-  return output;
+  std::ostream& operator <<(std::ostream& s,const Simplex& S)
+  {
+    s << S.dimension() << std::endl;
+    s << SYNARMOSMA::make_key(S.vertices) << std::endl;
+    s << "[";
+    for(int i=0; i<(signed) S.ubiquity.size()-1; ++i) {
+      s << S.ubiquity[i] << "," << std::endl;
+    }
+    s << S.ubiquity[S.ubiquity.size()-1] << "]" << std::endl;
+    return s;
+  }
 }
 
-std::ostream& operator <<(std::ostream& s,const Simplex& S)
-{
-  s << S.dimension() << std::endl;
-  s << make_key(S.vertices) << std::endl;
-  s << "[";
-  for(int i=0; i<(signed) S.ubiquity.size()-1; ++i) {
-    s << S.ubiquity[i] << "," << std::endl;
-  }
-  s << S.ubiquity[S.ubiquity.size()-1] << "]" << std::endl;
-  return s;
-}

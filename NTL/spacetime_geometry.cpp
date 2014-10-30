@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 void Spacetime::get_coordinates(int v,std::vector<double>& x) const
 {
@@ -58,15 +60,15 @@ void Spacetime::chorogenesis(int nsteps)
   const int D = geometry->dimension();
   const int nv = (signed) events.size();
 
-  factorize(nv,factors);
+  SYNARMOSMA::factorize(nv,factors);
   j = 1;
   for(i=0; i<(signed) factors.size(); ++i) {
     assert(factors[i].second%D == 0);
-    j *= ipow(factors[i].first,factors[i].second/D);
+    j *= SYNARMOSMA::ipow(factors[i].first,factors[i].second/D);
   }
   const int n = j;
   for(i=0; i<=D; ++i) {
-    dpopulation[i] = ipow(2,i)*factorial(D)/(factorial(i)*factorial(D - i))*ipow(n - 2,D - i);
+    dpopulation[i] = SYNARMOSMA::ipow(2,i)*SYNARMOSMA::factorial(D)/(SYNARMOSMA::factorial(i)*SYNARMOSMA::factorial(D - i))*SYNARMOSMA::ipow(n - 2,D - i);
   }
   // Zero out the spacetime energy and make sure the vertex geometry is dimensionally homogeneous...
   std::vector<double> x,y;
@@ -91,7 +93,7 @@ void Spacetime::chorogenesis(int nsteps)
   double temperature = 1.0;
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
-  Graph* G = new Graph(cardinality(0,-1));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,-1));
   const int ne = (signed) simplices[1].size();
 
 #ifdef VERBOSE
@@ -293,7 +295,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     double l,ell;
     std::set<int> S;
     std::vector<double> x1,x2;
-    hash_map::const_iterator qt;
+    SYNARMOSMA::hash_map::const_iterator qt;
     const int nv = (signed) events.size();
     const int D = geometry->dimension();
     const double pfactor = (2.0/M_PI)*5.0;
@@ -537,7 +539,7 @@ bool Spacetime::realizable(int d,int n) const
   if (d < 2) return true;
   int i,j,info,dp1 = d + 1;
   std::set<int> S;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   double alpha;
   bool output = true;
   char jtype = 'N';
@@ -592,10 +594,10 @@ bool Spacetime::realizable(int d,int n) const
 void Spacetime::compute_volume()
 {
   int i,j,k,l,n,m,parity,info,pivots[Spacetime::ND+3];
-  UINT64 q,p = 8;
+  SYNARMOSMA::UINT64 q,p = 8;
   double prefactor,V,l1,l2,l3,A[(Spacetime::ND+3)*(Spacetime::ND+3)];
   std::set<int> S;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   compute_lengths();
 
@@ -619,7 +621,7 @@ void Spacetime::compute_volume()
     if (simplices[i].empty()) continue;
     m = i + 2;
     n = (signed) simplices[i].size();
-    q = factorial(i);
+    q = SYNARMOSMA::factorial(i);
     q *= q;
     prefactor = 1.0/(double(p)*double(q));
     prefactor *= ((i+1)%2 == 0) ? 1.0 : -1.0;

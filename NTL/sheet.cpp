@@ -1,19 +1,21 @@
 #include "sheet.h"
 
+using namespace DIAPLEXIS;
+
 Sheet::Sheet()
 {
-  H = new Homology(GF2,NATIVE);
-  pi = new Homotopy;
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::GF2,SYNARMOSMA::NATIVE);
+  pi = new SYNARMOSMA::Homotopy;
 
   clear();
 
   active = true;
 }
 
-Sheet::Sheet(int n,unsigned long c,FIELD f,METHOD m)
+Sheet::Sheet(int n,unsigned long c,SYNARMOSMA::FIELD f,SYNARMOSMA::METHOD m)
 {
-  H = new Homology(f,m);
-  pi = new Homotopy;
+  H = new SYNARMOSMA::Homology(f,m);
+  pi = new SYNARMOSMA::Homotopy;
 
   clear();
 
@@ -22,10 +24,10 @@ Sheet::Sheet(int n,unsigned long c,FIELD f,METHOD m)
   colour = c;
 }
 
-Sheet::Sheet(int n,int p,unsigned long c,FIELD f,METHOD m)
+Sheet::Sheet(int n,int p,unsigned long c,SYNARMOSMA::FIELD f,SYNARMOSMA::METHOD m)
 {
-  H = new Homology(f,m);
-  pi = new Homotopy;
+  H = new SYNARMOSMA::Homology(f,m);
+  pi = new SYNARMOSMA::Homotopy;
 
   clear();
 
@@ -37,8 +39,8 @@ Sheet::Sheet(int n,int p,unsigned long c,FIELD f,METHOD m)
 
 Sheet::Sheet(const Sheet& source)
 {
-  H = new Homology(GF2,NATIVE);
-  pi = new Homotopy;
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::GF2,SYNARMOSMA::NATIVE);
+  pi = new SYNARMOSMA::Homotopy;
 
   index = source.index;
   colour = source.colour;

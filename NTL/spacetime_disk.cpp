@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 void Spacetime::read_parameters(const char* filename)
 {
@@ -97,22 +99,22 @@ void Spacetime::read_parameters(const char* filename)
     }
     else if (name == "HomologyMethod") {
       if (value == "GAP") {
-        H->set_method(GAP); 
+        H->set_method(SYNARMOSMA::GAP); 
       }
       else if (value == "Native") {
-        H->set_method(NATIVE);
+        H->set_method(SYNARMOSMA::NATIVE);
       }
     }
     else if (name == "HomologyBase") {
       if (value == "INT") {
-        H->set_field(INT);
+        H->set_field(SYNARMOSMA::INT);
       }
       else if (value == "NTL::ZZ") {
-        H->set_field(ZZ);
+        H->set_field(SYNARMOSMA::ZZ);
       }
       else {
         // This should be the Galois field GF(2)
-        H->set_field(GF2);
+        H->set_field(SYNARMOSMA::GF2);
       }
     }
     else if (name == "Compressible") {
@@ -252,7 +254,7 @@ void Spacetime::read_parameters(const char* filename)
   else if (initial_state == CARTESIAN) {
     // If initial_size != n^dimension, n \in Z+, we have a problem
     std::vector<std::pair<long,int> > factors;
-    factorize(initial_size,factors);
+    SYNARMOSMA::factorize(initial_size,factors);
     for(q=0; q<(signed) factors.size(); ++q) {
       if (factors[q].second % D != 0) {
         std::cerr << "The grid size " << initial_size << " is not consistent with the background dimension " << D << "." << std::endl;
@@ -321,7 +323,7 @@ void Spacetime::write_log() const
   std::string nvalue;
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int>::const_iterator it;
   std::string group_string,bvalue[] = {"False","True"};
   const int Nv = (signed) events.size();
@@ -347,7 +349,7 @@ void Spacetime::write_log() const
     s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
     s << "<MaximumDimension>" << Spacetime::ND << "</MaximumDimension>" << std::endl;
-    s << "<AtomicPropositions>" << NP << "</AtomicPropositions>" << std::endl;
+    s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
@@ -384,19 +386,19 @@ void Spacetime::write_log() const
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (H->get_method() == GAP) {
+    if (H->get_method() == SYNARMOSMA::GAP) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
     else {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (H->get_field() == INT) {
+    if (H->get_field() == SYNARMOSMA::INT) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == ZZ) {
+    else if (H->get_field() == SYNARMOSMA::ZZ) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == GF2) {
+    else if (H->get_field() == SYNARMOSMA::GF2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     if (weaving == DYNAMIC) {
@@ -932,7 +934,6 @@ void Spacetime::write_log() const
 void Spacetime::read_complex(std::ifstream& s)
 {
   int i,j,n;
-  Group G;
   Vertex v;
   Simplex S;
   Sheet t;
@@ -1002,9 +1003,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != NP) {
+  if (n != SYNARMOSMA::Proposition::get_clause_size()) {
     s.close();
-    std::cerr << "The compiled binary's atomic clause number " << NP << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's atomic clause number " << SYNARMOSMA::Proposition::get_clause_size() << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -1018,7 +1019,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!double_equality(x,Spacetime::ramosity)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::ramosity)) {
     s.close();
     std::cerr << "The compiled binary's ramosity " << Spacetime::ramosity << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
@@ -1026,7 +1027,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!double_equality(x,Spacetime::epsilon)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::epsilon)) {
     s.close();
     std::cerr << "The compiled binary's epsilon " << Spacetime::epsilon << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
@@ -1034,7 +1035,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!double_equality(x,Spacetime::T_zero)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::T_zero)) {
     s.close();
     std::cerr << "The compiled binary's T_zero " << Spacetime::T_zero << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
@@ -1042,7 +1043,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!double_equality(x,Spacetime::kappa)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::kappa)) {
     s.close();
     std::cerr << "The compiled binary's kappa " << Spacetime::kappa << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
@@ -1050,7 +1051,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!double_equality(x,Spacetime::Lambda)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::Lambda)) {
     s.close();
     std::cerr << "The compiled binary's Lambda " << Spacetime::Lambda << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
@@ -1227,7 +1228,7 @@ void Spacetime::write_complex(std::ofstream& s) const
 
 void Spacetime::write_state() const
 {
-  int i,j,n;
+  int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
   const int nt = (signed) codex.size();
 
   std::stringstream sstream;
@@ -1239,7 +1240,7 @@ void Spacetime::write_state() const
 
   // First the global parameters...
   s.write((char*)(&Spacetime::ND),sizeof(int));
-  s.write((char*)(&NP),sizeof(int));
+  s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
   s.write((char*)(&Spacetime::epsilon),sizeof(double));

@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 bool Spacetime::interplication(int centre,double size,int D,int sheet)
 {
@@ -31,7 +33,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     }
     ambient.push_back(std::pair<int,double>(i,l - size));
   }
-  std::sort(ambient.begin(),ambient.end(),pair_predicate_dbl);
+  std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
 
   // Ideally the number of boundary vertices should be the surface area of a d-sphere
   d = geometry->dimension();
@@ -172,7 +174,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
       alpha = geometry->get_distance(p,*it,false);
       ambient.push_back(std::pair<int,double>(*it,l + alpha));
     }
-    std::sort(ambient.begin(),ambient.end(),pair_predicate_dbl);
+    std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
     if (RND.drandom() < 0.5) {
       S.insert(ambient[0].first);
     }
@@ -199,7 +201,7 @@ bool Spacetime::germination(int base,int sheet)
   std::set<int> N,Dm2,Dm1,current,tset,free_dims;
   std::set<int>::const_iterator it,jt;
   std::vector<double> x,y,z,xc,bvector;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   int i,j,vx[2],D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
   const int nv = (signed) events.size();
@@ -404,7 +406,7 @@ bool Spacetime::germination(int base,int sheet)
       for(jt=free_dims.begin(); jt!=free_dims.end(); ++jt) {
         mi = *jt;
         x[2] = y[mi];
-        delta = norm(x);
+        delta = SYNARMOSMA::norm(x);
         if (delta > Spacetime::epsilon) {
           good = true;
           break;
@@ -429,7 +431,7 @@ bool Spacetime::germination(int base,int sheet)
       y.push_back(z[D1]);
       y.push_back(z[D2]);
       y.push_back(z[mi]);
-      delta = norm(y);
+      delta = SYNARMOSMA::norm(y);
       if (delta > Spacetime::epsilon) {
         good = true;
         break;
@@ -444,7 +446,7 @@ bool Spacetime::germination(int base,int sheet)
       break;
     }
 
-    cross_product(x,y,z);
+    SYNARMOSMA::cross_product(x,y,z);
 
     // Now look to see if there are any existing vertices near xc
     // and -xc...
@@ -565,7 +567,7 @@ bool Spacetime::correction(int base,int sheet)
   int i,j,n,m,in1;
   bool active,modified = false;
   double l,d1,d2,dbest;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::vector<int> locus;
   std::set<int> candidates;
   Simplex S;
@@ -625,7 +627,7 @@ bool Spacetime::correction(int base,int sheet)
         else {
           if (simplices[1][qt->second].ubiquity[sheet] == 0) {
 #ifdef VERBOSE
-            std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
+            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
 #endif
             simplices[1][qt->second].ubiquity[sheet] = 1;
             modified = true;
@@ -644,7 +646,7 @@ bool Spacetime::correction(int base,int sheet)
         else {
           if (simplices[1][qt->second].ubiquity[sheet] == 0) {
 #ifdef VERBOSE
-            std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
+            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
 #endif
             simplices[1][qt->second].ubiquity[sheet] = 1;
             modified = true;
@@ -698,7 +700,7 @@ void Spacetime::simplicial_implication(int base,int sheet) const
   std::vector<std::set<int> >* implied_simplex;
   std::vector<std::set<int> >::const_iterator it;
   bool failure;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> S,sc;
 
   if (sheet == -1) {
@@ -712,7 +714,7 @@ void Spacetime::simplicial_implication(int base,int sheet) const
     for(i=M; i>2; --i) {
       // See how many i-dimensional simplices exist among the relations between v and its
       // neighbours, so there should be (M choose i) such possible i-simplices
-      n = combinations(S,i,C);
+      n = SYNARMOSMA::combinations(S,i,C);
       for(l=0; l<n; ++l) {
         // Grab the i elements from S and put them into the vector vx...
         for(j=0; j<i; ++j) {
@@ -772,7 +774,7 @@ void Spacetime::simplicial_implication(int base,int sheet) const
     for(i=M; i>2; --i) {
       // See how many i-dimensional simplices exist among the relations between v and its
       // neighbours, so there should be (M choose i) such possible i-simplices
-      n = combinations(S,i,C);
+      n = SYNARMOSMA::combinations(S,i,C);
       for(l=0; l<n; ++l) {
         // Grab the i elements from S and put them into the vector vx...
         for(j=0; j<i; ++j) {
@@ -837,7 +839,7 @@ bool Spacetime::reduction(int base,int sheet)
   if (d < 2) return false;
   int i,n,m,vx[1+d];
   std::set<int> candidates,S;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int N = (signed) simplices[d].size();
 
   // Find which edges this vertex possesses are used in n-simplices (n > 1) and
@@ -889,7 +891,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
   if (pool.empty()) return false;
   i = RND.irandom(pool);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << make_key(simplices[1][i].vertices) << " in contraction" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in contraction" << std::endl;
 #endif
   simplex_deletion(1,i,sheet);
   return true;
@@ -900,7 +902,7 @@ bool Spacetime::compensation_m(int base,int sheet)
   int i,j,vx[2];
   double l;
   std::set<int> candidates,S;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
   if (vertex_dimension(base,sheet) < 2) return false;
@@ -934,7 +936,7 @@ bool Spacetime::compensation_m(int base,int sheet)
   }
   j = RND.irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
 #endif
   simplex_deletion(1,j,sheet);
   return true;
@@ -945,7 +947,7 @@ bool Spacetime::compensation_g(int base,int sheet)
   int i,j,vx[2];
   double l;
   std::set<int> candidates;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
   int sdegree = 0;
@@ -999,7 +1001,7 @@ bool Spacetime::compensation_g(int base,int sheet)
     if (qt != index_table[1].end()) {
       assert(simplices[1][qt->second].ubiquity[sheet] == 0);
 #ifdef VERBOSE
-      std::cout << "Restoring edge with key " << make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
+      std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
 #endif
       simplices[1][qt->second].ubiquity[sheet] = 1;
     }
@@ -1039,7 +1041,7 @@ bool Spacetime::compensation_g(int base,int sheet)
     }
     i = RND.irandom(candidates);
 #ifdef VERBOSE
-    std::cout << "Deleting edge with key " << make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
+    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
 #endif
     simplex_deletion(1,i,sheet);
   }
@@ -1204,7 +1206,7 @@ void Spacetime::compute_entourages(int sheet)
   std::set<int>::const_iterator it;
   const int ulimit = dimension(sheet);
   const int nt = (signed) codex.size();
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   // What about removing items from the entourage of a d-simplex, when this item has
   // changed its ubiquity?
@@ -1240,7 +1242,7 @@ void Spacetime::compute_entourages(int sheet)
           s = simplices[i][j].faces[k];
           qt = index_table[i-1].find(s);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Entourage error: " << i << "  " << j << "  " << make_key(simplices[i][j].vertices) << "  "<< make_key(s) << std::endl;
+            std::cout << "Entourage error: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].vertices) << "  "<< SYNARMOSMA::make_key(s) << std::endl;
             std::exit(1);
           }
           tau = simplices[i-1][qt->second].ubiquity;
@@ -1280,7 +1282,7 @@ void Spacetime::compute_entourages(int sheet)
           s = simplices[i][j].faces[k];
           qt = index_table[i-1].find(s);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Entourage error: " << i << "  " << j << "  " << make_key(simplices[i][j].vertices) << "  "<< make_key(s) << std::endl;
+            std::cout << "Entourage error: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].vertices) << "  "<< SYNARMOSMA::make_key(s) << std::endl;
             std::exit(1);
           }
           if (simplices[i-1][qt->second].ubiquity[sheet] == 0) simplices[i-1][qt->second].ubiquity[sheet] = 1;
@@ -1392,7 +1394,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<n; ++i) {
       used[i] = false;
     }
-    std::sort(connect.begin(),connect.end(),tuple_predicate);
+    std::sort(connect.begin(),connect.end(),SYNARMOSMA::tuple_predicate);
     // Assuming the array "connect" has been sorted in ascending order for the last
     // element...
     j = connect[0].get<0>();
@@ -1497,7 +1499,7 @@ bool Spacetime::foliation_m(int base,int sheet)
   int i,p,n1,n2,vx[2];
   std::set<int> candidates;
   std::vector<int> locus;
-  hash_map::iterator qt;
+  SYNARMOSMA::hash_map::iterator qt;
   const int ne = (signed) simplices[1].size();
   const int nt = (signed) codex.size();
 
@@ -1552,7 +1554,7 @@ bool Spacetime::foliation_x(int base,int sheet)
   int i,p,n1,n2,vx[2];
   std::set<int> candidates,S;
   std::vector<int> locus;
-  hash_map::iterator qt;
+  SYNARMOSMA::hash_map::iterator qt;
   const int ne = (signed) simplices[1].size();
   const int nt = (signed) codex.size();
 
@@ -1793,7 +1795,7 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
   std::set<int> fc;
   std::set<int>::const_iterator it;
   std::vector<int> vec,vx,locus;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int d = (signed) S.size() - 1;
   const int nt = (signed) codex.size();
 
@@ -1852,7 +1854,7 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
       simplices[i][qt->second].ubiquity[sheet] = 1;
     }
     fc.clear();
-    while(next_combination(vec,1+d)) {
+    while(SYNARMOSMA::next_combination(vec,1+d)) {
       for(j=0; j<=i; ++j) {
         fc.insert(vx[vec[j]]);
       }
@@ -1905,7 +1907,7 @@ void Spacetime::simplicial_implication(int sheet)
   Simplex S;
   std::set<int> colours;
   std::string sx;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int>::const_iterator itz;
 
   if (sheet == -1) {
@@ -1967,7 +1969,7 @@ void Spacetime::simplicial_implication(int sheet)
           qt = index_table[i-1].find(simplices[i][j].faces[k]);
           if (qt == index_table[i-1].end()) {
 #ifdef VERBOSE
-            std::cout << "Adding simplex with key " << make_key(simplices[i][j].faces[k]) << " to regularize the complex" << std::endl;
+            std::cout << "Adding simplex with key " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << " to regularize the complex" << std::endl;
 #endif
             S.initialize(simplices[i][j].faces[k],locus);
             simplices[i-1].push_back(S);
@@ -1977,7 +1979,7 @@ void Spacetime::simplicial_implication(int sheet)
           else {
             if (simplices[i-1][qt->second].ubiquity[sheet] == 0) {
 #ifdef VERBOSE
-              std::cout << "Restoring simplex with key " << make_key(simplices[i-1][qt->second].vertices) << " to regularize the complex" << std::endl;
+              std::cout << "Restoring simplex with key " << SYNARMOSMA::make_key(simplices[i-1][qt->second].vertices) << " to regularize the complex" << std::endl;
 #endif
               simplices[i-1][qt->second].ubiquity[sheet] = 1;
             }
@@ -2022,7 +2024,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   std::set<int> colours;
   std::vector<int> component,locus;
   std::string sx;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
 
@@ -2112,7 +2114,7 @@ void Spacetime::regularization(bool minimal,int sheet)
       else {
         assert(ghost(simplices[1][qt->second].ubiquity));
 #ifdef VERBOSE
-        std::cout << "Restoring the simplex with key " << make_key(simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
+        std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
 #endif
         simplices[1][qt->second].ubiquity[j] = 1;
       }
@@ -2170,7 +2172,7 @@ bool Spacetime::circumvolution(int sheet)
   int i,j,k,l,u[2],w[2];
   std::set<int> edge_set,S;
   std::set<int>::const_iterator it,jt;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int D = dimension(sheet);
   int vx[D];
 
@@ -2311,7 +2313,7 @@ bool Spacetime::circumvolution(int base,int sheet)
     } while(true);
   }
 #ifdef VERBOSE
-  std::cout << "Circumvolving the " << d << "-simplices: " << make_key(simplices[d][s2].vertices) << " => " << make_key(simplices[d][s1].vertices) << std::endl;
+  std::cout << "Circumvolving the " << d << "-simplices: " << SYNARMOSMA::make_key(simplices[d][s2].vertices) << " => " << SYNARMOSMA::make_key(simplices[d][s1].vertices) << std::endl;
 #endif
   int v1[d+1],v2[d+1];
   for(i=0; i<=d; ++i) {
@@ -2335,7 +2337,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
   bool success;
   std::set<int> vx;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   if (base >= 0) {
     int n1 = vertex_dimension(base,sheet);
@@ -2420,7 +2422,7 @@ bool Spacetime::expansion(int base,int sheet)
   std::vector<int> locus;
   std::set<int> vx,N,S;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   Simplex s1;
   const int nt = (signed) codex.size();
   const int ne = (signed) simplices[1].size();
@@ -2596,7 +2598,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
   else {
     bool found;
     std::set<int>::const_iterator it;
-    hash_map::const_iterator qt;
+    SYNARMOSMA::hash_map::const_iterator qt;
     std::set<int> v;
     std::vector<int> locus;
 
@@ -2644,7 +2646,7 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
           }
         }
         else {
-          l = element(vx);
+          l = SYNARMOSMA::element(vx);
           events[l].ubiquity[sheet] = 1;
         }
         vx.clear();
@@ -2789,7 +2791,7 @@ bool Spacetime::vertex_twist(int sheet)
   // simplicial homology.
   int i,n1,n2,nc,cutoff,n = (signed) events.size();
   std::vector<std::string> ekeys;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> parents;
   std::set<int>::const_iterator it;
   std::vector<int> candidates,used;
@@ -3009,7 +3011,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   Vertex vt;
   bool success;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> vx,candidates;
   const int nt = (signed) codex.size();
 
@@ -3385,7 +3387,7 @@ void Spacetime::hyphansis(int sheet)
   }
   s.close();
 
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
 
   if (weaving == DYNAMIC) {
     dynamic_hyphansis(candidates,sheet);

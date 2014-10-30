@@ -1,5 +1,7 @@
 #include "vertex.h"
 
+using namespace DIAPLEXIS;
+
 Vertex::Vertex()
 {
   clear();

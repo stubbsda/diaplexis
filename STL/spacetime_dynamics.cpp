@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<double>& y,double* output) const
 {
@@ -165,7 +167,7 @@ void Spacetime::energy_diffusion()
     if (l > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,l));
   }
   if (candidates.empty()) return;  
-  std::sort(candidates.begin(),candidates.end(),pair_predicate_dbl);
+  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
   nc = (signed) candidates.size();
   for(i=nc-1; i>=0; --i) {
     v = candidates[i].first;
@@ -455,9 +457,9 @@ void Spacetime::optimize()
     std::vector<std::pair<int,int> > vcount;
     std::set<int> vmodified,vx;
     std::set<int>::const_iterator it;
-    std::vector<Geometry> pool,ptemp;
-    Geometry* optimal = new Geometry(*geometry); 
-    Geometry* initial_state = new Geometry(*geometry); 
+    std::vector<SYNARMOSMA::Geometry> pool,ptemp;
+    SYNARMOSMA::Geometry* optimal = new SYNARMOSMA::Geometry(*geometry); 
+    SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
     const int pmagnitude = int(0.15*system_size);
     const double initial_error = error;
 
@@ -466,11 +468,11 @@ void Spacetime::optimize()
 #endif
 
     for(i=0; i<2*pool_size; ++i) {
-      pool.push_back(Geometry(*geometry));
+      pool.push_back(SYNARMOSMA::Geometry(*geometry));
       vcount.push_back(std::pair<int,int>(0,0));
     }
     for(i=0; i<pool_size; ++i) {
-      ptemp.push_back(Geometry(*geometry));
+      ptemp.push_back(SYNARMOSMA::Geometry(*geometry));
     }
 
     geometry->store(initial_state);
@@ -570,7 +572,7 @@ void Spacetime::optimize()
         } while(joust < njousts);
         vcount[i] = std::pair<int,int>(i,vc);
       }
-      std::sort(vcount.begin(),vcount.end(),pair_predicate_int);
+      std::sort(vcount.begin(),vcount.end(),SYNARMOSMA::pair_predicate_int);
       for(i=0; i<pool_size; ++i) {
         ptemp[i] = pool[vcount[i].first];
         ftemp[i] = fitness[vcount[i].first];
@@ -613,7 +615,7 @@ void Spacetime::optimize()
     std::set<int> vmodified;
     std::set<int>::const_iterator it;
     std::vector<double> E,lengths,base,output,output1,output2;
-    Geometry* optimal = new Geometry(*geometry); 
+    SYNARMOSMA::Geometry* optimal = new SYNARMOSMA::Geometry(*geometry); 
     const double initial_error = error;
 
     geometry->store(optimal);
@@ -880,7 +882,7 @@ void Spacetime::optimize()
     compute_volume();
     if (!cgradient_refinement) return;
     double d,q,E,prior,alpha,beta,E_initial,nx = 0.0,sigma = 0.1;
-    Geometry* initial_state = new Geometry(*geometry); 
+    SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
     determine_flexible_edges();
@@ -1004,11 +1006,11 @@ void Spacetime::optimize()
   else if (solver == SIMPLEX) {
     int in1,j,k,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
-    Geometry SR(*geometry),SE(*geometry);
-    Geometry* initial_state = new Geometry(*geometry);
+    SYNARMOSMA::Geometry SR(*geometry),SE(*geometry);
+    SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry);
     std::vector<std::pair<int,double> > fitness;
     std::set<int> vmodified;
-    std::vector<Geometry> S;
+    std::vector<SYNARMOSMA::Geometry> S;
     const double initial_error = error;
 
 #ifdef VERBOSE
@@ -1049,7 +1051,7 @@ void Spacetime::optimize()
       fitness.push_back(std::pair<int,double>(i,error));
     }
     // Sort the simplex vertices from lowest to highest error...
-    std::sort(fitness.begin(),fitness.end(),pair_predicate_dbl);
+    std::sort(fitness.begin(),fitness.end(),SYNARMOSMA::pair_predicate_dbl);
     do {
       ntrans++;
       bindex = fitness[0].first;
@@ -1191,7 +1193,7 @@ void Spacetime::optimize()
         }
       }
       // Now resort the simplex vertices...
-      std::sort(fitness.begin(),fitness.end(),pair_predicate_dbl);
+      std::sort(fitness.begin(),fitness.end(),SYNARMOSMA::pair_predicate_dbl);
 #ifdef VERBOSE
       std::cout << "At simplex transformation step " << ntrans << " the error is " << fitness[0].second << std::endl;
 #endif

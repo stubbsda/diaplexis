@@ -1,6 +1,8 @@
 #include "spacetime.h"
 
-extern Random RND;
+extern SYNARMOSMA::Random RND;
+
+using namespace DIAPLEXIS;
 
 void Spacetime::compute_simplicial_dimension()
 {
@@ -67,7 +69,7 @@ void Spacetime::get_ubiquity(int d,int n,std::string& output) const
 void Spacetime::compute_degree_distribution(bool logarithmic,int sheet) const
 {
   std::vector<double> histogram;
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
 
   compute_graph(G,sheet);
 
@@ -150,7 +152,7 @@ bool Spacetime::active_element(int d,int n) const
 
 void Spacetime::random_walk(double* mean,double* sdeviation,int sheet) const
 {
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
   compute_graph(G,sheet);
   G->random_walk(mean,sdeviation,geometry->dimension());
   delete G;
@@ -186,7 +188,7 @@ int Spacetime::simplex_embedding(int d,int n) const
   char jtype = 'V',uplo = 'U';
   std::set<int> S;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   simplices[d][n].get_vertices(vx);
 
@@ -267,13 +269,13 @@ void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int 
 
   // Now the dual vector, f*
   for(i=0; i<=D; ++i) {
-    s += ipow(-1,i)*f[i];
+    s += SYNARMOSMA::ipow(-1,i)*f[i];
   }
   fstar.push_back(s);
   for(i=1; i<D; ++i) {
     s = 0;
     for(j=i; j<=D; ++j) {
-      s += ipow(-1,j-i)*int(factorial(j)/(factorial(i)*factorial(j-i)))*f[j];
+      s += SYNARMOSMA::ipow(-1,j-i)*int(SYNARMOSMA::factorial(j)/(SYNARMOSMA::factorial(i)*SYNARMOSMA::factorial(j-i)))*f[j];
     }
     fstar.push_back(s);
   }
@@ -314,7 +316,7 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
 
 void Spacetime::vertex_degree_statistics(double* output,int sheet) const
 {
-  Graph* G = new Graph(cardinality(0,sheet));  
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));  
   compute_graph(G,sheet);
   output[0] = double(G->max_degree());
   output[1] = double(G->min_degree());
@@ -327,7 +329,7 @@ int Spacetime::cyclicity(int sheet) const
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
   if (!(connected(sheet))) return 0;
-  Graph* G = new Graph;
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
 
   compute_graph(G,sheet);
   int output = G->size() - G->bridge_count();
@@ -338,7 +340,7 @@ int Spacetime::cyclicity(int sheet) const
 bool Spacetime::logical_conformity(int v) const
 {
   std::set<int>::const_iterator it;
-  Proposition Q = events[v].theorem;
+  SYNARMOSMA::Proposition Q = events[v].theorem;
   for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
     Q = Q*events[*it].theorem;
   }
@@ -393,7 +395,7 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
   }
 }
 
-void Spacetime::compute_graph(Graph* G,int sheet) const
+void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
 {
   int i,vx[2],in1 = 0;
   const int nv = (signed) events.size();
@@ -432,11 +434,11 @@ void Spacetime::compute_graph(Graph* G,int sheet) const
   }
 }
 
-void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
+void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet) const
 {
   int i,v,w,hop = 1;
   const int nv = (signed) events.size();
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
   std::set<int> current,next,S;
   std::vector<int> offset;
@@ -473,11 +475,11 @@ void Spacetime::compute_graph(Graph* G,int base,int steps,int sheet) const
   } while(true);
 }
 
-void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet) const
+void Spacetime::compute_causal_graph(SYNARMOSMA::Graph* G,int base,CAUSALITY lcone,int sheet) const
 {
   int i,j,l,v;
   CAUSALITY output;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> S;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
@@ -550,7 +552,7 @@ void Spacetime::compute_causal_graph(Graph* G,int base,CAUSALITY lcone,int sheet
   }
 }
 
-void Spacetime::compute_global_nexus(Nexus* NX,int sheet) const
+void Spacetime::compute_global_nexus(SYNARMOSMA::Nexus* NX,int sheet) const
 {
   int i,j;
   std::vector<int> offset;
@@ -598,7 +600,7 @@ void Spacetime::compute_global_nexus(Nexus* NX,int sheet) const
   NX->regularization();
 }
 
-void Spacetime::compute_local_nexus(Nexus* NX,int base,int sheet) const
+void Spacetime::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base,int sheet) const
 {
   int i,j;
   std::vector<int> offset;
@@ -652,7 +654,7 @@ void Spacetime::compute_lightcones()
   if (geometry->get_euclidean()) return;
   int i,j,k;
   CAUSALITY lcone;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
   std::set<int> pcurrent,fcurrent,old,v,null,S;
   const int nv = (signed) events.size();
@@ -756,8 +758,8 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   std::vector<int> jset;
   std::set<int>::const_iterator it;
   std::vector<int>::const_iterator vit;
-  hash_map::const_iterator qt;
-  Graph* G = new Graph;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
 
   // This makes a graph out of the entire forward light cone of this vertex
   compute_causal_graph(G,v,FUTURE,sheet);
@@ -853,8 +855,8 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   CAUSALITY lcone;
   std::set<int> past,future,fcurrent,pcurrent,v,null,old,S;
   std::set<int>::const_iterator it,jt;
-  hash_map::const_iterator qt;
-  Graph G;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  SYNARMOSMA::Graph G;
   const int nv = (signed) events.size();
   const double na = double(cardinality(0,sheet));
 
@@ -1080,7 +1082,7 @@ int Spacetime::chromatic_number(int sheet) const
   // a disconnected graph.
   if (!connected(sheet)) return 0;
 
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
 
   compute_graph(G,sheet);
   int chi = G->chromatic_number();
@@ -1122,7 +1124,7 @@ double Spacetime::entwinement(int sheet) const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
   compute_graph(G,sheet);
   double output = G->entwinement();
   delete G;
@@ -1131,7 +1133,7 @@ double Spacetime::entwinement(int sheet) const
 
 double Spacetime::cyclic_resistance(int sheet) const
 {
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
   compute_graph(G,sheet);
   double output = G->cyclic_resistance();
   delete G;
@@ -1203,7 +1205,7 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
   std::vector<int> distance;
   std::set<int> S;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
   bool visited[nv];
 
@@ -1447,7 +1449,7 @@ bool Spacetime::consistent(int sheet) const
   bool found;
   std::set<int> S;
   std::set<int>::const_iterator it;
-  hash_map::const_iterator qt;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
   const int ulimit = dimension(sheet);
 
@@ -1480,10 +1482,10 @@ bool Spacetime::consistent(int sheet) const
             }
           }
           if (!found) {
-            std::cout << "Can't find face " << make_key(S) << " of simplex " << make_key(simplices[i][j].vertices) << std::endl;
+            std::cout << "Can't find face " << SYNARMOSMA::make_key(S) << " of simplex " << SYNARMOSMA::make_key(simplices[i][j].vertices) << std::endl;
             for(l=0; l<(signed) simplices[i-1].size(); ++l) {
               if (ghost(simplices[i-1][l].ubiquity)) continue;
-              std::cout << make_key(simplices[i-1][l].vertices) << std::endl;
+              std::cout << SYNARMOSMA::make_key(simplices[i-1][l].vertices) << std::endl;
               for(m=0; m<(signed) codex.size(); ++m) {
                 std::cout << m << "  " << simplices[i-1][l].ubiquity[m] << std::endl;
               }
@@ -1492,7 +1494,7 @@ bool Spacetime::consistent(int sheet) const
           }
           qt = index_table[i-1].find(S);
           if (qt == index_table[i-1].end()) {
-            std::cout << "Problem with the index tables for " << make_key(simplices[i][j].vertices) << " and " << make_key(S) << std::endl;
+            std::cout << "Problem with the index tables for " << SYNARMOSMA::make_key(simplices[i][j].vertices) << " and " << SYNARMOSMA::make_key(S) << std::endl;
             return false;
           }
         }
@@ -1568,10 +1570,10 @@ bool Spacetime::consistent(int sheet) const
             }
           }
           if (!found) {
-            std::cout << "For sheet " << sheet << ", can't find face " << make_key(S) << " of simplex " << make_key(simplices[i][j].vertices) << std::endl;
+            std::cout << "For sheet " << sheet << ", can't find face " << SYNARMOSMA::make_key(S) << " of simplex " << SYNARMOSMA::make_key(simplices[i][j].vertices) << std::endl;
             for(l=0; l<(signed) simplices[i-1].size(); ++l) {
               if (simplices[i-1][l].ubiquity[sheet] == 0) continue;
-              std::cout << make_key(simplices[i-1][l].vertices) << std::endl;
+              std::cout << SYNARMOSMA::make_key(simplices[i-1][l].vertices) << std::endl;
               for(m=0; m<(signed) codex.size(); ++m) {
                 std::cout << m << "  " << simplices[i-1][l].ubiquity[m] << std::endl;
               }
@@ -1633,7 +1635,7 @@ bool Spacetime::consistent(int sheet) const
       for(k=0; k<n; ++k) {
         if (k == j) continue;
         if (S == simplices[i][k].vertices) {
-          std::cout << "Illegal " << i << "-simplex duplication with " << make_key(S) << std::endl;
+          std::cout << "Illegal " << i << "-simplex duplication with " << SYNARMOSMA::make_key(S) << std::endl;
           return false;
         }
       }
@@ -1646,7 +1648,7 @@ bool Spacetime::connected(int sheet) const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
 
   compute_graph(G,sheet);
 
@@ -1659,7 +1661,7 @@ int Spacetime::component_analysis(std::vector<int>& component,int sheet) const
 {
   int i,n,ct = 0;
   std::vector<int> cvalue;
-  Graph* G = new Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
 
   compute_graph(G,sheet);
   n = G->component_analysis(cvalue);
