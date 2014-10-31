@@ -593,7 +593,7 @@ bool Spacetime::realizable(int d,int n) const
 
 void Spacetime::compute_volume()
 {
-  int i,j,k,l,n,m,parity,info,pivots[Spacetime::ND+3];
+  int i,j,k,l,n,m,vx[Spacetime::ND+3];
   SYNARMOSMA::UINT64 q,p = 8;
   double prefactor,V,l1,l2,l3,A[(Spacetime::ND+3)*(Spacetime::ND+3)];
   std::set<int> S;
@@ -633,41 +633,19 @@ void Spacetime::compute_volume()
     }
     for(j=0; j<n; ++j) {
       if (simplices[i][j].ubiquity == 1 || !simplices[i][j].modified) continue;
-      simplices[i][j].get_vertices(pivots);
+      simplices[i][j].get_vertices(vx);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
           S.clear();
-          S.insert(pivots[k]);
-          S.insert(pivots[l]);
+          S.insert(vx[k]);
+          S.insert(vx[l]);
           qt = index_table[1].find(S);
           V = simplices[1][qt->second].sq_volume;
           A[m*(1+k)+1+l] = V;
           A[m*(1+l)+1+k] = V;
         }
       }
-      dgetrf_(&m,&m,A,&m,pivots,&info);
-      assert(info >= 0);
-      V = prefactor;
-      parity = 1;
-      for(k=0; k<m; ++k) {
-        V *= A[k*(1+m)];
-        if (pivots[i] < i) parity *= -1;
-      }
-      V = double(parity)*V;
-      /*
-      if (info > 0) {
-        std::set<int>::const_iterator it;
-        std::cout << "Null simplex: " << i << "  " << V << std::endl;
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
-          std::cout << "[ ";
-          for(k=0; k<(signed) events[*it].x.size(); ++k) {
-            std::cout << events[*it].x[k] << " ";
-          }
-          std::cout << "]" << std::endl;
-        }
-        std::exit(1);
-      }
-      */
+      V = prefactor*SYNARMOSMA::determinant(A,m);
       simplices[i][j].volume = std::sqrt(std::abs(V));
       simplices[i][j].sq_volume = V;
       simplices[i][j].modified = false;
