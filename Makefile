@@ -1,12 +1,12 @@
 install: diaplexis-ntl diaplexis-stl
 	mkdir -p $(DIAPLEXIS)/lib
-	cp NTL/libdiaplexis-ntl.so $(DIAPLEXIS)/lib/
-	cp STL/libdiaplexis-stl.so $(DIAPLEXIS)/lib/
+	install -p NTL/libdiaplexis-ntl.so $(DIAPLEXIS)/lib/
+	install -p STL/libdiaplexis-stl.so $(DIAPLEXIS)/lib/
 	mkdir -p $(DIAPLEXIS)/include/NTL
 	mkdir -p $(DIAPLEXIS)/include/STL
-	cp *.h $(DIAPLEXIS)/include/
-	cp NTL/*.h $(DIAPLEXIS)/include/NTL/
-	cp STL/*.h $(DIAPLEXIS)/include/STL/ 
+	install -p *.h $(DIAPLEXIS)/include/
+	install -p NTL/*.h $(DIAPLEXIS)/include/NTL/
+	install -p STL/*.h $(DIAPLEXIS)/include/STL/ 
 
 diaplexis-ntl:
 	cd NTL; $(MAKE)  
