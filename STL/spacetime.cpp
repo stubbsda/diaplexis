@@ -1715,6 +1715,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
     std::vector<int>* arrangement = new std::vector<int>[initial_size];
     std::set<int> N;
     std::set<int>::const_iterator it,jt;
+    std::vector<double> vpoints;
 
     for(i=0; i<geometry->dimension(); ++i) {
       entourage.push_back(0);
@@ -1726,15 +1727,14 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
       in1 = l/k;
       entourage[0] = in1;
       rvalue = l - in1*nd;
-      svalue[0] = dx*(double(in1) - 0.5*double(nm1));
+      vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
       for(m=1; m<geometry->dimension(); ++m) {
         k /= n;
         in1 = rvalue/k;
         entourage[m] = in1;
         rvalue -= k*in1;
-        svalue[m] = dx*(double(in1) - 0.5*double(nm1));
+        vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
       }
-      if (!relational) geometry->vertex_addition(svalue);
       for(m=0; m<geometry->dimension(); ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
@@ -1743,7 +1743,12 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
       arrangement[l] = entourage;
     }
 
-    if (relational) geometry->create(n,"CARTESIAN");
+    if (relational) {
+      geometry->create(n,"CARTESIAN");
+    }
+    else {
+      geometry->multiple_vertex_addition(initial_size,false,vpoints);
+    }
 
     // Now the edges...
     for(i=0; i<initial_size; ++i) {
@@ -1935,28 +1940,23 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
 
     RND.initialize_bernoulli(edge_probability);
 
-    if (relational) {
-      for(i=0; i<initial_size; ++i) {
-        if (RND.drandom() < 0.1) {
-          vt.energy = 10.0*RND.drandom();
-          k++;
-        }
-        events.push_back(vt);
+    for(i=0; i<initial_size; ++i) {
+      if (RND.drandom() < 0.1) {
+        vt.energy = 10.0*RND.drandom();
+        k++;
       }
+      events.push_back(vt);
+    }
+    if (relational) {
       geometry->create(initial_size,"RANDOM");
     }
     else {
-      for(i=0; i<initial_size; ++i) {
-        if (RND.drandom() < 0.1) {
-          vt.energy = 10.0*RND.drandom();
-          k++;
-        }
-        for(j=0; j<geometry->dimension(); ++j) {
-          svalue[j] = -10.0 + 20.0*RND.drandom();
-        }
-        geometry->vertex_addition(svalue);
-        events.push_back(vt);
+      std::vector<double> climits;
+      for(i=0; i<geometry->dimension(); ++i) {
+        climits.push_back(-10.0);
+        climits.push_back(10.0);
       }
+      geometry->multiple_vertex_addition(initial_size,true,climits);
     }
 
     // A final step to ensure that at least one node has non-zero energy...
