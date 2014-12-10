@@ -1923,25 +1923,34 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
   }
   else if (initial_state == RANDOM) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
-    // assemble a random graph, with n = initial_size...
+    // assemble a random graph, with n = initial_size
     int level = 2,k = 0,ulimit;
+    double percent;
+    bool found;
     std::set<int>* N;
     std::vector<Simplex> svector;
     std::vector<Simplex>::const_iterator vit;
     SYNARMOSMA::hash_map::const_iterator qt;
-    bool found;
     std::set<int> v,vx,current;
     std::set<int>::const_iterator it,chk;
+    const double nv = double(initial_size);
 
-    RND.initialize_bernoulli(edge_probability);
-
+    // Add the vertices
     for(i=0; i<initial_size; ++i) {
-      if (RND.drandom() < 0.1) {
-        vt.energy = 10.0*RND.drandom();
-        k++;
-      }
       events.push_back(vt);
     }
+
+    // Next distribute energy among the vertices, ensuring at least one vertex
+    // has non-zero energy
+    do {
+      i = RND.irandom(initial_size);
+      if (events[i].energy > 0.0) continue;
+      events[i].energy = 10.0*RND.drandom();
+      k += 1;
+      percent = double(k)/nv;
+    } while(percent < 0.1);
+
+    // Next initialize the geometry
     if (relational) {
       geometry->create(initial_size,"RANDOM");
     }
@@ -1954,9 +1963,9 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
       geometry->multiple_vertex_addition(initial_size,true,climits);
     }
 
-    // A final step to ensure that at least one node has non-zero energy...
-    if (k == 0) events[RND.irandom(initial_size)].energy = 20.0*RND.drandom();
-
+    // Now initialize the probability distribution for creating edges...
+    RND.initialize_bernoulli(edge_probability);
+    // and create the edges
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (RND.bernoulli_variate() == false) continue;
@@ -1968,7 +1977,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
         S.vertices.clear();
       }
     }
-    // Now we have to compute all the n-simplices (n > 1) that are implied
+
+    // Finally we have to compute all the n-simplices (n > 1) that are implied
     // by this random graph...
     do {
       N = new std::set<int>[level];
