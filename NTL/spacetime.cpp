@@ -2036,8 +2036,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
 
 void Spacetime::initialize()
 {
-  int i,pid;
-  std::stringstream s1,s2,s3,s4;
+  int i;
+  std::stringstream day,month,year,pid;
 #ifdef VERBOSE
   timeval Z;
   double t1,t2;
@@ -2066,18 +2066,18 @@ void Spacetime::initialize()
   boost::gregorian::date d = start_time.date();
   boost::gregorian::date::ymd_type ymd = d.year_month_day();
 
-  s1.width(2);
-  s1 << std::setfill('0') << ymd.day.as_number();
-  s2.width(2);
-  s2 << std::setfill('0') << ymd.month.as_number();
-  s3.width(4);
-  s3 << ymd.year;
-  date_string = s1.str() + s2.str() + s3.str();
+  day.width(2);
+  day << std::setfill('0') << ymd.day.as_number();
+  month.width(2);
+  month << std::setfill('0') << ymd.month.as_number();
+  year.width(4);
+  year << ymd.year;
+  // Using the ISO 8601 norm
+  date_string = year.str() + "-" + month.str() + "-" + day.str();
 
-  pid = getpid();
-  s4.width(5);
-  s4 << std::setfill('0') << pid;
-  pid_string = s4.str();
+  pid.width(5);
+  pid << std::setfill('0') << getpid();
+  pid_string = pid.str();
   if (diskless) {
     state_file = "";
     log_file = "";
