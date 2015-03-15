@@ -10,5 +10,5 @@ LD_FLAGS  += -L$(SYNARMOSMA)/lib -shared
 CXX_FLAGS += $(DEBUG) 
 LD_FLAGS  += $(DEBUG)
 
-LIBS       = -lsynarmosma $(LAPACK) -lboost_system -lpugixml -lntl -lm
+LIBS       = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lm
 

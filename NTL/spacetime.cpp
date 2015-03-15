@@ -735,13 +735,12 @@ bool Spacetime::step_forwards()
 {
   int i,n = (signed) codex.size();
   std::vector<int> order;
-  timeval Z;
-  double t1,t2;
   static double htime = 0.0;
   static double gtime = 0.0;
+  boost::timer::cpu_times Z;
+  boost::timer::cpu_timer t1;  
 
-  gettimeofday(&Z,NULL);
-  t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
+  // Begin the hyphantic phase...
   RND.shuffle(order,n);
 
   std::ofstream s1(hyphansis_file.c_str(),std::ios::app);
@@ -759,23 +758,26 @@ bool Spacetime::step_forwards()
   s2.close();
 
   regularization(false,-1);
-  gettimeofday(&Z,NULL);
-  t2 = Z.tv_sec + (Z.tv_usec/1000000.0);
-  htime += (t2 - t1);
+  t1.stop();
+  Z = t1.elapsed();
+  htime += boost::lexical_cast<double>(boost::timer::format(Z,3,"%w"));
+
+  // Start the global operations phrase...
+  t1.start();
 #ifdef VERBOSE
   std::cout << "Calling global operations..." << std::endl;
 #endif
-  gettimeofday(&Z,NULL);
-  t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
-  bool out = global_operations();
-  gettimeofday(&Z,NULL);
-  t2 = Z.tv_sec + (Z.tv_usec/1000000.0);
-  gtime += (t2 - t1);
-  if (out) {
-    std::cout << boost::format("%-45s %8.3f %-10s\n") % "Time required for topological hyphansis was" % htime % "seconds.";
-    std::cout << boost::format("%-45s %8.3f %-10s\n") % "Time required for global operations was" % gtime % "seconds.";
+  bool done = global_operations();
+  t1.stop();
+  Z = t1.elapsed();
+  gtime += boost::lexical_cast<double>(boost::timer::format(Z,3,"%w"));
+
+  // If the simulation is finished print out some timing data...
+  if (done) {
+    std::cout << "Time required for topological hyphansis was " << htime << " seconds." << std::endl;
+    std::cout << "Time required for global operations was " << gtime << " seconds." << std::endl;
   }
-  return out;
+  return done;
 }
 
 void Spacetime::test_harness(int type,int n)
@@ -2039,11 +2041,7 @@ void Spacetime::initialize()
   int i;
   std::stringstream day,month,year,pid;
 #ifdef VERBOSE
-  timeval Z;
-  double t1,t2;
-
-  gettimeofday(&Z,NULL);
-  t1 = Z.tv_sec + (Z.tv_usec/1000000.0);
+  boost::timer::cpu_timer t1;
 #endif
 
   // Allocate the memory for the simplices and index tables...
@@ -2170,8 +2168,7 @@ void Spacetime::initialize()
 #endif
 
 #ifdef VERBOSE
-  gettimeofday(&Z,NULL);
-  t2 = Z.tv_sec + (Z.tv_usec/1000000.0);
-  std::cout << "Spacetime initialization required " << t2 - t1 << " seconds to complete." << std::endl;
+  t1.stop();
+  std::cout << "Spacetime initialization required " << boost::timer::format(t1.elapsed(),3,"%w") << " seconds to complete." << std::endl;
 #endif
 }
