@@ -135,6 +135,11 @@ void Simplex::clear()
   modified = true;
 }
 
+void Simplex::serialize(std::ofstream& s) const
+{
+  serialize(s,0);
+}
+
 void Simplex::serialize(std::ofstream& s,int nt) const
 {
   int i,n;

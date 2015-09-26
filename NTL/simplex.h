@@ -40,6 +40,7 @@ namespace DIAPLEXIS {
     int absolute_embedding() const;
     void get_faces(std::vector<Simplex>&) const;
     void serialize(std::ofstream&,int) const;
+    virtual void serialize(std::ofstream&) const;
     virtual void deserialize(std::ifstream&);
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
