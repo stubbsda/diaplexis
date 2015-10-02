@@ -1,7 +1,7 @@
 include ../Makefile.inc
 
 OBJECTS = sheet.o spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
-spacetime_geometry.o spacetime_hyphansis.o vertex.o simplex.o
+spacetime_geometry.o spacetime_hyphansis.o event.o simplex.o
 
 TARGET = libdiaplexis-stl.so
 
@@ -35,8 +35,8 @@ sheet.o: sheet.cpp sheet.h
 simplex.o: simplex.cpp simplex.h
 	$(CXX) $(CXX_FLAGS) -c simplex.cpp
 
-vertex.o: vertex.cpp vertex.h
-	$(CXX) $(CXX_FLAGS) -c vertex.cpp
+event.o: event.cpp event.h
+	$(CXX) $(CXX_FLAGS) -c event.cpp
 
 clean:
 	rm -f $(OBJECTS)

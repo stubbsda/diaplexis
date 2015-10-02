@@ -11,7 +11,7 @@ void Spacetime::compute_simplicial_dimension()
 
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
-    events[i].global_dimension = vertex_dimension(i,-1);
+    events[i].topological_dimension = vertex_dimension(i,-1);
   }
 }
 
@@ -575,7 +575,7 @@ void Spacetime::compute_lightcones()
       }
     }
     if (pcurrent.empty()) {
-      events[i].past = null;
+      events[i].anterior = null;
     }
     else {
       do {
@@ -603,11 +603,11 @@ void Spacetime::compute_lightcones()
         pcurrent = v;
         v.clear();
       } while(true);
-      events[i].past = old;
+      events[i].anterior = old;
       old.clear();
     }
     if (fcurrent.empty()) {
-      events[i].future = null;
+      events[i].posterior = null;
       continue;
     }
     do {
@@ -634,7 +634,7 @@ void Spacetime::compute_lightcones()
       fcurrent = v;
       v.clear();
     } while(true);
-    events[i].future = old;
+    events[i].posterior = old;
     old.clear();
   }
 }

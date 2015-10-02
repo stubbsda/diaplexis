@@ -346,7 +346,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = events[i].global_dimension;
+      n = events[i].topological_dimension;
       system_size += geometry->dimension();
       vdimension.push_back(n);
     }
@@ -357,7 +357,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = events[i].global_dimension;
+      n = events[i].topological_dimension;
       system_size += (n <= geometry->dimension()) ? geometry->dimension() : n;
       vdimension.push_back(n);
     }

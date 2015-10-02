@@ -2729,7 +2729,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
   bool change;
   std::set<int>::const_iterator it;
   std::vector<int> locus;
-  Vertex vx;
+  Event vx;
   Simplex S;
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
@@ -2954,7 +2954,7 @@ bool Spacetime::vertex_deletion(int n,int sheet)
 int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
 {
   int i,n = (signed) events.size();
-  Vertex vt;
+  Event vt;
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
@@ -2970,7 +2970,7 @@ int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
 int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
 {
   int i,n = (signed) events.size();
-  Vertex vt;
+  Event vt;
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
@@ -2986,7 +2986,7 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
 int Spacetime::vertex_addition(int base,int sheet)
 {
   int i,n = (signed) events.size();
-  Vertex vt;
+  Event vt;
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
@@ -3008,7 +3008,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 {
   // Performs an inflation on the vertex base with colour sheet
   int i,k,n1,na,delta,its = 0;
-  Vertex vt;
+  Event vt;
   bool success;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;

@@ -1,4 +1,4 @@
-HEADERS    = vertex.h simplex.h sheet.h spacetime.h
+HEADERS    = event.h simplex.h sheet.h spacetime.h
 
 DEBUG      = -g
 

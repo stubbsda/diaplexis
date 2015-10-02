@@ -2,7 +2,7 @@
 #include <pugixml.hpp>
 
 #include "sheet.h"
-#include "vertex.h"
+#include "event.h"
 #include "simplex.h"
 
 #ifndef _spacetimeh
@@ -10,7 +10,7 @@
 
 namespace DIAPLEXIS {
   typedef struct {
-    std::vector<Vertex> events;
+    std::vector<Event> events;
     std::vector<Simplex>* simplices;
     SYNARMOSMA::hash_map* index_table;
     SYNARMOSMA::Geometry geometry;
@@ -54,7 +54,7 @@ namespace DIAPLEXIS {
     Plegma anterior;
     std::vector<Simplex>* simplices;
     SYNARMOSMA::hash_map* index_table;
-    std::vector<Vertex> events;
+    std::vector<Event> events;
     std::vector<Sheet> codex;
     SYNARMOSMA::Geometry* geometry;
     SYNARMOSMA::Homology* H;

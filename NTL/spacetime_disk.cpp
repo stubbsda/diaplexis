@@ -934,7 +934,7 @@ void Spacetime::write_log() const
 void Spacetime::read_complex(std::ifstream& s)
 {
   int i,j,n;
-  Vertex v;
+  Event v;
   Simplex S;
   Sheet t;
 
@@ -1107,7 +1107,7 @@ void Spacetime::read_state(const std::string& filename)
   read_complex(s);
 
   // Now read the anterior spacetime state and calculate the deltas...
-  Vertex v;
+  Event v;
   Simplex S;
 
   s.read((char*)(&topology_delta),sizeof(double));

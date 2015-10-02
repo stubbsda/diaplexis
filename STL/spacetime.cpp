@@ -189,9 +189,9 @@ void Spacetime::distribute(int nprocs) const
     affinity.push_back(-1);
     if (ghost(events[i].ubiquity)) continue;
     nreal++;
-    if (events[i].global_dimension > max_dim) {
+    if (events[i].topological_dimension > max_dim) {
       current = i;
-      max_dim = events[i].global_dimension;
+      max_dim = events[i].topological_dimension;
     }
   }
   for(i=0; i<nprocs; ++i) {
@@ -205,11 +205,11 @@ void Spacetime::distribute(int nprocs) const
     // So take all of the n-simplices (n > 1) that are active and which 
     // contain the current vertex and assign all of their vertices to the 
     // current processor...
-    if (events[current].global_dimension > 1) {
+    if (events[current].topological_dimension > 1) {
       affinity[current] = cproc;
       volume[cproc] += 1;
       // Need to loop over all d-simplices, d > 1
-      for(i=2; i<=events[current].global_dimension; ++i) {
+      for(i=2; i<=events[current].topological_dimension; ++i) {
         for(j=0; j<(signed) simplices[i].size(); ++j) {
           if (ghost(simplices[i][j].ubiquity)) continue;
           if (simplices[i][j].contains(current)) {
@@ -260,7 +260,7 @@ void Spacetime::distribute(int nprocs) const
     done = true;
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
-      if (affinity[i] == -1 && events[i].global_dimension > 1) {
+      if (affinity[i] == -1 && events[i].topological_dimension > 1) {
         done = false;
         current = i;
         break;
@@ -336,7 +336,7 @@ void Spacetime::distribute(int nprocs) const
     do {
       n = RND.irandom(nv);
       if (ghost(events[n].ubiquity)) continue;
-      if (events[n].global_dimension > 1) continue;
+      if (events[n].topological_dimension > 1) continue;
       break;
     } while(true);
     p_old = affinity[n];
@@ -814,7 +814,7 @@ void Spacetime::test_harness(int type,int n)
     }
   }
   else {
-    Vertex vt;
+    Event vt;
 
     nv = n;
     events.clear();
@@ -1127,7 +1127,7 @@ void Spacetime::structural_deficiency()
       sum = 0.5*double(vertex_dimension(i,j) - 1); 
       events[i].entwinement.push_back(sum);
     }
-    events[i].global_dimension = vertex_dimension(i,-1);
+    events[i].topological_dimension = vertex_dimension(i,-1);
     events[i].topology_modified = false;
   }
 
@@ -1394,7 +1394,7 @@ bool Spacetime::global_operations()
 
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
-    if (events[i].topology_modified) events[i].global_dimension = vertex_dimension(i,-1);
+    if (events[i].topology_modified) events[i].topological_dimension = vertex_dimension(i,-1);
   }
 
   // First perform the geometry and energy diffusion...
@@ -1685,7 +1685,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
 void Spacetime::build_initial_state(const std::vector<int>& locus)
 {
   int i,j,in1;
-  Vertex vt;
+  Event vt;
   Simplex S;
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
