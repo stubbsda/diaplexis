@@ -288,6 +288,7 @@ namespace DIAPLEXIS {
     bool adjust_dimension();
     void analyze_convergence();
     void test_harness(int,int);
+    void condense();
     void initialize();
     void clear();
     void write(Spacetime&) const;

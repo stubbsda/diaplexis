@@ -170,6 +170,68 @@ void Spacetime::clear()
   iterations = 0;
 }
 
+void Spacetime::condense()
+{
+  // First check how many ghost vertices and edges there are in this spacetime....
+  int i,n = 0,m = 0;
+  const int nv = (signed) events.size();
+  const int ne = (signed) simplices[1].size();
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity > 1) n++;
+  }
+  for(i=0; i<ne; ++i) {
+    if (simplices[1][i].ubiquity > 1) m++;
+  }
+  double rho_v = double(n)/double(nv);
+  double rho_e = double(m)/double(ne);
+#ifdef VERBOSE
+  std::cout << "Topological density is for vertices " << rho_v << " and for edges " << rho_e << std::endl;
+#endif
+  if (rho_v > 0.5 || rho_e > 0.5) return;
+  // So we need to condense this spacetime to reduce memory pressure...
+  int j,offset[nv];
+  Simplex S;
+  std::set<int> vx;
+  std::set<int>::const_iterator it;
+  std::vector<Event> nevents;
+  std::vector<Simplex> nsimplices;
+
+  n = 0;
+  for(i=0; i<nv; ++i) {
+    offset[i] = -1;
+    if (events[i].ubiquity == 1) continue;
+    nevents.push_back(events[i]);
+    offset[i] = n;
+    n++;
+  }
+  events = nevents;
+  for(i=0; i<n; ++i) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      vx.insert(offset[*it]);
+    }
+    events[i].neighbours = vx;
+    vx.clear();
+  }
+  for(i=1; i<=Spacetime::ND; ++i) {
+    m = (signed) simplices[i].size();
+    index_table[i].clear();
+    for(j=0; j<m; ++j) {
+      if (simplices[i][j].ubiquity == 1) continue;
+      S = simplices[i][j];
+      for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
+        vx.insert(offset[*it]);
+      }
+      S.vertices = vx;
+      S.calculate_faces();
+      index_table[i][S.vertices] = (signed) nsimplices.size();
+      nsimplices.push_back(S);
+    }
+    simplices[i] = nsimplices;
+    nsimplices.clear();
+  }
+  compute_entourages(-1);  
+}
+
 void Spacetime::distribute(int nprocs) const
 {
   assert(nprocs > 0);
@@ -758,6 +820,7 @@ bool Spacetime::step_forwards()
   s2.close();
 
   regularization(false,-1);
+  condense();
   t1.stop();
   Z = t1.elapsed();
   htime += boost::lexical_cast<double>(boost::timer::format(Z,3,"%w"));
