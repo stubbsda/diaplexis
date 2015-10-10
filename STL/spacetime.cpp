@@ -209,6 +209,7 @@ void Spacetime::condense()
       vx.insert(offset[*it]);
     }
     events[i].neighbours = vx;
+    events[i].entourage.clear();
     vx.clear();
   }
   for(i=1; i<=Spacetime::ND; ++i) {
@@ -221,9 +222,11 @@ void Spacetime::condense()
         vx.insert(offset[*it]);
       }
       S.vertices = vx;
+      S.entourage.clear();
       S.calculate_faces();
       index_table[i][S.vertices] = (signed) nsimplices.size();
       nsimplices.push_back(S);
+      vx.clear();
     }
     simplices[i] = nsimplices;
     nsimplices.clear();
