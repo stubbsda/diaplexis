@@ -319,7 +319,7 @@ void Spacetime::write_log() const
   double max_length,min_length,avg_length;
   bool atemporal;
   static bool fcall = true;
-  CAUSALITY lcone;
+  SYNARMOSMA::RELATION rho;
   std::string nvalue;
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
@@ -472,7 +472,7 @@ void Spacetime::write_log() const
   nat = 0;
   for(i=0; i<Nv; ++i) {
     // Is this vertex atemporal (no timelike edges) or chiral
-    // (number of FUTURE edges != number of PAST edges)?
+    // (number of SYNARMOSMA::AFTER edges != number of SYNARMOSMA::BEFORE edges)?
     if (events[1].ubiquity == 1) continue;
     nf = 0;
     np = 0;
@@ -480,11 +480,11 @@ void Spacetime::write_log() const
     for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       in1 = *it;
       if (simplices[1][in1].sq_volume > 0.0) continue;
-      lcone = simplices[1][in1].orientation;
+      rho = simplices[1][in1].orientation;
       simplices[1][in1].get_vertices(vx);
-      if (i == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
+      if (i == vx[1]) rho = (rho == SYNARMOSMA::AFTER) ? SYNARMOSMA::BEFORE : SYNARMOSMA::AFTER;
       atemporal = false;
-      if (lcone == FUTURE) {
+      if (rho == SYNARMOSMA::AFTER) {
         nf++;
       }
       else {
@@ -733,7 +733,7 @@ void Spacetime::write_log() const
     nat = 0;
     for(j=0; j<Nv; ++j) {
       // Is this vertex atemporal (no timelike edges) or chiral
-      // (number of FUTURE edges != number of PAST edges)?
+      // (number of SYNARMOSMA::AFTER edges != number of SYNARMOSMA::BEFORE edges)?
       if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
       nf = 0;
       np = 0;
@@ -741,11 +741,11 @@ void Spacetime::write_log() const
       for(it=events[j].entourage.begin(); it!=events[j].entourage.end(); ++it) {
         in1 = *it;
         if (simplices[1][in1].sq_volume > 0.0) continue;
-        lcone = simplices[1][in1].orientation;
+        rho = simplices[1][in1].orientation;
         simplices[1][in1].get_vertices(vx);
-        if (j == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
+        if (j == vx[1]) rho = (rho == SYNARMOSMA::AFTER) ? SYNARMOSMA::BEFORE : SYNARMOSMA::AFTER;
         atemporal = false;
-        if (lcone == FUTURE) {
+        if (rho == SYNARMOSMA::AFTER) {
           nf++;
         }
         else {

@@ -156,7 +156,7 @@ namespace DIAPLEXIS {
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int) const;
-    void compute_causal_graph(SYNARMOSMA::Graph*,int,CAUSALITY,int) const;
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
     void simplex_membership(int,std::vector<int>&) const;
