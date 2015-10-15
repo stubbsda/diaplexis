@@ -552,11 +552,11 @@ int Spacetime::simplex_embedding(int d,int n) const
       delta = std::abs(simplices[1][qt->second].volume);
       dmatrix[n*i+j] = delta;
       dmatrix[n*j+i] = delta;
-      if (simplices[1][qt->second].sq_volume < 0.0) {
-        nt++;
+      if (simplices[1][qt->second].orientation == SYNARMOSMA::DISPARATE) {
+        ns++;
       }
       else {
-        ns++;
+        nt++;
       }
     }
   }
@@ -819,6 +819,7 @@ void Spacetime::compute_volume()
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
     simplices[2][i].volume = std::sqrt(std::abs(V));
     simplices[2][i].sq_volume = V;
+    simplices[2][i].orientation = (V > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
     simplices[2][i].modified = false;
   }
 
@@ -853,6 +854,7 @@ void Spacetime::compute_volume()
       V = prefactor*SYNARMOSMA::determinant(A,m);
       simplices[i][j].volume = std::sqrt(std::abs(V));
       simplices[i][j].sq_volume = V;
+      simplices[i][j].orientation = (V > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
       simplices[i][j].modified = false;
     }
     p *= 2;
@@ -871,6 +873,7 @@ void Spacetime::compute_lengths()
     delta = geometry->get_distance(vx[0],vx[1],true);
     simplices[1][i].sq_volume = delta;
     simplices[1][i].volume = std::sqrt(std::abs(delta));
+    simplices[1][i].orientation = (delta > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
     simplices[1][i].modified = false;
   }
 }
