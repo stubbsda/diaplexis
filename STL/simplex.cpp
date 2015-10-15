@@ -4,46 +4,26 @@ using namespace DIAPLEXIS;
 
 Simplex::Simplex()
 {
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
+  set_default_values();
 }
 
 Simplex::Simplex(int n,const std::vector<int>& locus) : Cell(n)
 {
+  set_default_values();
   ubiquity = locus;
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
 }
 
 Simplex::Simplex(int v1,int v2,const std::vector<int>& locus) : Cell(v1,v2)
 {
   // A specialized constructor for 0-simplices and 1-simplices
+  set_default_values();
   ubiquity = locus;
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
 }
 
 Simplex::Simplex(const std::set<int>& v,const std::vector<int>& locus) : Cell(v)
 {
+  set_default_values();
   ubiquity = locus;
-  energy = 0.0;
-  volume = 0.0;
-  sq_volume = 0.0;
-  incept = -1;
-  orientation = SPACELIKE;
-  modified = true;
 }
 
 Simplex::Simplex(const Simplex& source) : Cell()
@@ -100,12 +80,17 @@ void Simplex::initialize(const std::set<int>& vx,const std::vector<int>& locus)
 void Simplex::clear()
 {
   Cell::clear();
+  set_default_values();
+}
+
+void Simplex::set_default_values()
+{
   ubiquity.clear();
   energy = 0.0;
   volume = 0.0;
   sq_volume = 0.0;
   incept = -1;
-  orientation = SPACELIKE;
+  orientation = SYNARMOSMA::DISPARATE;
   modified = true;
 }
 
@@ -127,7 +112,7 @@ void Simplex::serialize(std::ofstream& s) const
   }
   s.write((char*)(&volume),sizeof(double));
   s.write((char*)(&sq_volume),sizeof(double));
-  s.write((char*)(&orientation),sizeof(CAUSALITY));
+  s.write((char*)(&orientation),sizeof(int));
   s.write((char*)(&energy),sizeof(double));
   s.write((char*)(&incept),sizeof(int));
 }
@@ -150,7 +135,7 @@ void Simplex::deserialize(std::ifstream& s)
   }
   s.read((char*)(&volume),sizeof(double));
   s.read((char*)(&sq_volume),sizeof(double));
-  s.read((char*)(&orientation),sizeof(CAUSALITY));
+  s.read((char*)(&orientation),sizeof(int));
   s.read((char*)(&energy),sizeof(double));
   s.read((char*)(&incept),sizeof(int));
   Cell::calculate_faces();

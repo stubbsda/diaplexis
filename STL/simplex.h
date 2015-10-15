@@ -4,13 +4,6 @@
 #define _simplexh
 
 namespace DIAPLEXIS {
-  enum CAUSALITY 
-  {
-      PAST,
-      FUTURE,
-      SPACELIKE
-  };
-
   class Simplex: public SYNARMOSMA::Cell {
    protected:
     double volume;
@@ -19,8 +12,9 @@ namespace DIAPLEXIS {
     bool modified;
     int incept;
     std::vector<int> ubiquity;
-    CAUSALITY orientation;
+    SYNARMOSMA::RELATION orientation;
 
+     virtual void set_default_values();
    public:
     Simplex();
     Simplex(const Simplex&);

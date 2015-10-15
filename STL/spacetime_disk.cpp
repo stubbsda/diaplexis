@@ -319,7 +319,7 @@ void Spacetime::write_log() const
   double max_length,min_length,avg_length;
   bool atemporal;
   static bool fcall = true;
-  CAUSALITY lcone;
+  SYNARMOSMA::RELATION rho;
   std::string nvalue;
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
@@ -480,12 +480,12 @@ void Spacetime::write_log() const
     atemporal = true;
     for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
       in1 = *it;
-      if (simplices[1][in1].sq_volume > 0.0) continue;
-      lcone = simplices[1][in1].orientation;
+      if (simplices[1][in1].orientation == SYNARMOSMA::DISPARATE) continue;
+      rho = simplices[1][in1].orientation;
       simplices[1][in1].get_vertices(vx);
-      if (i == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
+      if (i == vx[1]) rho = (rho == SYNARMOSMA::AFTER) ? SYNARMOSMA::BEFORE : SYNARMOSMA::AFTER;
       atemporal = false;
-      if (lcone == FUTURE) {
+      if (rho == SYNARMOSMA::AFTER) {
         nf++;
       }
       else {
@@ -510,11 +510,11 @@ void Spacetime::write_log() const
     if (wm < Spacetime::epsilon) {
       nnull++;
     }
-    else if (simplices[1][i].sq_volume < 0.0) {
-      ntime++;
+    else if (simplices[1][i].orientation == SYNARMOSMA::DISPARATE) {
+      nspace++;
     }
     else {
-      nspace++;
+      ntime++;
     }
   }
 
@@ -741,12 +741,12 @@ void Spacetime::write_log() const
       atemporal = true;
       for(it=events[j].entourage.begin(); it!=events[j].entourage.end(); ++it) {
         in1 = *it;
-        if (simplices[1][in1].sq_volume > 0.0) continue;
-        lcone = simplices[1][in1].orientation;
+        if (simplices[1][in1].orientation == SYNARMOSMA::DISPARATE) continue;
+        rho = simplices[1][in1].orientation;
         simplices[1][in1].get_vertices(vx);
-        if (j == vx[1]) lcone = (lcone == FUTURE) ? PAST : FUTURE;
+        if (j == vx[1]) rho = (rho == SYNARMOSMA::AFTER) ? SYNARMOSMA::BEFORE : SYNARMOSMA::AFTER;
         atemporal = false;
-        if (lcone == FUTURE) {
+        if (rho == SYNARMOSMA::AFTER) {
           nf++;
         }
         else {
@@ -779,11 +779,11 @@ void Spacetime::write_log() const
         if (wm < Spacetime::epsilon) {
           nnull++;
         }
-        else if (simplices[1][j].sq_volume < 0.0) {
-          ntime++;
+        else if (simplices[1][j].orientation == SYNARMOSMA::DISPARATE) {
+          nspace++;
         }
         else {
-          nspace++;
+          ntime++;
         }
       }
       avg_length /= double(ne);

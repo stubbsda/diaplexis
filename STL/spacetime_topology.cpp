@@ -370,10 +370,10 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet)
   } while(true);
 }
 
-void Spacetime::compute_causal_graph(SYNARMOSMA::Graph* G,int base,CAUSALITY lcone,int sheet) const
+void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
 {
   int i,j,l,v;
-  CAUSALITY output;
+  SYNARMOSMA::RELATION rho;
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> S;
   std::set<int>::const_iterator it;
@@ -399,16 +399,13 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Graph* G,int base,CAUSALITY lco
           S.insert(j);
           qt = index_table[1].find(S);
           if (ghost(simplices[1][qt->second].ubiquity)) continue;
-          if (!(simplices[1][qt->second].sq_volume < 0.0)) continue;
-          output = simplices[1][qt->second].orientation;
-          if (j < v) output = (output == FUTURE) ? PAST : FUTURE;
-          if (output == lcone) {
-            if (offset[j] == -1) {
-              offset[j] = G->add_vertex();
-              next.push_back(j);
-            }
-            G->foliation_m(offset[j],offset[v]);
+          rho = simplices[1][qt->second].orientation;
+          if (rho == SYNARMOSMA::DISPARATE) continue;
+          if (offset[j] == -1) {
+            offset[j] = G->add_vertex();
+            next.push_back(j);
           }
+          G->add_edge(offset[v],offset[j],rho);
         }
       }
       if (next.empty()) break;
@@ -428,16 +425,13 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Graph* G,int base,CAUSALITY lco
           qt = index_table[1].find(S);
           l = qt->second;
           if (simplices[1][l].ubiquity[sheet] == 0) continue;
-          if (!(simplices[1][l].sq_volume < 0.0)) continue;
-          output = simplices[1][l].orientation;
-          if (j < v) output = (output == FUTURE) ? PAST : FUTURE;
-          if (output == lcone) {
-            if (offset[j] == -1) {
-              offset[j] = G->add_vertex();
-              next.push_back(j);
-            }
-            G->foliation_m(offset[j],offset[v]);
+          rho = simplices[1][l].orientation;
+          if (rho == SYNARMOSMA::DISPARATE) continue;
+          if (offset[j] == -1) {
+            offset[j] = G->add_vertex();
+            next.push_back(j);
           }
+          G->add_edge(offset[v],offset[j],rho);
         }
       }
       if (next.empty()) break;
@@ -548,7 +542,7 @@ void Spacetime::compute_lightcones()
   // sheet = -1, with a Lorentzian metric
   if (geometry->get_euclidean()) return;
   int i,j,k;
-  CAUSALITY lcone;
+  SYNARMOSMA::RELATION rho;
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int>::const_iterator it,jt;
   std::set<int> pcurrent,fcurrent,old,v,null,S;
@@ -565,9 +559,9 @@ void Spacetime::compute_lightcones()
       S.insert(i);
       S.insert(j);
       qt = index_table[1].find(S);
-      lcone = simplices[1][qt->second].orientation;
-      if (lcone == SPACELIKE) continue;
-      if (lcone == PAST) {
+      rho = simplices[1][qt->second].orientation;
+      if (rho == SYNARMOSMA::DISPARATE) continue;
+      if (rho == SYNARMOSMA::BEFORE) {
         pcurrent.insert(j);
       }
       else {
@@ -588,9 +582,9 @@ void Spacetime::compute_lightcones()
             S.insert(j);
             S.insert(k);
             qt = index_table[1].find(S);
-            lcone = simplices[1][qt->second].orientation;
-            if (lcone == SPACELIKE) continue;
-            if (lcone == PAST) {
+            rho = simplices[1][qt->second].orientation;
+            if (rho == SYNARMOSMA::DISPARATE) continue;
+            if (rho == SYNARMOSMA::BEFORE) {
               // Check to see if k doesn't already exist in the set "old"
               if (old.count(k) == 0) v.insert(k);
             }
@@ -620,9 +614,9 @@ void Spacetime::compute_lightcones()
           S.insert(j);
           S.insert(k);
           qt = index_table[1].find(S);
-          lcone = simplices[1][qt->second].orientation;
-          if (lcone == SPACELIKE) continue;
-          if (lcone == FUTURE) {
+          rho = simplices[1][qt->second].orientation;
+          if (rho == SYNARMOSMA::DISPARATE) continue;
+          if (rho == SYNARMOSMA::AFTER) {
             if (old.count(k) == 0) v.insert(k);
           }
         }
@@ -644,17 +638,17 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   if (geometry->get_euclidean()) return 0.0;
   int i,j,k,nsink = 0,nsource = 0,causal_loop = 0;
   double output,nlinearity = 0.0;
-  CAUSALITY lcone;
+  SYNARMOSMA::RELATION rho;
   std::set<int> past,future,fcurrent,pcurrent,v,null,old,S;
   std::set<int>::const_iterator it,jt;
   SYNARMOSMA::hash_map::const_iterator qt;
-  SYNARMOSMA::Graph G;
+  SYNARMOSMA::Directed_Graph G;
   const int nv = (signed) events.size();
   const double na = double(cardinality(0,sheet));
 
   if (sheet == -1) {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,rho,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
@@ -667,9 +661,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
         S.insert(i);
         S.insert(j);
         qt = index_table[1].find(S);
-        lcone = simplices[1][qt->second].orientation;
-        if (lcone == SPACELIKE) continue;
-        if (lcone == PAST) {
+        rho = simplices[1][qt->second].orientation;
+        if (rho == SYNARMOSMA::DISPARATE) continue;
+        if (rho == SYNARMOSMA::BEFORE) {
           pcurrent.insert(j);
         }
         else {
@@ -690,9 +684,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
               S.insert(j);
               S.insert(k);
               qt = index_table[1].find(S);
-              lcone = simplices[1][qt->second].orientation;
-              if (lcone == SPACELIKE) continue;
-              if (lcone == PAST) {
+              rho = simplices[1][qt->second].orientation;
+              if (rho == SYNARMOSMA::DISPARATE) continue;
+              if (rho == SYNARMOSMA::BEFORE) {
                 // Check to see if k doesn't already exist in the set "old"
                 if (old.count(k) == 0) v.insert(k);
               }
@@ -722,9 +716,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             S.insert(j);
             S.insert(k);
             qt = index_table[1].find(S);
-            lcone = simplices[1][qt->second].orientation;
-            if (lcone == SPACELIKE) continue;
-            if (lcone == FUTURE) {
+            rho = simplices[1][qt->second].orientation;
+            if (rho == SYNARMOSMA::DISPARATE) continue;
+            if (rho == SYNARMOSMA::AFTER) {
               if (old.count(k) == 0) v.insert(k);
             }
           }
@@ -742,13 +736,13 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       // If it's a sink, that means all of its edges have orientation equal to -1;
       // for a source, the edges must all have an orientation equal to +1.
       if (past.empty() && !future.empty()) {
-        compute_causal_graph(&G,i,FUTURE,-1);
+        compute_causal_graph(&G,i,-1);
         nlinearity += G.cyclicity();
         nsource++;
         continue;
       }
       else if (!past.empty() && future.empty()) {
-        compute_causal_graph(&G,i,PAST,-1);
+        compute_causal_graph(&G,i,-1);
         nlinearity += G.cyclicity();
         nsink++;
         continue;
@@ -757,7 +751,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   }
   else {
 #ifdef PARALLEL
-#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,lcone,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,rho,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity[sheet] == 0) continue;
@@ -771,9 +765,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
         S.insert(j);
         qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-        lcone = simplices[1][qt->second].orientation;
-        if (lcone == SPACELIKE) continue;
-        if (lcone == PAST) {
+        rho = simplices[1][qt->second].orientation;
+        if (rho == SYNARMOSMA::DISPARATE) continue;
+        if (rho == SYNARMOSMA::BEFORE) {
           pcurrent.insert(j);
         }
         else {
@@ -795,9 +789,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
               S.insert(k);
               qt = index_table[1].find(S);
               if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-              lcone = simplices[1][qt->second].orientation;
-              if (lcone == SPACELIKE) continue;
-              if (lcone == PAST) {
+              rho = simplices[1][qt->second].orientation;
+              if (rho == SYNARMOSMA::DISPARATE) continue;
+              if (rho == SYNARMOSMA::BEFORE) {
                 // Check to see if k doesn't already exist in the set "old"
                 if (old.count(k) == 0) v.insert(k);
               }
@@ -828,9 +822,9 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
             S.insert(k);
             qt = index_table[1].find(S);
             if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-            lcone = simplices[1][qt->second].orientation;
-            if (lcone == SPACELIKE) continue;
-            if (lcone == FUTURE) {
+            rho = simplices[1][qt->second].orientation;
+            if (rho == SYNARMOSMA::DISPARATE) continue;
+            if (rho == SYNARMOSMA::AFTER) {
               if (old.count(k) == 0) v.insert(k);
             }
           }
@@ -848,13 +842,13 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
       // If it's a sink, that means all of its edges have orientation equal to -1;
       // for a source, the edges must all have an orientation equal to +1.
       if (past.empty() && !future.empty()) {
-        compute_causal_graph(&G,i,FUTURE,sheet);
+        compute_causal_graph(&G,i,sheet);
         nlinearity += G.cyclicity();
         nsource++;
         continue;
       }
       else if (!past.empty() && future.empty()) {
-        compute_causal_graph(&G,i,PAST,sheet);
+        compute_causal_graph(&G,i,sheet);
         nlinearity += G.cyclicity();
         nsink++;
         continue;

@@ -1260,10 +1260,10 @@ void Spacetime::structural_deficiency()
       }
       k++;
       /*
-      if (!(simplices[1][n].sq_volume < 0.0)) continue;
+      if (simplices[1][n].orientation == SYNARMOSMA::DISPARATE) continue;
       u = simplices[1][n].ubiquity.count();
       // How to determine if j lies in the chronological future of i?
-      sigma = (simplices[1][n].orientation == FUTURE) ? 1 : -1;
+      sigma = (simplices[1][n].orientation == SYNARMOSMA::AFTER) ? 1 : -1;
       if (j < i) sigma = -sigma;
       sum2 += double(sigma)*events[j].energy*l_inv;
       */

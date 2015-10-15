@@ -431,54 +431,46 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   // large negative value means the topology must be altered to resemble that of the Cartesian
   // initial state.
   if (geometry->get_euclidean()) return 0.0;
-  int in1,in2,tcount;
-  double l,w1,w2,tipsy,vorticity;
-  CAUSALITY d1,d2;
-  std::set<int> n1,n2,S;
+  int u,w,tcount;
+  double l,tipsy,vorticity;
+  SYNARMOSMA::RELATION d1,d2;
+  std::set<int> S;
   std::vector<int> jset;
   std::set<int>::const_iterator it;
   std::vector<int>::const_iterator vit;
   SYNARMOSMA::hash_map::const_iterator qt;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Directed_Graph* G = new SYNARMOSMA::Directed_Graph;
 
-  // This makes a graph out of the entire forward light cone of this vertex
-  compute_causal_graph(G,v,FUTURE,sheet);
-  w1 = G->cyclicity();
-  // And this makes one out of the entire backward light cone
-  compute_causal_graph(G,v,PAST,sheet);
-  w2 = G->cyclicity();
-  // Now assign the arithmetic average of the cyclicity of these graphs to be the 
-  // vertex's temporal vorticity
-  vorticity = 0.5*(w1 + w2);
+  compute_causal_graph(G,v,sheet);
+  vorticity = G->cyclicity();
   delete G;
-  n1 = events[v].neighbours;
+
   tipsy = 0.0;
   if (sheet == -1) {
-    for(it=n1.begin(); it!=n1.end(); ++it) {
-      in1 = *it;
+    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+      u = *it;
       S.clear();
       S.insert(v);
-      S.insert(in1);
+      S.insert(u);
       qt = index_table[1].find(S);
       l = simplices[1][qt->second].volume;
-      if (!(simplices[1][qt->second].sq_volume > 0.0)) continue;
+      if (simplices[1][qt->second].orientation != SYNARMOSMA::DISPARATE) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
-      n2 = events[in1].neighbours;
-      std::set_intersection(n1.begin(),n1.end(),n2.begin(),n2.end(),jset.begin());
+      std::set_intersection(events[v].neighbours.begin(),events[v].neighbours.end(),events[u].neighbours.begin(),events[u].neighbours.end(),jset.begin());
       if (jset.empty()) continue;
       tcount = 0;
       for(vit=jset.begin(); vit!=jset.end(); ++vit) {
-        in2 = *vit;
+        w = *vit;
 
         S.clear();
         S.insert(v);
-        S.insert(in2);
+        S.insert(w);
         qt = index_table[1].find(S);
         d1 = simplices[1][qt->second].orientation;
 
         S.clear();
-        S.insert(in1);
-        S.insert(in2);
+        S.insert(u);
+        S.insert(w);
         qt = index_table[1].find(S);
         d2 = simplices[1][qt->second].orientation;
         if (d1 != d2) tcount++;
@@ -487,33 +479,32 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
     }
   }
   else {
-    for(it=n1.begin(); it!=n1.end(); ++it) {
-      in1 = *it;
+    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+      u = *it;
       S.clear();
       S.insert(v);
-      S.insert(in1);
+      S.insert(u);
       qt = index_table[1].find(S);
       if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
       l = simplices[1][qt->second].volume;
-      if (!(simplices[1][qt->second].sq_volume > 0.0)) continue;
+      if (simplices[1][qt->second].orientation != SYNARMOSMA::DISPARATE) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
-      n2 = events[in1].neighbours;
-      std::set_intersection(n1.begin(),n1.end(),n2.begin(),n2.end(),jset.begin());
+      std::set_intersection(events[v].neighbours.begin(),events[v].neighbours.end(),events[u].neighbours.begin(),events[u].neighbours.end(),jset.begin());
       if (jset.empty()) continue;
       tcount = 0;
       for(vit=jset.begin(); vit!=jset.end(); ++vit) {
-        in2 = *vit;
+        w = *vit;
 
         S.clear();
         S.insert(v);
-        S.insert(in2);
+        S.insert(w);
         qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         d1 = simplices[1][qt->second].orientation;
 
         S.clear();
-        S.insert(in1);
-        S.insert(in2);
+        S.insert(u);
+        S.insert(w);
         qt = index_table[1].find(S);
         if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
         d2 = simplices[1][qt->second].orientation;
@@ -553,11 +544,11 @@ int Spacetime::simplex_embedding(int d,int n) const
       delta = std::abs(simplices[1][qt->second].volume);
       dmatrix[n*i+j] = delta;
       dmatrix[n*j+i] = delta;
-      if (simplices[1][qt->second].sq_volume < 0.0) {
-        nt++;
+      if (simplices[1][qt->second].orientation == SYNARMOSMA::DISPARATE) {
+        ns++;
       }
       else {
-        ns++;
+        nt++;
       }
     }
   }
@@ -817,6 +808,7 @@ void Spacetime::compute_volume()
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
     simplices[2][i].volume = std::sqrt(std::abs(V));
     simplices[2][i].sq_volume = V;
+    simplices[2][i].orientation = (V > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
     simplices[2][i].modified = false;
   }
 
@@ -851,6 +843,7 @@ void Spacetime::compute_volume()
       V = prefactor*SYNARMOSMA::determinant(A,m);
       simplices[i][j].volume = std::sqrt(std::abs(V));
       simplices[i][j].sq_volume = V;
+      simplices[i][j].orientation = (V > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
       simplices[i][j].modified = false;
     }
     p *= 2;
@@ -869,6 +862,7 @@ void Spacetime::compute_lengths()
     delta = geometry->get_distance(vx[0],vx[1],true);
     simplices[1][i].sq_volume = delta;
     simplices[1][i].volume = std::sqrt(std::abs(delta));
+    simplices[1][i].orientation = (delta > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
     simplices[1][i].modified = false;
   }
 }
