@@ -862,7 +862,7 @@ void Spacetime::compute_lengths()
     delta = geometry->get_distance(vx[0],vx[1],true);
     simplices[1][i].sq_volume = delta;
     simplices[1][i].volume = std::sqrt(std::abs(delta));
-    simplices[1][i].orientation = (delta > 0.0) ? SYNARMOSMA::DISPARATE : SYNARMOSMA::BEFORE;
+    simplices[1][i].orientation = (delta > 0.0) ? SYNARMOSMA::DISPARATE : geometry->get_temporal_order(vx[0],vx[1]);
     simplices[1][i].modified = false;
   }
 }
