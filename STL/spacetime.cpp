@@ -1577,6 +1577,8 @@ bool Spacetime::global_operations()
   compute_curvature();
   compute_obliquity();
   assert(consistent(-1));
+
+  compute_lightcones();
   compute_global_topology(-1);
   for(i=0; i<(signed) codex.size(); ++i) {
     compute_global_topology(i);
@@ -2178,11 +2180,11 @@ void Spacetime::initialize()
     compute_volume();
     compute_curvature();
     compute_obliquity();
+    compute_lightcones();
     compute_global_topology(-1);
     for(i=0; i<nt_initial; ++i) {
       compute_global_topology(i);
     }
-
     structural_deficiency();
   }
   RND.initialize_poisson(Spacetime::ramosity);
