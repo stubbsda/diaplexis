@@ -1,13 +1,12 @@
 HEADERS    = event.h simplex.h sheet.h spacetime.h
 
-DEBUG      = -g
+CXX_FLAGS += -I$(SYNARMOSMA)/include $(OPENMP) -fPIC
+LD_FLAGS  += -L$(SYNARMOSMA)/lib $(OPENMP) -shared
 
-OPT        = $(CXX_OPT)
-
-CXX_FLAGS += -I$(SYNARMOSMA)/include -fPIC -DVERBOSE
-LD_FLAGS  += -L$(SYNARMOSMA)/lib -shared
-
+#CXX_FLAGS += $(CXX_OPT)
 CXX_FLAGS += $(DEBUG) 
+
+#LD_FLAGS += $(CXX_OPT)
 LD_FLAGS  += $(DEBUG)
 
 LIBS       = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lm
