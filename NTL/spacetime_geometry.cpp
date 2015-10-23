@@ -347,7 +347,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
 
     assert(system_size == D*na);
 
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
     for(i=0; i<nv; ++i) {

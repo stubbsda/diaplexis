@@ -661,8 +661,8 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(euler_characteristic(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-#ifdef PARALLEL
-  #pragma omp parallel for default(shared) private(i,j)
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j)
 #endif
   for(i=0; i<Nv; ++i) {
     for(j=0; j<Nt; ++j) {

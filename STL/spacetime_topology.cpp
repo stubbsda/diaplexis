@@ -94,7 +94,7 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
   }
 
   if (sheet == -1) {
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
 #endif
     for(i=0; i<nv; ++i) {
@@ -103,19 +103,19 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
         if (ghost(events[j].ubiquity)) continue;
         l = combinatorial_distance(i,j);
         if (l > m) m = l;
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp critical
         {
 #endif
         pcount[l] += 1;
-#ifdef PARALLEL
+#ifdef _OPENMP
         }
 #endif
       }
     }
   }
   else {
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
 #endif
     for(i=0; i<nv; ++i) {
@@ -124,12 +124,12 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
         if (events[j].ubiquity[sheet] == 0) continue;
         l = combinatorial_distance(i,j,sheet);
         if (l > m) m = l;
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp critical
         {
 #endif
         pcount[l] += 1;
-#ifdef PARALLEL
+#ifdef _OPENMP
         }
 #endif
       }
@@ -647,7 +647,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
   const double na = double(cardinality(0,sheet));
 
   if (sheet == -1) {
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,rho,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {
@@ -750,7 +750,7 @@ double Spacetime::compute_temporal_nonlinearity(int sheet) const
     }
   }
   else {
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,it,jt,qt,rho,G,old,v,pcurrent,fcurrent,past,future,S) reduction(+:nlinearity,nsource,nsink,causal_loop)
 #endif
     for(i=0; i<nv; ++i) {

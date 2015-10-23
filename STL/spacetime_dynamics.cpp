@@ -15,7 +15,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
   const double pfactor = (2.0/M_PI)*5.0;
   double force[D*nreal];
 
-#ifdef PARALLEL
+#ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,m,l,it,r_true,delta)
 #endif 
   for(i=0; i<nv; ++i) {

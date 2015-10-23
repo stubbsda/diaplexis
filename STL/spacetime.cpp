@@ -1205,8 +1205,8 @@ void Spacetime::structural_deficiency()
     gvalue[i] = sum/double(nt);
   }
 
-#ifdef PARALLEL
-  #pragma omp parallel for default(shared) private(i,j,k,l,found,d1,d2) schedule(dynamic,1)
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j,k,l,found,d1,d2) schedule(dynamic,1)
 #endif
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
@@ -1227,10 +1227,14 @@ void Spacetime::structural_deficiency()
       }
       if (found) continue;
       gvalue[i] += 0.1;
-#ifdef PARALLEL
-      #pragma omp critical
+#ifdef _OPENMP
+#pragma omp critical
+      {
 #endif
       gvalue[j] += 0.1;
+#ifdef _OPENMP
+      }
+#endif
     }
   }
 
