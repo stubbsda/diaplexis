@@ -234,6 +234,8 @@ namespace DIAPLEXIS {
     bool correction(int,int);
     bool germination(int,int);
     bool vertex_twist(int);
+    bool stellar_addition(int,int);
+    bool stellar_deletion(int,int);
     void vertex_fusion(int,int,int);
     void compute_neighbours();
     void compute_entourages(int);

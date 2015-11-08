@@ -189,6 +189,84 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   return true;
 }
 
+bool Spacetime::stellar_addition(int base,int sheet)
+{
+  int m,vx[2];
+  std::set<int> nset;
+  std::set<int>::const_iterator it;
+
+  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
+    if (NTL::divide(simplices[1][*it].ubiquity,codex[sheet].colour) == 1) {
+      simplices[1][*it].get_vertices(vx);
+      m = (vx[0] == base) ? vx[1] : vx[0];
+      nset.insert(m);
+    }
+  }
+  if (nset.size() != 3) return false;    
+  vertex_deletion(base,sheet);
+  simplex_addition(nset,sheet);
+  regularization(true,sheet);
+  return true;
+}
+
+bool Spacetime::stellar_deletion(int base,int sheet)
+{
+  if (vertex_dimension(base,sheet) < 2) return false;
+  // Take one of these 2-simplices and eliminate it in favour of a 
+  // new vertex
+  int i,j,m = (signed) simplices[2].size();
+  std::vector<int> sx;
+  std::vector<double> xc,xtemp;
+  std::set<int> candidates,S;
+  SYNARMOSMA::hash_map::const_iterator qt;
+
+  for(i=0; i<m; ++i) {
+    if (NTL::divide(simplices[2][i].ubiquity,codex[sheet].colour) == 0) continue;
+    if (simplices[2][i].contains(base)) candidates.insert(i);
+  }
+  // Choose a 2-simplex at random, get its three vertices and then 
+  // eliminate each of the three edges in succession...
+  m = RND.irandom(candidates);
+  simplices[2][m].get_vertices(sx);
+
+  S.clear();
+  S.insert(sx[0]); S.insert(sx[1]);
+  qt = index_table[1].find(S);
+  simplex_deletion(1,qt->second,sheet);
+
+  S.clear();
+  S.insert(sx[0]); S.insert(sx[2]);
+  qt = index_table[1].find(S);
+  simplex_deletion(1,qt->second,sheet);
+
+  S.clear();
+  S.insert(sx[1]); S.insert(sx[2]);
+  qt = index_table[1].find(S);
+  simplex_deletion(1,qt->second,sheet);    
+  // Now add the new vertex and the three edges...
+  for(i=0; i<geometry->dimension(); ++i) {
+    xc.push_back(0.0);
+  }
+  for(i=0; i<3; ++i) {
+    geometry->get_coordinates(sx[i],xtemp);
+    for(j=0; j<geometry->dimension(); ++j) {
+      xc[j] += xtemp[j]; 
+    }
+  }
+  for(i=0; i<geometry->dimension(); ++i) {
+    xc[i] = xc[i]/3.0;
+  }
+  m = vertex_addition(xc,sheet);
+  for(i=0; i<3; ++i) {
+    S.clear();
+    S.insert(m);
+    S.insert(sx[i]);
+    simplex_addition(S,sheet);
+  }
+  regularization(true,sheet);
+  return true;    
+}
+
 bool Spacetime::germination(int base,int sheet)
 {
   // This method constructs new neighbour vertices w_i for the vertex base which are
