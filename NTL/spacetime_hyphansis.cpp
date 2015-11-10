@@ -189,7 +189,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   return true;
 }
 
-bool Spacetime::stellar_addition(int base,int sheet)
+bool Spacetime::stellar_deletion(int base,int sheet)
 {
   int m,vx[2];
   std::set<int> nset;
@@ -209,7 +209,7 @@ bool Spacetime::stellar_addition(int base,int sheet)
   return true;
 }
 
-bool Spacetime::stellar_deletion(int base,int sheet)
+bool Spacetime::stellar_addition(int base,int sheet)
 {
   if (vertex_dimension(base,sheet) < 2) return false;
   // Take one of these 2-simplices and eliminate it in favour of a 
