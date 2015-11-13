@@ -13,8 +13,8 @@ const int Spacetime::topological_radius;
 const int Spacetime::ND;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
-const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm"};
-const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V"};
+const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm","Y"};
+const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
 
 Spacetime::Spacetime()
 {
@@ -681,7 +681,7 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
 
 void Spacetime::implication(std::string& output) const
 {
-  // Should return one of {F,Um,Om,E,I,P,V}
+  // Should return one of the implicative operators: {F,Um,Om,E,I,P,V,Δ}
   double alpha;
   if (iterations < 50) {
     alpha = RND.drandom();
@@ -745,7 +745,7 @@ void Spacetime::implication(std::string& output) const
 
 void Spacetime::explication(std::string& output) const
 {
-  // Should return one of {Ux,D,Sg,Sm,R,G,A,C,N}
+  // Should return one of the explicative operators: {G,C,A,Sg,Sm,D,N,Y,R,Ox,Ux}
   //if (RND.drandom() < 0.1) return 'G';
   double alpha;
   if (iterations < 50) {

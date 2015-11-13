@@ -121,8 +121,8 @@ namespace DIAPLEXIS {
     int annealing_steps;
 
     // Stuff for the implicative/explicative operators:
-    static const int N_EXP = 10;
-    static const int N_IMP = 7;
+    static const int N_EXP = 11;
+    static const int N_IMP = 8;
     static const std::string EXP_OP[N_EXP];
     static const std::string IMP_OP[N_IMP];
     // The combinatorial size of the subgraph used to compute

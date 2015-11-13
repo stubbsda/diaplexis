@@ -3388,6 +3388,12 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     else if (op == "C") {
       success = correction(v,sheet);
     }
+    else if (op == "Δ") {
+      success = stellar_deletion(v,sheet);
+    }
+    else if (op == "Y") {
+      success = stellar_addition(v,sheet);
+    }
     else if (op == "N") {
       success = contraction(v,pvalues[0],sheet);
       opstring << "," << pvalues[0]; 
@@ -3520,6 +3526,9 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       else if (op == "V") {
         success = circumvolution(v,sheet);
       }
+      else if (op == "Δ") {
+        success = stellar_deletion(v,sheet);
+      }
     }
     else if (alpha > Spacetime::epsilon) {
       if (vertex_dimension(v,sheet) > 1) {
@@ -3556,6 +3565,9 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
         }
         else if (op == "G") {
           success = germination(v,sheet);
+        }
+        else if (op == "Y") {
+          success = stellar_addition(v,sheet);
         }
         else if (op == "A") {
           success = amputation(v,10.0,sheet);
