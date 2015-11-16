@@ -191,6 +191,9 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
 
 bool Spacetime::stellar_deletion(int base,int sheet)
 {
+  // If this vertex is already part of a d-simplex, d >= 2, then
+  // this operation is pointless...
+  if (vertex_dimension(base,sheet) >= 2) return false;
   int m,vx[2];
   std::set<int> nset;
   std::set<int>::const_iterator it;
