@@ -234,7 +234,7 @@ void Spacetime::read_parameters(const char* filename)
   // Now a series of tests to make sure that the parameters
   // aren't entirely crazy...
   assert(geometry_cutoff > 0.0);
-  assert(max_iter > 0);
+  assert(max_iter >= 0);
   assert(nt_initial > 0);
   assert(initial_size > 0);
   // One and only one initial state should be chosen...

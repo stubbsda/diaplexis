@@ -943,9 +943,9 @@ void Spacetime::test_harness(int type,int n)
 
 void Spacetime::evolve()
 {
-  do {
+  for(int i=0; i<max_iter; ++i) {
     if (step_forwards()) break;
-  } while(true);
+  }
 
   if (diskless) return;
 

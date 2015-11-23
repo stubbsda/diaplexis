@@ -662,17 +662,18 @@ void Spacetime::compute_curvature()
 
 double Spacetime::representational_energy(bool weighted) const
 {
-  // A routine that follows the logic of C. Godsil and G. Royle, "Algebraic
+  // A routine that follows the algorithm outlined in C. Godsil and G. Royle, "Algebraic
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
-  double value,energy = 0.0;
-  int i,j,k,l,vx[2],n = 0;
+  if (dimension(-1) < 1) return 0.0;
+  int i,n = 0;
   std::vector<int> offset;
-  std::set<int>::const_iterator it;
+  SYNARMOSMA::Graph G;
   const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  
+  compute_graph(&G,-1);
 
-  if (dimension(-1) < 1) return energy;
-
+  SYNARMOSMA::Matrix<double> L(G.order());
+  
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) {
       offset.push_back(-1);
@@ -682,57 +683,30 @@ double Spacetime::representational_energy(bool weighted) const
     n++;
   }
 
-  std::vector<double>* laplacian = new std::vector<double>[n];
-  double diagonal[n];
-  for(i=0; i<n; ++i) {
-    diagonal[i] = 0.0;
-  }
-
   if (weighted) {
-    // What is the appropriate value for l?
+    int j,k,vx[2];
     double w;
-    l = 0;
+    const int ne = (signed) simplices[1].size();
+  
     for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity == 1) continue;
-      value = std::abs(simplices[1][i].volume);
-      w = double(1+l)/value;
+      w = 2.0/std::abs(simplices[1][i].volume);
       simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       k = offset[vx[1]];
-      diagonal[j] += w;
-      diagonal[k] += w;
-      laplacian[j].push_back(-w);
-      laplacian[j].push_back(double(j));
-      laplacian[k].push_back(-w);
-      laplacian[k].push_back(double(i));
+      // The diagonal elements need to be incremented...
+      L.set(j,j,w,true);
+      L.set(k,k,w,true);
+      // but not the off-diagonal elements...
+      L.set(j,k,-w);
+      L.set(k,j,-w);
     }
   }
   else {
-    // We can construct the Laplacian of the spacetime graph directly in this
-    // case
-    for(i=0; i<ne; ++i) {
-      if (simplices[1][i].ubiquity == 1) continue;
-      simplices[1][i].get_vertices(vx);
-      j = offset[vx[0]];
-      k = offset[vx[1]];
-      diagonal[j] += 1.0;
-      diagonal[k] += 1.0;
-      laplacian[j].push_back(-1.0);
-      laplacian[j].push_back(double(vx[0]));
-      laplacian[k].push_back(-1.0);
-      laplacian[k].push_back(double(vx[1]));
-    }
-  }
-  for(i=0; i<nv; ++i) {
-    if (offset[i] == -1) continue;
-    laplacian[offset[i]].push_back(diagonal[offset[i]]);
-    laplacian[offset[i]].push_back(double(i));
+    G.compute_laplacian(&L);
   }
 
-  energy = geometry->inner_product(laplacian,offset,n);
-  delete[] laplacian;
-
-  return energy;
+  return geometry->inner_product(L,offset);
 }
 
 bool Spacetime::realizable(int d,int n) const
