@@ -125,7 +125,7 @@ void Spacetime::chorogenesis(int nsteps)
   double temperature = 1.0;
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,-1));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
   const int ne = (signed) simplices[1].size();
 
 #ifdef VERBOSE
@@ -447,11 +447,10 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   std::set<int>::const_iterator it;
   std::vector<int>::const_iterator vit;
   SYNARMOSMA::hash_map::const_iterator qt;
-  SYNARMOSMA::Directed_Graph* G = new SYNARMOSMA::Directed_Graph;
+  SYNARMOSMA::Directed_Graph G;
 
-  compute_causal_graph(G,v,sheet);
-  vorticity = G->cyclicity();
-  delete G;
+  compute_causal_graph(&G,v,sheet);
+  vorticity = G.cyclicity();
 
   tipsy = 0.0;
   if (sheet == -1) {

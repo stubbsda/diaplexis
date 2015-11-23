@@ -69,7 +69,7 @@ void Spacetime::get_ubiquity(int d,int n,std::string& output) const
 void Spacetime::compute_degree_distribution(bool logarithmic,int sheet) const
 {
   std::vector<double> histogram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
 
   compute_graph(G,sheet);
 
@@ -156,10 +156,9 @@ bool Spacetime::active_element(int d,int n) const
 
 void Spacetime::random_walk(double* mean,double* sdeviation,int sheet) const
 {
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
-  compute_graph(G,sheet);
-  G->random_walk(mean,sdeviation,geometry->dimension());
-  delete G;
+  SYNARMOSMA::Graph G;
+  compute_graph(&G,sheet);
+  G.random_walk(mean,sdeviation,geometry->dimension());
 }
 
 double Spacetime::dimensional_stress(int d,int n,int sheet) const
@@ -215,25 +214,22 @@ void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int 
 
 void Spacetime::vertex_degree_statistics(double* output,int sheet) const
 {
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));  
-  compute_graph(G,sheet);
-  output[0] = double(G->max_degree());
-  output[1] = double(G->min_degree());
-  output[2] = G->average_degree();
-  delete G;
+  SYNARMOSMA::Graph G;  
+  compute_graph(&G,sheet);
+  output[0] = double(G.max_degree());
+  output[1] = double(G.min_degree());
+  output[2] = G.average_degree();
 }
 
 int Spacetime::cyclicity(int sheet) const
 {
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
-  if (!(connected(sheet))) return 0;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph G;
 
-  compute_graph(G,sheet);
-  int output = G->size() - G->bridge_count();
-  delete G;
-  return output;
+  compute_graph(&G,sheet);
+  if (!G.connected()) return 0;
+  return (G.size() - G.bridge_count());
 }
 
 bool Spacetime::logical_conformity(int v) const
@@ -867,18 +863,13 @@ int Spacetime::chromatic_number(int sheet) const
 {
   // Computes the chromatic number chi of the graph associated with the
   // colour "p"; we already know that 1 <= chi <= max_degree+1.  
+  SYNARMOSMA::Graph G;
 
+  compute_graph(&G,sheet);
   // It makes no sense to try to compute a single chromatic number for
   // a disconnected graph.
-  if (!connected(sheet)) return 0;
-
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
-
-  compute_graph(G,sheet);
-  int chi = G->chromatic_number();
-  delete G;
-
-  return chi;
+  if (!G.connected()) return 0;
+  return G.chromatic_number();
 }
 
 int Spacetime::entourage(int base,int sheet) const
@@ -914,20 +905,16 @@ double Spacetime::entwinement(int sheet) const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
-  compute_graph(G,sheet);
-  double output = G->entwinement();
-  delete G;
-  return output;
+  SYNARMOSMA::Graph G;
+  compute_graph(&G,sheet);
+  return G.entwinement();
 }
 
 double Spacetime::cyclic_resistance(int sheet) const
 {
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
-  compute_graph(G,sheet);
-  double output = G->cyclic_resistance();
-  delete G;
-  return output;
+  SYNARMOSMA::Graph G;
+  compute_graph(&G,sheet);
+  return G.cyclic_resistance();
 }
 
 int Spacetime::combinatorial_distance(int v1,int v2) const
@@ -1434,24 +1421,21 @@ bool Spacetime::connected(int sheet) const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph G;
 
-  compute_graph(G,sheet);
+  compute_graph(&G,sheet);
 
-  bool output = G->connected();
-  delete G;
-  return output;
+  return G.connected();
 }
 
 int Spacetime::component_analysis(std::vector<int>& component,int sheet) const
 {
   int i,n,ct = 0;
   std::vector<int> cvalue;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph(cardinality(0,sheet));
+  SYNARMOSMA::Graph G;
 
-  compute_graph(G,sheet);
-  n = G->component_analysis(cvalue);
-  delete G;
+  compute_graph(&G,sheet);
+  n = G.component_analysis(cvalue);
   // We now need to include the unused vertices in the output component vector
   component.clear();
   if (sheet == -1) {
