@@ -3246,7 +3246,7 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
 void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
   int i,j,v,its,opcount;
-  double m_width,x_width;
+  double m_width = 1.0,x_width = 1.0;
   bool success = false;
   std::string line,op;
   std::stringstream opstring;
@@ -3427,7 +3427,6 @@ void Spacetime::hyphansis(int sheet)
   double alpha;
   std::vector<std::pair<int,double> > candidates;
   const int nv = (signed) events.size();
-  const double nactive = double(cardinality(0,sheet));
 
   codex[sheet].ops = "";
 
@@ -3451,7 +3450,7 @@ void Spacetime::hyphansis(int sheet)
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
 #ifdef VERBOSE
-  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/nactive << " percent of the total." << std::endl;
+  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(cardinality(0,sheet)) << " percent of the total." << std::endl;
   std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
 #endif
   if (candidates.empty()) {
@@ -3490,7 +3489,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
   double alpha;
   std::string op;
   std::stringstream opstring;
-  bool success;
+  bool success = false;
   const int nc = (signed) candidates.size();
 
   std::ofstream s(hyphansis_file.c_str(),std::ios::app);

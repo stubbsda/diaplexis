@@ -881,7 +881,7 @@ void Spacetime::optimize()
     geometry->compute_distances();
     compute_volume();
     if (!cgradient_refinement) return;
-    double d,q,E,prior,alpha,beta,E_initial,nx = 0.0,sigma = 0.1;
+    double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
     SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
     std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
@@ -1004,7 +1004,7 @@ void Spacetime::optimize()
     delete initial_state;
   }
   else if (solver == SIMPLEX) {
-    int in1,j,k,bindex,windex,ntrans = 0;
+    int in1,j,k = 0,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
     SYNARMOSMA::Geometry SR(*geometry),SE(*geometry);
     SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry);

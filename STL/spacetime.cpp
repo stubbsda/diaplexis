@@ -2004,7 +2004,7 @@ void Spacetime::build_initial_state(const std::vector<int>& locus)
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
     // assemble a random graph, with n = initial_size
     int level = 2,k = 0,ulimit;
-    double percent;
+    double percent = 0.0;
     bool found;
     std::set<int>* N;
     std::vector<Simplex> svector;

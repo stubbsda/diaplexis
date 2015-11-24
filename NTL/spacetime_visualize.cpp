@@ -342,7 +342,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     // set the vertex colour according to a thermal palette.
     int vx[2];
     unsigned char out[3];
-    double x,x_max,x_min,delta,theta,xvalue[nv];
+    double x,x_max = 0.0,x_min = 0.0,delta,theta,xvalue[nv];
 
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
