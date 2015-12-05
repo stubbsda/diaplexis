@@ -292,7 +292,7 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
 
 void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
 {
-  int i,vx[2],in1 = 0;
+  int i,vx[2];
   const int nv = (signed) events.size();
   const int ne = (signed) simplices[1].size();
   int offset[nv];
@@ -303,28 +303,24 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
       if (events[i].ubiquity == 1) continue;
-      offset[i] = in1;
-      in1++;
-      G->add_vertex();
+      offset[i] = G->add_vertex();
     }
     for(i=0; i<ne; ++i) {
       if (simplices[1][i].ubiquity == 1) continue;
       simplices[1][i].get_vertices(vx);
-      G->foliation_m(offset[vx[0]],offset[vx[1]]);
+      G->add_edge(offset[vx[0]],offset[vx[1]]);
     }
   }
   else {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
       if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      offset[i] = in1;
-      in1++;
-      G->add_vertex();
+      offset[i] = G->add_vertex();
     }
     for(i=0; i<ne; ++i) {
       if (NTL::divide(simplices[1][i].ubiquity,codex[sheet].colour) == 0) continue;
       simplices[1][i].get_vertices(vx);
-      G->foliation_m(offset[vx[0]],offset[vx[1]]);
+      G->add_edge(offset[vx[0]],offset[vx[1]]);
     }
   }
 }
@@ -360,10 +356,10 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet)
           offset[w] = G->add_vertex();
           next.insert(w);
         }
-        G->foliation_m(offset[v],offset[w]);
+        G->add_edge(offset[v],offset[w]);
       }
     }
-    if (next.empty() || hop >= steps) break;
+    if (next.empty() || hop == steps) break;
     hop++;
     current = next;
     next.clear();

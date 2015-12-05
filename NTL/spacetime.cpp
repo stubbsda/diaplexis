@@ -107,6 +107,8 @@ void Spacetime::set_default_values()
   compressible = false;
   superposable = false;
   foliodynamics = false;
+  instrument_convergence = true;
+  high_memory = true;
   checkpoint = true;
   checkpoint_frequency = 50;
   iterations = 0;
@@ -1157,12 +1159,13 @@ void Spacetime::structural_deficiency()
   of sheets, to be used in conjunction with the global quantities: the
   geometry (vertex coordinates) and energy.
   */
-  int i,j,k,c,n;
+  int i,j,k,c,nv_test = 0;
   double sum,sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
+  std::vector<double> tangle;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Graph G;
   const double na = double(cardinality(0,-1));
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
@@ -1176,27 +1179,28 @@ void Spacetime::structural_deficiency()
     R[i] = 0.0;
     rho[i] = 0.0;
   }
+  for(i=0; i<nt; ++i) {
+    tangle.push_back(0.0);
+  }
 
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j,tangle,G)
+#endif
   for(i=0; i<nv; ++i) {
+    for(j=0; j<nt; ++j) {
+      tangle[j] = 0.0;
+    }
     if (events[i].ubiquity == 1) {
-      n = (signed) events[i].entwinement.size();
-      for(j=n; j<nt; ++j) {
-        events[i].entwinement.push_back(0.0);
-      }
+      events[i].entwinement = tangle;
       continue;
     }
     if (!events[i].topology_modified) continue;
-    events[i].entwinement.clear();
     for(j=0; j<nt; ++j) {
-      if (NTL::divide(events[i].ubiquity,codex[j].colour) == 0) {
-        events[i].entwinement.push_back(0.0);
-        continue;
-      }
-      compute_graph(G,i,j);
-      sum = G->completeness() + G->entwinement()/double(G->order() - 1);
-      sum += 0.5*double(vertex_dimension(i,j) - 1); 
-      events[i].entwinement.push_back(sum);
+      if (NTL::divide(events[i].ubiquity,codex[j].colour) == 0) continue;
+      compute_graph(&G,i,j);
+      tangle[j] = G.completeness() + G.entwinement()/double(G.order() - 1) + 0.5*double(vertex_dimension(i,j) - 1);;
     }
+    events[i].entwinement = tangle;
     events[i].topological_dimension = vertex_dimension(i,-1);
     events[i].topology_modified = false;
   }
@@ -1243,6 +1247,9 @@ void Spacetime::structural_deficiency()
     }
   }
 
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j,k,l,l_inv,it,sum1,sum2) schedule(dynamic,1)
+#endif
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     if (events[i].neighbours.empty()) {
@@ -1304,18 +1311,22 @@ void Spacetime::structural_deficiency()
   global_deficiency =  E_G + 2.0*M_PI*double(euler_characteristic(-1)) - E_total;
 
   error = 0.0;
-  double terror = 0.0;
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     delta = events[i].deficiency;
     error += delta*delta;
-    terror += std::abs(delta);
   }
   error = std::sqrt(error)/na;
-  std::cout << "The total error is " << terror << std::endl;
+#ifdef VERBOSE
+  double total_error = 0.0;
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    total_error += std::abs(events[i].deficiency);
+  }
+  std::cout << "The total error is " << total_error << std::endl;
+#endif
 
   // Sanity check...
-  int nv_test = 0;
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
@@ -1324,7 +1335,6 @@ void Spacetime::structural_deficiency()
   if (nv_test == 0) assert(error < Spacetime::epsilon);
 
   //error += std::abs(global_deficiency)/double(na);
-  delete G;
 }
 
 int Spacetime::sheet_fission(int parent)
@@ -1387,7 +1397,7 @@ void Spacetime::compute_global_topology(int sheet)
   if (sheet == -1) {
     // The global case...
     H->compute(NX);
-    pi->compute(NX);
+    if (high_memory) pi->compute(NX);
     // Finally, the pseudomanifold and orientability properties
     pseudomanifold = NX->pseudomanifold(&boundary);
     if (pseudomanifold) orientable = NX->orientable();
@@ -1395,7 +1405,7 @@ void Spacetime::compute_global_topology(int sheet)
   else {
     bool bdry;
     codex[sheet].H->compute(NX);
-    codex[sheet].pi->compute(NX);
+    if (high_memory) codex[sheet].pi->compute(NX);
     codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
     codex[sheet].boundary = bdry;
     if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
@@ -1585,7 +1595,7 @@ bool Spacetime::global_operations()
 
   structural_deficiency();
 
-  analyze_convergence();
+  if (instrument_convergence) analyze_convergence();
 
   if (error < Spacetime::epsilon || iterations >= max_iter) converged = true;
 #ifdef VERBOSE
@@ -2187,18 +2197,19 @@ void Spacetime::initialize()
     compute_lightcones();
     compute_global_topology(-1);
     for(i=0; i<nt_initial; ++i) {
-      compute_global_topology(i);
+      codex[i].set_topology(H,pi,pseudomanifold,boundary,orientable);
     }
     structural_deficiency();
   }
   RND.initialize_poisson(Spacetime::ramosity);
 
   assert(energy_check());
-
-  anterior.events = events;
-  for(i=1; i<=Spacetime::ND; ++i) {
-    anterior.simplices[i] = simplices[i];
-    anterior.index_table[i] = index_table[i];
+  if (instrument_convergence) {
+    anterior.events = events;
+    for(i=1; i<=Spacetime::ND; ++i) {
+      anterior.simplices[i] = simplices[i];
+      anterior.index_table[i] = index_table[i];
+    }
   }
   if (diskless) return;
 

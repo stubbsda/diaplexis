@@ -19,6 +19,7 @@ namespace DIAPLEXIS {
     bool orientable;  
 
     void clear();
+    void set_topology(const SYNARMOSMA::Homology*,const SYNARMOSMA::Homotopy*,bool,bool,bool);
     void serialize(std::ofstream&) const;
     void deserialize(std::ifstream&);
    public:

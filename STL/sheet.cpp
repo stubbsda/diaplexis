@@ -93,6 +93,17 @@ void Sheet::clear()
   orientable = false;
 }
 
+void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotopy* p,bool pm,bool bd,bool orient)
+{
+  delete H;
+  H = new SYNARMOSMA::Homology(*K);
+  delete pi;
+  pi = new SYNARMOSMA::Homotopy(*p); 
+  pseudomanifold = pm;
+  boundary = bd;
+  orientable = orient;
+}
+
 void Sheet::serialize(std::ofstream& s) const
 {
   int i,n = (signed) ops.size();

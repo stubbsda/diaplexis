@@ -91,6 +91,12 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "PerturbEnergy") {
       perturb_energy = (value == "True") ? true : false;
     }
+    else if (name == "MemoryFootprint") {
+      high_memory = (value == "High") ? true : false;
+    }
+    else if (name == "InstrumentConvergence") {
+      instrument_convergence = (value == "True") ? true : false;
+    }
     else if (name == "Hyphansis") {
       if (value == "MUSICAL") weaving = MUSICAL;
     }
@@ -244,8 +250,8 @@ void Spacetime::read_parameters(const char* filename)
   // Finally for the background dimension...
   assert(D > 0);
 
-  geometry->initialize(euclidean,relational,uniform,D);
-  anterior.geometry.initialize(euclidean,relational,uniform,D);
+  geometry->initialize(euclidean,relational,uniform,high_memory,D);
+  if (instrument_convergence) anterior.geometry.initialize(euclidean,relational,uniform,high_memory,D);
 
   if (initial_state == RANDOM) {
     assert(edge_probability > 0.0 && edge_probability < 1.0);
@@ -529,17 +535,19 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(error);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("TopologyDelta");
-  nvalue = boost::lexical_cast<std::string>(topology_delta);
-  atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+  if (instrument_convergence) {
+    atom = rstep.append_child("TopologyDelta");
+    nvalue = boost::lexical_cast<std::string>(topology_delta);
+    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("GeometryDelta");
-  nvalue = boost::lexical_cast<std::string>(geometry_delta);
-  atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+    atom = rstep.append_child("GeometryDelta");
+    nvalue = boost::lexical_cast<std::string>(geometry_delta);
+    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("EnergyDelta");
-  nvalue = boost::lexical_cast<std::string>(energy_delta);
-  atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+    atom = rstep.append_child("EnergyDelta");
+    nvalue = boost::lexical_cast<std::string>(energy_delta);
+    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+  }
 
   atom = rstep.append_child("Pseudomanifold");
   nvalue = (pseudomanifold) ? "True" : "False";
@@ -566,9 +574,11 @@ void Spacetime::write_log() const
   nvalue = H->write();
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   
-  atom = rstep.append_child("Homotopy");
-  nvalue = pi->write();
-  atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+  if (high_memory) {
+    atom = rstep.append_child("Homotopy");
+    nvalue = pi->write();
+    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+  }
 
   ne = cardinality(1,-1);
   atom = rstep.append_child("Cyclomaticity");
@@ -819,10 +829,12 @@ void Spacetime::write_log() const
     atom = sheet.append_child("Homology");
     nvalue = codex[i].H->write();
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-  
-    atom = sheet.append_child("Homotopy");
-    nvalue = codex[i].pi->write();
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+ 
+    if (high_memory) { 
+      atom = sheet.append_child("Homotopy");
+      nvalue = codex[i].pi->write();
+      atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+    }
 
     atom = sheet.append_child("Cyclomaticity");
     nvalue = boost::lexical_cast<std::string>(ne-nn+1);
@@ -1072,6 +1084,8 @@ void Spacetime::read_state(const std::string& filename)
   // Skip changing the initial_state as it should remain DISKFILE...
   s.read((char*)(&original_state),sizeof(TOPOLOGY));
   s.read((char*)(&foliodynamics),sizeof(bool));
+  s.read((char*)(&instrument_convergence),sizeof(bool));
+  s.read((char*)(&high_memory),sizeof(bool));
   s.read((char*)(&superposable),sizeof(bool));
   s.read((char*)(&compressible),sizeof(bool));
   s.read((char*)(&permutable),sizeof(bool));
@@ -1111,31 +1125,33 @@ void Spacetime::read_state(const std::string& filename)
   read_complex(s);
 
   // Now read the anterior spacetime state and calculate the deltas...
-  Event v;
-  Simplex S;
+  if (instrument_convergence) {
+    Event v;
+    Simplex S;
 
-  s.read((char*)(&topology_delta),sizeof(double));
-  s.read((char*)(&geometry_delta),sizeof(double));
-  s.read((char*)(&energy_delta),sizeof(double));
+    s.read((char*)(&topology_delta),sizeof(double));
+    s.read((char*)(&geometry_delta),sizeof(double));
+    s.read((char*)(&energy_delta),sizeof(double));
 
-  s.read((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    v.deserialize(s);
-    anterior.events.push_back(v);
-  }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
     s.read((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      S.deserialize(s);
-      anterior.simplices[i].push_back(S);
+    for(i=0; i<n; ++i) {
+      v.deserialize(s);
+      anterior.events.push_back(v);
     }
-  }
 
-  // Regenerate the anterior index table...
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-      anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
+    for(i=1; i<=Spacetime::ND; ++i) {
+      s.read((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        S.deserialize(s);
+        anterior.simplices[i].push_back(S);
+      }
+    }
+
+    // Regenerate the anterior index table...
+    for(i=1; i<=Spacetime::ND; ++i) {
+      for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
+        anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
+      }
     }
   }
   s.close();
@@ -1263,6 +1279,8 @@ void Spacetime::write_state() const
   s.write((char*)(&checkpoint_frequency),sizeof(int));
   s.write((char*)(&initial_state),sizeof(TOPOLOGY));
   s.write((char*)(&foliodynamics),sizeof(bool));
+  s.write((char*)(&instrument_convergence),sizeof(bool));
+  s.write((char*)(&high_memory),sizeof(bool));
   s.write((char*)(&superposable),sizeof(bool));
   s.write((char*)(&compressible),sizeof(bool));
   s.write((char*)(&permutable),sizeof(bool));
@@ -1305,24 +1323,25 @@ void Spacetime::write_state() const
   write_complex(s);
 
   // Now write the deltas and the anterior spacetime state...
-  s.write((char*)(&topology_delta),sizeof(double));
-  s.write((char*)(&geometry_delta),sizeof(double));
-  s.write((char*)(&energy_delta),sizeof(double));
+  if (instrument_convergence) {
+    s.write((char*)(&topology_delta),sizeof(double));
+    s.write((char*)(&geometry_delta),sizeof(double));
+    s.write((char*)(&energy_delta),sizeof(double));
 
-  n = (signed) anterior.events.size();
-  s.write((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    anterior.events[i].serialize(s);
-  }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
-    n = (signed) anterior.simplices[i].size();
+    n = (signed) anterior.events.size();
     s.write((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      anterior.simplices[i][j].serialize(s);
+    for(i=0; i<n; ++i) {
+      anterior.events[i].serialize(s);
+    }
+
+    for(i=1; i<=Spacetime::ND; ++i) {
+      n = (signed) anterior.simplices[i].size();
+      s.write((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        anterior.simplices[i][j].serialize(s);
+      }
     }
   }
-
   // Close the file and return...
   s.close();
 }

@@ -89,6 +89,8 @@ namespace DIAPLEXIS {
     bool permutable;
     bool converged;
     bool foliodynamics;
+    bool high_memory;
+    bool instrument_convergence;
     bool checkpoint;
     int checkpoint_frequency;
     std::string hyphansis_file;
