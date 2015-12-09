@@ -916,7 +916,9 @@ int Spacetime::combinatorial_distance(int v1,int v2) const
   if (v1 == v2) return 0;
 
   // A sanity check...
+#ifdef DEBUG
   assert(!ghost(events[v1].ubiquity) && !ghost(events[v2].ubiquity));
+#endif
 
   // Handle the simplest case first, where v2 is a neighbour of v1...
   std::set<int>::const_iterator it = std::find(events[v1].neighbours.begin(),events[v1].neighbours.end(),v2);
@@ -967,7 +969,9 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
   if (v1 == v2) return 0;
 
   // A sanity check...
+#ifdef DEBUG
   assert(events[v1].ubiquity[sheet] == 1 && events[v2].ubiquity[sheet] == 1);
+#endif
 
   // So, we'll have to use Dijkstra's algorithm then...
   int i,n,v,md,base,l = -1;
@@ -1222,8 +1226,10 @@ bool Spacetime::consistent(int sheet) const
   const int nv = (signed) events.size();
   const int ulimit = dimension(sheet);
 
+#ifdef DEBUG
   assert(simplices[0].empty());
   assert(index_table[0].empty());
+#endif
 
   if (sheet == -1) {
     for(i=Spacetime::ND; i>=2; i--) {

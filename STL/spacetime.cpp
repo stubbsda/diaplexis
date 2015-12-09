@@ -1156,10 +1156,9 @@ void Spacetime::structural_deficiency()
   of sheets, to be used in conjunction with the global quantities: the
   geometry (vertex coordinates) and energy.
   */
-  int i,j,k,c,nv_test = 0;
+  int i,j,k,c;
   double sum,sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
-  std::vector<double> tangle;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Graph G;
@@ -1175,13 +1174,18 @@ void Spacetime::structural_deficiency()
     R[i] = 0.0;
     rho[i] = 0.0;
   }
-  for(i=0; i<nt; ++i) {
-    tangle.push_back(0.0);
-  }
 
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,tangle,G)
+  {
 #endif
+  std::vector<double> tangle;
+  for(i=0; i<nt; ++i) {
+    tangle.push_back(0.0);
+  }
+#ifdef _OPENMP
+#pragma omp for
+#endif  
   for(i=0; i<nv; ++i) {
     for(j=0; j<nt; ++j) {
       tangle[j] = 0.0;
@@ -1200,6 +1204,9 @@ void Spacetime::structural_deficiency()
     events[i].topological_dimension = vertex_dimension(i,-1);
     events[i].topology_modified = false;
   }
+#ifdef _OPENMP
+  }
+#endif
 
   for(i=0; i<nv; ++i) {
     sum = 0.0;
@@ -1322,13 +1329,15 @@ void Spacetime::structural_deficiency()
 #endif
 
   // Sanity check...
+#ifdef DEBUG
+  int nv_test = 0;
   for(i=0; i<nv; ++i) {
     if (ghost(events[i].ubiquity)) continue;
     if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
     nv_test++;
   }
   if (nv_test == 0) assert(error < Spacetime::epsilon);
-
+#endif
   //error += std::abs(global_deficiency)/double(na);
 }
 
@@ -1481,7 +1490,6 @@ bool Spacetime::global_operations()
   }
 
   // First perform the geometry and energy diffusion...
-  assert(consistent(-1));
   if (adjust_dimension()) {
     compute_volume();
     compute_curvature();
@@ -1593,7 +1601,9 @@ bool Spacetime::global_operations()
   compute_volume();
   compute_curvature();
   compute_obliquity();
+#ifdef DEBUG
   assert(consistent(-1));
+#endif
 
   compute_lightcones();
   compute_global_topology(-1);
@@ -2205,8 +2215,9 @@ void Spacetime::initialize()
     structural_deficiency();
   }
   RND.initialize_poisson(Spacetime::ramosity);
-
+#ifdef DEBUG
   assert(energy_check());
+#endif
 
   if (instrument_convergence) {
     anterior.events = events;

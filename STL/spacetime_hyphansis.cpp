@@ -835,7 +835,9 @@ void Spacetime::simplicial_implication(int base,int sheet) const
     }
   }
   else {
+#ifdef DEBUG
     assert(events[base].ubiquity[sheet] == 1);
+#endif
     std::set<int>::const_iterator jt;
 
     d = 0;
@@ -1080,7 +1082,9 @@ bool Spacetime::compensation_g(int base,int sheet)
     S.initialize(base,j,locus);
     qt = index_table[1].find(S.vertices);
     if (qt != index_table[1].end()) {
+#ifdef DEBUG
       assert(simplices[1][qt->second].ubiquity[sheet] == 0);
+#endif
 #ifdef VERBOSE
       std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
 #endif
@@ -1504,7 +1508,9 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
       }
     } while((signed) linked.size() < ncomp);
     nsedge = (signed) sedge.size()/2;
+#ifdef DEBUG
     assert((nsedge+1) == ncomp);
+#endif
 #ifdef VERBOSE
     std::cout << "Adding " << nsedge << " edge(s) to reconnect the spacetime complex..." << std::endl;
 #endif
@@ -1527,7 +1533,9 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
       locus[l] = 0;
     }
     nc -= nsedge;
+#ifdef DEBUG
     assert(connected(-1));
+#endif
     delete[] cvertex;
   }
   return nc;
@@ -2178,8 +2186,10 @@ void Spacetime::regularization(bool minimal,int sheet)
           }
         }
       }
+#ifdef DEBUG
       assert(v1 > -1);
       assert(v2 > -1);
+#endif
       j = RND.irandom(colours);
       locus[j] = 1;
       S.initialize(v1,v2,locus);
@@ -2193,7 +2203,9 @@ void Spacetime::regularization(bool minimal,int sheet)
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
       else {
+#ifdef DEBUG
         assert(ghost(simplices[1][qt->second].ubiquity));
+#endif
 #ifdef VERBOSE
         std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
 #endif
@@ -2226,9 +2238,10 @@ void Spacetime::regularization(bool minimal,int sheet)
 #ifdef VERBOSE
       std::cout << "Linking together " << v1 << " and " << v2 << " at a distance of " << mdelta << std::endl;
 #endif
+#ifdef DEBUG
       assert(v1 > -1);
       assert(v2 > -1);
-
+#endif
       S.initialize(v1,v2,locus);
       qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
@@ -2241,7 +2254,9 @@ void Spacetime::regularization(bool minimal,int sheet)
     }
   }
   compute_neighbours();
+#ifdef DEBUG
   assert(connected(sheet));
+#endif
   compute_entourages(sheet);
   delete[] cvertex;
 }
@@ -2634,7 +2649,9 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
       n = (signed) simplices[i].size();
       for(j=0; j<(signed) mutation[i].size(); ++j) {
         in1 = mutation[i][j];
+#ifdef DEBUG
         assert(in1 < n);
+#endif
         vx = simplices[i][in1].vertices;
         for(l=0; l<n; ++l) {
           if (l == in1) continue;
@@ -2801,7 +2818,9 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   // Then recalculate the entourages...
   compute_entourages(-1);
   compute_neighbours();
+#ifdef DEBUG
   assert(consistent(-1));
+#endif
 }
 
 void Spacetime::superposition_fission(std::set<int>& vmodified)
@@ -2879,7 +2898,9 @@ bool Spacetime::vertex_twist(int sheet)
   std::stringstream s;
   static int first = 1;
 
+#ifdef DEBUG
   assert(consistent(sheet));
+#endif
 
   cutoff = (first == 1) ? 2 : 1;
 
@@ -3273,7 +3294,9 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       elements.push_back(*beg);
     }
     if (elements.empty()) continue;
+#ifdef DEBUG
     assert(elements.size() == 3);
+#endif
     its = boost::lexical_cast<int>(elements[0]) - 1;
     if (its < iterations) continue;
     if (its > iterations) break;

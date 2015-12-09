@@ -326,7 +326,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     geometry->compute_distances(last);
   }
   else {
-    int j,k;
+    int j,k,na = 0;
     double l,ell;
     std::set<int> S;
     std::vector<double> x1,x2;
@@ -337,8 +337,13 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     const double sq_cutoff = edge_flexibility_threshold*edge_flexibility_threshold;
     double alpha[D];
 
-    assert(system_size == D*nv);
-
+    for(i=0; i<nv; ++i) {
+      if (ghost(events[i].ubiquity)) continue;
+      na++;
+    }
+#ifdef DEBUG
+    assert(system_size == D*na);
+#endif
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
@@ -747,7 +752,9 @@ bool Spacetime::realizable(int d,int n) const
     }
   }
   dsyev_(&jtype,&uplo,&dp1,A,&dp1,w,work,&nwork,&info);
+#ifdef DEBUG
   assert(info == 0);
+#endif
   for(i=0; i<dp1; ++i) {
     if (w[i] < 0.0) {
       output = false;

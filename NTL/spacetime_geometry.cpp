@@ -344,9 +344,9 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
       if (events[i].ubiquity == 1) continue;
       na++;
     }
-
+#ifdef DEBUG
     assert(system_size == D*na);
-
+#endif
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,l,x1,x2,ell,alpha,it,S,qt)
 #endif
@@ -756,7 +756,9 @@ bool Spacetime::realizable(int d,int n) const
     }
   }
   dsyev_(&jtype,&uplo,&dp1,A,&dp1,w,work,&nwork,&info);
+#ifdef DEBUG
   assert(info == 0);
+#endif
   for(i=0; i<dp1; ++i) {
     if (w[i] < 0.0) {
       output = false;
