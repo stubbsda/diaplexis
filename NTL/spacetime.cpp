@@ -1159,18 +1159,23 @@ void Spacetime::structural_deficiency()
   of sheets, to be used in conjunction with the global quantities: the
   geometry (vertex coordinates) and energy.
   */
-  int i,j,k,c;
+  int i,j,k,v1,v2,v3,c = 0;
   double sum,sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Graph G;
-  const double na = double(cardinality(0,-1));
+  const int na = cardinality(0,-1);
   const int nv = (signed) events.size();
   const int nt = (signed) codex.size();
   double R[nv],gvalue[nv],length_deviation[nv],rho[nv];
+  int avertices[na];
 
   for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity > 1) {
+      avertices[c] = i;
+      c++;
+    }
     events[i].deficiency = 0.0;
     events[i].geometric_deficiency = 0.0;
     length_deviation[i] = 0.0;
@@ -1221,33 +1226,52 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,l,found,d1,d2) schedule(dynamic,1)
+#pragma omp parallel for default(shared) private(i,j,k,v1,v2,v3,l,found,d1,d2) schedule(dynamic,1)
 #endif
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    for(j=1+i; j<nv; ++j) {
-      if (events[j].ubiquity == 1) continue;
-      l = geometry->get_distance(i,j,false);
+  for(i=0; i<na; ++i) {
+    v1 = avertices[i];
+    for(j=1+i; j<na; ++j) {
+      v2 = avertices[j];
+      l = geometry->get_distance(v1,v2,false);
       if (l < 3.8025 || l > 4.2025) continue;
       // See if there is a third vertex that lies between these two...
       found = false;
-      for(k=0; k<nv; ++k) {
-        if (events[k].ubiquity == 1) continue;
-        if (k == i || k == j) continue;
-        d1 = geometry->get_distance(i,k,false);
-        d2 = geometry->get_distance(j,k,false);
+      for(k=0; k<i; ++k) {
+        v3 = avertices[k];
+        d1 = geometry->get_distance(v1,v3,false);
+        d2 = geometry->get_distance(v2,v3,false);
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
         }
       }
       if (found) continue;
-      gvalue[i] += 0.1;
+      for(k=1+i; k<j; ++k) {
+        v3 = avertices[k];
+        d1 = geometry->get_distance(v1,v3,false);
+        d2 = geometry->get_distance(v2,v3,false);
+        if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+      for(k=1+j; k<na; ++k) {
+        v3 = avertices[k];
+        d1 = geometry->get_distance(v1,v3,false);
+        d2 = geometry->get_distance(v2,v3,false);
+        if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
 #ifdef _OPENMP
 #pragma omp critical
      {
 #endif
-      gvalue[j] += 0.1;
+      gvalue[v1] += 0.1;
+      gvalue[v2] += 0.1;
 #ifdef _OPENMP
      }
 #endif
@@ -1255,20 +1279,15 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,l,l_inv,it,sum1,sum2) schedule(dynamic,1)
+#pragma omp parallel for default(shared) private(i,j,k,v1,l,l_inv,it,sum1,sum2) 
 #endif
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    if (events[i].neighbours.empty()) {
-      R[i] = gvalue[i];
-      rho[i] = events[i].energy;
-      continue;
-    }
+  for(i=0; i<na; ++i) {
+    v1 = avertices[i];
     sum1 = 0.0;
     sum2 = 0.0;
-    k = 0;
-    length_deviation[i] = 0.0;
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+    k = (events[v1].neighbours.empty()) ? 1 : (signed) events[v1].neighbours.size();
+    length_deviation[v1] = 0.0;
+    for(it=events[v1].neighbours.begin(); it!=events[v1].neighbours.end(); ++it) {
       j = *it;
       l = geometry->get_distance(i,j,true);
       l_inv = 1.0/(1.0 + l);
@@ -1276,12 +1295,11 @@ void Spacetime::structural_deficiency()
       sum2 += events[j].energy*l_inv;
       if (l < 1.0) {
         // To handle the case of null edges...
-        length_deviation[i] += 10.0*(l - 1.0)*(l - 1.0);
+        length_deviation[v1] += 10.0*(l - 1.0)*(l - 1.0);
       }
       else {
-        length_deviation[i] += std::log(l)*std::log(l);
+        length_deviation[v1] += std::log(l)*std::log(l);
       }
-      k++;
       /*
       if (simplices[1][n].orientation == SYNARMOSMA::DISPARATE) continue;
       u = simplices[1][n].ubiquity.count();
@@ -1291,16 +1309,16 @@ void Spacetime::structural_deficiency()
       sum2 += double(sigma)*events[j].energy*l_inv;
       */
     }
-    length_deviation[i] = length_deviation[i]/double(k);
-    R[i] = gvalue[i]; // - sum1/double(k);
-    rho[i] = events[i].energy; // + sum2/double(k);
+    length_deviation[v1] = length_deviation[v1]/double(k);
+    R[v1] = gvalue[v1]; // - sum1/double(k);
+    rho[v1] = events[v1].energy; // + sum2/double(k);
   }
   
   // The local part of the structure equations
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    events[i].deficiency = R[i] + events[i].obliquity + length_deviation[i] + events[i].curvature - Spacetime::Lambda*rho[i];
-    events[i].geometric_deficiency = events[i].obliquity + length_deviation[i] + events[i].curvature;
+  for(i=0; i<na; ++i) {
+    v1 = avertices[i];
+    events[v1].deficiency = R[v1] + events[v1].obliquity + length_deviation[v1] + events[v1].curvature - Spacetime::Lambda*rho[v1];
+    events[v1].geometric_deficiency = events[v1].obliquity + length_deviation[v1] + events[v1].curvature;
   }
 
   // Now the chromatic energy sum...
@@ -1318,17 +1336,15 @@ void Spacetime::structural_deficiency()
   global_deficiency =  E_G + 2.0*M_PI*double(euler_characteristic(-1)) - E_total;
 
   error = 0.0;
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    delta = events[i].deficiency;
+  for(i=0; i<na; ++i) {
+    delta = events[avertices[i]].deficiency;
     error += delta*delta;
   }
-  error = std::sqrt(error)/na;
+  error = std::sqrt(error)/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    total_error += std::abs(events[i].deficiency);
+  for(i=0; i<na; ++i) {
+    total_error += std::abs(events[avertices[i]].deficiency);
   }
   std::cout << "The total error is " << total_error << std::endl;
 #endif
@@ -1336,9 +1352,8 @@ void Spacetime::structural_deficiency()
   // Sanity check...
 #ifdef DEBUG
   int nv_test = 0;
-  for(i=0; i<nv; ++i) {
-    if (events[i].ubiquity == 1) continue;
-    if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
+  for(i=0; i<na; ++i) {
+    if (std::abs(events[avertices[i]].deficiency) < Spacetime::epsilon) continue;
     nv_test++;
   }
   if (nv_test == 0) assert(error < Spacetime::epsilon);
