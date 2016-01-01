@@ -25,7 +25,7 @@ void Spacetime::read_parameters(const char* filename)
     name = params.name();
     value = params.first_child().value();
 
-    if (name == "InitialVertices") {
+    if (name == "InitialEvents") {
       initial_size = boost::lexical_cast<int>(value);
     }
     else if (name == "InitialState") {
@@ -366,7 +366,7 @@ void Spacetime::write_log() const
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
     s << "<Global>" << std::endl;
-    if (initial_state != SINGLETON) s << "<InitialVertices>" << initial_size << "</InitialVertices>" << std::endl;
+    if (initial_state != SINGLETON) s << "<InitialEvents>" << initial_size << "</InitialEvents>" << std::endl;
     s << "<InitialSheets>" << nt_initial << "</InitialSheets>" << std::endl;
     s << "<MaxIterations>" << max_iter << "</MaxIterations>" << std::endl;
     s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
@@ -585,15 +585,15 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(ne-nn+1);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("ActiveVertices");
+  atom = rstep.append_child("ActiveEvents");
   nvalue = boost::lexical_cast<std::string>(nn);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("SourceVertices");
+  atom = rstep.append_child("SourceEvents");
   nvalue = boost::lexical_cast<std::string>(nsource);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("SinkVertices");
+  atom = rstep.append_child("SinkEvents");
   nvalue = boost::lexical_cast<std::string>(nsink);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -631,15 +631,15 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   vertex_degree_statistics(vdata,-1);
-  atom = rstep.append_child("MinVertexDegree");
+  atom = rstep.append_child("MinEventDegree");
   nvalue = boost::lexical_cast<std::string>(vdata[1]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("AvgVertexDegree");
+  atom = rstep.append_child("AvgEventDegree");
   nvalue = boost::lexical_cast<std::string>(vdata[2]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("MaxVertexDegree");
+  atom = rstep.append_child("MaxEventDegree");
   nvalue = boost::lexical_cast<std::string>(vdata[0]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -647,23 +647,23 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(total_energy(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("MinVertexEnergy");
+  atom = rstep.append_child("MinEventEnergy");
   nvalue = boost::lexical_cast<std::string>(min_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("AvgVertexEnergy");
+  atom = rstep.append_child("AvgEventEnergy");
   nvalue = boost::lexical_cast<std::string>(avg_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("MaxVertexEnergy");
+  atom = rstep.append_child("MaxEventEnergy");
   nvalue = boost::lexical_cast<std::string>(max_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("AtemporalVertices");
+  atom = rstep.append_child("AtemporalEvents");
   nvalue = boost::lexical_cast<std::string>(nat);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  atom = rstep.append_child("ChiralVertices");
+  atom = rstep.append_child("ChiralEvents");
   nvalue = boost::lexical_cast<std::string>(nch);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -840,15 +840,15 @@ void Spacetime::write_log() const
     nvalue = boost::lexical_cast<std::string>(ne-nn+1);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("ActiveVertices");
+    atom = sheet.append_child("ActiveEvents");
     nvalue = boost::lexical_cast<std::string>(nn);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("SourceVertices");
+    atom = sheet.append_child("SourceEvents");
     nvalue = boost::lexical_cast<std::string>(nsource);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("SinkVertices");
+    atom = sheet.append_child("SinkEvents");
     nvalue = boost::lexical_cast<std::string>(nsink);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -884,27 +884,27 @@ void Spacetime::write_log() const
     nvalue = boost::lexical_cast<std::string>(max_length);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MinVertexDegree");
+    atom = sheet.append_child("MinEventDegree");
     nvalue = boost::lexical_cast<std::string>(min_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("AvgVertexDegree");
+    atom = sheet.append_child("AvgEventDegree");
     nvalue = boost::lexical_cast<std::string>(avg_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MaxVertexDegree");
+    atom = sheet.append_child("MaxEventDegree");
     nvalue = boost::lexical_cast<std::string>(max_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MinVertexDimension");
+    atom = sheet.append_child("MinEventDimension");
     nvalue = boost::lexical_cast<std::string>(vd_min[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("AvgVertexDimension");
+    atom = sheet.append_child("AvgEventDimension");
     nvalue = boost::lexical_cast<std::string>(vd_avg[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MaxVertexDimension");
+    atom = sheet.append_child("MaxEventDimension");
     nvalue = boost::lexical_cast<std::string>(vd_max[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -912,23 +912,23 @@ void Spacetime::write_log() const
     nvalue = boost::lexical_cast<std::string>(total_energy(i));
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MinVertexEnergy");
+    atom = sheet.append_child("MinEventEnergy");
     nvalue = boost::lexical_cast<std::string>(min_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("AvgVertexEnergy");
+    atom = sheet.append_child("AvgEventEnergy");
     nvalue = boost::lexical_cast<std::string>(avg_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("MaxVertexEnergy");
+    atom = sheet.append_child("MaxEventEnergy");
     nvalue = boost::lexical_cast<std::string>(max_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("AtemporalVertices");
+    atom = sheet.append_child("AtemporalEvents");
     nvalue = boost::lexical_cast<std::string>(nat);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    atom = sheet.append_child("ChiralVertices");
+    atom = sheet.append_child("ChiralEvents");
     nvalue = boost::lexical_cast<std::string>(nch);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
