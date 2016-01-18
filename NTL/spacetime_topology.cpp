@@ -250,7 +250,7 @@ void Spacetime::compute_simplex_energy(int d,int n)
   simplices[d][n].get_vertices(vx);
 
   for(i=0; i<1+d; ++i) {
-    alpha += events[vx[i]].energy;
+    alpha += events[vx[i]].get_energy();
   }
   simplices[d][n].energy = alpha/double(1+d);
 }

@@ -5,7 +5,7 @@ extern SYNARMOSMA::Random RND;
 using namespace DIAPLEXIS;
 
 const double Spacetime::ramosity = 0.15;
-const double Spacetime::epsilon = 0.00001;
+const double Spacetime::convergence_threshold = 0.00001;
 const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
@@ -500,13 +500,13 @@ void Spacetime::get_energy_values(std::vector<double>& output,int sheet) const
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
-      output.push_back(events[i].energy);
+      output.push_back(events[i].get_energy());
     }
   } 
   else {
     for(i=0; i<nv; ++i) {
       if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      output.push_back(events[i].energy);
+      output.push_back(events[i].get_energy());
     }
   }
 }
@@ -1005,7 +1005,7 @@ bool Spacetime::correctness()
   compute_curvature();
   compute_obliquity();
   structural_deficiency();
-  if (std::abs(anterior_error - error) < Spacetime::epsilon) return true;
+  if (std::abs(anterior_error - error) < std::numeric_limits<double>::epsilon()) return true;
   std::cout << "Error difference is " << anterior_error << "  " << error << "  " << std::abs(anterior_error - error) << std::endl;
   return false;
 }
@@ -1016,7 +1016,7 @@ void Spacetime::write_vertex_data(int v) const
   std::cout << "For vertex " << v << " we have:" << std::endl;
   std::cout << "    Incept = " << events[v].incept << std::endl;
   std::cout << "    Structural deficiency = " << events[v].deficiency << std::endl;
-  std::cout << "    Energy = " << events[v].energy << std::endl;
+  std::cout << "    Energy = " << events[v].get_energy() << std::endl;
   std::cout << "    Orthogonality = " << events[v].obliquity << std::endl;
   std::cout << std::endl;
 }
@@ -1136,9 +1136,9 @@ bool Spacetime::energy_check() const
   const int nv = (signed) events.size();
 
   for(int i=0; i<nv; ++i) {
-    if (events[i].energy > 0.0) {
+    if (!events[i].zero_energy()) {
       if (events[i].ubiquity == 1) {
-        std::cout << "Potential problem here: " << i << "  " << events[i].energy << std::endl;
+        std::cout << "Potential problem here: " << i << "  " << events[i].get_energy() << std::endl;
         output = false;
       }
     }
@@ -1292,7 +1292,7 @@ void Spacetime::structural_deficiency()
       l = geometry->get_distance(i,j,true);
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
-      sum2 += events[j].energy*l_inv;
+      sum2 += events[j].get_energy()*l_inv;
       if (l < 1.0) {
         // To handle the case of null edges...
         length_deviation[v1] += 10.0*(l - 1.0)*(l - 1.0);
@@ -1306,12 +1306,12 @@ void Spacetime::structural_deficiency()
       // How to determine if j lies in the chronological future of i?
       sigma = (simplices[1][n].orientation == SYNARMOSMA::AFTER) ? 1 : -1;
       if (j < i) sigma = -sigma;
-      sum2 += double(sigma)*events[j].energy*l_inv;
+      sum2 += double(sigma)*events[j].get_energy()*l_inv;
       */
     }
     length_deviation[v1] = length_deviation[v1]/double(k);
     R[v1] = gvalue[v1]; // - sum1/double(k);
-    rho[v1] = events[v1].energy; // + sum2/double(k);
+    rho[v1] = events[v1].get_energy(); // + sum2/double(k);
   }
   
   // The local part of the structure equations
@@ -1327,7 +1327,7 @@ void Spacetime::structural_deficiency()
     for(j=0; j<nt; ++j) {
       if (NTL::divide(events[i].ubiquity,codex[j].colour) == 1) c++;
     }
-    E_total += double(c)*events[i].energy;
+    E_total += double(c)*events[i].get_energy();
   }
   E_total = E_total/double(nt);
 
@@ -1353,10 +1353,10 @@ void Spacetime::structural_deficiency()
 #ifdef DEBUG
   int nv_test = 0;
   for(i=0; i<na; ++i) {
-    if (std::abs(events[avertices[i]].deficiency) < Spacetime::epsilon) continue;
+    if (std::abs(events[avertices[i]].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     nv_test++;
   }
-  if (nv_test == 0) assert(error < Spacetime::epsilon);
+  if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
 #endif
   //error += std::abs(global_deficiency)/double(na);
 }
@@ -1516,13 +1516,13 @@ bool Spacetime::global_operations()
   double nc = double(cardinality(0,-1));
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
-    E_avg += events[i].energy;
+    E_avg += events[i].get_energy();
   }
   E_avg = E_avg/nc;
   sigma = 0.0;
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
-    sigma += (events[i].energy - E_avg)*(events[i].energy - E_avg);
+    sigma += (events[i].get_energy() - E_avg)*(events[i].get_energy() - E_avg);
   }
   sigma = std::sqrt(sigma/nc);
   std::cout << "Standard deviation of vertex energy is " << sigma << std::endl;
@@ -1536,7 +1536,7 @@ bool Spacetime::global_operations()
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
     histo2[vertex_dimension(i,-1)] += 1;
-    if (events[i].energy < Spacetime::epsilon) continue;
+    if (events[i].zero_energy()) continue;
     histogram[vertex_dimension(i,-1)] += 1;
   }
   for(i=0; i<=Spacetime::ND; ++i) {
@@ -1623,9 +1623,9 @@ bool Spacetime::global_operations()
 
   if (instrument_convergence) analyze_convergence();
 
-  if (error < Spacetime::epsilon || iterations >= max_iter) converged = true;
+  if (error < Spacetime::convergence_threshold || iterations >= max_iter) converged = true;
 #ifdef VERBOSE
-  std::cout << iterations << "  " << error << "  " << Spacetime::epsilon << "  " << converged << std::endl;
+  std::cout << iterations << "  " << error << "  " << Spacetime::convergence_threshold << "  " << converged << std::endl;
 #endif
 
   if (converged) {
@@ -1692,10 +1692,10 @@ void Spacetime::analyze_convergence()
   geometry_delta = geometry_change(geometry,&(anterior.geometry));
 
   for(i=0; i<nva; ++i) {
-    edelta += std::abs(events[i].energy - anterior.events[i].energy);
+    edelta += std::abs(events[i].get_energy() - anterior.events[i].get_energy());
   }
   for(i=nva; i<nv; ++i) {
-    edelta += events[i].energy;
+    edelta += events[i].get_energy();
   }
   energy_delta = edelta;
 
@@ -1736,7 +1736,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
     chi = simplices[n][m].ubiquity;
     if (chi == 1) continue;
     E = simplices[n][m].energy;
-    if (E < Spacetime::epsilon) continue;
+    if (E < std::numeric_limits<double>::epsilon()) continue;
     tau = chi;
     alpha = std::exp(-temperature*E);
     for(j=0; j<nt; ++j) {
@@ -1977,11 +1977,11 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
         for(i=0; i<geometry->dimension(); ++i) {
           j += SYNARMOSMA::ipow(n,geometry->dimension()-1-i)*RND.irandom(k-2,k+2);
         }
-        events[j].energy = 1000.0*(0.5 + RND.drandom()/2.0);
+        events[j].set_energy(1000.0*(0.5 + RND.drandom()/2.0));
       }
       else {
         for(i=0; i<(signed) v.size(); ++i) {
-          events[v[i]].energy = 5.0*RND.drandom();
+          events[v[i]].set_energy(5.0*RND.drandom());
         }
       }
     }
@@ -1995,7 +1995,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
     else {
       geometry->vertex_addition(svalue);
     }
-    vt.energy = 5000.0*(0.5 + RND.drandom()/2.0);
+    vt.set_energy(5000.0*(0.5 + RND.drandom()/2.0));
     events.push_back(vt);
   }
   else if (initial_state == MONOPLEX) {
@@ -2003,7 +2003,7 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
     std::set<int> vx;
     int ulimit = geometry->dimension();
     if (initial_dim > geometry->dimension()) ulimit = initial_dim;
-    if (perturb_energy) vt.energy = 500.0 + (2000.0/double(initial_dim))*RND.drandom();
+    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND.drandom());
 
     if (!relational) {
       svalue.clear();
@@ -2054,8 +2054,8 @@ void Spacetime::build_initial_state(const NTL::ZZ locus)
     // has non-zero energy
     do {
       i = RND.irandom(initial_size);
-      if (events[i].energy > 0.0) continue;
-      events[i].energy = 10.0*RND.drandom();
+      if (!events[i].zero_energy()) continue;
+      events[i].set_energy(10.0*RND.drandom());
       k += 1;
       percent = double(k)/nv;
     } while(percent < 0.1);

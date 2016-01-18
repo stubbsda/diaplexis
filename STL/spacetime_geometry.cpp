@@ -37,12 +37,12 @@ double Spacetime::total_energy(int sheet) const
 
   if (sheet == -1) {
     for(int i=0; i<nv; ++i) {
-      if (!ghost(events[i].ubiquity)) sum += events[i].energy;
+      if (!ghost(events[i].ubiquity)) sum += events[i].get_energy();
     }
   }
   else {
     for(int i=0; i<nv; ++i) {
-      if (events[i].ubiquity[sheet] == 1) sum += events[i].energy;
+      if (events[i].ubiquity[sheet] == 1) sum += events[i].get_energy();
     }
   }
   return sum;
@@ -106,7 +106,7 @@ void Spacetime::chorogenesis(int nsteps)
   std::vector<double> x,y;
   system_size = 0;
   for(i=0; i<nv; ++i) {
-    events[i].energy = 0.0;
+    events[i].nullify_energy();
     geometry->get_coordinates(i,x);
     system_size += D;
     if (D == (signed) x.size()) continue;
@@ -216,12 +216,12 @@ void Spacetime::determine_flexible_edges()
   for(i=0; i<ne; ++i) {
     if (ghost(simplices[1][i].ubiquity)) continue;
     simplices[1][i].get_vertices(vx);
-    if (events[vx[0]].energy > 0.0 || events[vx[1]].energy > 0.0) continue;
+    if (!events[vx[0]].zero_energy() || !events[vx[1]].zero_energy()) continue;
     // Now check to see if one of these vertices has a neighbour with energy > 0
     e_neighbour = false;
     n = vx[0];
     for(it=events[n].neighbours.begin(); it!=events[n].neighbours.end(); ++it) {
-      if (events[*it].energy > 0.0) e_neighbour = true;
+      if (!events[*it].zero_energy()) e_neighbour = true;
     }
     if (e_neighbour) {
       flexible_edge[i] = 1;
@@ -229,7 +229,7 @@ void Spacetime::determine_flexible_edges()
     }
     n = vx[1];
     for(it=events[n].neighbours.begin(); it!=events[n].neighbours.end(); ++it) {
-      if (events[*it].energy > 0.0) e_neighbour = true;
+      if (!events[*it].zero_energy()) e_neighbour = true;
     }
     if (e_neighbour) flexible_edge[i] = 1;
   }
@@ -255,7 +255,7 @@ double Spacetime::compute_abnormality() const
       continue;
     }
     d = std::sqrt(d);
-    ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[vx[0]].energy + events[vx[1]].energy)));
+    ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[vx[0]].get_energy() + events[vx[1]].get_energy())));
     output += (d - ell)*(d - ell);
   }
   return output;
@@ -286,7 +286,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x) const
       continue;
     }
     d = std::sqrt(d);
-    ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[vx[0]].energy + events[vx[1]].energy)));
+    ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[vx[0]].get_energy() + events[vx[1]].get_energy())));
     output += (d - ell)*(d - ell);
   }
   return output;
@@ -370,7 +370,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
           }
         }
         else {
-          ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[i].energy + events[k].energy)));
+          ell = 1.0/(1.0 + pfactor*std::atan(0.5*(events[i].get_energy() + events[k].get_energy())));
           l = std::sqrt(l);
           for(j=0; j<D; ++j) {
             alpha[j] += 2.0*(l - ell)*(x1[j] - x2[j])/l;
@@ -632,7 +632,7 @@ void Spacetime::compute_obliquity()
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);
     }
     rho = rho/double(events[i].neighbours.size() - 1);
-    if (rho < Spacetime::epsilon) rho = 0.0;
+    if (rho < std::numeric_limits<double>::epsilon()) rho = 0.0;
     events[i].obliquity = rho;
   }
 }

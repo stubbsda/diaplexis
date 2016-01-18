@@ -94,10 +94,9 @@ void Event::serialize(std::ofstream& s) const
   double l;
   std::set<int>::const_iterator it;
 
-  s.write((char*)(&incept),sizeof(int));
-  s.write((char*)(&topological_dimension),sizeof(int));
+  Vertex::serialize(s);
+
   s.write((char*)(&deficiency),sizeof(double));
-  s.write((char*)(&energy),sizeof(double));
   s.write((char*)(&curvature),sizeof(double));
   s.write((char*)(&obliquity),sizeof(double));
   s.write((char*)(&geometric_deficiency),sizeof(double));
@@ -109,30 +108,12 @@ void Event::serialize(std::ofstream& s) const
     l = entwinement[i];
     s.write((char*)(&l),sizeof(double));
   }
-  in1 = (signed) neighbours.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=neighbours.begin(); it!=neighbours.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
+
   n = ubiquity.size();
   s.write((char*)(&n),sizeof(int));
   for(i=0; i<n; ++i) {
     s.write((char*)(&ubiquity[i]),sizeof(int));
   }
-  in1 = (signed) anterior.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=anterior.begin(); it!=anterior.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
-  in1 = (signed) posterior.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=posterior.begin(); it!=posterior.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
-  theorem.serialize(s);
 }
 
 void Event::deserialize(std::ifstream& s)
@@ -140,12 +121,13 @@ void Event::deserialize(std::ifstream& s)
   int i,j,in1;
   double xc;
 
-  clear();
+  entwinement.clear();
+  topology_modified = true;
+  geometry_modified = true;
+  ubiquity.clear();
+  Vertex::deserialize(s);
 
-  s.read((char*)(&incept),sizeof(int));
-  s.read((char*)(&topological_dimension),sizeof(int));
   s.read((char*)(&deficiency),sizeof(double));
-  s.read((char*)(&energy),sizeof(double));
   s.read((char*)(&curvature),sizeof(double));
   s.read((char*)(&obliquity),sizeof(double));
   s.read((char*)(&geometric_deficiency),sizeof(double));
@@ -156,26 +138,11 @@ void Event::deserialize(std::ifstream& s)
     s.read((char*)(&xc),sizeof(double));
     entwinement.push_back(xc);
   }
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    neighbours.insert(in1);
-  }
+
   s.read((char*)(&j),sizeof(int));
   for(i=0; i<j; ++i) {
     s.read((char*)(&in1),sizeof(int));
     ubiquity.push_back(in1);
   }
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    anterior.insert(in1);
-  }
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    posterior.insert(in1);
-  }
-  theorem.deserialize(s);
 }
 

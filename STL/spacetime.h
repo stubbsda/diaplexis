@@ -135,8 +135,8 @@ namespace DIAPLEXIS {
 
     // The intensity of branching in the polycosmos, 0 < x < 1
     static const double ramosity;
-    // Error tolerance
-    static const double epsilon;
+    // Error tolerance for convergence
+    static const double convergence_threshold;
     // The initial temperature for cosmic annealing
     static const double T_zero;
     // The rate of thermal decay in the annealing schedule
@@ -326,7 +326,7 @@ namespace DIAPLEXIS {
     inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
     inline double get_event_obliquity(int n) const {return events[n].obliquity;};
-    inline double get_event_energy(int n) const {return events[n].energy;};
+    inline double get_event_energy(int n) const {return events[n].get_energy();};
     inline double get_event_curvature(int n) const {return events[n].curvature;};
     inline double get_event_deficiency(int n) const {return events[n].deficiency;};
     inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
@@ -436,19 +436,20 @@ namespace DIAPLEXIS {
   void Spacetime::get_energy_extrema(double* output) const
   {
     int i;
-    double u_ex = 0.0,l_ex = 0.0;
+    double alpha,u_ex = 0.0,l_ex = 0.0;
     const int nv = (signed) events.size();
 
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
-      u_ex = events[i].energy;
+      u_ex = events[i].get_energy();
       break;
     }
     l_ex = u_ex;
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
-      if (u_ex < events[i].energy) u_ex = events[i].energy;
-      if (l_ex > events[i].energy) l_ex = events[i].energy;
+      alpha = events[i].get_energy();
+      if (u_ex < alpha) u_ex = alpha;       
+      if (l_ex > alpha) l_ex = alpha;
     }
     output[0] = u_ex;
     output[1] = l_ex;

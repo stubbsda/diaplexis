@@ -1,6 +1,6 @@
 HEADERS    = event.h simplex.h sheet.h spacetime.h
 
-CXX_FLAGS += -I$(SYNARMOSMA)/include $(OPENMP) -fPIC
+CXX_FLAGS += -I$(SYNARMOSMA)/include $(OPENMP) -fPIC -DDISCRETE
 LD_FLAGS  += -L$(SYNARMOSMA)/lib $(OPENMP) -shared
 
 #CXX_FLAGS += $(CXX_OPT)

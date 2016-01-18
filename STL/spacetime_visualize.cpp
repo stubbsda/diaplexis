@@ -345,7 +345,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
 
     for(i=0; i<nv; ++i) {
       if (ghost(events[i].ubiquity)) continue;
-      x_min = (use_energy) ? events[i].energy : events[i].deficiency;
+      x_min = (use_energy) ? events[i].get_energy() : events[i].deficiency;
       x_max = x_min;
       break;
     }
@@ -353,7 +353,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     if (use_energy) {
       for(i=0; i<nv; ++i) {
         if (ghost(events[i].ubiquity)) continue;
-        x = events[i].energy;
+        x = events[i].get_energy();
         xvalue[i] = x;
         if (x > x_max) x_max = x;
         if (x < x_min) x_min = x;

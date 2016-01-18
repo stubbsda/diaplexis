@@ -30,7 +30,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
       if (events[j].ubiquity == 1) continue;
       m = offset[j];
       if (k == m) continue;
-      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(events[i].energy + events[j].energy)));
+      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(events[i].get_energy() + events[j].get_energy())));
       delta = 0.0;
       for(l=0; l<D; ++l) {
         delta += (y[D*k+l] - y[D*m+l])*(y[D*k+l] - y[D*m+l]);
@@ -157,14 +157,18 @@ void Spacetime::energy_diffusion()
   // so I next look for a neighbour with positive deficiency (so 
   // it needs energy), with a transfer that is dependent on both 
   // the geometric distance and the relative energy delta. 
+#ifdef DEBUG
   double Esum1 = 0.0;
   for(i=0; i<nv; ++i) {
+    Esum1 += events[i].get_energy();
+  }
+#endif
+  for(i=0; i<nv; ++i) {
     Enew[i] = -1.0;
-    Esum1 += events[i].energy;
     // Inactive vertex...
     if (events[i].ubiquity == 1) continue;
     l = std::abs(events[i].deficiency);
-    if (l > Spacetime::epsilon) candidates.push_back(std::pair<int,double>(i,l));
+    if (l > std::numeric_limits<double>::epsilon()) candidates.push_back(std::pair<int,double>(i,l));
   }
   if (candidates.empty()) return;  
   std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
@@ -172,29 +176,29 @@ void Spacetime::energy_diffusion()
   for(i=nc-1; i>=0; --i) {    
     v = candidates[i].first;
     if (Enew[v] > -1.0) continue;
-    E = events[v].energy;
+    E = events[v].get_energy();
     // Look for neighbours with an energy value less than 
     // mine that don't already have a new energy value...
     tvertex.clear();
     for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
       n = *it;
       if (Enew[n] > -1.0) continue;
-      tvertex.push_back(boost::tuple<int,double,double>(n,events[n].energy,events[n].deficiency));
+      tvertex.push_back(boost::tuple<int,double,double>(n,events[n].get_energy(),events[n].deficiency));
     }
     if (tvertex.empty()) continue;
     m = (signed) tvertex.size();
     // If the deficiency > 0, this vertex needs to absorb energy, while 
     // if the deficiency < 0 it wants to donate energy
-    if (events[v].deficiency < 0.0) {
+    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
       // The greater my deficiency the more energy I want to transfer and ideally it needs to be 
       // transferred to the vertices with the largest deficiency
-      if (E < Spacetime::epsilon) continue;
+      if (E < std::numeric_limits<double>::epsilon()) continue;
       ivertex.clear();
       for(j=0; j<m; ++j) {
        n = tvertex[j].get<0>();
        En = tvertex[j].get<1>();
        d = tvertex[j].get<2>();
-       if (d > Spacetime::epsilon) ivertex.push_back(std::pair<int,double>(n,d));
+       if (d > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,d));
       }
       d = -events[v].deficiency/Spacetime::Lambda;
       E_tx = (E < d) ? E : d;
@@ -205,7 +209,7 @@ void Spacetime::energy_diffusion()
         Enew[v] = E - double(m)*E_tx;
         for(j=0; j<m; ++j) {
           n = tvertex[j].get<0>();
-          Enew[n] = events[n].energy + E_tx;
+          Enew[n] = events[n].get_energy() + E_tx;
         }
       }
       else {
@@ -222,7 +226,7 @@ void Spacetime::energy_diffusion()
           residue = (E_tx - d)/double(1 + m);
           for(j=0; j<m; ++j) {
             n = ivertex[j].first;
-            Enew[n] = events[n].energy + ivertex[j].second/Spacetime::Lambda + residue;
+            Enew[n] = events[n].get_energy() + ivertex[j].second/Spacetime::Lambda + residue;
           }
           Enew[v] = E - d - double(m)*residue;
         }
@@ -237,11 +241,11 @@ void Spacetime::energy_diffusion()
             l = ivertex[j].second/Spacetime::Lambda;
             n = ivertex[j].first;
             if (l < residue) {
-              Enew[n] = events[n].energy + l;
+              Enew[n] = events[n].get_energy() + l;
               residue -= l;
             }
             else {
-              Enew[n] = events[n].energy + residue;
+              Enew[n] = events[n].get_energy() + residue;
               break;
             }
           } while(true);
@@ -255,7 +259,7 @@ void Spacetime::energy_diffusion()
        n = tvertex[j].get<0>();
        En = tvertex[j].get<1>();
        d = tvertex[j].get<2>();
-       if (En > Spacetime::epsilon) ivertex.push_back(std::pair<int,double>(n,En));
+       if (En > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,En));
       }
       // If none of my neighbours have any energy there is nothing to do but 
       // skip to another vertex
@@ -266,22 +270,22 @@ void Spacetime::energy_diffusion()
       d = 0.0;
       for(j=0; j<m; ++j) {
         n = ivertex[j].first;
-        if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
-        En = events[n].energy;
+        if (!(events[n].deficiency < -std::numeric_limits<double>::epsilon())) continue;
+        En = events[n].get_energy();
         E_tx = -events[n].deficiency/Spacetime::Lambda;
         d += (En < E_tx) ? En : E_tx;
       }
       if (d < (events[v].deficiency/Spacetime::Lambda)) {
         for(j=0; j<m; ++j) {
           n = ivertex[j].first;
-          if (!(events[n].deficiency < -Spacetime::epsilon)) continue;
-          En = events[n].energy;
+          if (!(events[n].deficiency < -std::numeric_limits<double>::epsilon())) continue;
+          En = events[n].get_energy();
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           if (En < E_tx) {
             Enew[n] = 0.0;
           }
           else {
-            Enew[n] = events[n].energy - E_tx;
+            Enew[n] = events[n].get_energy() - E_tx;
           }
         }
         Enew[v] = E + d;
@@ -292,39 +296,43 @@ void Spacetime::energy_diffusion()
         do {
           j = RND.irandom(m);
           n = ivertex[j].first;
-          if (Enew[n] > -1.0 || !(events[n].deficiency < -Spacetime::epsilon)) continue;
-          En = events[n].energy;
+          if (Enew[n] > -1.0 || !(events[n].deficiency < -std::numeric_limits<double>::epsilon())) continue;
+          En = events[n].get_energy();
           E_tx = -events[n].deficiency/Spacetime::Lambda;
           l = (En < E_tx) ? En : E_tx;
           if (l < residue) {
-            Enew[n] = (En < E_tx) ? 0.0 : events[n].energy - l;
+            Enew[n] = (En < E_tx) ? 0.0 : events[n].get_energy() - l;
             residue -= l;
           }
           else {
-            Enew[n] = events[n].energy - residue;
+            Enew[n] = events[n].get_energy() - residue;
             break;
           }
         } while(true);
       }
     }
   }
-  for(i=0; i<nv; ++i) {
-    if (Enew[i] > -1.0) events[i].energy = Enew[i];
-  }
-  for(i=0; i<nv; ++i) {
-   if (events[i].energy < 0.0) {
-      std::cout << "Error, negative energy!" << std::endl;
-      std::cout << i << "  " << events[i].energy << std::endl;
-      std::exit(1);
-    }
-  }
+#ifdef DEBUG
+  // A check to verify that the energy has been conserved during its diffusion through the spacetime
+  // network.
   double Esum2 = 0.0;
   for(i=0; i<nv; ++i) {
-    Esum2 += events[i].energy;
+    if (Enew[i] > std::numeric_limits<double>::epsilon()) {
+      Esum2 += Enew[i];
+    }
+    else {
+      Esum2 += events[i].get_energy();
+    }
   }
-  if (std::abs(Esum2 - Esum1) > Spacetime::epsilon) {
-    std::cout << "Energy conservation error " << Esum1 << "  " << Esum2 << std::endl;
+  // Use the float epsilon because the double epsilon is much too sensitive given the likelihood of round-off
+  // error from the various multiplications and divisions carried out in the diffusion algorithm.
+  if (std::abs(Esum2 - Esum1) > std::numeric_limits<float>::epsilon()) {
+    std::cout << std::setprecision(12) << "Energy conservation error " << Esum1 << "  " << Esum2 << "  " << Esum2 - Esum1 << std::endl;
     std::exit(1);
+  }
+#endif
+  for(i=0; i<nv; ++i) {
+    if (Enew[i] > std::numeric_limits<double>::epsilon()) events[i].set_energy(Enew[i]);
   }
 }
 
@@ -375,7 +383,7 @@ void Spacetime::optimize()
 
   for(i=0; i<nv; ++i) {
     if (events[i].ubiquity == 1) continue;
-    if (std::abs(events[i].deficiency) >= Spacetime::epsilon) {
+    if (std::abs(events[i].deficiency) > std::numeric_limits<double>::epsilon()) {
       deficient = true;
       break;
     }
@@ -395,12 +403,12 @@ void Spacetime::optimize()
 
     for(i=0; i<nv; ++i) {
       if (events[i].ubiquity == 1) continue;
-      if (std::abs(events[i].geometric_deficiency) < Spacetime::epsilon) continue;
+      if (std::abs(events[i].geometric_deficiency) < std::numeric_limits<double>::epsilon()) continue;
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
       found = false;
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        if (std::abs(events[*it].geometric_deficiency) < Spacetime::epsilon) {
+        if (std::abs(events[*it].geometric_deficiency) < std::numeric_limits<double>::epsilon()) {
           found = true;
           break;
         }
@@ -485,7 +493,7 @@ void Spacetime::optimize()
         pool[i].get_implied_vertices(n,vx);
         viable = false;
         for(it=vx.begin(); it!=vx.end(); ++it) {
-          if (std::abs(events[*it].geometric_deficiency) > Spacetime::epsilon) viable = true;
+          if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (!viable) continue;
         pool[i].geometry_modification(n,0.0,0.05);
@@ -533,7 +541,7 @@ void Spacetime::optimize()
           pool[i].get_implied_vertices(j,vx);
           viable = false;
           for(it=vx.begin(); it!=vx.end(); ++it) {
-            if (std::abs(events[*it].geometric_deficiency) > Spacetime::epsilon) viable = true;
+            if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
           }
           if (!viable) continue;
           pool[i].geometry_modification(j,0.0,severity);
@@ -629,7 +637,7 @@ void Spacetime::optimize()
           geometry->get_implied_vertices(m,vmodified);
           viable = false;
           for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-            if (std::abs(events[*it].geometric_deficiency) > Spacetime::epsilon) viable = true;
+            if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
           }
           if (viable) break;
           vmodified.clear();
@@ -706,7 +714,7 @@ void Spacetime::optimize()
             geometry->get_implied_vertices(n,vmodified);
             viable = false;
             for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-              if (std::abs(events[*it].geometric_deficiency) > Spacetime::epsilon) viable = true;
+              if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
             }
             if (viable) break;
             vmodified.clear();

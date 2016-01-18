@@ -358,7 +358,7 @@ void Spacetime::write_log() const
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
     s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
-    s << "<MachineEpsilon>" << Spacetime::epsilon << "</MachineEpsilon>" << std::endl;
+    s << "<ConvergenceThreshold>" << Spacetime::convergence_threshold << "</ConvergenceThreshold>" << std::endl;
     s << "<InitialAnnealingTemperature>" << Spacetime::T_zero << "</InitialAnnealingTemperature>" << std::endl;
     s << "<ThermalDecayRate>" << Spacetime::kappa << "</ThermalDecayRate>" << std::endl;
     s << "<EnergyCouplingConstant>" << Spacetime::Lambda << "</EnergyCouplingConstant>" << std::endl;
@@ -465,7 +465,7 @@ void Spacetime::write_log() const
   min_ven = 10000.0;
   for(i=0; i<Nv; ++i) {
     if (events[i].ubiquity == 1) continue;
-    w = events[i].energy;
+    w = events[i].get_energy();
     if (w > max_ven) max_ven = w;
     if (w < min_ven) min_ven = w;
     avg_ven += w;
@@ -512,7 +512,7 @@ void Spacetime::write_log() const
   for(i=0; i<Ne; ++i) {
     if (simplices[1][i].ubiquity == 1) continue;
     wm = simplices[1][i].volume;
-    if (wm < Spacetime::epsilon) {
+    if (wm < std::numeric_limits<double>::epsilon()) {
       nnull++;
     }
     else if (simplices[1][i].orientation == SYNARMOSMA::DISPARATE) {
@@ -719,13 +719,13 @@ void Spacetime::write_log() const
     min_val = 1000;
     for(j=0; j<Nv; ++j) {
       if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
-      min_ven = events[j].energy;
+      min_ven = events[j].get_energy();
       min_val = vertex_valence(j,i);
       break;
     }
     for(j=0; j<Nv; ++j) {
       if (NTL::divide(events[j].ubiquity,codex[i].colour) == 0) continue;
-      w = events[j].energy;
+      w = events[j].get_energy();
       if (w > max_ven) max_ven = w;
       if (w < min_ven) min_ven = w;
       avg_ven += w;
@@ -782,7 +782,7 @@ void Spacetime::write_log() const
         if (NTL::divide(simplices[1][j].ubiquity,codex[i].colour) == 0) continue;
         wm = simplices[1][j].volume;
         avg_length += wm;
-        if (wm < Spacetime::epsilon) {
+        if (wm < std::numeric_limits<double>::epsilon()) {
           nnull++;
         }
         else if (simplices[1][j].orientation == SYNARMOSMA::DISPARATE) {
@@ -1039,9 +1039,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!SYNARMOSMA::double_equality(x,Spacetime::epsilon)) {
+  if (!SYNARMOSMA::double_equality(x,Spacetime::convergence_threshold)) {
     s.close();
-    std::cerr << "The compiled binary's epsilon " << Spacetime::epsilon << " does not match that (" << x << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's convergence threshold " << Spacetime::convergence_threshold << " does not match that (" << x << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -1177,7 +1177,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
       if (events[i].ubiquity == 1) continue;
       offset[i] = N1;
       N1++;
-      E = events[i].energy;
+      E = events[i].get_energy();
       s.write((char*)(&E),sizeof(double));
     }
     // Finally the edges...
@@ -1196,7 +1196,7 @@ void Spacetime::write_graph(const std::string& filename,int sheet) const
       if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
       offset[i] = N1;
       N1++;
-      E = events[i].energy;
+      E = events[i].get_energy();
       s.write((char*)(&E),sizeof(double));
     }
     // Finally the edges...
@@ -1259,7 +1259,7 @@ void Spacetime::write_state() const
   s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
-  s.write((char*)(&Spacetime::epsilon),sizeof(double));
+  s.write((char*)(&Spacetime::convergence_threshold),sizeof(double));
   s.write((char*)(&Spacetime::T_zero),sizeof(double));
   s.write((char*)(&Spacetime::kappa),sizeof(double));
   s.write((char*)(&Spacetime::Lambda),sizeof(double));

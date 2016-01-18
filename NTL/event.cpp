@@ -94,15 +94,13 @@ void Event::serialize(std::ofstream& s,int nt) const
   int i,in1;
   long q;
   double l;
-  std::set<int>::const_iterator it;
   NTL::PrimeSeq pseq;
   const int one = 1;
   const int zero = 0;
 
-  s.write((char*)(&incept),sizeof(int));
-  s.write((char*)(&topological_dimension),sizeof(int));
+  Vertex::serialize(s);
+
   s.write((char*)(&deficiency),sizeof(double));
-  s.write((char*)(&energy),sizeof(double));
   s.write((char*)(&curvature),sizeof(double));
   s.write((char*)(&obliquity),sizeof(double));
   s.write((char*)(&geometric_deficiency),sizeof(double));
@@ -115,13 +113,6 @@ void Event::serialize(std::ofstream& s,int nt) const
     s.write((char*)(&l),sizeof(double));
   }
 
-  in1 = (signed) neighbours.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=neighbours.begin(); it!=neighbours.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
-
   s.write((char*)(&nt),sizeof(int));
   for(i=0; i<nt; ++i) {
     q = pseq.next();
@@ -132,21 +123,6 @@ void Event::serialize(std::ofstream& s,int nt) const
       s.write((char*)(&zero),sizeof(int));
     }
   }
-
-  in1 = (signed) anterior.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=anterior.begin(); it!=anterior.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
-
-  in1 = (signed) posterior.size();
-  s.write((char*)(&in1),sizeof(int));
-  for(it=posterior.begin(); it!=posterior.end(); ++it) {
-    in1 = *it;
-    s.write((char*)(&in1),sizeof(int));
-  }
-  theorem.serialize(s);
 }
 
 void Event::deserialize(std::ifstream& s)
@@ -156,12 +132,13 @@ void Event::deserialize(std::ifstream& s)
   double xc;
   NTL::PrimeSeq pseq;
 
-  clear();
+  entwinement.clear();
+  topology_modified = true;
+  geometry_modified = true;
+  ubiquity = 1;
+  Vertex::deserialize(s);
 
-  s.read((char*)(&incept),sizeof(int));
-  s.read((char*)(&topological_dimension),sizeof(int));
   s.read((char*)(&deficiency),sizeof(double));
-  s.read((char*)(&energy),sizeof(double));
   s.read((char*)(&curvature),sizeof(double));
   s.read((char*)(&obliquity),sizeof(double));
   s.read((char*)(&geometric_deficiency),sizeof(double));
@@ -174,30 +151,11 @@ void Event::deserialize(std::ifstream& s)
   }
 
   s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    neighbours.insert(in1);
-  }
-
-  s.read((char*)(&j),sizeof(int));
   ubiquity = 1;
   for(i=0; i<j; ++i) {
     q = pseq.next();
     s.read((char*)(&in1),sizeof(int));
     if (in1 == 1) ubiquity *= q;    
   }
-
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    anterior.insert(in1);
-  }
-
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    s.read((char*)(&in1),sizeof(int));
-    posterior.insert(in1);
-  }
-  theorem.deserialize(s);
 }
 

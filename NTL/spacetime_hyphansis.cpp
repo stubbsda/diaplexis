@@ -316,7 +316,7 @@ bool Spacetime::germination(int base,int sheet)
       a = z[i];
       b = z[j];
       delta = a*a + b*b;
-      if (delta < Spacetime::epsilon) continue;
+      if (delta < std::numeric_limits<double>::epsilon()) continue;
       D1 = i;
       D2 = j;
       x[D1] = a/std::sqrt(a*a+b*b);
@@ -481,7 +481,7 @@ bool Spacetime::germination(int base,int sheet)
         mi = *jt;
         x[2] = y[mi];
         delta = SYNARMOSMA::norm(x);
-        if (delta > Spacetime::epsilon) {
+        if (delta > std::numeric_limits<double>::epsilon()) {
           good = true;
           break;
         }
@@ -506,7 +506,7 @@ bool Spacetime::germination(int base,int sheet)
       y.push_back(z[D2]);
       y.push_back(z[mi]);
       delta = SYNARMOSMA::norm(y);
-      if (delta > Spacetime::epsilon) {
+      if (delta > std::numeric_limits<double>::epsilon()) {
         good = true;
         break;
       }
@@ -649,7 +649,7 @@ bool Spacetime::correction(int base,int sheet)
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
     if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-    if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
+    if (std::abs(events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_computed_distance(base,i,false);
     if (l < 3.8025 || l > 4.2025) continue;
     // See if there is a third vertex that lies between these two...
@@ -990,7 +990,7 @@ bool Spacetime::compensation_m(int base,int sheet)
     if (vx[0] != base && vx[1] != base) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
     if (vertex_dimension(j,sheet) < 2) continue;
-    if (events[j].deficiency < -Spacetime::epsilon) continue;
+    if (events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_computed_distance(base,j,false);
     if (l >= 0.81 && l <= 1.21) continue;
     S.clear();
@@ -1552,7 +1552,7 @@ bool Spacetime::foliation_m(int base,int sheet)
     simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
-    if (std::abs(events[p].deficiency) < Spacetime::epsilon) continue;
+    if (std::abs(events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
@@ -1600,7 +1600,7 @@ bool Spacetime::foliation_x(int base,int sheet)
     simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
-    if (std::abs(events[p].deficiency) < Spacetime::epsilon) continue;
+    if (std::abs(events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
@@ -1651,8 +1651,10 @@ bool Spacetime::amputation(int base,double cutoff,int sheet)
     }
   }
   if (events[n].ubiquity == 1) {
-    events[base].energy += events[n].energy;
-    events[n].energy = 0.0;
+    if (!events[n].zero_energy()) {
+      events[base].increment_energy(events[n].get_energy());
+      events[n].nullify_energy();
+    }
   }
   
   return true;
@@ -1667,7 +1669,7 @@ bool Spacetime::fusion_x(int base,double geometric_cutoff,int sheet)
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
     if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-    if (std::abs(events[i].deficiency) < Spacetime::epsilon) continue;
+    if (std::abs(events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     if (geometry->get_computed_distance(base,i,false) > geometric_cutoff) continue;
     candidates.insert(i);
   }
@@ -2069,7 +2071,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   for(i=0; i<nc; ++i) {
     if (cvertex[i].size() == 1) {
       // Isolated vertex, let's see what its energy is...
-      if (events[cvertex[i][0]].energy < Spacetime::epsilon) {
+      if (events[cvertex[i][0]].zero_energy()) {
         // Eliminate this vertex altogether...
 #ifdef VERBOSE
         std::cout << "Eliminating isolated vertex " << cvertex[i][0] << std::endl;
@@ -2358,7 +2360,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
       simplices[1][i].get_vertices(vtx);
       if (vtx[0] != base && vtx[1] != base) continue;
       u = (vtx[0] == base) ? vtx[1] : vtx[0];
-      if (events[u].deficiency < -Spacetime::epsilon) M.insert(u);
+      if (events[u].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(u);
     }
     if (M.empty()) creativity = 1.0;
     vx.insert(base);
@@ -2450,7 +2452,7 @@ bool Spacetime::expansion(int base,int sheet)
     simplices[1][i].get_vertices(vtx);
     if (vtx[0] != base && vtx[1] != base) continue;
     u = (vtx[0] == base) ? vtx[1] : vtx[0];
-    if (events[u].deficiency < -Spacetime::epsilon) N.insert(u);
+    if (events[u].deficiency < -std::numeric_limits<double>::epsilon()) N.insert(u);
   }
 
   for(it=N.begin(); it!=N.end(); ++it) {
@@ -2646,8 +2648,10 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
     events[n2].ubiquity /= codex[sheet].colour;
   }
   if (events[n2].ubiquity == 1) {
-    events[n1].energy += events[n2].energy;
-    events[n2].energy = 0.0;
+    if (!events[n2].zero_energy()) {
+      events[n1].increment_energy(events[n2].get_energy());
+      events[n2].nullify_energy();
+    }
   }
 }
 
@@ -2666,10 +2670,10 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   for(i=0; i<nv; ++i) {
     modified.push_back(0);
     if (events[i].ubiquity == 1) continue;
-    if (events[i].energy > Spacetime::epsilon) continue;
+    if (!events[i].zero_energy()) continue;
     for(j=1+i; j<nv; ++j) {
       if (events[j].ubiquity == 1) continue;
-      if (events[j].energy > Spacetime::epsilon) continue;
+      if (!events[j].zero_energy()) continue;
       delta = geometry->get_distance(i,j,false);
       if (delta < alpha) candidates.push_back(std::pair<int,int>(i,j));
     }
@@ -2828,8 +2832,10 @@ bool Spacetime::vertex_twist(int sheet)
   events[n2].ubiquity /= codex[sheet].colour;
   codex[sheet].vx_delta.insert(n2);
   if (events[n2].ubiquity == 1) {
-    events[n1].energy += events[n2].energy;
-    events[n2].energy = 0.0;
+    if (!events[n2].zero_energy()) {
+      events[n1].increment_energy(events[n2].get_energy());
+      events[n2].nullify_energy();
+    }
   }
   vertex_fusion(n1,n2,sheet);
   if (first) first = false;
@@ -2971,11 +2977,11 @@ int Spacetime::vertex_addition(int base,int sheet)
   Event vt;
 
   vt.ubiquity = codex[sheet].colour;
-  if (events[base].energy < Spacetime::epsilon) {
+  if (events[base].zero_energy()) {
     geometry->vertex_addition(base);
   }
   else {
-    geometry->vertex_addition(base,1.0/(1.0 + events[base].energy));
+    geometry->vertex_addition(base,1.0/(1.0 + events[base].get_energy()));
   }
   events.push_back(vt);
 
@@ -3026,7 +3032,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     for(it=N.begin(); it!=N.end(); ++it) {
       jt = std::find(vx.begin(),vx.end(),*it);
       if (jt == vx.end()) {
-        if (events[*it].deficiency < -Spacetime::epsilon) M.insert(*it);
+        if (events[*it].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(*it);
       }
     }
     if (M.empty()) creativity = 1.0;
@@ -3216,7 +3222,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
     if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
-    if (events[v].deficiency < Spacetime::epsilon) {
+    if (events[v].deficiency < std::numeric_limits<double>::epsilon()) {
       m_vertices.push_back(v);
     }
     else {
@@ -3335,13 +3341,13 @@ void Spacetime::hyphansis(int sheet)
   for(int i=0; i<nv; ++i) {
     if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
 #ifdef VERBOSE
-    if (events[i].energy > Spacetime::epsilon) nze++;
-    if (events[i].deficiency > Spacetime::epsilon) npos++;
-    if (events[i].deficiency < -Spacetime::epsilon) nneg++;
+    if (!events[i].zero_energy()) nze++;
+    if (events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
+    if (events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
 #endif
     // Eliminate vertices whose structural deficiency is close to zero...
     alpha = std::abs(events[i].deficiency);
-    if (alpha < Spacetime::epsilon) continue;
+    if (alpha < std::numeric_limits<double>::epsilon()) continue;
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
 #ifdef VERBOSE
@@ -3356,7 +3362,7 @@ void Spacetime::hyphansis(int sheet)
 
   if (candidates.size() == 1) {
     v = candidates[0].first;
-    if (events[v].deficiency < -Spacetime::epsilon) {
+    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
       assert(expansion(v,sheet));
       codex[sheet].ops += 'E';
       regularization(false,sheet);
@@ -3394,7 +3400,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     // vertex inactive...
     if (NTL::divide(events[v].ubiquity,codex[sheet].colour) == 0) continue;
     alpha = events[v].deficiency;
-    if (alpha < -Spacetime::epsilon) {
+    if (alpha < -std::numeric_limits<double>::epsilon()) {
       implication(op);
       opstring << op << "," << v;
       if (op == "F") {
@@ -3426,7 +3432,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
         success = stellar_deletion(v,sheet);
       }
     }
-    else if (alpha > Spacetime::epsilon) {
+    else if (alpha > std::numeric_limits<double>::epsilon()) {
       if (vertex_dimension(v,sheet) > 1) {
         if (RND.drandom() < alpha/10.0) {
           op = "D";
