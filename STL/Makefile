@@ -3,7 +3,7 @@ include ../Makefile.inc
 OBJECTS = sheet.o spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
 spacetime_geometry.o spacetime_hyphansis.o event.o simplex.o
 
-TARGET = libdiaplexis-stl.so
+TARGET = libdiaplexis.so
 
 diaplexis: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)

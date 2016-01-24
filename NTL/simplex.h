@@ -1,4 +1,4 @@
-#include "synarmosma.h"
+#include "synarmosma/cell.h"
 
 #ifndef _simplexh
 #define _simplexh

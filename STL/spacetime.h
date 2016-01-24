@@ -1,6 +1,9 @@
 // For XML processing...
 #include <pugixml.hpp>
 
+#include "synarmosma/geometry.h"
+#include "synarmosma/directed_graph.h"
+
 #include "sheet.h"
 #include "event.h"
 #include "simplex.h"

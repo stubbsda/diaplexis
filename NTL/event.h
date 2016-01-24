@@ -1,4 +1,4 @@
-#include "synarmosma.h"
+#include "synarmosma/vertex.h"
 
 #ifndef _eventh
 #define _eventh
