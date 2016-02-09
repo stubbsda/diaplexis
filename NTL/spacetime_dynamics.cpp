@@ -142,6 +142,52 @@ void Spacetime::compute_delta()
 #endif
 }
 
+void Spacetime::energy_diffusion(int nchip)
+{
+  // This algorithm, based on the parallel chip-firing game for graphs
+  // (cf. T-Y Jiang et al., SIAM J. Disc. Math., 29:615-630, (2015)) is 
+  // simple but suffers from the flaw that it does not conserve energy 
+  // in the spacetime complex unless nchip > E_total/epsilon, where the 
+  // epsilon value is used to test the difference of E_total before and 
+  // after the diffusion process. For a fixed graph topology the chip-
+  // firing game always settles into a limit cycle but with the dynamic 
+  // topology employed here there is no such guarantee.
+  const int nv = (signed) events.size();
+  const double dE = total_energy(-1)/double(nchip);
+  int i,j;
+  unsigned int d,chip_count[nv];
+  bool fired[nv];
+  double E;
+  std::set<int>::const_iterator it;
+
+  for(i=0; i<nv; ++i) {
+    chip_count[i] = 0;
+    fired[i] = false;
+    if (events[i].ubiquity == 1) continue;
+    E = events[i].get_energy();
+    chip_count[i] = int(E/dE);
+  }
+  for(i=0; i<nv; ++i) {
+    d = (unsigned) vertex_valence(i,-1);
+    if (chip_count[i] < d) continue;
+    fired[i] = true;
+    chip_count[i] -= d;
+  }
+  for(i=0; i<nv; ++i) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      j = *it;
+      if (fired[j]) chip_count[i] += 1;
+    }
+  }
+  for(i=0; i<nv; ++i) {
+    if (chip_count[i] == 0) {
+      events[i].nullify_energy();
+      continue;
+    }
+    events[i].set_energy(dE*double(chip_count[i]));
+  } 
+}
+
 void Spacetime::energy_diffusion()
 {
   const int nv = (signed) events.size();

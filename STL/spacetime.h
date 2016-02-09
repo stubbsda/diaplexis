@@ -290,6 +290,7 @@ namespace DIAPLEXIS {
     int ubiquity_permutation(double,std::set<int>&);
     void update_viewer();
     void energy_diffusion();
+    void energy_diffusion(int);
     void optimize();
     bool adjust_dimension();
     void analyze_convergence();
