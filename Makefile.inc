@@ -1,6 +1,6 @@
 HEADERS    = event.h simplex.h sheet.h spacetime.h
 
-CXX_FLAGS += -I$(BIBLIOTHEK)/include $(OPENMP) -fPIC -DDISCRETE
+CXX_FLAGS += -I$(BIBLIOTHEK)/include $(OPENMP) -fPIC #-DDISCRETE
 LD_FLAGS  += -L$(BIBLIOTHEK)/lib $(OPENMP) -shared
 
 #CXX_FLAGS += $(CXX_OPT)
