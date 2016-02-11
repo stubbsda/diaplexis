@@ -479,7 +479,7 @@ void Spacetime::optimize()
       // vertex diminishes with 0.05 the maximum
       sigma = 0.1*events[n].geometric_deficiency;
       if (sigma > 0.05) sigma = 0.05;
-      geometry->multiplicative_modification(n,true,1.0,sigma);
+      geometry->mutation(n,true,true,sigma);
       vmodified.insert(n);
       compute_geometric_dependency(vmodified);
       geometry->compute_distances(vmodified);
@@ -542,7 +542,7 @@ void Spacetime::optimize()
           if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (!viable) continue;
-        pool[i].geometry_modification(n,0.0,0.05);
+        pool[i].mutation(n,false,false,0.05);
         for(it=vx.begin(); it!=vx.end(); ++it) {
           vmodified.insert(*it);
         }
@@ -590,7 +590,7 @@ void Spacetime::optimize()
             if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
           }
           if (!viable) continue;
-          pool[i].geometry_modification(j,0.0,severity);
+          pool[i].mutation(j,false,false,severity);
           for(it=vx.begin(); it!=vx.end(); ++it) {
             vmodified.insert(*it);
           }
@@ -688,7 +688,7 @@ void Spacetime::optimize()
           if (viable) break;
           vmodified.clear();
         } while(true);
-        geometry->geometry_modification(m,0.0,thermal_variance);
+        geometry->mutation(m,false,false,thermal_variance);
         compute_geometric_dependency(vmodified);
         geometry->compute_distances(vmodified);
         compute_volume();
@@ -765,7 +765,7 @@ void Spacetime::optimize()
             if (viable) break;
             vmodified.clear();
           } while(true);
-          geometry->geometry_modification(n,0.0,thermal_variance);
+          geometry->mutation(n,false,false,thermal_variance);
           // Now we need to recaculate some edge lengths and
           // then various defect angles associated with the
           // triangles in their entourage...
@@ -1077,7 +1077,7 @@ void Spacetime::optimize()
     for(i=0; i<system_size; ++i) {
       geometry->get_implied_vertices(i,vmodified);
       compute_geometric_dependency(vmodified);
-      geometry->geometry_modification(i,0.0,0.1);
+      geometry->mutation(i,false,false,0.1);
       geometry->compute_distances(vmodified);
       geometry->store(&SR);
       S.push_back(SR);
