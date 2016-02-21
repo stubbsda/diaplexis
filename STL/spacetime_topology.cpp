@@ -101,7 +101,7 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
       if (ghost(events[i].ubiquity)) continue;
       for(j=1+i; j<nv; ++j) {
         if (ghost(events[j].ubiquity)) continue;
-        l = combinatorial_distance(i,j);
+        l = combinatorial_distance(i,j,-1);
         if (l > m) m = l;
 #ifdef _OPENMP
 #pragma omp critical
@@ -288,10 +288,16 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
 
 void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
 {
+  int offset[events.size()];
+
+  compute_graph(G,offset,sheet);
+}
+
+void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
+{
   int i,vx[2];
   const int nv = (signed) events.size();
   const int ne = (signed) simplices[1].size();
-  int offset[nv];
 
   G->clear();
 
@@ -909,59 +915,6 @@ double Spacetime::cyclic_resistance(int sheet) const
   return G.cyclic_resistance();
 }
 
-int Spacetime::combinatorial_distance(int v1,int v2) const
-{
-  // A method to calculate the topological distance
-  // between the two vertices v1 and v2
-  if (v1 == v2) return 0;
-
-  // A sanity check...
-#ifdef DEBUG
-  assert(!ghost(events[v1].ubiquity) && !ghost(events[v2].ubiquity));
-#endif
-
-  // Handle the simplest case first, where v2 is a neighbour of v1...
-  std::set<int>::const_iterator it = std::find(events[v1].neighbours.begin(),events[v1].neighbours.end(),v2);
-  if (it != events[v1].neighbours.end()) return 1;
-
-  // So, we'll have to use Dijkstra's algorithm then...
-  int i,n,v,md,base,l = -1;
-  std::vector<int> distance;
-  const int nv = (signed) events.size();
-  bool visited[nv];
-
-  for(i=0; i<nv; ++i) {
-    distance.push_back(-1);
-    visited[i] = false;
-  }
-  distance[v1] = 0;
-  do {
-    base = -1;
-    md = 10000;
-    for(i=0; i<nv; ++i) {
-      if (visited[i]) continue;
-      n = distance[i];
-      if (n == -1) continue;
-      if (n < md) {
-        md = n;
-        base = i;
-      }
-    }
-    if (base == -1) break;
-    if (base == v2) {
-      l = md;
-      break;
-    }
-    visited[base] = true;
-    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
-      v = *it;
-      n = distance[base] + 1;
-      if (distance[v] < 0 || distance[v] > n) distance[v] = n;
-    }
-  } while(true);
-  return l;
-}
-
 int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
 {
   // A method to calculate the topological distance
@@ -970,53 +923,19 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
 
   // A sanity check...
 #ifdef DEBUG
-  assert(events[v1].ubiquity[sheet] == 1 && events[v2].ubiquity[sheet] == 1);
+  if (sheet == -1) {
+    assert(!ghost(events[v1].ubiquity) && !ghost(events[v2].ubiquity));
+  }
+  else {
+    assert(events[v1].ubiquity[sheet] == 1 && events[v2].ubiquity[sheet] == 1);
+  }
 #endif
 
-  // So, we'll have to use Dijkstra's algorithm then...
-  int i,n,v,md,base,l = -1;
-  std::vector<int> distance;
-  std::set<int> S;
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
-  bool visited[nv];
-
-  for(i=0; i<nv; ++i) {
-    distance.push_back(-1);
-    visited[i] = false;
-  }
-  distance[v1] = 0;
-  do {
-    base = -1;
-    md = 10000;
-    for(i=0; i<nv; ++i) {
-      if (visited[i]) continue;
-      n = distance[i];
-      if (n == -1) continue;
-      if (n < md) {
-        md = n;
-        base = i;
-      }
-    }
-    if (base == -1) break;
-    if (base == v2) {
-      l = md;
-      break;
-    }
-    visited[base] = true;
-    for(it=events[base].neighbours.begin(); it!=events[base].neighbours.end(); ++it) {
-      v = *it;
-      S.clear();
-      S.insert(base);
-      S.insert(v);
-      qt = index_table[1].find(S);
-      if (simplices[1][qt->second].ubiquity[sheet] == 0) continue;
-      n = distance[base] + 1;
-      if (distance[v] < 0 || distance[v] > n) distance[v] = n;
-    }
-  } while(true);
-  return l;
+  int d,offset[events.size()];
+  SYNARMOSMA::Graph G;
+  compute_graph(&G,offset,sheet);
+  d = G.distance(offset[v1],offset[v2]);
+  return d;
 }
 
 int Spacetime::euler_characteristic(int sheet) const

@@ -158,7 +158,8 @@ namespace DIAPLEXIS {
     void arclength_statistics(double*,int) const;
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const; 
+    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int*,int) const; 
     void compute_graph(SYNARMOSMA::Graph*,int) const;
     void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
@@ -166,7 +167,6 @@ namespace DIAPLEXIS {
     void simplex_membership(int,std::vector<int>&) const;
     int chromatic_number(int) const;
     double dimensional_stress(int,int) const;
-    int combinatorial_distance(int,int) const;
     int combinatorial_distance(int,int,int) const;
     double entwinement(int) const;
     double cyclic_resistance(int) const;

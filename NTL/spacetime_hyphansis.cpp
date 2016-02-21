@@ -2218,16 +2218,16 @@ bool Spacetime::circumvolution(int sheet)
       simplices[1][n1].get_vertices(w);
       simplices[1][n2].get_vertices(u);
 
-      d = combinatorial_distance(w[0],u[0]);
+      d = combinatorial_distance(w[0],u[0],-1);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[1],u[0]);
+      d = combinatorial_distance(w[1],u[0],-1);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[0],u[1]);
+      d = combinatorial_distance(w[0],u[1],-1);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[1],u[1]);
+      d = combinatorial_distance(w[1],u[1],-1);
       if (d <= 2) continue;
 
       candidates.push_back(n1);
@@ -2818,7 +2818,7 @@ bool Spacetime::vertex_twist(int sheet)
     if (n1 == n2) continue;
     n1 = candidates[n1];
     n2 = candidates[n2];
-    if (combinatorial_distance(n1,n2) > cutoff) {
+    if (combinatorial_distance(n1,n2,-1) > cutoff) {
       good = true;
       break;
     }
