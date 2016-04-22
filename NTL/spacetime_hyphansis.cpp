@@ -2781,12 +2781,13 @@ bool Spacetime::vertex_twist(int sheet)
   // This method will fuse two 0-simplices with each other, so as to twist the
   // complex's topology, creating non-orientability and torsion groups in the
   // simplicial homology.
-  int i,n1,n2,nc,cutoff,n = (signed) events.size();
+  int i,j,n1,n2,nc,delta,cutoff,n = (signed) events.size();
   std::vector<std::string> ekeys;
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> parents;
   std::set<int>::const_iterator it;
   std::vector<int> candidates,used;
+  std::vector<std::pair<int,int> > slist;
   std::stringstream s;
   static bool first = true;
 
@@ -2810,22 +2811,18 @@ bool Spacetime::vertex_twist(int sheet)
   // Grab a random pair (v1,v2) of elements from the vector candidates, set v1
   // to be inactive and then go through all d-simplices, d > 0, setting every
   // occurrence of v1 to v2.
-  unsigned int its = 0;
-  bool good = false;
-  do {
-    n1 = RND.irandom(nc);
-    n2 = RND.irandom(nc);
-    if (n1 == n2) continue;
-    n1 = candidates[n1];
-    n2 = candidates[n2];
-    if (combinatorial_distance(n1,n2,-1) > cutoff) {
-      good = true;
-      break;
+  for(i=0; i<nc; ++i) {
+    for(j=1+i; j<nc; ++j) {
+      delta = combinatorial_distance(candidates[i],candidates[j],-1);
+      if (delta > cutoff) {
+        slist.push_back(std::pair<int,int>(candidates[i],candidates[j]));
+      }
     }
-    its++;
-    if (its > candidates.size()) break;
-  } while(true);
-  if (!good) return false;
+  } 
+  if (slist.empty()) return false;
+  n1 = RND.irandom(slist.size());
+  n1 = slist[i].first;
+  n2 = slist[i].second;
 #ifdef VERBOSE
   std::cout << "Twist is " << n1 << " => " << n2 << std::endl;
 #endif

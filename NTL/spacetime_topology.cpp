@@ -93,45 +93,82 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
     pcount.push_back(0);
   }
 
-  if (sheet == -1) {
-#ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
-#endif
-    for(i=0; i<nv; ++i) {
-      if (events[i].ubiquity == 1) continue;
-      for(j=1+i; j<nv; ++j) {
-        if (events[j].ubiquity == 1) continue;
-        l = combinatorial_distance(i,j,-1);
-        if (l > m) m = l;
-#ifdef _OPENMP
-#pragma omp critical
-        {
-#endif
-        pcount[l] += 1;
-#ifdef _OPENMP
+  // If we know memory is abundant relative to the spacetime 
+  // size, we can compute the distances all at once
+  if (geometry->get_memory_type()) {
+    int offset[nv];
+    SYNARMOSMA::Graph G;
+    SYNARMOSMA::edge_hash distances;
+    SYNARMOSMA::edge_hash::const_iterator qt;
+
+    compute_graph(&G,offset,sheet);
+    G.compute_distances(distances);
+    if (sheet == -1) {
+      for(i=0; i<nv; ++i) {
+        if (events[i].ubiquity == 1) continue;
+        for(j=1+i; j<nv; ++j) {
+          if (events[j].ubiquity == 1) continue;
+          qt = distances.find(std::pair<int,int>(offset[i],offset[j]));
+          l = qt->second;
+          if (l > m) m = l;
+          pcount[l] += 1;
         }
-#endif
+      }
+    }
+    else {
+      for(i=0; i<nv; ++i) {
+        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        for(j=1+i; j<nv; ++j) {
+          if (NTL::divide(events[j].ubiquity,codex[sheet].colour) == 0) continue;
+          qt = distances.find(std::pair<int,int>(offset[i],offset[j]));
+          l = qt->second;
+          if (l > m) m = l;
+          pcount[l] += 1;
+        }
       }
     }
   }
-  else {
+  else { 
+    if (sheet == -1) {
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
 #endif
-    for(i=0; i<nv; ++i) {
-      if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
-      for(j=1+i; j<nv; ++j) {
-        if (NTL::divide(events[j].ubiquity,codex[sheet].colour) == 0) continue;
-        l = combinatorial_distance(i,j,sheet);
-        if (l > m) m = l;
+      for(i=0; i<nv; ++i) {
+        if (events[i].ubiquity == 1) continue;
+        for(j=1+i; j<nv; ++j) {
+          if (events[j].ubiquity == 1) continue;
+          l = combinatorial_distance(i,j,-1);
+          if (l > m) m = l;
 #ifdef _OPENMP
 #pragma omp critical
-        {
+          {
 #endif
-        pcount[l] += 1;
+          pcount[l] += 1;
 #ifdef _OPENMP
-        }
+          }
 #endif
+        }
+      }
+    }
+    else {
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j,l) reduction(max:m) schedule(dynamic,1)
+#endif
+      for(i=0; i<nv; ++i) {
+        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        for(j=1+i; j<nv; ++j) {
+          if (NTL::divide(events[j].ubiquity,codex[sheet].colour) == 0) continue;
+          l = combinatorial_distance(i,j,sheet);
+          if (l > m) m = l;
+#ifdef _OPENMP
+#pragma omp critical
+          {
+#endif
+          pcount[l] += 1;
+#ifdef _OPENMP
+          }
+#endif
+        }
       }
     }
   }
