@@ -973,7 +973,6 @@ void Spacetime::read_complex(std::ifstream& s)
       index_table[i][simplices[i][j].vertices] = j;
     }
   }
-  compute_entourages(-1);
 
   // Now the algebraic properties...
   H->deserialize(s);
@@ -988,6 +987,7 @@ void Spacetime::read_complex(std::ifstream& s)
     codex[i].deserialize(s);
     if (codex[i].active) nactive++;
   }
+  compute_entourages(-1);
 }
 
 void Spacetime::read_state(const std::string& filename)
