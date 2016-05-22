@@ -20,7 +20,7 @@ namespace DIAPLEXIS {
   } Plegma;
 
   class Spacetime {
-   private:
+   protected:
     enum ALGORITHM
     {
         MINIMAL,
@@ -148,10 +148,11 @@ namespace DIAPLEXIS {
     // and the energy
     static const double Lambda;
 
-    inline std::string sheet_activity() const;
-    inline bool edge_exists(int,int,int) const;
-    inline int cardinality(int,int) const;
-    inline void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    std::string sheet_activity() const;
+    bool edge_exists(int,int,int) const;
+    int cardinality(int,int) const;
+    int cardinality_safe(int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     void compute_degree_distribution(bool,int) const;
     void compute_connectivity_distribution(int) const;
     void random_walk(double*,double*,int) const;
@@ -182,6 +183,7 @@ namespace DIAPLEXIS {
     double dimensional_frontier(int,int) const;
     double dimensional_uniformity(int) const;
     bool active_simplex(int,int,int) const;
+    int circuit_rank(int) const;
     int euler_characteristic(int) const;
     int component_analysis(std::vector<int>&,int) const;
     int entourage(int,int) const;
@@ -326,6 +328,10 @@ namespace DIAPLEXIS {
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
     double get_geometric_distance(int,int,bool) const;
+    bool is_pseudomanifold(bool*,int) const;
+    void get_energy_extrema(double*) const;
+    void get_deficiency_extrema(double*) const;
+    void write_vertex_data(int) const;
     inline int get_background_dimension() const {return geometry->dimension();};
     inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
@@ -348,20 +354,16 @@ namespace DIAPLEXIS {
     inline int get_iterations() const {return iterations;};
     inline int get_dimension(int sheet) const {return dimension(sheet);};
     inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
-    inline void get_cyclomaticity(int* output,int sheet) const {output[0] = cardinality(0,sheet); output[1] = cardinality(1,sheet); output[2] = output[1] - output[0] + 1;};
+    inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
     inline double get_error() const {return error;};
     inline double get_total_energy(int sheet) const {return total_energy(sheet);};
     inline int get_maximum_iterations() const {return max_iter;};
     inline bool is_converged() const {return converged;};
-    inline bool is_pseudomanifold(bool*,int) const;
     inline bool is_orientable(int sheet) const {bool output = (sheet == -1) ? orientable : codex[sheet].orientable; return output;};
     inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
     inline int get_events() const {return (signed) events.size();};
     inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;};
     inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
-    inline void get_energy_extrema(double*) const;
-    inline void get_deficiency_extrema(double*) const;
-    void write_vertex_data(int) const;
   };
 
   inline bool ghost(const std::vector<int>& v)
@@ -412,7 +414,7 @@ namespace DIAPLEXIS {
     }
   }
 
-  double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
+  inline double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
   {
     int i,sum = 0,bcount = 0;
     double mu,sigma = 0.0;
@@ -437,55 +439,12 @@ namespace DIAPLEXIS {
     return sigma + double(bcount);
   }
 
-  void Spacetime::get_energy_extrema(double* output) const
-  {
-    int i;
-    double alpha,u_ex = 0.0,l_ex = 0.0;
-    const int nv = (signed) events.size();
-
-    for(i=0; i<nv; ++i) {
-      if (ghost(events[i].ubiquity)) continue;
-      u_ex = events[i].get_energy();
-      break;
-    }
-    l_ex = u_ex;
-    for(i=0; i<nv; ++i) {
-      if (ghost(events[i].ubiquity)) continue;
-      alpha = events[i].get_energy();
-      if (u_ex < alpha) u_ex = alpha;       
-      if (l_ex > alpha) l_ex = alpha;
-    }
-    output[0] = u_ex;
-    output[1] = l_ex;
-  }
-
-  void Spacetime::get_deficiency_extrema(double* output) const
-  {
-    int i;
-    double u_ex = 0.0,l_ex = 0.0;
-    const int nv = (signed) events.size();
-
-    for(i=0; i<nv; ++i) {
-      if (ghost(events[i].ubiquity)) continue;
-      u_ex = events[i].deficiency;
-      break;
-    }
-    l_ex = u_ex;
-    for(i=0; i<nv; ++i) {
-      if (ghost(events[i].ubiquity)) continue;
-      if (u_ex < events[i].deficiency) u_ex = events[i].deficiency;
-      if (l_ex > events[i].deficiency) l_ex = events[i].deficiency;
-    }
-    output[0] = u_ex;
-    output[1] = l_ex;
-  }
-
-  void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
+  inline void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
     compute_graph(G,base,Spacetime::topological_radius,sheet);
   }
 
-  int Spacetime::cardinality(int d,int sheet) const
+  inline int Spacetime::cardinality(int d,int sheet) const
   {
     int i,n = 0;
     if (sheet == -1) {

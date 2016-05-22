@@ -2,6 +2,49 @@
 
 using namespace DIAPLEXIS;
 
+void Spacetime::get_energy_extrema(double* output) const
+{
+  int i;
+  double alpha,u_ex = 0.0,l_ex = 0.0;
+  const int nv = (signed) events.size();
+
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    u_ex = events[i].get_energy();
+    break;
+  }
+  l_ex = u_ex;
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    alpha = events[i].get_energy();
+    if (u_ex < alpha) u_ex = alpha;
+    if (l_ex > alpha) l_ex = alpha;
+  }
+  output[0] = u_ex;
+  output[1] = l_ex;
+}
+
+void Spacetime::get_deficiency_extrema(double* output) const
+{
+  int i;
+  double u_ex = 0.0,l_ex = 0.0;
+  const int nv = (signed) events.size();
+
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    u_ex = events[i].deficiency;
+    break;
+  }
+  l_ex = u_ex;
+  for(i=0; i<nv; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    if (u_ex < events[i].deficiency) u_ex = events[i].deficiency;
+    if (l_ex > events[i].deficiency) l_ex = events[i].deficiency;
+  }
+  output[0] = u_ex;
+  output[1] = l_ex;
+}
+
 void Spacetime::write_distribution(const std::vector<int>& affinity) const
 {
   // First determine the number of distinct processors in this distribution...

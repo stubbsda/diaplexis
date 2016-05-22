@@ -979,6 +979,55 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
   return d;
 }
 
+int Spacetime::cardinality_safe(int d,int sheet) const
+{
+  int i,n = 0;
+  if (sheet == -1) {
+    if (d == 0) {
+      const int M = (signed) events.size();
+      for(i=0; i<M; ++i) {
+        if (events[i].ubiquity == 1) continue;
+        n++;
+      }
+    }
+    else {
+      const int M = (signed) simplices[d].size();
+      for(i=0; i<M; ++i) {
+        if (simplices[d][i].ubiquity == 1) continue;
+        n++;
+      }
+    }
+  }
+  else {
+    if (d == 0) {
+      const int M = (signed) events.size();
+      for(i=0; i<M; ++i) {
+        if (NTL::divide(events[i].ubiquity,codex[sheet].colour) == 0) continue;
+        n++;
+      }
+    }
+    else {
+      const int M = (signed) simplices[d].size();
+      for(i=0; i<M; ++i) {
+        if (NTL::divide(simplices[d][i].ubiquity,codex[sheet].colour) == 0) continue;
+        n++;
+      }
+    }
+  }
+  return n;
+}
+
+int Spacetime::circuit_rank(int sheet) const
+{
+  int output = cardinality(1,sheet) - cardinality(0,sheet);
+  if (connected(sheet)) {
+    return 1 + output;
+  }
+  std::vector<int> components;
+  int n = component_analysis(components,sheet);
+  return n + output;
+}
+
 int Spacetime::euler_characteristic(int sheet) const
 {
   int i,pf = 1,chi = 0;
