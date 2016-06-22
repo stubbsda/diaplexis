@@ -580,7 +580,7 @@ void Spacetime::write_log() const
   }
 
   ne = cardinality(1,-1);
-  atom = rstep.append_child("Cyclomaticity");
+  atom = rstep.append_child("CircuitRank");
   nvalue = boost::lexical_cast<std::string>(ne-nn+1);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
@@ -832,7 +832,7 @@ void Spacetime::write_log() const
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
 
-    atom = sheet.append_child("Cyclomaticity");
+    atom = sheet.append_child("CircuitRank");
     nvalue = boost::lexical_cast<std::string>(ne-nn+1);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
