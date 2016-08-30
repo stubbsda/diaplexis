@@ -271,7 +271,7 @@ bool Spacetime::logical_conformity(int v) const
   std::set<int>::const_iterator it;
   SYNARMOSMA::Proposition Q = events[v].theorem;
   for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-    Q = Q*events[*it].theorem;
+    Q = Q & events[*it].theorem;
   }
   return Q.satisfiable();
 }

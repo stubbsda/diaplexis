@@ -1,6 +1,8 @@
 // For XML processing...
 #include <pugixml.hpp>
 
+#include <boost/timer/timer.hpp>
+
 #include "synarmosma/geometry.h"
 #include "synarmosma/directed_graph.h"
 

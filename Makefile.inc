@@ -15,5 +15,5 @@ ifeq ($(UNAME),Darwin)
   LD_FLAGS += -install_name $(BIBLIOTHEK)/lib/libdiaplexis.so
 endif
 
-LIBS       = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lm
+LIBS       = -lsynarmosma $(LAPACK) -lboost_timer-mt $(BOOST) -lpugixml -lntl -lm
 
