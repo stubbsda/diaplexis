@@ -70,6 +70,7 @@ void Event::clear()
   obliquity = 0.0;
   geometric_deficiency = 0.0;
   entwinement.clear();
+  theorem.clear();
 }
 
 void Event::write2screen() const
@@ -105,6 +106,8 @@ void Event::serialize(std::ofstream& s,int nt) const
   s.write((char*)(&obliquity),sizeof(double));
   s.write((char*)(&geometric_deficiency),sizeof(double));
   s.write((char*)(&boundary),sizeof(bool)); 
+
+  theorem.serialize(s);
 
   in1 = (signed) entwinement.size();
   s.write((char*)(&in1),sizeof(int));
@@ -143,6 +146,8 @@ void Event::deserialize(std::ifstream& s)
   s.read((char*)(&obliquity),sizeof(double));
   s.read((char*)(&geometric_deficiency),sizeof(double));
   s.read((char*)(&boundary),sizeof(bool));
+
+  theorem.deserialize(s);
 
   s.read((char*)(&j),sizeof(int));
   for(i=0; i<j; ++i) {

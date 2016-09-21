@@ -16,6 +16,7 @@ namespace DIAPLEXIS {
     double geometric_deficiency;
     std::vector<int> ubiquity;
     double deficiency;
+    SYNARMOSMA::Proposition theorem;
 
    public:
     Event();
