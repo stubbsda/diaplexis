@@ -269,10 +269,67 @@ int Spacetime::cyclicity(int sheet) const
   return (G.size() - G.bridge_count());
 }
 
+void Spacetime::set_logical_atoms(int n)
+{ 
+#ifdef DEBUG
+  assert(n > 0);
+#endif
+  int i,j,natoms;
+  double sigma;
+  std::set<int> cset;
+  const int nvertex = (signed) events.size();
+
+  for(int i=0; i<nvertex; ++i) {
+    events[i].theorem.clear();
+  }
+ 
+  // Set the logical atoms in a purely random manner, the argument 
+  // "n" represents the total number of propositional atoms in the 
+  // entire spacetime
+  for(i=0; i<nvertex; ++i) {
+    if (events[i].ubiquity == 1) continue;
+    cset.clear();
+    // The more energetic and the higher the topological dimension of a 
+    // vertex, the greater the number of atomic propositions in its theorem 
+    // property.
+    sigma = (1.0 + events[i].energy)*double(4 + events[i].topological_dimension);
+    sigma *= RND.drandom(1.0,1.5);
+    natoms = int(sigma);
+    if (natoms >= n) {
+      for(j=0; j<n; ++j) {
+        cset.insert(j); 
+      }
+    }
+    else {
+      do {
+        cset.insert(RND.irandom(n));
+        if ((signed) cset.size() == natoms) break;
+      } while(true);
+    }
+    events[i].theorem.set_atoms(cset);   
+  }
+}
+
+double Spacetime::logical_energy(int v) const
+{
+  if (events[v].neighbours.empty()) return 0.0;
+  double sum = 0.0;
+  std::set<int>::const_iterator it;
+  SYNARMOSMA::Proposition q,p = events[v].theorem;
+
+  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+    q = p & events[*it].theorem;
+    sum += double(q.satisfiable());
+  }
+  sum = sum/double(events[v].neighbours.size());
+  return sum;
+}
+
 bool Spacetime::logical_conformity(int v) const
 {
   std::set<int>::const_iterator it;
   SYNARMOSMA::Proposition Q = events[v].theorem;
+
   for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
     Q = Q & events[*it].theorem;
   }

@@ -271,6 +271,8 @@ namespace DIAPLEXIS {
     void compute_lightcones();
     double compute_temporal_vorticity(int,int) const;
     double compute_temporal_nonlinearity(int) const;
+    void set_logical_atoms(int);
+    double logical_energy(int) const;
     bool logical_conformity(int) const;
     double representational_energy(bool) const;
 
