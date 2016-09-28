@@ -1,4 +1,5 @@
 #include "synarmosma/vertex.h"
+#include "synarmosma/proposition.h"
 
 #ifndef _eventh
 #define _eventh
