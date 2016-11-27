@@ -29,6 +29,7 @@ void Spacetime::read_parameters(const char* filename)
       initial_size = boost::lexical_cast<int>(value);
     }
     else if (name == "InitialState") {
+      boost::to_upper(value);
       if (value == "CARTESIAN") {
         initial_state = CARTESIAN;
       }
@@ -50,13 +51,16 @@ void Spacetime::read_parameters(const char* filename)
       input_file = value;
     }
     else if (name == "EuclideanGeometry") {
-      if (value == "True") euclidean = true;
+      boost::to_upper(value);
+      euclidean = (value == "TRUE") ? true : false;
     }
     else if (name == "RelationalGeometry") {
-      if (value == "True") relational = true;
+      boost::to_upper(value);
+      relational = (value == "TRUE") ? true : false;
     }
     else if (name == "DimensionalUniformity") {
-      if (value == "True") uniform = true;
+      boost::to_upper(value);
+      uniform = (value == "TRUE") ? true : false;
     }
     else if (name == "RandomSeed") {
       rs = boost::lexical_cast<unsigned int>(value);
@@ -83,35 +87,43 @@ void Spacetime::read_parameters(const char* filename)
       initial_dim = boost::lexical_cast<int>(value);
     }
     else if (name == "PerturbTopology") {
-      perturb_topology = (value == "True") ? true : false;
+      boost::to_upper(value);
+      perturb_topology = (value == "TRUE") ? true : false;
     }
     else if (name == "PerturbGeometry") {
-      perturb_geometry = (value == "True") ? true : false;
+      boost::to_upper(value);
+      perturb_geometry = (value == "TRUE") ? true : false;
     }
     else if (name == "PerturbEnergy") {
-      perturb_energy = (value == "True") ? true : false;
+      boost::to_upper(value);
+      perturb_energy = (value == "TRUE") ? true : false;
     }
     else if (name == "MemoryFootprint") {
-      high_memory = (value == "High") ? true : false;
+      boost::to_upper(value);
+      high_memory = (value == "HIGH") ? true : false;
     }
     else if (name == "InstrumentConvergence") {
-      instrument_convergence = (value == "True") ? true : false;
+      boost::to_upper(value);
+      instrument_convergence = (value == "TRUE") ? true : false;
     }
     else if (name == "Hyphansis") {
+      boost::to_upper(value);
       if (value == "MUSICAL") weaving = MUSICAL;
     }
     else if (name == "HyphansisScore") {
       hyphansis_score = value;
     }
     else if (name == "HomologyMethod") {
+      boost::to_upper(value);
       if (value == "GAP") {
         H->set_method(SYNARMOSMA::GAP);
       }
-      else if (value == "Native") {
+      else if (value == "NATIVE") {
         H->set_method(SYNARMOSMA::NATIVE);
       }
     }
     else if (name == "HomologyBase") {
+      boost::to_upper(value);
       if (value == "INT") {
         H->set_field(SYNARMOSMA::INT);
       }
@@ -124,19 +136,24 @@ void Spacetime::read_parameters(const char* filename)
       }
     }
     else if (name == "Compressible") {
-      compressible = (value == "True") ? true : false;
+      boost::to_upper(value);
+      compressible = (value == "TRUE") ? true : false;
     }
     else if (name == "Permutable") {
-      permutable = (value == "True") ? true : false;
+      boost::to_upper(value);
+      permutable = (value == "TRUE") ? true : false;
     }
     else if (name == "Superposable") {
-      superposable = (value == "True") ? true : false;
+      boost::to_upper(value);
+      superposable = (value == "TRUE") ? true : false;
     }
     else if (name == "SheetDynamics") {
-      foliodynamics = (value == "True") ? true : false;
+      boost::to_upper(value);
+      foliodynamics = (value == "TRUE") ? true : false;
     }
     else if (name == "Checkpoint") {
-      checkpoint = (value == "True") ? true : false;
+      boost::to_upper(value);
+      checkpoint = (value == "TRUE") ? true : false;
     }
     else if (name == "CheckpointFrequency") {
       checkpoint_frequency = boost::lexical_cast<int>(value);
@@ -149,6 +166,7 @@ void Spacetime::read_parameters(const char* filename)
     value = params.first_child().value();
 
     if (name == "SolverType") {
+      boost::to_upper(value);
       if (value == "MECHANICAL") {
         solver = MECHANICAL;
       }
@@ -191,6 +209,7 @@ void Spacetime::read_parameters(const char* filename)
       thermalization = boost::lexical_cast<double>(value);
     }
     else if (name == "IntegrationEngine") {
+      boost::to_upper(value);
       int_engine = value;
     }
     else if (name == "StepSize") {
@@ -209,7 +228,8 @@ void Spacetime::read_parameters(const char* filename)
       repulsion_constant = boost::lexical_cast<double>(value);
     } 
     else if (name == "ConjugateGradientRefinement") {
-      cgradient_refinement = (value == "True") ? true : false;
+      boost::to_upper(value);
+      cgradient_refinement = (value == "TRUE") ? true : false;
     }
     else if (name == "MaxConjugateGradientSteps") {
       max_CG_steps = boost::lexical_cast<int>(value);
