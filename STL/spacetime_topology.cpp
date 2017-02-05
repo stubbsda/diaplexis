@@ -239,11 +239,27 @@ void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int 
   for(i=1; i<D; ++i) {
     s = 0;
     for(j=i; j<=D; ++j) {
-      s += SYNARMOSMA::ipow(-1,j-i)*int(SYNARMOSMA::factorial(j)/(SYNARMOSMA::factorial(i)*SYNARMOSMA::factorial(j-i)))*f[j];
+      s += SYNARMOSMA::ipow(-1,j-i)*int(SYNARMOSMA::binomial(j,i))*f[j];
     }
     fstar.push_back(s);
   }
   fstar.push_back(f[D]);
+}
+
+void Spacetime::compute_hvector(std::vector<int>& h,int sheet) const
+{
+  int i,j,sum;
+  std::vector<int> f,fstar;
+  const int D = dimension(sheet);
+
+  compute_fvector(f,fstar,sheet);
+  for(i=0; i<=D; ++i) {
+    sum = SYNARMOSMA::ipow(-1,i)*int(SYNARMOSMA::binomial(D+1,i));
+    for(j=1; j<=i; ++j) {
+      sum += SYNARMOSMA::ipow(-1,i-j)*int(SYNARMOSMA::binomial(D+1-j,i-j))*f[j-1];
+    }
+    h.push_back(sum);
+  }
 }
 
 void Spacetime::vertex_degree_statistics(double* output,int sheet) const

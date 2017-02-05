@@ -100,7 +100,7 @@ void Spacetime::chorogenesis(int nsteps)
   }
   const int n = j;
   for(i=0; i<=D; ++i) {
-    dpopulation[i] = SYNARMOSMA::ipow(2,i)*SYNARMOSMA::factorial(D)/(SYNARMOSMA::factorial(i)*SYNARMOSMA::factorial(D - i))*SYNARMOSMA::ipow(n - 2,D - i);
+    dpopulation[i] = SYNARMOSMA::ipow(2,i)*int(SYNARMOSMA::binomial(D,i))*SYNARMOSMA::ipow(n - 2,D - i);
   }
   // Zero out the spacetime energy and make sure the vertex geometry is dimensionally homogeneous...
   std::vector<double> x,y;

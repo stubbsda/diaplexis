@@ -1039,16 +1039,7 @@ void Spacetime::write_topology(int sheet) const
     for(i=Spacetime::ND; i>=1; i--) {
       n = cardinality(i,-1);
       if (n > 0) {
-        if (i > 0) {
-          q = 1;
-          for(j=ns; j>=ns-i; j--) {
-            q *= (SYNARMOSMA::UINT64) j;
-          }
-          q = q/SYNARMOSMA::factorial(i+1);
-        }
-        else {
-          q = (SYNARMOSMA::UINT64) ns;
-        }
+        q = int(SYNARMOSMA::binomial(ns,i+1));
         std::cout << "There are " << n << " (" << q << ") " << i << "-simplices in this complex." << std::endl;
       }
     }
@@ -1066,16 +1057,7 @@ void Spacetime::write_topology(int sheet) const
     for(i=Spacetime::ND; i>=1; i--) {
       n = cardinality(i,sheet);
       if (n > 0) {
-        if (i > 0) {
-          q = 1;
-          for(j=ns; j>=ns-i; j--) {
-            q *= (SYNARMOSMA::UINT64) j;
-          }
-          q = q/SYNARMOSMA::factorial(i+1);
-        }
-        else {
-          q = (SYNARMOSMA::UINT64) ns;
-        }
+        q = int(SYNARMOSMA::binomial(ns,i+1));
         std::cout << "There are " << n << " (" << q << ") " << i << "-simplices in this complex." << std::endl;
       }
     }

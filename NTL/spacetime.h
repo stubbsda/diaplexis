@@ -162,6 +162,7 @@ namespace DIAPLEXIS {
     void arclength_statistics(double*,int) const;
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
+    void compute_hvector(std::vector<int>&,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int) const;
