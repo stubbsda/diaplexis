@@ -62,7 +62,7 @@ void Spacetime::read_parameters(const char* filename)
     }
     else if (name == "RandomSeed") {
       rs = boost::lexical_cast<unsigned int>(value);
-      if (rs == 0) rs = (unsigned) std::time(NULL);
+      if (rs == 0) rs = (unsigned) std::time(nullptr);
       RND->set_seed(rs);
     }
     else if (name == "BackgroundDimension") {
