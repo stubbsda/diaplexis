@@ -80,8 +80,8 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
 
 void Spacetime::chorogenesis(int nsteps)
 {
-  //assert(initial_state == RANDOM);
-  assert(solver == MECHANICAL);
+  //assert(initial_state == Initial_Topology::random);
+  assert(solver == Geometry_Solver::mechanical);
   assert(edge_probability > 0.3);
   assert(geometry->get_euclidean());
   assert(connected(-1));
