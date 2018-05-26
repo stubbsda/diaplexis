@@ -118,22 +118,22 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "HomologyMethod") {
       boost::to_upper(value);
       if (value == "GAP") {
-        H->set_method(SYNARMOSMA::Homology::GAP); 
+        H->set_method(SYNARMOSMA::Homology::Method::gap); 
       }
       else if (value == "NATIVE") {
-        H->set_method(SYNARMOSMA::Homology::NATIVE);
+        H->set_method(SYNARMOSMA::Homology::Method::native);
       }
     }
     else if (name == "HomologyBase") {
       boost::to_upper(value);
       if (value == "INT") {
-        H->set_field(SYNARMOSMA::Homology::INT);
+        H->set_field(SYNARMOSMA::Homology::Field::int32);
       }
       else if (value == "NTL::ZZ") {
-        H->set_field(SYNARMOSMA::Homology::ZZ);
+        H->set_field(SYNARMOSMA::Homology::Field::multiprecision);
       }
       else if (value == "GF2") {
-        H->set_field(SYNARMOSMA::Homology::GF2);
+        H->set_field(SYNARMOSMA::Homology::Field::mod2);
       }
     }
     else if (name == "Compressible") {
@@ -421,19 +421,19 @@ void Spacetime::write_log() const
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (H->get_method() == SYNARMOSMA::Homology::GAP) {
+    if (H->get_method() == SYNARMOSMA::Homology::Method::gap) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
-    else if (H->get_method() == SYNARMOSMA::Homology::NATIVE) {
+    else if (H->get_method() == SYNARMOSMA::Homology::Method::native) {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (H->get_field() == SYNARMOSMA::Homology::INT) {
+    if (H->get_field() == SYNARMOSMA::Homology::Field::int32) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::ZZ) {
+    else if (H->get_field() == SYNARMOSMA::Homology::Field::multiprecision) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::GF2) {
+    else if (H->get_field() == SYNARMOSMA::Homology::Field::mod2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     if (weaving == Hyphansis::dynamic) {
@@ -1125,6 +1125,7 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&edge_probability),sizeof(double));
 
   s.read((char*)(&solver),sizeof(Geometry_Solver));
+  s.read((char*)(&engine),sizeof(Integrator));
   s.read((char*)(&geometry_tolerance),sizeof(double));
   s.read((char*)(&solver_its),sizeof(int));
   s.read((char*)(&ngenerations),sizeof(int));
@@ -1136,6 +1137,12 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&thermalization),sizeof(double));
   s.read((char*)(&max_CG_steps),sizeof(int));
   s.read((char*)(&max_LS_steps),sizeof(int));
+  s.read((char*)(&spring_constant),sizeof(double));
+  s.read((char*)(&repulsion_constant),sizeof(double));
+  s.read((char*)(&damping_constant),sizeof(double));
+  s.read((char*)(&step_size),sizeof(double));
+  s.read((char*)(&edge_flexibility_threshold),sizeof(double));
+  s.read((char*)(&cgradient_refinement),sizeof(bool));
   s.read((char*)(&simplex_alpha),sizeof(double));
   s.read((char*)(&simplex_gamma),sizeof(double));
   s.read((char*)(&simplex_rho),sizeof(double));
@@ -1318,6 +1325,7 @@ void Spacetime::write_state() const
 
   // Geometric runtime constants...
   s.write((char*)(&solver),sizeof(Geometry_Solver));
+  s.write((char*)(&engine),sizeof(Integrator));
   s.write((char*)(&geometry_tolerance),sizeof(double));
   s.write((char*)(&solver_its),sizeof(int));
   s.write((char*)(&ngenerations),sizeof(int));
@@ -1329,6 +1337,12 @@ void Spacetime::write_state() const
   s.write((char*)(&thermalization),sizeof(double));
   s.write((char*)(&max_CG_steps),sizeof(int));
   s.write((char*)(&max_LS_steps),sizeof(int));
+  s.write((char*)(&spring_constant),sizeof(double));
+  s.write((char*)(&repulsion_constant),sizeof(double));
+  s.write((char*)(&damping_constant),sizeof(double));
+  s.write((char*)(&step_size),sizeof(double));
+  s.write((char*)(&edge_flexibility_threshold),sizeof(double));
+  s.write((char*)(&cgradient_refinement),sizeof(bool));
   s.write((char*)(&simplex_alpha),sizeof(double));
   s.write((char*)(&simplex_gamma),sizeof(double));
   s.write((char*)(&simplex_rho),sizeof(double));

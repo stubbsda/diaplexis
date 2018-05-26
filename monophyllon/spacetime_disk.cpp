@@ -29,19 +29,19 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "InitialState") {
       boost::to_upper(value);
       if (value == "CARTESIAN") {
-        initial_state = CARTESIAN;
+        initial_state = Initial_Topology::cartesian;
       }
       else if (value == "RANDOM") {
-        initial_state = RANDOM;
+        initial_state = Initial_Topology::random;
       }
       else if (value == "SINGLETON") {
-        initial_state = SINGLETON;
+        initial_state = Initial_Topology::singleton;
       }
       else if (value == "MONOPLEX") {
-        initial_state = MONOPLEX;
+        initial_state = Initial_Topology::monoplex;
       }
       else if (value == "DISKFILE") {
-        initial_state = DISKFILE;
+        initial_state = Initial_Topology::diskfile;
       }
       n_is++;
     }
@@ -99,7 +99,12 @@ void Spacetime::read_parameters(const char* filename)
     }
     else if (name == "Hyphansis") {
       boost::to_upper(value);
-      if (value == "MUSICAL") weaving = MUSICAL;
+      if (value == "MUSICAL") {
+        weaving = Hyphansis::musical;
+      }
+      else if (value == "DYNAMIC") {
+        weaving = Hyphansis::dynamic;
+      }
     }
     else if (name == "HyphansisScore") {
       hyphansis_score = value;
@@ -110,22 +115,22 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "HomologyMethod") {
       boost::to_upper(value);
       if (value == "GAP") {
-        H->set_method(SYNARMOSMA::Homology::GAP); 
+        H->set_method(SYNARMOSMA::Homology::Method::gap); 
       }
       else if (value == "NATIVE") {
-        H->set_method(SYNARMOSMA::Homology::NATIVE);
+        H->set_method(SYNARMOSMA::Homology::Method::native);
       }
     }
     else if (name == "HomologyBase") {
       boost::to_upper(value);
       if (value == "INT") {
-        H->set_field(SYNARMOSMA::Homology::INT);
+        H->set_field(SYNARMOSMA::Homology::Field::int32);
       }
       else if (value == "NTL::ZZ") {
-        H->set_field(SYNARMOSMA::Homology::ZZ);
+        H->set_field(SYNARMOSMA::Homology::Field::multiprecision);
       }
       else if (value == "GF2") {
-        H->set_field(SYNARMOSMA::Homology::GF2);
+        H->set_field(SYNARMOSMA::Homology::Field::mod2);
       }
     }
     else if (name == "Compressible") {
@@ -149,19 +154,19 @@ void Spacetime::read_parameters(const char* filename)
     if (name == "SolverType") {
       boost::to_upper(value);
       if (value == "MECHANICAL") {
-        solver = MECHANICAL;
+        solver = Geometry_Solver::mechanical;
       }
       else if (value == "EVOLUTIONARY") {
-        solver = EVOLUTIONARY;
+        solver = Geometry_Solver::evolutionary;
       }
       else if (value == "ANNEALING") {
-        solver = ANNEALING;
+        solver = Geometry_Solver::annealing;
       }
       else if (value == "MINIMAL") {
-        solver = MINIMAL;
+        solver = Geometry_Solver::minimal;
       }
       else if (value == "SIMPLEX") {
-        solver = SIMPLEX;
+        solver = Geometry_Solver::simplex;
       }
       n_so++;
     }
@@ -191,7 +196,12 @@ void Spacetime::read_parameters(const char* filename)
     }
     else if (name == "IntegrationEngine") {
       boost::to_upper(value);
-      int_engine = value;
+      if (value == "EULER") {
+        engine = Integrator::euler;
+      }
+      else if (value == "RK4") {
+        engine = Integrator::rk4;
+      }
     }
     else if (name == "StepSize") {
       step_size = boost::lexical_cast<double>(value);
@@ -250,7 +260,7 @@ void Spacetime::read_parameters(const char* filename)
   // Finally for the background dimension...
   assert(D > 0);
 
-  if (weaving == DYNAMIC) {
+  if (weaving == Hyphansis::dynamic) {
     assert(edge_reorientability >= 0.0);
     assert(edge_reorientability <= 1.0);
   }
@@ -262,11 +272,11 @@ void Spacetime::read_parameters(const char* filename)
   geometry->initialize(euclidean,relational,uniform,high_memory,D);
   if (instrument_convergence) anterior.geometry.initialize(euclidean,relational,uniform,high_memory,D);
 
-  if (initial_state == RANDOM) {
+  if (initial_state == Initial_Topology::random) {
     assert(edge_probability > std::numeric_limits<double>::epsilon() && (edge_probability - 1.0) < -std::numeric_limits<double>::epsilon());
     assert(initial_size > 1);
   }
-  else if (initial_state == CARTESIAN) {
+  else if (initial_state == Initial_Topology::cartesian) {
     // If initial_size != n^dimension, n \in Z+, we have a problem
     std::vector<std::pair<long,int> > factors;
     SYNARMOSMA::factorize(initial_size,factors);
@@ -278,33 +288,32 @@ void Spacetime::read_parameters(const char* filename)
       }
     }
   }
-  else if (initial_state == MONOPLEX) {
+  else if (initial_state == Initial_Topology::monoplex) {
     assert(initial_dim <= Spacetime::ND);
   }
-  else if (initial_state == SINGLETON) {
+  else if (initial_state == Initial_Topology::singleton) {
     assert(initial_size == 1);
   }
 
-  if (solver == MINIMAL) {
+  if (solver == Geometry_Solver::minimal) {
     assert(solver_its > 0);
   }
-  else if (solver == EVOLUTIONARY) {
+  else if (solver == Geometry_Solver::evolutionary) {
     assert(pool_size > 0);
     assert(ngenerations > 0);
     assert(njousts > 0);
   }
-  else if (solver == ANNEALING) {
+  else if (solver == Geometry_Solver::annealing) {
     assert(annealing_steps > 0);
     assert(thermalization > std::numeric_limits<double>::epsilon());
     assert(thermal_variance > std::numeric_limits<double>::epsilon());
     assert(thermal_sweep > 0);
   }
-  else if (solver == MECHANICAL) {
+  else if (solver == Geometry_Solver::mechanical) {
     if (!relational && !uniform) {
       std::cerr << "If the geometry model is absolute it must be dimensionally uniform in order to use the MECHANICAL geometry solver!" << std::endl;
       std::exit(1);
     }
-    assert(int_engine == "EULER" || int_engine == "RK4");
     assert(step_size > std::numeric_limits<double>::epsilon() && (step_size - 1.0) < -std::numeric_limits<double>::epsilon());
     assert(spring_constant < -std::numeric_limits<double>::epsilon());
     assert(repulsion_constant > std::numeric_limits<double>::epsilon());
@@ -316,7 +325,7 @@ void Spacetime::read_parameters(const char* filename)
       assert(edge_flexibility_threshold > std::numeric_limits<double>::epsilon());
     }
   }
-  else if (solver == SIMPLEX) {
+  else if (solver == Geometry_Solver::simplex) {
     assert(simplex_alpha > std::numeric_limits<double>::epsilon());
     assert((simplex_gamma - 1.0) > std::numeric_limits<double>::epsilon());
     assert(simplex_gamma > simplex_alpha);
@@ -369,7 +378,7 @@ void Spacetime::write_log() const
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
     s << "<Global>" << std::endl;
-    if (initial_state != SINGLETON) s << "<InitialEvents>" << initial_size << "</InitialEvents>" << std::endl;
+    if (initial_state != Initial_Topology::singleton) s << "<InitialEvents>" << initial_size << "</InitialEvents>" << std::endl;
     s << "<MaximumIterations>" << max_iter << "</MaximumIterations>" << std::endl;
     s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
     s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
@@ -378,36 +387,36 @@ void Spacetime::write_log() const
     s << "<RandomSeed>" << RND->get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
     s << "<Compressible>" << bvalue[compressible] << "</Compressible>" << std::endl;
-    if (initial_state == DISKFILE) {
+    if (initial_state == Initial_Topology::diskfile) {
       s << "<InitialState>" << sname[initial_state] << " (" << sname[original_state] << ")</InitialState>" << std::endl;
+      s << "<InputFile>" << input_file << "</InputFile>" << std::endl;
     }
     else {
       s << "<InitialState>" << sname[initial_state] << "</InitialState>" << std::endl;
     }
-    if (initial_state == RANDOM) s << "<EdgeProbability>" << edge_probability << "</EdgeProbability>" << std::endl;
+    if (initial_state == Initial_Topology::random) s << "<EdgeProbability>" << edge_probability << "</EdgeProbability>" << std::endl;
     s << "<CheckpointFrequency>" << checkpoint_frequency << "</CheckpointFrequency>" << std::endl;
-    if (initial_state == DISKFILE) s << "<InputFile>" << input_file << "</InputFile>" << std::endl;
-    if (initial_state == CARTESIAN) {
+    if (initial_state == Initial_Topology::cartesian) {
       s << "<PerturbTopology>" << bvalue[perturb_topology] << "</PerturbTopology>" << std::endl;
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (H->get_method() == SYNARMOSMA::Homology::GAP) {
+    if (H->get_method() == SYNARMOSMA::Homology::Method::gap) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
-    else if (H->get_method() == SYNARMOSMA::Homology::NATIVE) {
+    else if (H->get_method() == SYNARMOSMA::Homology::Method::native) {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (H->get_field() == SYNARMOSMA::Homology::INT) {
+    if (H->get_field() == SYNARMOSMA::Homology::Field::int32) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::ZZ) {
+    else if (H->get_field() == SYNARMOSMA::Homology::Field::multiprecision) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::GF2) {
+    else if (H->get_field() == SYNARMOSMA::Homology::Field::mod2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
-    if (weaving == DYNAMIC) {
+    if (weaving == Hyphansis::dynamic) {
       s << "<Hyphansis>DYNAMIC</Hyphansis>" << std::endl; 
     }
     else {
@@ -418,22 +427,27 @@ void Spacetime::write_log() const
     s << "<Geometry>" << std::endl;
     s << "<GeometryTolerance>" << geometry_tolerance << "</GeometryTolerance>" << std::endl;
     s << "<SolverType>" << hname[solver] << "</SolverType>" << std::endl;
-    if (solver == MINIMAL) {
+    if (solver == Geometry_Solver::minimal) {
       s << "<SolverIterations>" << solver_its << "</SolverIterations>" << std::endl;
     }
-    else if (solver == EVOLUTIONARY) {
+    else if (solver == Geometry_Solver::evolutionary) {
       s << "<MaximumGenerations>" << ngenerations << "</MaximumGenerations>" << std::endl;
       s << "<MaximumJousts>" << njousts << "</MaximumJousts>" << std::endl;
       s << "<PoolSize>" << pool_size << "<</PoolSize>" << std::endl;
     }
-    else if (solver == ANNEALING) {
+    else if (solver == Geometry_Solver::annealing) {
       s << "<ThermalVariance>" << thermal_variance << "</ThermalVariance>" << std::endl;
       s << "<ThermalSweeps>" << thermal_sweep << "</ThermalSweeps>" << std::endl;
       s << "<AnnealingSteps>" << annealing_steps << "</AnnealingSteps>" << std::endl;
       s << "<ThermalizationCriterion>" << thermalization << "</ThermalizationCriterion>" << std::endl;
     }
-    else if (solver == MECHANICAL) {
-      s << "<IntegrationEngine>" << int_engine << "</IntegrationEngine>" << std::endl;
+    else if (solver == Geometry_Solver::mechanical) {
+      if (engine == Integrator::euler) {
+        s << "<IntegrationEngine>EULER</IntegrationEngine>" << std::endl;
+      }
+      else {
+        s << "<IntegrationEngine>RK4</IntegrationEngine>" << std::endl;
+      }
       s << "<StepSize>" << step_size << "</StepSize>" << std::endl;
       s << "<MaximumIntegrationSteps>" << max_int_steps << "</MaximumIntegrationSteps>" << std::endl;
       s << "<DampingConstant>" << damping_constant << "</DampingConstant>" << std::endl;
@@ -446,7 +460,7 @@ void Spacetime::write_log() const
         s << "<EdgeFlexibilityThreshold>" << edge_flexibility_threshold << "</EdgeFlexibilityThreshold>" << std::endl;
       }
     }
-    else if (solver == SIMPLEX) {
+    else if (solver == Geometry_Solver::simplex) {
       s << "<ReflectionCoefficient>" << simplex_alpha << "</ReflectionCoefficient>" << std::endl;
       s << "<ExpansionCoefficient>" << simplex_gamma << "</ExpansionCoefficient>" << std::endl;
       s << "<ContractionCoefficient>" << simplex_rho << "</ContractionCoefficient>" << std::endl;
@@ -828,7 +842,7 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&q),sizeof(int));
   s.read((char*)(&checkpoint_frequency),sizeof(int));
   // Skip changing the initial_state as it should remain DISKFILE...
-  s.read((char*)(&original_state),sizeof(TOPOLOGY));
+  s.read((char*)(&original_state),sizeof(Initial_Topology));
   s.read((char*)(&instrument_convergence),sizeof(bool));
   s.read((char*)(&high_memory),sizeof(bool));
   s.read((char*)(&superposable),sizeof(bool));
@@ -838,7 +852,8 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&perturb_energy),sizeof(bool));
   s.read((char*)(&edge_probability),sizeof(double));
 
-  s.read((char*)(&solver),sizeof(ALGORITHM));
+  s.read((char*)(&solver),sizeof(Geometry_Solver));
+  s.read((char*)(&engine),sizeof(Integrator));
   s.read((char*)(&geometry_tolerance),sizeof(double));
   s.read((char*)(&solver_its),sizeof(int));
   s.read((char*)(&ngenerations),sizeof(int));
@@ -850,6 +865,12 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&thermalization),sizeof(double));
   s.read((char*)(&max_CG_steps),sizeof(int));
   s.read((char*)(&max_LS_steps),sizeof(int));
+  s.read((char*)(&spring_constant),sizeof(double));
+  s.read((char*)(&repulsion_constant),sizeof(double));
+  s.read((char*)(&damping_constant),sizeof(double));
+  s.read((char*)(&step_size),sizeof(double));
+  s.read((char*)(&edge_flexibility_threshold),sizeof(double));
+  s.read((char*)(&cgradient_refinement),sizeof(bool));
   s.read((char*)(&simplex_alpha),sizeof(double));
   s.read((char*)(&simplex_gamma),sizeof(double));
   s.read((char*)(&simplex_rho),sizeof(double));
@@ -989,7 +1010,7 @@ void Spacetime::write_state() const
   unsigned int q = RND->get_seed();
   s.write((char*)(&q),sizeof(int));
   s.write((char*)(&checkpoint_frequency),sizeof(int));
-  s.write((char*)(&initial_state),sizeof(TOPOLOGY));
+  s.write((char*)(&initial_state),sizeof(Initial_Topology));
   s.write((char*)(&instrument_convergence),sizeof(bool));
   s.write((char*)(&high_memory),sizeof(bool));
   s.write((char*)(&superposable),sizeof(bool));
@@ -1000,7 +1021,8 @@ void Spacetime::write_state() const
   s.write((char*)(&edge_probability),sizeof(double));
 
   // Geometric runtime constants...
-  s.write((char*)(&solver),sizeof(ALGORITHM));
+  s.write((char*)(&solver),sizeof(Geometry_Solver));
+  s.write((char*)(&engine),sizeof(Integrator));
   s.write((char*)(&geometry_tolerance),sizeof(double));
   s.write((char*)(&solver_its),sizeof(int));
   s.write((char*)(&ngenerations),sizeof(int));
@@ -1012,6 +1034,12 @@ void Spacetime::write_state() const
   s.write((char*)(&thermalization),sizeof(double));
   s.write((char*)(&max_CG_steps),sizeof(int));
   s.write((char*)(&max_LS_steps),sizeof(int));
+  s.write((char*)(&spring_constant),sizeof(double));
+  s.write((char*)(&repulsion_constant),sizeof(double));
+  s.write((char*)(&damping_constant),sizeof(double));
+  s.write((char*)(&step_size),sizeof(double));
+  s.write((char*)(&edge_flexibility_threshold),sizeof(double));
+  s.write((char*)(&cgradient_refinement),sizeof(bool));
   s.write((char*)(&simplex_alpha),sizeof(double));
   s.write((char*)(&simplex_gamma),sizeof(double));
   s.write((char*)(&simplex_rho),sizeof(double));

@@ -25,8 +25,8 @@ namespace DIAPLEXIS {
     int deserialize(std::ifstream&);
    public:
     Sheet();
-    Sheet(int,SYNARMOSMA::Homology::FIELD,SYNARMOSMA::Homology::METHOD);
-    Sheet(int,int,SYNARMOSMA::Homology::FIELD,SYNARMOSMA::Homology::METHOD);
+    Sheet(int,SYNARMOSMA::Homology::Field,SYNARMOSMA::Homology::Method);
+    Sheet(int,int,SYNARMOSMA::Homology::Field,SYNARMOSMA::Homology::Method);
     Sheet(const Sheet&);
     Sheet& operator =(const Sheet&);
     ~Sheet();

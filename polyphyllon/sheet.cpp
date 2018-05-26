@@ -4,7 +4,7 @@ using namespace DIAPLEXIS;
 
 Sheet::Sheet()
 {
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::GF2,SYNARMOSMA::Homology::NATIVE);
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
 
   clear();
@@ -12,7 +12,7 @@ Sheet::Sheet()
   active = true;
 }
 
-Sheet::Sheet(int n,SYNARMOSMA::Homology::FIELD f,SYNARMOSMA::Homology::METHOD m)
+Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 {
   H = new SYNARMOSMA::Homology(f,m);
   pi = new SYNARMOSMA::Homotopy;
@@ -23,7 +23,7 @@ Sheet::Sheet(int n,SYNARMOSMA::Homology::FIELD f,SYNARMOSMA::Homology::METHOD m)
   index = n;
 }
 
-Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::FIELD f,SYNARMOSMA::Homology::METHOD m)
+Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 {
   H = new SYNARMOSMA::Homology(f,m);
   pi = new SYNARMOSMA::Homotopy;
@@ -37,7 +37,7 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::FIELD f,SYNARMOSMA::Homology::MET
 
 Sheet::Sheet(const Sheet& source)
 {
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::GF2,SYNARMOSMA::Homology::NATIVE);
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
 
   index = source.index;

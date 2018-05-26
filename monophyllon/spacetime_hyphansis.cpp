@@ -3091,7 +3091,7 @@ void Spacetime::hyphansis()
   s.close();
   std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
 
-  if (weaving == DYNAMIC) {
+  if (weaving == Hyphansis::dynamic) {
     dynamic_hyphansis(candidates);
   }
   else {

@@ -25,28 +25,34 @@ namespace DIAPLEXIS {
 
   class Spacetime {
    protected:
-    enum ALGORITHM
+    enum Initial_Topology
     {
-        MINIMAL,
-        MECHANICAL,
-        EVOLUTIONARY,
-        ANNEALING,
-        SIMPLEX
+        random,
+        monoplex,
+        cartesian,
+        singleton,
+        diskfile
     };
 
-    enum TOPOLOGY
+    enum Geometry_Solver
     {
-        RANDOM,
-        MONOPLEX,
-        CARTESIAN,
-        SINGLETON,
-        DISKFILE
+        minimal,
+        mechanical,
+        evolutionary,
+        annealing,
+        simplex
     };
 
-    enum HYPHANSIS
+    enum class Integrator
     {
-        DYNAMIC,
-        MUSICAL
+        euler,
+        rk4
+    };
+
+    enum class Hyphansis
+    {
+        dynamic,
+        musical
     };
 
     // The main (variable) properties of the Spacetime class
@@ -74,9 +80,9 @@ namespace DIAPLEXIS {
     std::vector<int> flexible_edge;
 
     // The global parameters
-    TOPOLOGY initial_state;
-    TOPOLOGY original_state;
-    HYPHANSIS weaving;
+    Initial_Topology initial_state;
+    Initial_Topology original_state;
+    Hyphansis weaving;
     int initial_size;
     int max_iter;
     int initial_dim;
@@ -103,7 +109,8 @@ namespace DIAPLEXIS {
 
     // Now the parameters associated with the
     // geometry solver
-    ALGORITHM solver;
+    Geometry_Solver solver;
+    Integrator engine;
     double geometry_tolerance;
     double thermalization;
     double thermal_variance;
@@ -117,7 +124,6 @@ namespace DIAPLEXIS {
     double step_size;
     double edge_flexibility_threshold;
     bool cgradient_refinement;
-    std::string int_engine;
     int solver_its;
     int ngenerations;
     int pool_size;

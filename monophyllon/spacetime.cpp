@@ -72,7 +72,6 @@ void Spacetime::set_default_values()
   thermal_sweep = 1000;
   annealing_steps = 500;
   thermalization = 0.001;
-  int_engine = std::string("RK4");
   max_int_steps = 10000;
   step_size = 0.05;
   spring_constant = -1.5;
@@ -97,8 +96,9 @@ void Spacetime::set_default_values()
   input_file = std::string("");
   initial_size = 10;
   initial_dim = 4;
-  initial_state = RANDOM;
-  solver = MINIMAL;
+  initial_state = Initial_Topology::random;
+  solver = Geometry_Solver::minimal;
+  engine = Integrator::rk4;
   converged = false;
   compressible = false;
   superposable = false;
@@ -114,14 +114,14 @@ void Spacetime::set_default_values()
   boundary = false;
   orientable = false;
   diskless = false;
-  original_state = RANDOM;
+  original_state = Initial_Topology::random;
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::GF2,SYNARMOSMA::Homology::NATIVE);
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
   RND = new SYNARMOSMA::Random;
-  weaving = DYNAMIC;
+  weaving = Hyphansis::dynamic;
   edge_reorientability = 0.01;
   hyphansis_file = std::string("data/hyphansis");
   hyphansis_score = std::string("");
@@ -1418,7 +1418,7 @@ void Spacetime::build_initial_state()
   vt.incept = 0;
   S.incept = 0;
 
-  if (initial_state == CARTESIAN) {
+  if (initial_state == Initial_Topology::cartesian) {
     std::vector<std::pair<long,int> > factors;
     SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
@@ -1597,7 +1597,7 @@ void Spacetime::build_initial_state()
       }
     }
   }
-  else if (initial_state == SINGLETON) {
+  else if (initial_state == Initial_Topology::singleton) {
     // An initial spacetime consisting of a single isolated vertex, though with very
     // high energy
     if (relational) {
@@ -1609,7 +1609,7 @@ void Spacetime::build_initial_state()
     vt.set_energy(5000.0*(0.5 + RND->drandom()/2.0));
     events.push_back(vt);
   }
-  else if (initial_state == MONOPLEX) {
+  else if (initial_state == Initial_Topology::monoplex) {
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
     int ulimit = geometry->dimension();
@@ -1642,7 +1642,7 @@ void Spacetime::build_initial_state()
     simplices[initial_dim].push_back(S);
     index_table[initial_dim][S.vertices] = 0;
   }
-  else if (initial_state == RANDOM) {
+  else if (initial_state == Initial_Topology::random) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
     // assemble a random graph, with n = initial_size
     int level = 2,k = 0,ulimit;
@@ -1802,7 +1802,7 @@ void Spacetime::initialize()
     hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
   }
 
-  if (initial_state == DISKFILE) {
+  if (initial_state == Initial_Topology::diskfile) {
     read_state(input_file);
     if (converged) {
       std::cout << "This spacetime complex has already converged!" << std::endl;

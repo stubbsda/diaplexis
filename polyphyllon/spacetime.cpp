@@ -123,7 +123,7 @@ void Spacetime::set_default_values()
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::GF2,SYNARMOSMA::Homology::NATIVE);
+  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
   RND = new SYNARMOSMA::Random;
   weaving = Hyphansis::dynamic;

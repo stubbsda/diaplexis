@@ -489,7 +489,7 @@ void Spacetime::optimize()
 #ifdef VERBOSE
   std::cout << "Calling the geometric minimization routine with system dimension " << system_size << std::endl;
 #endif
-  if (solver == MINIMAL) {
+  if (solver == Geometry_Solver::minimal) {
     int its = 0;
     bool found;
     std::set<int> vmodified,candidates,bbarrel;
@@ -552,7 +552,7 @@ void Spacetime::optimize()
       old_error = error;
     } while(its < solver_its);
   }
-  else if (solver == EVOLUTIONARY) {
+  else if (solver == Geometry_Solver::evolutionary) {
     int j,in1,vc,joust,generation = 1;
     bool viable;
     double p,f1,f2,severity,fbest,fitness[2*pool_size],ftemp[pool_size];
@@ -710,7 +710,7 @@ void Spacetime::optimize()
     delete optimal;
     delete initial_state;
   }
-  else if (solver == ANNEALING) {
+  else if (solver == Geometry_Solver::annealing) {
     int j,m,step,naccept,nim,nwo_a,nwo_r;
     double S,q,t,E_old,paccept,sigma,E_avg,E_best,delta,temperature = 100.0;
     bool done,viable;
@@ -894,7 +894,7 @@ void Spacetime::optimize()
     structural_deficiency();
     delete optimal;
   }
-  else if (solver == MECHANICAL) {
+  else if (solver == Geometry_Solver::mechanical) {
     // Method to use an effective force algorithm to calculate the best 
     // geometric configuration for the spacetime complex, with the possibility 
     // of a final conjugate gradient optimization stage to attempt to reduce 
@@ -927,7 +927,7 @@ void Spacetime::optimize()
     for(i=0; i<2*D*nreal; ++i) {
       ynew.push_back(0.0);
     }
-    if (int_engine == "EULER") {
+    if (engine == Integrator::euler) {
       double F[2*D*nreal];
       do {
         mechanical_force(offset,y,F);
@@ -945,7 +945,7 @@ void Spacetime::optimize()
         its++;
       } while(true);
     }
-    else if (int_engine == "RK4") {
+    else if (engine == Integrator::rk4) {
       double k1[2*D*nreal],k2[2*D*nreal],k3[2*D*nreal],k4[2*D*nreal];
       std::vector<double> temp;
       for(i=0; i<2*D*nreal; ++i) {
@@ -1106,7 +1106,7 @@ void Spacetime::optimize()
     }
     delete initial_state;
   }
-  else if (solver == SIMPLEX) {
+  else if (solver == Geometry_Solver::simplex) {
     int in1,j,k = 0,bindex,windex,ntrans = 0;
     double f,q,centroid[system_size];
     SYNARMOSMA::Geometry SR(*geometry),SE(*geometry); 
