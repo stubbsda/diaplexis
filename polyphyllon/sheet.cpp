@@ -7,8 +7,6 @@ Sheet::Sheet()
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
 
-  clear();
-
   active = true;
 }
 
@@ -16,8 +14,6 @@ Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 {
   H = new SYNARMOSMA::Homology(f,m);
   pi = new SYNARMOSMA::Homotopy;
-
-  clear();
 
   active = true;
   index = n;
@@ -27,8 +23,6 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Met
 {
   H = new SYNARMOSMA::Homology(f,m);
   pi = new SYNARMOSMA::Homotopy;
-
-  clear();
 
   active = true;
   index = n;

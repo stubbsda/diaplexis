@@ -7,15 +7,15 @@
 namespace DIAPLEXIS {
   class Sheet {
    protected:
-    int index;
-    int parent;
+    int index = -1;
+    int parent = -1;
+    int nstep = 0;
+    bool active = false;
+    bool pseudomanifold = false;
+    bool boundary = false;
+    bool orientable = false;
+    std::string ops = "";
     std::set<int> vx_delta;
-    int nstep;
-    bool active;
-    bool pseudomanifold;
-    bool boundary;
-    bool orientable;
-    std::string ops;
     SYNARMOSMA::Homology* H;
     SYNARMOSMA::Homotopy* pi;
 

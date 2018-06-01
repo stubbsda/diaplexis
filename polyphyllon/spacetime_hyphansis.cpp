@@ -1475,7 +1475,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::set<int>::const_iterator jt,kt;
     std::set<int> linked;
     std::vector<int> component,sedge;
-    std::vector<boost::tuple<int,int,double> > connect;
+    std::vector<std::tuple<int,int,double> > connect;
     Simplex S;
 
     ncomp = component_analysis(component,-1);
@@ -1493,7 +1493,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<ncomp; ++i) {
       for(j=1+i; j<ncomp; ++j) {
         l = minimize_lengths(cvertex[i],cvertex[j],v);
-        connect.push_back(boost::tuple<int,int,double>(v[0],v[1],l));
+        connect.push_back(std::tuple<int,int,double>(v[0],v[1],l));
       }
     }
     n = (signed) connect.size();

@@ -8,13 +8,13 @@ namespace DIAPLEXIS {
   class Event: public SYNARMOSMA::Vertex {
    // For the event structure, the nodes of spacetime...
    protected:
-    bool boundary;
-    bool topology_modified;
-    bool geometry_modified;
-    double curvature;
-    double obliquity;
-    double deficiency;
-    double geometric_deficiency;
+    bool boundary = false;
+    bool topology_modified = true;
+    bool geometry_modified = true;
+    double curvature = 0.0;
+    double obliquity = 0.0;
+    double deficiency = 0.0;
+    double geometric_deficiency = 0.0;
     std::set<int> ubiquity;
     std::vector<double> entwinement;
     SYNARMOSMA::Proposition theorem;

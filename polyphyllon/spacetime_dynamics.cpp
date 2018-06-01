@@ -192,7 +192,7 @@ void Spacetime::energy_diffusion()
   int i,j,v,n,m,nc; 
   double Enew[nv],E,En,l,d,E_tx,residue; 
   std::set<int>::const_iterator it;
-  std::vector<boost::tuple<int,double,double> > tvertex;
+  std::vector<std::tuple<int,double,double> > tvertex;
   std::vector<std::pair<int,double> > candidates,ivertex;
 
   // I want to try a new method here that begins by considering 
@@ -227,7 +227,7 @@ void Spacetime::energy_diffusion()
     for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
       n = *it;
       if (Enew[n] > -1.0) continue;
-      tvertex.push_back(boost::tuple<int,double,double>(n,events[n].get_energy(),events[n].deficiency));
+      tvertex.push_back(std::tuple<int,double,double>(n,events[n].get_energy(),events[n].deficiency));
     }
     if (tvertex.empty()) continue;
     m = (signed) tvertex.size();
