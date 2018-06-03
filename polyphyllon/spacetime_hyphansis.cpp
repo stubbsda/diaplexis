@@ -187,7 +187,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   return true;
 }
 
-bool Spacetime::edge_reorientation(int base,int sheet)
+bool Spacetime::edge_parity_mutation(int base,int sheet)
 {
   int n;
   std::set<int> candidates;
@@ -200,17 +200,17 @@ bool Spacetime::edge_reorientation(int base,int sheet)
   }
   if (candidates.empty()) return false;      
   n = RND->irandom(candidates);
-  if (simplices[1][n].orientation == SYNARMOSMA::UNDIRECTED) {
-    simplices[1][n].orientation = (RND->irandom(2) == 0) ? SYNARMOSMA::INCOMING : SYNARMOSMA::OUTGOING;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
   }
   else {
-    simplices[1][n].orientation *= -1;
+    simplices[1][n].parity *= -1;
   }
-  recompute_orientation(n);
+  recompute_parity(n);
   return true;
 }
 
-bool Spacetime::edge_reorientation(int u,int v,int sheet)
+bool Spacetime::edge_parity_mutation(int u,int v,int sheet)
 {
   // This is the method used for dynamic hyphansis where there is a single call 
   // to recompute the orientation of all the higher-dimensional simplices, so no 
@@ -224,11 +224,11 @@ bool Spacetime::edge_reorientation(int u,int v,int sheet)
   if (qt == index_table[1].end()) return false;
   if (!simplices[1][qt->second].active(sheet)) return false;
   n = qt->second;
-  if (simplices[1][n].orientation == SYNARMOSMA::UNDIRECTED) {
-    simplices[1][n].orientation = (RND->irandom(2) == 0) ? SYNARMOSMA::INCOMING : SYNARMOSMA::OUTGOING;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
   }
   else {
-    simplices[1][n].orientation *= -1;
+    simplices[1][n].parity *= -1;
   }
   return true;
 }
@@ -1504,26 +1504,26 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::sort(connect.begin(),connect.end(),SYNARMOSMA::tuple_predicate);
     // Assuming the array "connect" has been sorted in ascending order for the last
     // element...
-    j = connect[0].get<0>();
-    k = connect[0].get<1>();
+    j = std::get<0>(connect[0]);
+    k = std::get<1>(connect[0]);
     sedge.push_back(j);
     sedge.push_back(k);
     linked.insert(component[j]);
     linked.insert(component[k]);
-    tlength = connect[0].get<2>();
+    tlength = std::get<2>(connect[0]);
     used[0] = true;
     do {
       for(i=1; i<n; ++i) {
         if (used[i]) continue;
-        j = component[connect[i].get<0>()];
-        k = component[connect[i].get<1>()];
+        j = component[std::get<0>(connect[i])];
+        k = component[std::get<1>(connect[i])];
         jt = std::find(linked.begin(),linked.end(),j);
         kt = std::find(linked.begin(),linked.end(),k);
         if (jt != linked.end() && kt != linked.end()) continue;
         if (jt == linked.end() && kt == linked.end()) continue;
-        sedge.push_back(connect[i].get<0>());
-        sedge.push_back(connect[i].get<1>());
-        tlength += connect[i].get<2>();
+        sedge.push_back(std::get<0>(connect[i]));
+        sedge.push_back(std::get<1>(connect[i]));
+        tlength += std::get<2>(connect[i]);
         linked.insert(j);
         linked.insert(k);
         break;
@@ -1888,14 +1888,9 @@ bool Spacetime::simplex_addition(const std::set<int>& S,int sheet)
 
   Simplex s(S,locus);
   if (d == 1) {
-    s.orientation = SYNARMOSMA::UNDIRECTED;
-    if (RND->drandom() < 1.0/double(geometry->dimension())) {
-      if (RND->irandom(2) == 0) {
-        s.orientation = SYNARMOSMA::OUTGOING;
-      }
-      else {
-        s.orientation = SYNARMOSMA::INCOMING;
-      }
+    s.parity = 0;
+    if (RND->drandom() < 0.2) {
+      s.parity = (RND->irandom(2) == 0) ? 1 : -1;
     }
   }
 
@@ -3411,7 +3406,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = germination(v,sheet);
     }
     else if (op == "T") {
-      success = edge_reorientation(v,sheet);
+      success = edge_parity_mutation(v,sheet);
     }
     if (success) {
       s << "    <Operation>" << opstring.str() << "</Operation>" << std::endl;
@@ -3613,15 +3608,15 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
   n = (signed) simplices[1].size();
   for(i=0; i<n; ++i) {
     if (!simplices[1][i].active(sheet)) continue;
-    if (RND->drandom() < edge_reorientability) {
+    if (RND->drandom() < parity_mutation) {
       simplices[1][i].get_vertices(vx);
-      if (edge_reorientation(vx[0],vx[1],sheet)) {
+      if (edge_parity_mutation(vx[0],vx[1],sheet)) {
         s << "    <Operation>T," << vx[0] << "</Operation>" << std::endl;
         r_edges.insert(i);
       }
     }
   }
-  recompute_orientation(r_edges);
+  recompute_parity(r_edges);
   s << "  </Sheet>" << std::endl;
   s.close();
 }

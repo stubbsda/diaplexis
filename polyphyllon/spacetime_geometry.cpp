@@ -437,12 +437,13 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   // large negative value means the topology must be altered to resemble that of the Cartesian
   // initial state.
   if (geometry->get_euclidean()) return 0.0;
-  int u,w,d1,d2,tcount;
+  int u,w,tcount;
   double l,tipsy,vorticity;
   std::set<int> S;
   std::vector<int> jset;
   std::set<int>::const_iterator it,jt;
   std::vector<int>::const_iterator vit;
+  SYNARMOSMA::Relation d1,d2;
   SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Directed_Graph G;
 
@@ -471,18 +472,8 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       for(vit=jset.begin(); vit!=jset.end(); ++vit) {
         w = *vit;
         if (w == u || w == v) continue;
-
-        S.clear();
-        S.insert(v);
-        S.insert(w);
-        qt = index_table[1].find(S);
-        d1 = simplices[1][qt->second].orientation;
-
-        S.clear();
-        S.insert(u);
-        S.insert(w);
-        qt = index_table[1].find(S);
-        d2 = simplices[1][qt->second].orientation;
+        d1 = geometry->get_temporal_order(v,w);
+        d2 = geometry->get_temporal_order(u,w);
         if (d1 != d2) tcount++;
       }
       tipsy += double(tcount)/(1.0 + l*double(jset.size()));
@@ -516,14 +507,14 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
         S.insert(u);
         qt = index_table[1].find(S);
         if (!simplices[1][qt->second].active(sheet)) continue;
-        d1 = simplices[1][qt->second].orientation;
+        d1 = geometry->get_temporal_order(v,u);
 
         S.clear();
         S.insert(u);
         S.insert(w);
         qt = index_table[1].find(S);
         if (!simplices[1][qt->second].active(sheet)) continue;
-        d2 = simplices[1][qt->second].orientation;
+        d2 = geometry->get_temporal_order(u,w);
         if (d1 != d2) tcount++;
       }
       tipsy += double(tcount)/(1.0 + l*double(jset.size()));

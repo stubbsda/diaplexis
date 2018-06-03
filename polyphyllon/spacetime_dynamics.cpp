@@ -239,9 +239,9 @@ void Spacetime::energy_diffusion()
       if (E < std::numeric_limits<double>::epsilon()) continue;
       ivertex.clear();
       for(j=0; j<m; ++j) {
-       n = tvertex[j].get<0>();
-       En = tvertex[j].get<1>();
-       d = tvertex[j].get<2>();
+       n = std::get<0>(tvertex[j]);
+       En = std::get<1>(tvertex[j]);
+       d = std::get<2>(tvertex[j]);
        if (d > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,d));
       }
       d = -events[v].deficiency/Spacetime::Lambda;
@@ -252,7 +252,7 @@ void Spacetime::energy_diffusion()
         E_tx = E_tx/double(1 + m);
         Enew[v] = E - double(m)*E_tx;
         for(j=0; j<m; ++j) {
-          n = tvertex[j].get<0>();
+          n = std::get<0>(tvertex[j]);
           Enew[n] = events[n].get_energy() + E_tx;
         }
       }
@@ -300,9 +300,9 @@ void Spacetime::energy_diffusion()
       // Look for a candidate which has a positive deficiency
       ivertex.clear();
       for(j=0; j<m; ++j) {
-       n = tvertex[j].get<0>();
-       En = tvertex[j].get<1>();
-       d = tvertex[j].get<2>();
+       n = std::get<0>(tvertex[j]);
+       En = std::get<1>(tvertex[j]);
+       d = std::get<2>(tvertex[j]);
        if (En > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,En));
       }
       // If none of my neighbours have any energy there is nothing to do but 

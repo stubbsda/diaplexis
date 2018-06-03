@@ -16,13 +16,13 @@ const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
 
 Spacetime::Spacetime()
 {
-  set_default_values();
+  allocate();
   initialize();
 }
 
 Spacetime::Spacetime(bool no_disk)
 {
-  set_default_values();
+  allocate();
   diskless = no_disk;
   if (diskless) checkpoint_frequency = 0;
   initialize();
@@ -30,14 +30,14 @@ Spacetime::Spacetime(bool no_disk)
 
 Spacetime::Spacetime(const char* filename)
 {
-  set_default_values();
+  allocate();
   read_parameters(filename);
   initialize();
 }
 
 Spacetime::Spacetime(const char* filename,bool no_disk)
 {
-  set_default_values();
+  allocate();
   read_parameters(filename);
   diskless = no_disk;
   if (diskless) checkpoint_frequency = 0;
@@ -61,75 +61,20 @@ Spacetime::~Spacetime()
   delete[] anterior.index_table;
 }
 
-void Spacetime::set_default_values()
+void Spacetime::allocate()
 {
-  perturb_geometry = false;
-  perturb_topology = false;
-  perturb_energy = true;
-  ngenerations = 1000;
-  solver_its = 50;
-  njousts = 20;
-  pool_size = 100;
-  thermal_variance = 0.5;
-  thermal_sweep = 1000;
-  annealing_steps = 500;
-  thermalization = 0.001;
-  max_int_steps = 10000;
-  step_size = 0.05;
-  spring_constant = -1.5;
-  repulsion_constant = 1.0;
-  damping_constant = 0.85;
-  cgradient_refinement = true;
-  max_CG_steps = 10;
-  max_LS_steps = 20;
-  edge_flexibility_threshold = 2.0;
-  simplex_alpha = 1.0;
-  simplex_gamma = 2.0;
-  simplex_rho = 0.5;
-  simplex_sigma = 0.5;
-  system_size = 0;
-  error = 0.0;
-  global_deficiency = 0.0;
-  topology_delta = 0.0;
-  geometry_delta = 0.0;
-  energy_delta = 0.0;
-  state_file = std::string("data/spacetime");
-  log_file = std::string("data/spacetime");
-  input_file = std::string("");
-  initial_size = 10;
-  initial_dim = 4;
-  initial_state = Initial_Topology::random;
-  solver = Geometry_Solver::minimal;
-  engine = Integrator::rk4;
-  converged = false;
-  permutable = false;
-  compressible = false;
-  superposable = false;
-  foliodynamics = false;
-  instrument_convergence = true;
-  high_memory = true;
-  checkpoint_frequency = 50;
-  iterations = 0;
-  geometry_tolerance = 0.0001;
-  max_iter = 50;
-  edge_probability = std::log(500.0)/250.0;
-  nactive = 1;
-  nt_initial = 1;
-  pseudomanifold = false;
-  boundary = false;
-  orientable = false;
-  diskless = false;
-  original_state = Initial_Topology::random;
+  // Allocate the memory for the simplices and index tables...
+  simplices = new std::vector<Simplex>[1 + Spacetime::ND];
+  index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
+  anterior.simplices = new std::vector<Simplex>[1 + Spacetime::ND];
+  anterior.index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
+
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi = new SYNARMOSMA::Homotopy;
   RND = new SYNARMOSMA::Random;
-  weaving = Hyphansis::dynamic;
-  edge_reorientability = 0.01;
-  hyphansis_file = std::string("data/hyphansis");
-  hyphansis_score = std::string("");
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -1081,7 +1026,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (!simplices[i][j].active()) continue;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"" << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
+          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"";
+          s << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1095,7 +1041,8 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
       for(j=0; j<(signed) simplices[i].size(); ++j) {
         if (!simplices[i][j].active(sheet)) continue;
         for(k=0; k<1+i; ++k) {
-          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"" << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
+          s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"";
+          s << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
         }
       }
     }
@@ -1184,8 +1131,13 @@ void Spacetime::structural_deficiency()
     if (!events[i].topology_modified) continue;
     for(j=0; j<nt; ++j) {
       if (!events[i].active(j)) continue;
+      tangle[j] = 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
+      //assert(!std::isnan(tangle[j]));
       compute_graph(&G,i,j);
-      tangle[j] = G.completeness() + G.entwinement()/double(G.order() - 1) + 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
+      tangle[j] += G.completeness();
+      //assert(!std::isnan(tangle[j]));
+      if (G.order() > 1) tangle[j] += G.entwinement()/double(G.order() - 1);
+      //assert(!std::isnan(tangle[j]));
     }
     events[i].entwinement = tangle;
     events[i].topological_dimension = vertex_dimension(i,-1);
@@ -1201,8 +1153,9 @@ void Spacetime::structural_deficiency()
       sum += events[i].entwinement[j];
     }
     gvalue[i] = sum/double(nt);
+    assert(!std::isnan(gvalue[i]));
   }
-
+  
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,v1,v2,v3,l,found,d1,d2) schedule(dynamic,1)
 #endif
@@ -1278,16 +1231,19 @@ void Spacetime::structural_deficiency()
       else {
         length_deviation[v1] += std::log(l)*std::log(l);
       }
-      //if (simplices[1][n].orientation == SYNARMOSMA::UNDIRECTED) continue;
+      //if (!simplices[1][n].timelike()) continue;
       //u = simplices[1][n].presence(nt);
       // How to determine if j lies in the chronological future of i?
-      //sigma = (simplices[1][n].orientation == SYNARMOSMA::OUTGOING) ? 1 : -1;
-      //if (j < i) sigma = -sigma;
+      //sigma = ???
       //sum2 += double(sigma)*events[j].get_energy()*l_inv;
     }
     length_deviation[v1] = length_deviation[v1]/double(k);
     R[v1] = gvalue[v1]; // - sum1/double(k);
     rho[v1] = events[v1].get_energy(); // + sum2/double(k);
+    // Sanity checks...
+    assert(!std::isnan(R[v1])); 
+    assert(!std::isnan(rho[v1])); 
+    assert(!std::isnan(length_deviation[v1]));
   }
 
   // The local part of the structure equations
@@ -1473,7 +1429,7 @@ bool Spacetime::global_operations()
   }
 
   // First perform the geometry and energy diffusion...
-  compute_orientation();
+  compute_parity();
   compute_lightcones();
   if (adjust_dimension()) {
     compute_volume();
@@ -1854,7 +1810,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.initialize(i,in1,locus,SYNARMOSMA::OUTGOING);
+          S.initialize(i,in1,locus);
           index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
@@ -1868,7 +1824,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
           in1 += v[j+1]*k;
         }
         if (in1 > i) {
-          S.initialize(i,in1,locus,SYNARMOSMA::OUTGOING);
+          S.initialize(i,in1,locus);
           index_table[1][S.vertices] = (signed) simplices[1].size();
           simplices[1].push_back(S);
           S.vertices.clear();
@@ -2135,12 +2091,6 @@ void Spacetime::initialize()
   boost::timer::cpu_timer t1;
 #endif
 
-  // Allocate the memory for the simplices and index tables...
-  simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
-  anterior.simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  anterior.index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
-
   if (!diskless) {
     if (std::system("mkdir -p data") < 0) {
       std::cerr << "Unable to create data directory." << std::endl;
@@ -2199,7 +2149,7 @@ void Spacetime::initialize()
     geometry->compute_distances();
     compute_simplicial_dimension();
     adjust_dimension();
-    compute_orientation();
+    compute_parity();
     compute_lightcones();
     compute_volume();
     compute_curvature();
