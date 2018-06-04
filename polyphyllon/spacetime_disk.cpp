@@ -1039,6 +1039,14 @@ void Spacetime::read_state(const std::string& filename)
   s.seekg(0);
 
   s.read((char*)(&n),sizeof(int));
+  if (n != 2) {
+    s.close();
+    std::cerr << "Reading in a state file for non-polyphyllon version of the Diaplexis library." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+
+  s.read((char*)(&n),sizeof(int));
   if (n != Spacetime::ND) {
     s.close();
     std::cerr << "The compiled binary's maximum simplicial dimension " << Spacetime::ND << " does not match that (" << n << ") of the data file." << std::endl;
@@ -1288,6 +1296,8 @@ void Spacetime::write_complex(std::ofstream& s) const
 void Spacetime::write_state() const
 {
   int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
+  // This is a polyphyllon file, so the first value is 2...
+  const int ftype = 2;
 
   std::stringstream sstream;
   sstream << iterations;
@@ -1296,6 +1306,7 @@ void Spacetime::write_state() const
   std::ofstream s(filename.c_str(),std::ios::out | std::ios::trunc | std::ios::binary);
 
   // First the global parameters...
+  s.write((char*)(&ftype),sizeof(int));
   s.write((char*)(&Spacetime::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));

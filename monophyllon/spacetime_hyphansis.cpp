@@ -187,7 +187,7 @@ bool Spacetime::interplication(int centre,double size,int D)
   return true;
 }
 
-bool Spacetime::edge_reorientation(int base)
+bool Spacetime::edge_parity_mutation(int base)
 {
   int n;
   std::set<int> candidates;
@@ -200,20 +200,20 @@ bool Spacetime::edge_reorientation(int base)
   }
   if (candidates.empty()) return false;      
   n = RND->irandom(candidates);
-  if (simplices[1][n].orientation == SYNARMOSMA::UNDIRECTED) {
-    simplices[1][n].orientation = (RND->irandom(2) == 0) ? SYNARMOSMA::INCOMING : SYNARMOSMA::OUTGOING;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
   }
   else {
-    simplices[1][n].orientation *= -1;
+    simplices[1][n].parity *= -1;
   }
-  recompute_orientation(n);
+  recompute_parity(n);
   return true;
 }
 
-bool Spacetime::edge_reorientation(int u,int v)
+bool Spacetime::edge_parity_mutation(int u,int v)
 {
   // This is the method used for dynamic hyphansis where there is a single call 
-  // to recompute the orientation of all the higher-dimensional simplices, so no 
+  // to recompute the parity of all the higher-dimensional simplices, so no 
   // need to include one at the method's end. 
   int n;
   std::set<int> S;
@@ -224,11 +224,11 @@ bool Spacetime::edge_reorientation(int u,int v)
   if (qt == index_table[1].end()) return false;
   if (!simplices[1][qt->second].active) return false;
   n = qt->second;
-  if (simplices[1][n].orientation == SYNARMOSMA::UNDIRECTED) {
-    simplices[1][n].orientation = (RND->irandom(2) == 0) ? SYNARMOSMA::INCOMING : SYNARMOSMA::OUTGOING;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
   }
   else {
-    simplices[1][n].orientation *= -1;
+    simplices[1][n].parity *= -1;
   }
   return true;
 }
@@ -390,7 +390,7 @@ bool Spacetime::germination(int base)
       modified = true;
       events[in1].active = true;
     }
-    S.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,in1);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
@@ -409,7 +409,7 @@ bool Spacetime::germination(int base)
     m = vertex_addition(base);
     Dm1.insert(m);
     geometry->set_coordinates(m,xc);
-    S.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,m);
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
@@ -433,7 +433,7 @@ bool Spacetime::germination(int base)
       modified = true;
       events[in1].active = true;
     }
-    S.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,in1);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
@@ -451,7 +451,7 @@ bool Spacetime::germination(int base)
     modified = true;
     m = vertex_addition(base);
     geometry->set_coordinates(m,xc);
-    S.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,m);
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
@@ -475,7 +475,7 @@ bool Spacetime::germination(int base)
       modified = true;
       events[in1].active = true;
     }
-    S.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,in1);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
@@ -491,7 +491,7 @@ bool Spacetime::germination(int base)
     m = vertex_addition(base);
     geometry->set_coordinates(m,xc);
     Dm1.insert(m);
-    S.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,m);
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
   }
@@ -587,7 +587,7 @@ bool Spacetime::germination(int base)
         modified = true;
         events[in1].active = true;
       }
-      S.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+      S.initialize(base,in1);
       qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
@@ -603,7 +603,7 @@ bool Spacetime::germination(int base)
       m = vertex_addition(base);
       current.insert(m);
       geometry->set_coordinates(m,xc);
-      S.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+      S.initialize(base,m);
       simplices[1].push_back(S);
       index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
@@ -628,7 +628,7 @@ bool Spacetime::germination(int base)
         modified = true;
         events[in1].active = true;
       }
-      S.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+      S.initialize(base,in1);
       qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
@@ -644,7 +644,7 @@ bool Spacetime::germination(int base)
       m = vertex_addition(base);
       current.insert(m);
       geometry->set_coordinates(m,xc);
-      S.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+      S.initialize(base,m);
       simplices[1].push_back(S);
       index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
@@ -717,7 +717,7 @@ bool Spacetime::correction(int base)
         modified = true;
       }
       // Connect this vertex to v and i if necessary
-      s1.initialize(base,in1,SYNARMOSMA::UNDIRECTED);
+      s1.initialize(base,in1);
       qt = index_table[1].find(s1.vertices);
       if (qt == index_table[1].end()) {
 #ifdef VERBOSE
@@ -736,7 +736,7 @@ bool Spacetime::correction(int base)
           modified = true;
         }
       }
-      s1.initialize(i,in1,SYNARMOSMA::UNDIRECTED);
+      s1.initialize(i,in1);
       qt = index_table[1].find(s1.vertices);
       if (qt == index_table[1].end()) {
 #ifdef VERBOSE
@@ -779,10 +779,10 @@ bool Spacetime::correction(int base)
   std::cout << "Adding vertex between " << base << " and " << n << std::endl;
 #endif
   m = vertex_addition(xc);
-  s1.initialize(base,m,SYNARMOSMA::UNDIRECTED);
+  s1.initialize(base,m);
   simplices[1].push_back(s1);
   index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
-  s1.initialize(n,m,SYNARMOSMA::UNDIRECTED);
+  s1.initialize(n,m);
   simplices[1].push_back(s1);
   index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
 
@@ -1343,7 +1343,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::set<int>::const_iterator jt,kt;
     std::set<int> linked;
     std::vector<int> component,sedge;
-    std::vector<boost::tuple<int,int,double> > connect;
+    std::vector<std::tuple<int,int,double> > connect;
     Simplex S;
 
     ncomp = component_analysis(component);
@@ -1361,7 +1361,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<ncomp; ++i) {
       for(j=1+i; j<ncomp; ++j) {
         l = minimize_lengths(cvertex[i],cvertex[j],vx);
-        connect.push_back(boost::tuple<int,int,double>(vx[0],vx[1],l));
+        connect.push_back(std::tuple<int,int,double>(vx[0],vx[1],l));
       }
     }
     n = (signed) connect.size();
@@ -1372,26 +1372,26 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::sort(connect.begin(),connect.end(),SYNARMOSMA::tuple_predicate);
     // Assuming the array "connect" has been sorted in ascending order for the last
     // element...
-    j = connect[0].get<0>();
-    k = connect[0].get<1>();
+    j = std::get<0>(connect[0]);
+    k = std::get<1>(connect[0]);
     sedge.push_back(j);
     sedge.push_back(k);
     linked.insert(component[j]);
     linked.insert(component[k]);
-    tlength = connect[0].get<2>();
+    tlength = std::get<2>(connect[0]);
     used[0] = true;
     do {
       for(i=1; i<n; ++i) {
         if (used[i]) continue;
-        j = component[connect[i].get<0>()];
-        k = component[connect[i].get<1>()];
+        j = component[std::get<0>(connect[i])];
+        k = component[std::get<1>(connect[i])];
         jt = std::find(linked.begin(),linked.end(),j);
         kt = std::find(linked.begin(),linked.end(),k);
         if (jt != linked.end() && kt != linked.end()) continue;
         if (jt == linked.end() && kt == linked.end()) continue;
-        sedge.push_back(connect[i].get<0>());
-        sedge.push_back(connect[i].get<1>());
-        tlength += connect[i].get<2>();
+        sedge.push_back(std::get<0>(connect[i]));
+        sedge.push_back(std::get<1>(connect[i]));
+        tlength += std::get<2>(connect[i]);
         linked.insert(j);
         linked.insert(k);
         break;
@@ -1408,7 +1408,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<nsedge; ++i) {
       j = sedge[2*i];
       k = sedge[2*i+1];
-      S.initialize(j,k,SYNARMOSMA::UNDIRECTED);
+      S.initialize(j,k);
       simplices[1].push_back(S);
       index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       events[j].neighbours.insert(k);
@@ -1450,7 +1450,7 @@ void Spacetime::inversion()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       if (i < j) {
-        S.initialize(i,j,SYNARMOSMA::UNDIRECTED);
+        S.initialize(i,j);
         simplices[1].push_back(S);
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       }
@@ -1635,13 +1635,13 @@ bool Spacetime::fission(int base,double density)
       if (vx[0] != base && vx[1] != base) continue;
       q = (vx[0] == base) ? vx[1] : vx[0];
       if (RND->drandom() < density) {
-        S.initialize(q,p,SYNARMOSMA::UNDIRECTED);
+        S.initialize(q,p);
         simplices[1].push_back(S);
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
         n++;
       }
     }
-    S.initialize(base,p,SYNARMOSMA::UNDIRECTED);
+    S.initialize(base,p);
     simplices[1].push_back(S);
     index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
 #ifdef VERBOSE
@@ -2258,7 +2258,7 @@ bool Spacetime::expansion(int base)
     s.insert(n);
     qt = index_table[1].find(s);
     simplices[1][qt->second].active = false;
-    S.initialize(m,n,SYNARMOSMA::UNDIRECTED);
+    S.initialize(m,n);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       simplices[1].push_back(S);
@@ -2476,7 +2476,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
       i = *it;
       events[i].neighbours.insert(nc);
       vmodified.insert(i);
-      S.initialize(nc,i,SYNARMOSMA::UNDIRECTED);
+      S.initialize(nc,i);
       simplices[1].push_back(S);
       index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
       S.clear();
@@ -3029,7 +3029,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = germination(v);
     }
     else if (op == "T") {
-      success = edge_reorientation(v);
+      success = edge_parity_mutation(v);
     }
     if (success) {
       s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
@@ -3225,14 +3225,14 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
   n = (signed) simplices[1].size();
   for(i=0; i<n; ++i) {
     if (!simplices[1][i].active) continue;
-    if (RND->drandom() < edge_reorientability) {
+    if (RND->drandom() < parity_mutation) {
       simplices[1][i].get_vertices(vx);
-      if (edge_reorientation(vx[0],vx[1])) {
+      if (edge_parity_mutation(vx[0],vx[1])) {
         s << "  <Operation>T," << vx[0] << "</Operation>" << std::endl;
         r_edges.insert(i);
       }
     }
   }
-  recompute_orientation(r_edges);
+  recompute_parity(r_edges);
   s.close();
 }

@@ -109,8 +109,8 @@ void Spacetime::read_parameters(const char* filename)
     else if (name == "HyphansisScore") {
       hyphansis_score = value;
     }
-    else if (name == "EdgeReorientability") {
-      edge_reorientability = boost::lexical_cast<double>(value);
+    else if (name == "ParityMutation") {
+      parity_mutation = boost::lexical_cast<double>(value);
     }
     else if (name == "HomologyMethod") {
       boost::to_upper(value);
@@ -261,8 +261,8 @@ void Spacetime::read_parameters(const char* filename)
   assert(D > 0);
 
   if (weaving == Hyphansis::dynamic) {
-    assert(edge_reorientability >= 0.0);
-    assert(edge_reorientability <= 1.0);
+    assert(parity_mutation >= 0.0);
+    assert(parity_mutation <= 1.0);
   }
   else {
     // Make sure the score file exists
@@ -338,8 +338,8 @@ void Spacetime::read_parameters(const char* filename)
 void Spacetime::write_log() const
 {
   int i,v,nn,ne,ntime,nspace,nf,np,nat,vd_avg,vd_min,vd_max;
-  int nsource,nsink,nnull,nch,in1,sum,mx,mn,rho;
-  double w,wm,avg_ven,max_ven,min_ven,vdata[3];
+  int nsource,nsink,nnull,nch,in1,sum,mx,mn;
+  double w,avg_ven,max_ven,min_ven,vdata[3];
   bool atemporal;
   static bool fcall = true;
   std::string nvalue;
@@ -502,10 +502,9 @@ void Spacetime::write_log() const
       S.clear();
       S.insert(i); S.insert(in1);
       qt = index_table[1].find(S);
-      rho = simplices[1][qt->second].get_orientation(i,in1);
-      if (rho == SYNARMOSMA::UNDIRECTED) continue;
+      if (!simplices[1][qt->second].timelike()) continue;
       atemporal = false;
-      if (rho == SYNARMOSMA::OUTGOING) {
+      if (geometry->get_temporal_order(i,in1) == SYNARMOSMA::Relation::before) {
         nf++;
       }
       else {
@@ -526,15 +525,14 @@ void Spacetime::write_log() const
   nnull = 0;
   for(i=0; i<Ne; ++i) {
     if (!simplices[1][i].active) continue;
-    wm = simplices[1][i].volume;
-    if (wm < std::numeric_limits<double>::epsilon()) {
-      nnull++;
+    if (simplices[1][i].timelike()) {
+      ntime++;
     }
-    else if (simplices[1][i].orientation == SYNARMOSMA::UNDIRECTED) {
+    else if (simplices[1][i].spacelike()) {
       nspace++;
     }
     else {
-      ntime++;
+      nnull++;
     }
   }
 
@@ -781,6 +779,14 @@ void Spacetime::read_state(const std::string& filename)
   s.seekg(0);
 
   s.read((char*)(&n),sizeof(int));
+  if (n != 1) {
+    s.close();
+    std::cerr << "Reading in a state file for non-monophyllon version of the Diaplexis library." << std::endl;
+    std::cerr << "Exiting..." << std::endl;
+    std::exit(1);
+  }
+
+  s.read((char*)(&n),sizeof(int));
   if (n != Spacetime::ND) {
     s.close();
     std::cerr << "The compiled binary's maximum simplicial dimension " << Spacetime::ND << " does not match that (" << n << ") of the data file." << std::endl;
@@ -851,6 +857,13 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&perturb_geometry),sizeof(bool));
   s.read((char*)(&perturb_energy),sizeof(bool));
   s.read((char*)(&edge_probability),sizeof(double));
+  s.read((char*)(&parity_mutation),sizeof(double));
+  s.read((char*)(&weaving),sizeof(Hyphansis));
+  if (weaving == Hyphansis::musical) {
+    s.read((char*)(&n),sizeof(int));
+    hyphansis_score.resize(n);
+    s.read((char*)(&hyphansis_score[0]),n);
+  }
 
   s.read((char*)(&solver),sizeof(Geometry_Solver));
   s.read((char*)(&engine),sizeof(Integrator));
@@ -985,6 +998,8 @@ void Spacetime::write_complex(std::ofstream& s) const
 void Spacetime::write_state() const
 {
   int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
+  // This is a monophyllon file, so the first value is 1...
+  const int ftype = 1;
 
   std::stringstream sstream;
   sstream << iterations;
@@ -993,6 +1008,7 @@ void Spacetime::write_state() const
   std::ofstream s(filename.c_str(),std::ios::out | std::ios::trunc | std::ios::binary);
 
   // First the global parameters...
+  s.write((char*)(&ftype),sizeof(int));
   s.write((char*)(&Spacetime::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Spacetime::topological_radius),sizeof(int));
@@ -1019,6 +1035,13 @@ void Spacetime::write_state() const
   s.write((char*)(&perturb_geometry),sizeof(bool));
   s.write((char*)(&perturb_energy),sizeof(bool));
   s.write((char*)(&edge_probability),sizeof(double));
+  s.write((char*)(&parity_mutation),sizeof(double));
+  s.write((char*)(&weaving),sizeof(Hyphansis));
+  if (weaving == Hyphansis::musical) {
+    int m = (signed) hyphansis_score.size();
+    s.write((char*)(&m),sizeof(int));
+    s.write((char*)(&hyphansis_score[0]),m);
+  }
 
   // Geometric runtime constants...
   s.write((char*)(&solver),sizeof(Geometry_Solver));

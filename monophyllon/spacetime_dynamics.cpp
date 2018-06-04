@@ -187,7 +187,7 @@ void Spacetime::energy_diffusion()
   int i,j,v,n,m,nc; 
   double Enew[nv],E,En,l,d,E_tx,residue; 
   std::set<int>::const_iterator it;
-  std::vector<boost::tuple<int,double,double> > tvertex;
+  std::vector<std::tuple<int,double,double> > tvertex;
   std::vector<std::pair<int,double> > candidates,ivertex;
 
   // I want to try a new method here that begins by considering 
@@ -222,7 +222,7 @@ void Spacetime::energy_diffusion()
     for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
       n = *it;
       if (Enew[n] > -1.0) continue;
-      tvertex.push_back(boost::tuple<int,double,double>(n,events[n].get_energy(),events[n].deficiency));
+      tvertex.push_back(std::tuple<int,double,double>(n,events[n].get_energy(),events[n].deficiency));
     }
     if (tvertex.empty()) continue;
     m = (signed) tvertex.size();
@@ -234,9 +234,9 @@ void Spacetime::energy_diffusion()
       if (E < std::numeric_limits<double>::epsilon()) continue;
       ivertex.clear();
       for(j=0; j<m; ++j) {
-       n = tvertex[j].get<0>();
-       En = tvertex[j].get<1>();
-       d = tvertex[j].get<2>();
+       n = std::get<0>(tvertex[j]);
+       En = std::get<1>(tvertex[j]);
+       d = std::get<2>(tvertex[j]);
        if (d > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,d));
       }
       d = -events[v].deficiency/Spacetime::Lambda;
@@ -247,7 +247,7 @@ void Spacetime::energy_diffusion()
         E_tx = E_tx/double(1 + m);
         Enew[v] = E - double(m)*E_tx;
         for(j=0; j<m; ++j) {
-          n = tvertex[j].get<0>();
+          n = std::get<0>(tvertex[j]);
           Enew[n] = events[n].get_energy() + E_tx;
         }
       }
@@ -295,9 +295,9 @@ void Spacetime::energy_diffusion()
       // Look for a candidate which has a positive deficiency
       ivertex.clear();
       for(j=0; j<m; ++j) {
-       n = tvertex[j].get<0>();
-       En = tvertex[j].get<1>();
-       d = tvertex[j].get<2>();
+       n = std::get<0>(tvertex[j]);
+       En = std::get<1>(tvertex[j]);
+       d = std::get<2>(tvertex[j]);
        if (En > std::numeric_limits<double>::epsilon()) ivertex.push_back(std::pair<int,double>(n,En));
       }
       // If none of my neighbours have any energy there is nothing to do but 
