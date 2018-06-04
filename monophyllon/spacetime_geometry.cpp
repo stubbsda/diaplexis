@@ -417,14 +417,15 @@ double Spacetime::compute_temporal_vorticity(int v) const
   // whereas a large positive value means much more topological entwinement is needed and a
   // large negative value means the topology must be altered to resemble that of the Cartesian
   // initial state.
-  int u,w,d1,d2,tcount;
+  int u,w,tcount;
   double l,tipsy,vorticity;
   std::set<int> S;
   std::vector<int> jset;
   std::set<int>::const_iterator it,jt;
   std::vector<int>::const_iterator vit;
-  SYNARMOSMA::hash_map::const_iterator qt;
+  SYNARMOSMA::Relation d1,d2;
   SYNARMOSMA::Directed_Graph G;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   compute_causal_graph(&G,v);
   vorticity = G.cyclicity();
@@ -437,7 +438,7 @@ double Spacetime::compute_temporal_vorticity(int v) const
     S.insert(u);
     qt = index_table[1].find(S);
     l = simplices[1][qt->second].volume;
-    if (simplices[1][qt->second].orientation != SYNARMOSMA::UNDIRECTED) continue;
+    if (!simplices[1][qt->second].spacelike()) continue;
     // This edge is spacelike, so it will contribute to the temporal vorticity
     jset.clear();
     for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); ++jt) {
@@ -448,18 +449,9 @@ double Spacetime::compute_temporal_vorticity(int v) const
     tcount = 0;
     for(vit=jset.begin(); vit!=jset.end(); ++vit) {
       w = *vit;
-
-      S.clear();
-      S.insert(v);
-      S.insert(w);
-      qt = index_table[1].find(S);
-      d1 = simplices[1][qt->second].orientation;
-
-      S.clear();
-      S.insert(u);
-      S.insert(w);
-      qt = index_table[1].find(S);
-      d2 = simplices[1][qt->second].orientation;
+      if (w == u || w == v) continue;
+      d1 = geometry->get_temporal_order(v,w);
+      d2 = geometry->get_temporal_order(u,w);
       if (d1 != d2) tcount++;
     }
     tipsy += double(tcount)/(1.0 + l*double(jset.size()));
@@ -495,10 +487,10 @@ int Spacetime::simplex_embedding(int d,int n) const
       delta = std::abs(simplices[1][qt->second].volume);
       dmatrix[n*i+j] = delta;
       dmatrix[n*j+i] = delta;
-      if (simplices[1][qt->second].orientation == SYNARMOSMA::UNDIRECTED) {
+      if (simplices[1][qt->second].spacelike()) {
         ns++;
       }
-      else {
+      else if (simplices[1][qt->second].timelike()) {
         nt++;
       }
     }
@@ -739,7 +731,6 @@ void Spacetime::compute_volume()
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
     simplices[2][i].volume = std::sqrt(std::abs(V));
     simplices[2][i].sq_volume = V;
-    simplices[2][i].orientation = (V > 0.0) ? SYNARMOSMA::UNDIRECTED : SYNARMOSMA::OUTGOING;
     simplices[2][i].modified = false;
   }
 
@@ -773,7 +764,6 @@ void Spacetime::compute_volume()
       V = prefactor*A.determinant();
       simplices[i][j].volume = std::sqrt(std::abs(V));
       simplices[i][j].sq_volume = V;
-      simplices[i][j].orientation = (V > 0.0) ? SYNARMOSMA::UNDIRECTED : SYNARMOSMA::OUTGOING;
       simplices[i][j].modified = false;
     }
     p *= 2;
@@ -792,7 +782,6 @@ void Spacetime::compute_lengths()
     delta = geometry->get_distance(vx[0],vx[1],true);
     simplices[1][i].sq_volume = delta;
     simplices[1][i].volume = std::sqrt(std::abs(delta));
-    simplices[1][i].orientation = (delta > 0.0) ? SYNARMOSMA::UNDIRECTED : geometry->get_temporal_order(vx[0],vx[1]);
     simplices[1][i].modified = false;
   }
 }

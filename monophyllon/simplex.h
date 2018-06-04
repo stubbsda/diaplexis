@@ -6,18 +6,21 @@
 namespace DIAPLEXIS {
   class Simplex: public SYNARMOSMA::Cell {
    protected:
-    double volume;
-    double sq_volume;
-    double energy;
-    bool modified;
-    bool active;
-    int incept;
-    int orientation;
+    double volume = 0.0;
+    double sq_volume = 0.0;
+    double energy = 0.0;
+    bool modified = true;
+    bool active = true;
+    int incept = -1;
+    int parity = 0;
 
     void clear() override;
-    void initialize(int,int,int = SYNARMOSMA::UNDIRECTED);
+    void initialize(int,int,int = 0);
     void initialize(const std::set<int>&) override;
-    inline int get_orientation(int,int) const;
+    inline int get_parity(int,int) const;
+    inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
+    inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
+    inline bool lightlike() const {return (!timelike() && !spacelike());};
     int absolute_embedding() const;
     void get_faces(std::vector<Simplex>&) const;
     int serialize(std::ofstream&) const override;
@@ -26,7 +29,7 @@ namespace DIAPLEXIS {
     Simplex();
     Simplex(const Simplex&);
     Simplex(int);
-    Simplex(int,int,int = SYNARMOSMA::UNDIRECTED);
+    Simplex(int,int,int = 0);
     Simplex(const std::set<int>&);
     ~Simplex() override;
     Simplex& operator =(const Simplex&);
@@ -35,15 +38,15 @@ namespace DIAPLEXIS {
     friend class Spacetime;
   };
 
-  inline int Simplex::get_orientation(int u,int v) const
+  inline int Simplex::get_parity(int u,int v) const
   {
 #ifdef DEBUG
     assert(u != v);
     assert(u >= 0 && v >= 0);
     assert(vertices.size() == 2 && vertices.count(u) == 1 && vertices.count(v) == 1);
 #endif
-    if (orientation == SYNARMOSMA::UNDIRECTED) return orientation;
-    int output = (u < v) ? orientation : -orientation;
+    if (parity == 0) return 0;
+    int output = (u < v) ? parity : -parity;
     return output;
   }
 }

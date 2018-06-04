@@ -56,83 +56,89 @@ namespace DIAPLEXIS {
     };
 
     // The main (variable) properties of the Spacetime class
-    int iterations;
-    int system_size;
-    int nactive;
-    double error;
-    double global_deficiency;
-    double topology_delta;
-    double geometry_delta;
-    double energy_delta;
-    Plegma anterior;
+    int iterations = 0;
+    int system_size = 0;
+    int nactive = 1;
+    bool pseudomanifold = false;
+    bool boundary = false;
+    bool orientable = false;
+    double error = 0.0;
+    double global_deficiency = 0.0;
+    double topology_delta = 0.0;
+    double geometry_delta = 0.0;
+    double energy_delta = 0.0;
+    std::string ops = "";
+    std::set<int> vx_delta;
+    std::vector<int> flexible_edge;
+    std::vector<Event> events;
     std::vector<Simplex>* simplices;
     SYNARMOSMA::hash_map* index_table;
-    std::vector<Event> events;
-    std::string ops;
-    std::set<int> vx_delta;
     SYNARMOSMA::Random* RND;
     SYNARMOSMA::Geometry* geometry;
     SYNARMOSMA::Homology* H;
     SYNARMOSMA::Homotopy* pi;
-    bool pseudomanifold;
-    bool boundary;
-    bool orientable;
-    std::vector<int> flexible_edge;
+    Plegma anterior;
 
     // The global parameters
-    Initial_Topology initial_state;
-    Initial_Topology original_state;
-    Hyphansis weaving;
-    int initial_size;
-    int max_iter;
-    int initial_dim;
+    Initial_Topology initial_state = Initial_Topology::random;
+    Initial_Topology original_state = Initial_Topology::random;
+    Hyphansis weaving = Hyphansis::dynamic;
+    int initial_size = 10;
+    int max_iter = 50;
+    int initial_dim = 4;
     boost::posix_time::ptime start_time;
-    std::string date_string;
-    std::string pid_string;
-    std::string state_file;
-    std::string log_file;
-    std::string input_file;
-    double edge_probability;
-    double edge_reorientability;
-    bool diskless;
-    bool perturb_topology;
-    bool perturb_geometry;
-    bool perturb_energy;
-    bool superposable;
-    bool compressible;
-    bool converged;
-    bool high_memory;
-    bool instrument_convergence;
-    int checkpoint_frequency;
-    std::string hyphansis_file;
-    std::string hyphansis_score;
+    std::string date_string = "";
+    std::string pid_string = "";
+    std::string state_file = "data/spacetime";
+    std::string log_file = "data/spacetime";
+    std::string input_file = "";
+    double edge_probability = std::log(500.0)/250.0;
+    double parity_mutation = 0.01;
+    bool diskless = false;
+    bool perturb_topology = false;
+    bool perturb_geometry = false;
+    bool perturb_energy = true;
+    bool superposable = false;
+    bool compressible = false;
+    bool converged = false;
+    bool high_memory = true;
+    bool instrument_convergence = true;
+    int checkpoint_frequency = 50;
+    std::string hyphansis_file = "data/hyphansis";
+    std::string hyphansis_score = "";
 
     // Now the parameters associated with the
     // geometry solver
-    Geometry_Solver solver;
-    Integrator engine;
-    double geometry_tolerance;
-    double thermalization;
-    double thermal_variance;
-    double simplex_alpha;
-    double simplex_gamma;
-    double simplex_rho;
-    double simplex_sigma;
-    double spring_constant;
-    double repulsion_constant;
-    double damping_constant;
-    double step_size;
-    double edge_flexibility_threshold;
-    bool cgradient_refinement;
-    int solver_its;
-    int ngenerations;
-    int pool_size;
-    int njousts;
-    int max_int_steps;
-    int max_CG_steps;
-    int max_LS_steps;
-    int thermal_sweep;
-    int annealing_steps;
+    Geometry_Solver solver = Geometry_Solver::minimal;
+    Integrator engine = Integrator::rk4;
+    double geometry_tolerance = 0.0001;
+    // Minimal
+    int solver_its = 50;
+    // Evolutionary
+    int ngenerations = 1000;
+    int njousts = 20;
+    int pool_size = 100;
+    // Annealing
+    double thermal_variance = 0.5;
+    int thermal_sweep = 1000;
+    int annealing_steps = 500;
+    double thermalization = 0.001;
+    // Mechanical
+    int max_int_steps = 10000;
+    double step_size = 0.05;
+    double spring_constant = -1.5;
+    double repulsion_constant = 1.0;
+    double damping_constant = 0.85;
+    double edge_flexibility_threshold = 2.0;
+    bool cgradient_refinement = true;
+    // Conjugate gradient
+    int max_CG_steps = 10;
+    int max_LS_steps = 20;
+    // Simplex
+    double simplex_alpha = 1.0;
+    double simplex_gamma = 2.0;
+    double simplex_rho = 0.5;
+    double simplex_sigma = 0.5;
 
     // Stuff for the implicative/explicative operators:
     static const int N_EXP = 11;
@@ -211,7 +217,7 @@ namespace DIAPLEXIS {
     void simplicial_implication();
     void reciprocate();
     void compute_simplex_energy(int,int);
-    void compute_simplex_orientation(int,int);
+    void compute_simplex_parity(int,int);
     // The various methods needed for the hyphantic operators
     void hyphansis();
     void dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
@@ -250,12 +256,12 @@ namespace DIAPLEXIS {
     bool vertex_twist();
     bool stellar_addition(int);
     bool stellar_deletion(int);
-    bool edge_reorientation(int);
-    bool edge_reorientation(int,int);
+    bool edge_parity_mutation(int);
+    bool edge_parity_mutation(int,int);
     void vertex_fusion(int,int);
-    void recompute_orientation(int);
-    void recompute_orientation(const std::set<int>&);
-    void compute_orientation();
+    void recompute_parity(int);
+    void recompute_parity(const std::set<int>&);
+    void compute_parity();
     void compute_neighbours();
     void compute_entourages();
     void superposition_fusion(std::set<int>&);
@@ -312,6 +318,7 @@ namespace DIAPLEXIS {
     void test_harness(int,int);
     void condense();
     void initialize();
+    void allocate();
     void clear();
     void write(Spacetime&) const;
     void read(const Spacetime&);

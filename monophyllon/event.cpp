@@ -4,7 +4,7 @@ using namespace DIAPLEXIS;
 
 Event::Event()
 {
-  clear();
+
 }
 
 Event::Event(const Event& source)

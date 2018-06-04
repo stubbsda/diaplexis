@@ -554,11 +554,11 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet)
 void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
 {
   int i,j,l,v;
-  SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> S;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
 
   G->clear();

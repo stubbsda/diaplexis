@@ -140,17 +140,17 @@ double Spacetime::dimensional_stress(int d,int n) const
   return sigma;
 }
 
-void Spacetime::recompute_orientation(int n) 
+void Spacetime::recompute_parity(int n) 
 {
   // The edge n has had its orientation changed, so now we need to recompute 
   // the orientation of the higher-dimensional simplices that depend on it.
   std::set<int> temp;
   
   temp.insert(n);
-  recompute_orientation(temp);
+  recompute_parity(temp);
 }
 
-void Spacetime::recompute_orientation(const std::set<int>& edges) 
+void Spacetime::recompute_parity(const std::set<int>& edges) 
 {
   // The 1-simplices in the argument have had their orientation changed, so now 
   // we need to recompute the orientation of the higher-dimensional simplices that 
@@ -165,7 +165,7 @@ void Spacetime::recompute_orientation(const std::set<int>& edges)
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      compute_simplex_orientation(d,i);
+      compute_simplex_parity(d,i);
       for(jt=simplices[d][i].entourage.begin(); jt!=simplices[d][i].entourage.end(); ++jt) {
         next.insert(*jt);
       }
@@ -177,7 +177,7 @@ void Spacetime::recompute_orientation(const std::set<int>& edges)
   } while(true);
 }
 
-void Spacetime::compute_orientation()
+void Spacetime::compute_parity()
 {
   int i,j;
   const int d = dimension();
@@ -185,7 +185,7 @@ void Spacetime::compute_orientation()
   for(i=2; i<=d; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (!simplices[i][j].modified) continue;
-      compute_simplex_orientation(i,j);
+      compute_simplex_parity(i,j);
     }
   }
 }
@@ -334,7 +334,7 @@ void Spacetime::compute_simplex_energy(int d,int n)
   simplices[d][n].energy = alpha/double(1+d);
 }
 
-void Spacetime::compute_simplex_orientation(int d,int n)
+void Spacetime::compute_simplex_parity(int d,int n)
 {
   if (d < 2) return;
   int i,j,vx[1+d];
@@ -343,48 +343,16 @@ void Spacetime::compute_simplex_orientation(int d,int n)
 
   simplices[d][n].get_vertices(vx);
 
-  simplices[d][n].orientation = SYNARMOSMA::UNDIRECTED;
+  simplices[d][n].parity = 1;
   // A single undirected edge means the whole simplex is undirected...
   for(i=0; i<=d; ++i) {
     for(j=1+i; j<=d; ++j) {
       S.insert(vx[i]); S.insert(vx[j]);
       qt = index_table[1].find(S);
-      if (simplices[1][qt->second].orientation == SYNARMOSMA::UNDIRECTED) return;
+      simplices[d][n].parity *= simplices[1][qt->second].parity;
       S.clear();     
     }
   }
-
-  int rho,nsink = 0,nsource = 0;
-  std::set<int> past,future;
-  for(i=0; i<=d; ++i) {
-    for(j=0; j<=d; ++j) {
-      if (i == j) continue;
-      S.insert(vx[i]); S.insert(vx[j]);
-      qt = index_table[1].find(S);
-      rho = simplices[1][qt->second].get_orientation(vx[i],vx[j]);
-      if (rho == SYNARMOSMA::INCOMING) {
-        past.insert(vx[j]);
-      }
-      else {
-        future.insert(vx[j]);
-      }
-      S.clear();
-    }
-    if (future.empty()) {
-      nsink++;
-    }
-    else if (past.empty()) {
-      nsource++;
-    }
-    past.clear();
-    future.clear();
-  }
-  if (nsink > 0 && nsource == 0) {
-    simplices[d][n].orientation = SYNARMOSMA::INCOMING;
-  }
-  else if (nsink == 0 && nsource > 0) {
-    simplices[d][n].orientation = SYNARMOSMA::OUTGOING;
-  }  
 }
 
 double Spacetime::dimensional_stress(int v) const
@@ -491,12 +459,12 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
 
 void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) const
 {
-  int i,j,d,v;
-  SYNARMOSMA::hash_map::const_iterator qt;
+  int i,j,v;
   std::set<int> S;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
 
   G->clear();
@@ -516,13 +484,12 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) con
         S.insert(j);
         qt = index_table[1].find(S);
         if (!simplices[1][qt->second].active) continue;
-        d = simplices[1][qt->second].get_orientation(v,j);
-        if (d == SYNARMOSMA::UNDIRECTED) continue;
+        if (!simplices[1][qt->second].timelike()) continue;
         if (offset[j] == -1) {
           offset[j] = G->add_vertex();
           next.push_back(j);
         }
-        G->add_edge(offset[v],offset[j],d);
+        G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
       }
     }
     if (next.empty()) break;
@@ -655,9 +622,9 @@ void Spacetime::compute_lightcones()
   }
   for(i=0; i<m; ++i) {
     if (!simplices[1][i].active) continue;
-    if (simplices[1][i].orientation == SYNARMOSMA::UNDIRECTED) continue;
+    if (!simplices[1][i].timelike()) continue;
     simplices[1][i].get_vertices(vx);
-    if (simplices[1][i].orientation == SYNARMOSMA::OUTGOING) {
+    if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
       events[vx[0]].posterior.insert(vx[1]);
       events[vx[1]].anterior.insert(vx[0]);
     }

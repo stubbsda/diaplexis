@@ -444,8 +444,8 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   std::set<int>::const_iterator it,jt;
   std::vector<int>::const_iterator vit;
   SYNARMOSMA::Relation d1,d2;
-  SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Directed_Graph G;
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   compute_causal_graph(&G,v,sheet);
   vorticity = G.cyclicity();
@@ -460,7 +460,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       qt = index_table[1].find(S);
       l = simplices[1][qt->second].volume;
       // Ignore timelike and null edges...
-      if (simplices[1][qt->second].sq_volume < std::numeric_limits<double>::epsilon()) continue;
+      if (!simplices[1][qt->second].spacelike()) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
       jset.clear();
       for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); ++jt) {
@@ -489,7 +489,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
       if (!simplices[1][qt->second].active(sheet)) continue;
       l = simplices[1][qt->second].volume;
       // Ignore timelike and null edges...
-      if (simplices[1][qt->second].sq_volume < std::numeric_limits<double>::epsilon()) continue;
+      if (!simplices[1][qt->second].spacelike()) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
       jset.clear();
       for(jt=events[v].neighbours.begin(); jt!=events[v].neighbours.end(); ++jt) {

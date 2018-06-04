@@ -1132,12 +1132,9 @@ void Spacetime::structural_deficiency()
     for(j=0; j<nt; ++j) {
       if (!events[i].active(j)) continue;
       tangle[j] = 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
-      //assert(!std::isnan(tangle[j]));
       compute_graph(&G,i,j);
       tangle[j] += G.completeness();
-      //assert(!std::isnan(tangle[j]));
       if (G.order() > 1) tangle[j] += G.entwinement()/double(G.order() - 1);
-      //assert(!std::isnan(tangle[j]));
     }
     events[i].entwinement = tangle;
     events[i].topological_dimension = vertex_dimension(i,-1);
@@ -1153,7 +1150,6 @@ void Spacetime::structural_deficiency()
       sum += events[i].entwinement[j];
     }
     gvalue[i] = sum/double(nt);
-    assert(!std::isnan(gvalue[i]));
   }
   
 #ifdef _OPENMP
