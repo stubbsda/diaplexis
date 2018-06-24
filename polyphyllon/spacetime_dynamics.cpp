@@ -140,6 +140,29 @@ void Spacetime::compute_delta()
 #endif
 }
 
+double Spacetime::parity_hamiltonian(double J,bool ferromagnetic,int sheet) const 
+{
+  // An Ising-like model based on the edge parity...
+  unsigned int i,ne = simplices[1].size();
+  double H = 0.0;
+
+  if (sheet == -1) {
+    for(i=0; i<ne; ++i) {
+      if (!simplices[1][i].active()) continue;
+      H += J*double(simplices[1][i].parity);
+    }
+  }
+  else {
+    for(i=0; i<ne; ++i) {
+      if (!simplices[1][i].active(i)) continue;
+      H += J*double(simplices[1][i].parity);
+    }
+  }
+
+  if (!ferromagnetic) H = -H;
+  return H;
+}
+
 void Spacetime::energy_diffusion(int nchip)
 {
   // This algorithm, based on the parallel chip-firing game for graphs

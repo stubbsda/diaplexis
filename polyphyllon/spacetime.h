@@ -214,6 +214,7 @@ namespace DIAPLEXIS {
     void simplicial_implication(int,int) const;
     int simplex_embedding(int,int) const;
     double dimensional_stress(int,int,int) const;
+    double parity_hamiltonian(double,bool,int) const;
     void write_graph(const std::string&,int) const;
 
     void compute_geometric_gradient(std::vector<double>&,bool);
