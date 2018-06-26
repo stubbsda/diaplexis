@@ -143,24 +143,31 @@ void Spacetime::compute_delta()
 double Spacetime::parity_hamiltonian(double J,bool ferromagnetic,int sheet) const 
 {
   // An Ising-like model based on the edge parity...
-  unsigned int i,ne = simplices[1].size();
-  double H = 0.0;
+  int i,ND = dimension(sheet);
+  unsigned int j,n;
+  SYNARMOSMA::INT64 H = 0;
 
   if (sheet == -1) {
-    for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      H += J*double(simplices[1][i].parity);
+    for(i=ND; i>=1; --i) {
+      n = simplices[i].size();
+      for(j=0; j<n; ++j) {
+        if (!simplices[i][j].active()) continue;
+        H += i*simplices[i][j].parity;
+      }
     }
   }
   else {
-    for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(i)) continue;
-      H += J*double(simplices[1][i].parity);
+    for(i=ND; i>=1; --i) {
+      n = simplices[i].size();
+      for(j=0; j<n; ++j) {
+        if (!simplices[i][j].active(sheet)) continue;
+        H += i*simplices[i][j].parity;
+      }
     }
   }
 
   if (!ferromagnetic) H = -H;
-  return H;
+  return -J*double(H);
 }
 
 void Spacetime::energy_diffusion(int nchip)

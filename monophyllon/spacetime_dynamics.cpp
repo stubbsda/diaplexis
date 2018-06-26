@@ -137,17 +137,20 @@ void Spacetime::compute_delta()
 
 double Spacetime::parity_hamiltonian(double J,bool ferromagnetic) const 
 {
-  // An Ising-like model based on the edge parity...
-  unsigned int i,ne = simplices[1].size();
-  double H = 0.0;
+  // An Ising-like model based on the simplex parity...
+  int i,ND = dimension();
+  unsigned int j,n;
+  SYNARMOSMA::INT64 H = 0;
 
-  for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    H += J*double(simplices[1][i].parity);
+  for(i=ND; i>=1; --i) {
+    n = simplices[i].size();
+    for(j=0; j<n; ++j) {
+      if (!simplices[i][j].active) continue;
+      H += i*simplices[i][j].parity;
+    }
   }
-
   if (!ferromagnetic) H = -H;
-  return H;
+  return -J*double(H);
 }
 
 void Spacetime::energy_diffusion(int nchip)
