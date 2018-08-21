@@ -15,7 +15,7 @@ endif
 
 HEADERS    = event.h simplex.h spacetime.h
 
-LIBS       = -lsynarmosma $(LAPACK) $(BOOST_TIMER) $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lpugixml -lntl -lm
+LIBS       = -lsynarmosma $(LAPACK) $(BOOST_TIMER) $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lpugixml -lntl -lgmp -lm
 
 OBJECTS = spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
 spacetime_geometry.o spacetime_hyphansis.o event.o simplex.o
