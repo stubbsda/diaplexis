@@ -1128,13 +1128,25 @@ void Spacetime::structural_deficiency()
       events[i].entwinement = tangle;
       continue;
     }
-    if (!events[i].topology_modified) continue;
+    if (!events[i].topology_modified) {
+      j = (signed) events[i].entwinement.size();
+      if (j < nt) {
+        for(k=0; k<(nt-j); ++k) {
+          events[i].entwinement.push_back(0.0);
+        }
+      }
+      continue;
+    }
     for(j=0; j<nt; ++j) {
       if (!events[i].active(j)) continue;
       tangle[j] = 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
       compute_graph(&G,i,j);
+      //std::cout << i << "  " << j << "  " << tangle[j] << "  " << G.order() << std::endl;
+      if (G.order() < 2) continue;
       tangle[j] += G.completeness();
-      if (G.order() > 1) tangle[j] += G.entwinement()/double(G.order() - 1);
+      //std::cout << i << "  " << j << "  " << tangle[j] << std::endl;
+      tangle[j] += G.entwinement()/double(G.order() - 1);
+      //std::cout << i << "  " << j << "  " << tangle[j] << std::endl;
     }
     events[i].entwinement = tangle;
     events[i].topological_dimension = vertex_dimension(i,-1);
@@ -1146,8 +1158,14 @@ void Spacetime::structural_deficiency()
 
   for(i=0; i<nv; ++i) {
     sum = 0.0;
+    if ((signed) events[i].entwinement.size() != nt) {
+      std::cout << i << "  " << events[i].entwinement.size() << "  " << nt << "  " << events[i].topology_modified << std::endl;
+    }
     for(j=0; j<nt; ++j) {
       sum += events[i].entwinement[j];
+      if (std::isnan(events[i].entwinement[j])) {
+        std::cout << i << "  " << j << "  " << events[i].entwinement[j] << std::endl;
+      }
     }
     gvalue[i] = sum/double(nt);
   }
