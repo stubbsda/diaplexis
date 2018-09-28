@@ -1128,25 +1128,14 @@ void Spacetime::structural_deficiency()
       events[i].entwinement = tangle;
       continue;
     }
-    if (!events[i].topology_modified) {
-      j = (signed) events[i].entwinement.size();
-      if (j < nt) {
-        for(k=0; k<(nt-j); ++k) {
-          events[i].entwinement.push_back(0.0);
-        }
-      }
-      continue;
-    }
+    if (!events[i].topology_modified) continue;
     for(j=0; j<nt; ++j) {
       if (!events[i].active(j)) continue;
       tangle[j] = 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
       compute_graph(&G,i,j);
-      //std::cout << i << "  " << j << "  " << tangle[j] << "  " << G.order() << std::endl;
       if (G.order() < 2) continue;
       tangle[j] += G.completeness();
-      //std::cout << i << "  " << j << "  " << tangle[j] << std::endl;
       tangle[j] += G.entwinement()/double(G.order() - 1);
-      //std::cout << i << "  " << j << "  " << tangle[j] << std::endl;
     }
     events[i].entwinement = tangle;
     events[i].topological_dimension = vertex_dimension(i,-1);
@@ -1158,14 +1147,8 @@ void Spacetime::structural_deficiency()
 
   for(i=0; i<nv; ++i) {
     sum = 0.0;
-    if ((signed) events[i].entwinement.size() != nt) {
-      std::cout << i << "  " << events[i].entwinement.size() << "  " << nt << "  " << events[i].topology_modified << std::endl;
-    }
     for(j=0; j<nt; ++j) {
       sum += events[i].entwinement[j];
-      if (std::isnan(events[i].entwinement[j])) {
-        std::cout << i << "  " << j << "  " << events[i].entwinement[j] << std::endl;
-      }
     }
     gvalue[i] = sum/double(nt);
   }
@@ -1255,9 +1238,11 @@ void Spacetime::structural_deficiency()
     R[v1] = gvalue[v1]; // - sum1/double(k);
     rho[v1] = events[v1].get_energy(); // + sum2/double(k);
     // Sanity checks...
+#ifdef DEBUG
     assert(!std::isnan(R[v1])); 
     assert(!std::isnan(rho[v1])); 
     assert(!std::isnan(length_deviation[v1]));
+#endif
   }
 
   // The local part of the structure equations
@@ -1320,7 +1305,10 @@ int Spacetime::sheet_fission(int parent)
   for(l=0; l<offspring; ++l) {
     codex.push_back(Sheet(nt+l,parent,H->get_field(),H->get_method()));
     for(i=0; i<nv; ++i) {
-      if (events[i].active(parent)) events[i].set_active(nt+l); 
+      if (events[i].active(parent)) {
+        events[i].set_active(nt+l); 
+        events[i].topology_modified = true;
+      }
     }
     for(i=1; i<=Spacetime::ND; ++i) {
       n = (signed) simplices[i].size();
@@ -1332,7 +1320,7 @@ int Spacetime::sheet_fission(int parent)
   return offspring;
 }
 
-void Spacetime::sheet_dynamics()
+int Spacetime::sheet_dynamics()
 {
   // How best to handle the issue of spinning of new sheets from existing ones according to a
   // Poisson process?
@@ -1354,6 +1342,7 @@ void Spacetime::sheet_dynamics()
     if (RND->poisson_variate()) nspawn += sheet_fission(parent);
   }
   nactive += nspawn;
+  return nspawn;
 }
 
 void Spacetime::compute_global_topology(int sheet)
@@ -1593,7 +1582,16 @@ bool Spacetime::global_operations()
     }
   }
   else {
-    if (foliodynamics) sheet_dynamics();
+    if (foliodynamics) {
+      if (sheet_dynamics() > 0) {
+        // If new sheets were created then we need to ensure that every event gets an entanglement 
+        // property of the right length (=codex.size()), which is what the following code achieves.
+        for(i=0; i<nv; ++i) {
+          if (events[i].active()) events[i].topology_modified = true;
+        }
+        structural_deficiency();
+      }
+    }
   }
 
   RND->increment_seed();

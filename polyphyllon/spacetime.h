@@ -304,7 +304,7 @@ namespace DIAPLEXIS {
     void explication(std::string&) const;
     void compute_delta();
     int sheet_fission(int);
-    void sheet_dynamics();
+    int sheet_dynamics();
     bool global_operations();
     void write_distribution(const std::vector<int>&) const;
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
