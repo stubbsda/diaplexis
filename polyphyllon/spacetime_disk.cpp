@@ -12,12 +12,9 @@ void Spacetime::read_parameters(const char* filename)
   bool euclidean = false,relational = false,uniform = false;
 
   // Open the file
-  if (!(pfile.load_file(filename))) {
-    std::cerr << "The file " << filename << " either does not exist or could not be loaded correctly." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-  
+  pugi::xml_parse_result result = pfile.load_file(filename);
+  if (result != pugi::status_ok) throw std::invalid_argument("Unable to parse parameter file!");
+
   global = pfile.child("Parameters").child("Global");
   for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
     name = params.name();
@@ -293,11 +290,7 @@ void Spacetime::read_parameters(const char* filename)
     std::vector<std::pair<long,int> > factors;
     SYNARMOSMA::factorize(initial_size,factors);
     for(q=0; q<(signed) factors.size(); ++q) {
-      if (factors[q].second % D != 0) {
-        std::cerr << "The grid size " << initial_size << " is not consistent with the background dimension " << D << "." << std::endl;
-        std::cerr << "Exiting..." << std::endl;
-        std::exit(1);
-      }
+      if (factors[q].second % D != 0) throw std::invalid_argument("Grid size inconsistent with the background dimension!");
     }
   }
   else if (initial_state == Initial_Topology::monoplex) {
@@ -322,10 +315,7 @@ void Spacetime::read_parameters(const char* filename)
     assert(thermal_sweep > 0);
   }
   else if (solver == Geometry_Solver::mechanical) {
-    if (!relational && !uniform) {
-      std::cerr << "If the geometry model is absolute it must be dimensionally uniform in order to use the MECHANICAL geometry solver!" << std::endl;
-      std::exit(1);
-    }
+    if (!relational && !uniform) throw std::invalid_argument("Mechanical solver requires dimensional uniformity when geometry is absolute!");
     assert(step_size > std::numeric_limits<double>::epsilon() && (step_size - 1.0) < -std::numeric_limits<double>::epsilon());
     assert(spring_constant < -std::numeric_limits<double>::epsilon());
     assert(repulsion_constant > std::numeric_limits<double>::epsilon());

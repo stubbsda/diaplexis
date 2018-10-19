@@ -1260,10 +1260,7 @@ void Spacetime::compute_entourages()
       for(k=0; k<1+i; ++k) {
         v = simplices[i][j].faces[k];
         qt = index_table[i-1].find(v);
-        if (qt == index_table[i-1].end()) {
-          std::cout << "Entourage error: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].vertices) << "  "<< SYNARMOSMA::make_key(v) << std::endl;
-          std::exit(1);
-        }
+        if (qt == index_table[i-1].end()) throw std::runtime_error("Missing entourage element!");
         simplices[i-1][qt->second].active = true;
         simplices[i-1][qt->second].entourage.insert(j);
       }
@@ -2863,32 +2860,35 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   const int nc = (signed) candidates.size();
 
   // Open the file containing the hyphantic score 
-  std::ifstream mscore(hyphansis_score.c_str());
-  if (!mscore.is_open()) {
-    std::cerr << "The file " << hyphansis_score << " either does not exist or could not be opened correctly." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-  // Now read the measure that corresponds to this iteration and sheet...
-  while(mscore.good()) {
-    getline(mscore,line);
-    // Break the line up at the forward slash
-    elements.clear();
-    boost::tokenizer<boost::char_separator<char> > tok(line,sp);
-    for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-      elements.push_back(*beg);
-    }
-    if (elements.empty()) continue;
+  std::ifstream mscore;
+  mscore.exceptions(std::ifstream::badbit);
+  try {
+    mscore.open(hyphansis_score.c_str());
+
+    // Now read the measure that corresponds to this iteration and sheet...
+    while(mscore.good()) {
+      getline(mscore,line);
+      // Break the line up at the forward slash
+      elements.clear();
+      boost::tokenizer<boost::char_separator<char> > tok(line,sp);
+      for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
+        elements.push_back(*beg);
+      }
+      if (elements.empty()) continue;
 #ifdef DEBUG
-    assert(elements.size() == 3);
+      assert(elements.size() == 3);
 #endif
-    its = boost::lexical_cast<int>(elements[0]) - 1;
-    if (its < iterations) continue;
-    if (its > iterations) break;
-    // So this is a line for this relaxation step, check if it is the right sheet/voice...
-    v = boost::lexical_cast<int>(elements[1]);
-    // So, grab the piano key...
-    key_list.push_back(boost::lexical_cast<int>(elements[2]));
+      its = boost::lexical_cast<int>(elements[0]) - 1;
+      if (its < iterations) continue;
+      if (its > iterations) break;
+      // So this is a line for this relaxation step, check if it is the right sheet/voice...
+      v = boost::lexical_cast<int>(elements[1]);
+      // So, grab the piano key...
+      key_list.push_back(boost::lexical_cast<int>(elements[2]));
+    }
+  }
+  catch (const std::ifstream::failure& e) {
+    std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
   }
   // Close the score file
   mscore.close();

@@ -441,10 +441,7 @@ void Spacetime::energy_diffusion()
   }
   // Use the float epsilon because the double epsilon is much too sensitive given the likelihood of round-off
   // error from the various multiplications and divisions carried out in the diffusion algorithm.
-  if (std::abs(Esum2 - Esum1) > std::numeric_limits<float>::epsilon()) {
-    std::cout << std::setprecision(12) << "Energy conservation error " << Esum1 << "  " << Esum2 << "  " << Esum2 - Esum1 << std::endl;
-    std::exit(1);
-  }
+  if (std::abs(Esum2 - Esum1) > std::numeric_limits<float>::epsilon()) throw std::runtime_error("Energy conservation error!");
 #endif
   for(i=0; i<nv; ++i) {
     if (Enew[i] > std::numeric_limits<double>::epsilon()) events[i].set_energy(Enew[i]);

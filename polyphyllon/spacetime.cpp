@@ -545,8 +545,7 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
       output = "V";
       break;
     default:
-      std::cerr << "Illegal key value in implicative scale!" << std::endl;
-      std::exit(2);
+      throw std::invalid_argument("Illegal key value in implicative scale!");
       break;
   }
   return output;
@@ -617,8 +616,7 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
       output = "G";
       break;
     default:
-      std::cerr << "Illegal key value in explicative scale!" << std::endl;
-      std::exit(2);
+      throw std::invalid_argument("Illegal key value in explicative scale!");
       break;
   }
   return output;
@@ -1744,6 +1742,7 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
 void Spacetime::build_initial_state(const std::set<int>& locus)
 {
   int i,j,in1;
+  std::string geometry_type;
   Event vt;
   Simplex S;
   const bool relational = geometry->get_relational();
@@ -1759,6 +1758,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
 
   if (initial_state == Initial_Topology::cartesian) {
     std::vector<std::pair<long,int> > factors;
+    geometry_type = "CARTESIAN";
     SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
     for(i=0; i<(signed) factors.size(); ++i) {
@@ -1805,7 +1805,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     }
 
     if (relational) {
-      geometry->create(n,"CARTESIAN");
+      geometry->create(n,geometry_type);
     }
     else {
       geometry->multiple_vertex_addition(initial_size,false,vpoints);
@@ -1941,8 +1941,9 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
   else if (initial_state == Initial_Topology::singleton) {
     // An initial spacetime consisting of a single isolated vertex, though with very
     // high energy
+    geometry_type = "SINGLETON";
     if (relational) {
-      geometry->create(0,"SINGLETON");
+      geometry->create(0,geometry_type);
     }
     else {
       geometry->vertex_addition(svalue);
@@ -1953,6 +1954,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
   else if (initial_state == Initial_Topology::monoplex) {
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
+    geometry_type = "MONOPLEX";
     int ulimit = geometry->dimension();
     if (initial_dim > geometry->dimension()) ulimit = initial_dim;
     if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND->drandom());
@@ -1977,7 +1979,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       vx.insert(i);
     }
 
-    if (relational) geometry->create(initial_dim,"MONOPLEX");
+    if (relational) geometry->create(initial_dim,geometry_type);
 
     S.initialize(vx,locus);
     simplices[initial_dim].push_back(S);
@@ -1997,6 +1999,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     std::set<int>::const_iterator it,chk;
     const double nv = double(initial_size);
 
+    geometry_type = "RANDOM";
     // Add the vertices
     for(i=0; i<initial_size; ++i) {
       events.push_back(vt);
@@ -2014,7 +2017,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
 
     // Next initialize the geometry
     if (relational) {
-      geometry->create(initial_size,"RANDOM");
+      geometry->create(initial_size,geometry_type);
     }
     else {
       std::vector<double> climits;
@@ -2104,11 +2107,7 @@ void Spacetime::initialize()
 #endif
 
   if (!diskless) {
-    if (std::system("mkdir -p data") < 0) {
-      std::cerr << "Unable to create data directory." << std::endl;
-      std::cerr << "Exiting..." << std::endl;
-      std::exit(1);
-    }
+    if (std::system("mkdir -p data") < 0) throw std::runtime_error("Unable to create data directory!");
   }
 
   // Get the date and the process ID so that we can construct the
