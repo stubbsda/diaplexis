@@ -751,7 +751,7 @@ bool Spacetime::step_forwards()
   // Begin the hyphantic phase...
   RND->shuffle(order,n);
 
-  std::ofstream s1(hyphansis_file.c_str(),std::ios::app);
+  std::ofstream s1(hyphansis_file,std::ios::app);
   s1 << "<Iteration>" << std::endl;
   s1 << "  <Index>" << iterations << "</Index>" << std::endl;
   s1.close();
@@ -759,7 +759,7 @@ bool Spacetime::step_forwards()
     if (!codex[order[i]].active) continue;
     hyphansis(order[i]);
   }
-  std::ofstream s2(hyphansis_file.c_str(),std::ios::app);
+  std::ofstream s2(hyphansis_file,std::ios::app);
   s2 << "</Iteration>" << std::endl;
   s2.close();
 
@@ -1016,7 +1016,7 @@ void Spacetime::write_incastrature(const std::string& filename,int sheet) const
   // has been installed on the system.
   int i,j,k;
 
-  std::ofstream s(filename.c_str(),std::ios::trunc);
+  std::ofstream s(filename,std::ios::trunc);
 
   s << "digraph G {" << std::endl;
   if (sheet == -1) {
@@ -2213,7 +2213,7 @@ void Spacetime::initialize()
   write_log();
 
   if (iterations == 0) {
-    std::ofstream s(hyphansis_file.c_str(),std::ios::trunc);
+    std::ofstream s(hyphansis_file,std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     s.close();
   }

@@ -350,7 +350,7 @@ void Spacetime::write_log() const
 
     gethostname(hostname,80);
 
-    std::ofstream s(log_file.c_str(),std::ios::out | std::ios::trunc);
+    std::ofstream s(log_file,std::ios::out | std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     s << "<LogFile>" << std::endl;
     s << "<Library>Diaplexis</Library>" << std::endl;
@@ -756,7 +756,7 @@ void Spacetime::read_state(const std::string& filename)
   unsigned int q;
   double x;
 
-  std::ifstream s(filename.c_str(),std::ios::in | std::ios::binary);
+  std::ifstream s(filename,std::ios::in | std::ios::binary);
   if (!s.is_open()) {
     // File doesn't exist, print an error message and die
     std::cerr << "The file " << filename << " cannot be found." << std::endl;
@@ -938,7 +938,7 @@ void Spacetime::write_graph(const std::string& filename) const
     offset.push_back(-1);
   }
 
-  std::ofstream s(filename.c_str(),std::ios::out | std::ios::trunc | std::ios::binary);
+  std::ofstream s(filename,std::ios::out | std::ios::trunc | std::ios::binary);
   i = cardinality(0);
   s.write((char*)(&i),sizeof(int));
   i = cardinality(1);
@@ -995,7 +995,7 @@ void Spacetime::write_state() const
   sstream << iterations;
   std::string filename = state_file + "_" + sstream.str() + ".dat";
 
-  std::ofstream s(filename.c_str(),std::ios::out | std::ios::trunc | std::ios::binary);
+  std::ofstream s(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
   // First the global parameters...
   s.write((char*)(&ftype),sizeof(int));

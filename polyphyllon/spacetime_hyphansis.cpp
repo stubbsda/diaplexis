@@ -3232,7 +3232,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   std::ifstream mscore;
   mscore.exceptions(std::ifstream::badbit);
   try {
-    mscore.open(hyphansis_score.c_str());
+    mscore.open(hyphansis_score);
     // Now read the measure that corresponds to this iteration and sheet...
     while(mscore.good()) {
       getline(mscore,line);
@@ -3263,7 +3263,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   mscore.close();
 
   // Open the hyphantic log file
-  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  std::ofstream s(hyphansis_file,std::ios::app);
 
   if (key_list.empty()) {
     // We're done!
@@ -3426,7 +3426,7 @@ void Spacetime::hyphansis(int sheet)
 
   codex[sheet].ops = "";
 
-  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  std::ofstream s(hyphansis_file,std::ios::app);
   s << "  <Sheet>" << std::endl;
   s << "    <Index>" << sheet << "</Index>" << std::endl;
 
@@ -3489,7 +3489,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
   bool success = false;
   const int nc = (signed) candidates.size();
 
-  std::ofstream s(hyphansis_file.c_str(),std::ios::app);
+  std::ofstream s(hyphansis_file,std::ios::app);
 
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
