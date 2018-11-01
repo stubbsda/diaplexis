@@ -12,8 +12,7 @@ void Spacetime::read_parameters(const std::string& filename)
   bool euclidean = false,relational = false,uniform = false;
 
   // Open the file
-  pugi::xml_parse_result result = pfile.load_file(filename.c_str()); 
-  if (result != pugi::status_ok) throw std::invalid_argument("Unable to parse parameter file!");
+  if (!(pfile.load_file(filename.c_str()))) throw std::invalid_argument("Unable to parse parameter file!");
 
   global = pfile.child("Parameters").child("Global");
   for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
