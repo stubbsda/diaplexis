@@ -27,14 +27,14 @@ Spacetime::Spacetime(bool no_disk)
   initialize();
 }
 
-Spacetime::Spacetime(const char* filename)
+Spacetime::Spacetime(const std::string& filename)
 {
   allocate();
   read_parameters(filename);
   initialize();
 }
 
-Spacetime::Spacetime(const char* filename,bool no_disk)
+Spacetime::Spacetime(const std::string& filename,bool no_disk)
 {
   allocate();
   read_parameters(filename);
@@ -74,7 +74,7 @@ void Spacetime::set_checkpoint_frequency(int a)
   checkpoint_frequency = a;
 }
 
-void Spacetime::restart(const char* filename,bool save_seed)
+void Spacetime::restart(const std::string& filename,bool save_seed)
 {
   if (save_seed) {
     unsigned int n = RND->get_seed();

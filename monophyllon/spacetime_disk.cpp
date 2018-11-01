@@ -2,7 +2,7 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::read_parameters(const char* filename)
+void Spacetime::read_parameters(const std::string& filename)
 {
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
@@ -12,7 +12,7 @@ void Spacetime::read_parameters(const char* filename)
   bool euclidean = false,relational = false,uniform = false;
 
   // Open the file
-  pugi::xml_parse_result result = pfile.load_file(filename); 
+  pugi::xml_parse_result result = pfile.load_file(filename.c_str()); 
   if (result != pugi::status_ok) throw std::invalid_argument("Unable to parse parameter file!");
 
   global = pfile.child("Parameters").child("Global");

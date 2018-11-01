@@ -308,7 +308,7 @@ namespace DIAPLEXIS {
     void read_state();
     void write_complex(std::ofstream&) const;
     void write_state() const;
-    void read_parameters(const char*);
+    void read_parameters(const std::string&);
     void set_default_values();
     void update_viewer();
     void energy_diffusion();
@@ -328,15 +328,15 @@ namespace DIAPLEXIS {
    public:
     Spacetime();
     Spacetime(bool);
-    Spacetime(const char*);
-    Spacetime(const char*,bool);
+    Spacetime(const std::string&);
+    Spacetime(const std::string&,bool);
     ~Spacetime();
     void read_state(const std::string&);
     bool step_forwards();
     void evolve();
     void chorogenesis(int);
     void distribute(int) const; 
-    void restart(const char*,bool);
+    void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*) const;
     void set_checkpoint_frequency(int);
