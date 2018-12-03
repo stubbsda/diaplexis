@@ -57,8 +57,8 @@ void Spacetime::compute_connectivity_distribution() const
   if (geometry->get_memory_type()) {
     int offset[nv];
     SYNARMOSMA::Graph G;
-    SYNARMOSMA::edge_hash distances;
-    SYNARMOSMA::edge_hash::const_iterator qt;
+    SYNARMOSMA::pair_index distances;
+    SYNARMOSMA::pair_index::const_iterator qt;
 
     compute_graph(&G,offset);
     G.compute_distances(distances);

@@ -1044,7 +1044,7 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != SYNARMOSMA::Proposition::get_clause_size()) {
+  if (n != (signed) SYNARMOSMA::Proposition::get_clause_size()) {
     s.close();
     std::cerr << "The compiled binary's atomic clause number " << SYNARMOSMA::Proposition::get_clause_size() << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
