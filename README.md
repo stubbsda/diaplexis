@@ -1,7 +1,7 @@
-The Diaplexis library is roughly 24,000 lines of C++ code written to explore the numerical dynamics 
+The Diaplexis library is roughly 23,000 lines of C++ code written to explore the numerical dynamics 
 of a combinatorial spacetime model based on a ramified or multi-sheeted simplicial complex. Compiling 
-this library requires a modern C++ compiler as well as the Synarmosma library, also available from 
-www.synarmosma.org via the file synarmosma.tar.gz. The current package includes both the standard 
+this library requires a modern C++ compiler as well as the Synarmosma library, available from GitHub 
+(https://github.com/stubbsda/synarmosma). The current package includes both the standard 
 multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that assumes the 
 entire spacetime complex exists on a single sheet (Monophyllon). The Diaplexis library also depends 
 on various external libraries, which for the most part are also needed to build the Synarmosma library: 
@@ -24,9 +24,10 @@ run under Windows using the Cygwin environment.
 Normally the only parameters that a user should need to modify in order to build the Diaplexis library 
 are located at the beginning of the Makefile, where various compiler arguments and libraries are all 
 specified. The build variables are all described in the Makefile and in general the default values should 
-be safe on most Unix-like platforms. A sample main.cpp file illustrating the use of the Spacetime class 
-is also included in the current directory along with an example of a parameter file (intended for the 
-Polyphyllon version of the Diaplexis library).
+be safe on most Unix-like platforms. A sample program file, euplecton.cpp, illustrating the use of the 
+Spacetime class is also included in the current directory along with an example of a parameter file, 
+intended for the Polyphyllon version of the Diaplexis library. Using the included makefile a simple test 
+can be run to verify the installation.
 
 The VERBOSE compilation flag causes the Diaplexis library to write a great deal of diagnostic logging 
 information to the standard output during execution and is normally only useful for developers. That 
