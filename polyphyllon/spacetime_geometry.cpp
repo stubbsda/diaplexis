@@ -9,7 +9,8 @@ void Spacetime::get_coordinates(int v,std::vector<double>& x) const
 
 void Spacetime::get_coordinates(std::vector<double>& x) const
 {
-  int i,j;
+  int i;
+  unsigned int j;
   std::vector<double> vx;
   const int nv = cardinality(0,-1);
 
@@ -85,14 +86,15 @@ void Spacetime::chorogenesis(int nsteps)
   assert(edge_probability > 0.3);
   assert(geometry->get_euclidean());
   assert(connected(-1));
-  int i,j,dpopulation[1+geometry->dimension()];
+  int dpopulation[1+geometry->dimension()];
+  unsigned int i,j;
   std::vector<std::pair<long,int> > factors;
-  const int D = geometry->dimension();
-  const int nv = (signed) events.size();
+  const unsigned int D = geometry->dimension();
+  const unsigned int nv = events.size();
 
   SYNARMOSMA::factorize(nv,factors);
   j = 1;
-  for(i=0; i<(signed) factors.size(); ++i) {
+  for(i=0; i<factors.size(); ++i) {
     assert(factors[i].second%D == 0);
     j *= SYNARMOSMA::ipow(factors[i].first,factors[i].second/D);
   }
@@ -107,7 +109,7 @@ void Spacetime::chorogenesis(int nsteps)
     events[i].nullify_energy(); 
     geometry->get_coordinates(i,x);
     system_size += D;
-    if (D == (signed) x.size()) continue;
+    if (D == x.size()) continue;
     for(j=0; j<D; ++j) {
       y.push_back(x[j]);
     }
@@ -119,12 +121,13 @@ void Spacetime::chorogenesis(int nsteps)
   
   compute_connectivity_distribution(-1);
 
-  int d,cfactor,derror,csize,vx[2];
+  int vx[2];
+  unsigned int d,derror,csize,cfactor;
   double temperature = 1.0;
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
   SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
-  const int ne = (signed) simplices[1].size();
+  const unsigned int ne = simplices[1].size();
 
 #ifdef VERBOSE
   std::cout << "Beginning chorogenesis with " << ne << " edges..." << std::endl;
@@ -135,9 +138,9 @@ void Spacetime::chorogenesis(int nsteps)
     for(i=0; i<ne; ++i) {
       if (!simplices[1][i].active()) continue;
       simplices[1][i].get_vertices(vx);
-      d = (signed) events[vx[0]].neighbours.size();
+      d = events[vx[0]].neighbours.size();
       if (d <= 2*geometry->dimension()) continue;
-      d = (signed) events[vx[1]].neighbours.size();
+      d = events[vx[1]].neighbours.size();
       if (d <= 2*geometry->dimension()) continue;
       candidates.push_back(i);
     }
@@ -145,7 +148,7 @@ void Spacetime::chorogenesis(int nsteps)
       std::cout << "No viable candidates for topological operations, exiting loop..." << std::endl;
       break;
     }
-    csize = (signed) candidates.size();
+    csize = candidates.size();
     cfactor = int(RND->drandom(0.1*temperature,temperature)*csize);
     if (cfactor == 0) {
       std::cout << "Temperature too low for topological operations, exiting loop..." << std::endl;
@@ -174,7 +177,7 @@ void Spacetime::chorogenesis(int nsteps)
     compute_graph(G,-1);
     G->degree_distribution(false,hgram);
     derror = 0;
-    for(i=0; i<(signed) hgram.size(); ++i) {
+    for(i=0; i<hgram.size(); ++i) {
       d = int(nv*hgram[i]);
       if (i > D) {
         derror += d;
@@ -392,17 +395,17 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
 
 double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<int>& S2,int* vx) const
 {
-  int i,j,v1,v2;
-  double delta,mdelta = 1000.0;
-  const int n1 = (signed) S1.size();
-  const int n2 = (signed) S2.size();
+  int v1,v2;
+  unsigned int i,j;
+  double delta,mdelta = std::numeric_limits<double>::infinity();
+  const unsigned int n1 = S1.size();
+  const unsigned int n2 = S2.size();
 
   for(i=0; i<n1; ++i) {
     v1 = S1[i];
     for(j=0; j<n2; ++j) {
       v2 = S2[j];
-      delta = geometry->get_distance(v1,v2,true);
-      if (delta < 0.0) delta = -delta;
+      delta = std::abs(geometry->get_distance(v1,v2,true));
       if (delta < mdelta) {
         mdelta = delta;
         vx[0] = v1;
@@ -411,15 +414,6 @@ double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<
     }
   }
   return mdelta;
-}
-
-void Spacetime::reciprocate()
-{
-  geometry->reciprocate();
-
-  compute_volume();
-  compute_curvature();
-  compute_obliquity();
 }
 
 bool Spacetime::delaunay() const

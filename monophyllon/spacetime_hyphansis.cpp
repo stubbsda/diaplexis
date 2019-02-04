@@ -17,6 +17,7 @@ bool Spacetime::interplication(int centre,double size,int D)
   std::vector<std::pair<int,double> > ambient;
   std::set<int> S,base,nvertex,bvertex,kvertex;
   std::set<int>::const_iterator it;
+  const int g_dim = (signed) geometry->dimension();
 
   // We begin by eliminating the central vertex along with any vertices on this 
   // sheet that are within the a sphere of radius "size"
@@ -34,7 +35,7 @@ bool Spacetime::interplication(int centre,double size,int D)
   std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
 
   // Ideally the number of boundary vertices should be the surface area of a d-sphere
-  d = geometry->dimension();
+  d = g_dim;
   alpha = double(d)/2.0;
   l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/boost::math::tgamma(1.0 + alpha);  
   d *= int(l);
@@ -49,11 +50,11 @@ bool Spacetime::interplication(int centre,double size,int D)
 
   // First add the central element of the knot, a D-simplex
   for(i=0; i<1+D; ++i) {
-    for(j=0; j<geometry->dimension(); ++j) {
+    for(j=0; j<g_dim; ++j) {
       xc.push_back(cvertex[j] + width*(RND->drandom() - 0.5));
     }
     if (!geometry->get_uniform()) {
-      for(j=geometry->dimension(); j<D; ++j) {
+      for(j=g_dim; j<D; ++j) {
         xc.push_back(-dm + dm/2.0*RND->drandom()); 
       }
     }
@@ -82,11 +83,11 @@ bool Spacetime::interplication(int centre,double size,int D)
       for(j=0; j<1+i; ++j) {
         q = -1;
         if (RND->drandom() < (0.5*l/dm)) {
-          for(k=0; k<geometry->dimension(); ++k) {
+          for(k=0; k<g_dim; ++k) {
             xc.push_back(cvertex[k] + width*(RND->drandom() - 0.5));
           }
           if (!geometry->get_uniform()) {
-            for(k=geometry->dimension(); k<i; ++k) {
+            for(k=g_dim; k<i; ++k) {
               alpha = RND->nrandom(-l,dm);
               if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND->drandom();
               if (alpha > -0.1) alpha = -0.1 - RND->drandom();
@@ -109,11 +110,11 @@ bool Spacetime::interplication(int centre,double size,int D)
         }
         if (q == -1) {
           // Create a new vertex from scratch
-          for(k=0; k<geometry->dimension(); ++k) {
+          for(k=0; k<g_dim; ++k) {
             xc.push_back(cvertex[k] + width*(RND->drandom() - 0.5));
           }
           if (!geometry->get_uniform()) {
-            for(k=geometry->dimension(); k<i; ++k) {
+            for(k=g_dim; k<i; ++k) {
               alpha = RND->nrandom(-l,dm);
               if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND->drandom();
               if (alpha > -0.1) alpha = -0.1 - RND->drandom();
@@ -261,7 +262,8 @@ bool Spacetime::stellar_addition(int base)
   if (vertex_dimension(base) < 2) return false;
   // Take one of these 2-simplices and eliminate it in favour of a 
   // new vertex
-  int i,j,m = (signed) simplices[2].size();
+  int i,m = (signed) simplices[2].size();
+  unsigned int l;
   std::vector<int> sx;
   std::vector<double> xc,xtemp;
   std::set<int> candidates,S;
@@ -291,17 +293,17 @@ bool Spacetime::stellar_addition(int base)
   qt = index_table[1].find(S);
   simplex_deletion(1,qt->second);    
   // Now add the new vertex and the three edges...
-  for(i=0; i<geometry->dimension(); ++i) {
+  for(l=0; l<geometry->dimension(); ++l) {
     xc.push_back(0.0);
   }
   for(i=0; i<3; ++i) {
     geometry->get_coordinates(sx[i],xtemp);
-    for(j=0; j<geometry->dimension(); ++j) {
-      xc[j] += xtemp[j]; 
+    for(l=0; l<geometry->dimension(); ++l) {
+      xc[l] += xtemp[l]; 
     }
   }
-  for(i=0; i<geometry->dimension(); ++i) {
-    xc[i] = xc[i]/3.0;
+  for(l=0; l<geometry->dimension(); ++l) {
+    xc[l] = xc[l]/3.0;
   }
   m = vertex_addition(xc);
   for(i=0; i<3; ++i) {
@@ -330,6 +332,7 @@ bool Spacetime::germination(int base)
   int i,j,vx[2],D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
   const int nv = (signed) events.size();
   const int ne = (signed) simplices[1].size();
+  const int D = (signed) geometry->dimension();
 
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
@@ -352,11 +355,11 @@ bool Spacetime::germination(int base)
   geometry->vertex_difference(n,base,z);
   geometry->get_coordinates(base,bvector);
   xc = bvector;
-  for(i=0; i<geometry->dimension(); ++i) {
+  for(i=0; i<D; ++i) {
     x.push_back(0.0);
   }
-  for(i=0; i<geometry->dimension(); ++i) {
-    for(j=1+i; j<geometry->dimension(); ++j) {
+  for(i=0; i<D; ++i) {
+    for(j=1+i; j<D; ++j) {
       a = z[i];
       b = z[j];
       delta = a*a + b*b;
@@ -500,7 +503,7 @@ bool Spacetime::germination(int base)
 
   // Now we use rolling cross products to branch out into higher
   // dimensions...
-  for(i=0; i<geometry->dimension(); ++i) {
+  for(i=0; i<D; ++i) {
     if (i == D1 || i == D2) continue;
     free_dims.insert(i);
   }
@@ -564,7 +567,7 @@ bool Spacetime::germination(int base)
     // Now look to see if there are any existing vertices near xc
     // and -xc...
     xc.clear();
-    for(i=0; i<geometry->dimension(); ++i) {
+    for(i=0; i<D; ++i) {
       xc.push_back(bvector[i]);
     }
     xc[D1] = z[0] + bvector[D1];
@@ -674,6 +677,7 @@ bool Spacetime::correction(int base)
   // are capable of adding another vertex at a distance of (roughly) one and which is
   // orthogonal to the vertex's current set of edges.
   int i,j,n,m,in1;
+  unsigned int r;
   bool active,modified = false;
   double l,d1,d2,dbest;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -766,8 +770,8 @@ bool Spacetime::correction(int base)
   // Perform the vertex fission on the n'th vertex pair...
   geometry->get_coordinates(base,x1);
   geometry->get_coordinates(n,x2);
-  for(i=0; i<geometry->dimension(); ++i) {
-    l = 0.5*(x1[i] + x2[i]);
+  for(r=0; r<geometry->dimension(); ++r) {
+    l = 0.5*(x1[r] + x2[r]);
     xc.push_back(l);
   }
   // Add something to check here if this new vertex is within 0.5 of an existing vertex...
@@ -980,7 +984,7 @@ bool Spacetime::compensation_g(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) simplices[1].size();
 
-  int sdegree = 0;
+  unsigned int sdegree = 0;
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vx);
@@ -988,7 +992,7 @@ bool Spacetime::compensation_g(int base)
     sdegree++;
   }
   if (sdegree == 2*geometry->dimension()) return false;
-  const int idegree = 2*geometry->dimension();
+  const unsigned int idegree = 2*geometry->dimension();
   const int nv = (signed) events.size();
 
   bool up = (sdegree < idegree) ? true : false;
@@ -1072,7 +1076,8 @@ bool Spacetime::compensation_g(int base)
 
 bool Spacetime::unravel(int base)
 {
-  int i,j,c,vx[2],n1,n2,in_max = -1;
+  int i,j,c,vx[2],in_max = -1;
+  unsigned int n1,n2;
   std::set<int>::const_iterator it;
   double vf,vf_max = 0.0;
 
@@ -2760,7 +2765,7 @@ bool Spacetime::inflation(int base,double creativity)
     if (dimension() == 0) {
       n1 = 0;
     }
-    else if (dimension() < geometry->dimension()) {
+    else if (dimension() < (signed) geometry->dimension()) {
       n1 = 1;
     }
     else {

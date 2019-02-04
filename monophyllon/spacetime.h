@@ -85,7 +85,7 @@ namespace DIAPLEXIS {
     Hyphansis weaving = Hyphansis::dynamic;
     int initial_size = 10;
     int max_iter = 50;
-    int initial_dim = 4;
+    unsigned int initial_dim = 4;
     boost::posix_time::ptime start_time;
     std::string date_string = "";
     std::string pid_string = "";
@@ -167,7 +167,7 @@ namespace DIAPLEXIS {
     void compute_graph(SYNARMOSMA::Graph*,int) const;
     void compute_degree_distribution(bool) const;
     void compute_connectivity_distribution() const;
-    void random_walk(double*,double*) const;
+    std::pair<double,double> random_walk() const;
     void arclength_statistics(double*) const;
     void vertex_degree_statistics(double*) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&) const;
@@ -216,7 +216,6 @@ namespace DIAPLEXIS {
     void compute_geometric_dependency(const std::set<int>&);
     void compute_topological_dependency(const std::set<int>&);
     void simplicial_implication();
-    void reciprocate();
     void compute_simplex_energy(int,int);
     void compute_simplex_parity(int,int);
     // The various methods needed for the hyphantic operators

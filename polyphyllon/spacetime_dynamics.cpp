@@ -473,6 +473,7 @@ bool Spacetime::adjust_dimension()
   bool modified;
   std::vector<int> vdimension;
   const int nv = (signed) events.size();
+  const int D = (signed) geometry->dimension();
   const bool uniform = geometry->get_uniform();
 
   system_size = 0;
@@ -484,7 +485,7 @@ bool Spacetime::adjust_dimension()
         continue;
       }
       n = events[i].topological_dimension;
-      system_size += geometry->dimension();
+      system_size += D;
       vdimension.push_back(n);
     }
   }
@@ -495,7 +496,7 @@ bool Spacetime::adjust_dimension()
         continue;
       }
       n = events[i].topological_dimension;
-      system_size += (n <= geometry->dimension()) ? geometry->dimension() : n;
+      system_size += (n <= D) ? D : n;
       vdimension.push_back(n);
     }
   }

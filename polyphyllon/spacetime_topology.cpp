@@ -189,11 +189,18 @@ bool Spacetime::active_element(int d,int n) const
   return output;
 }
 
-void Spacetime::random_walk(double* mean,double* sdeviation,int sheet) const
+std::pair<double,double> Spacetime::random_walk(int sheet) const
 {
+  std::pair<double,double> output;
   SYNARMOSMA::Graph G;
+
   compute_graph(&G,sheet);
-  G.random_walk(mean,sdeviation,geometry->dimension());
+  int L = G.size()/4;
+  // Do a random walk with a length equal to a quarter of the graph's size and 
+  // a fifth of its vertices as starting point.  
+  output = G.random_walk(L,0.2);
+
+  return output;
 }
 
 double Spacetime::dimensional_stress(int d,int n,int sheet) const

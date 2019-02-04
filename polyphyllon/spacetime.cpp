@@ -789,7 +789,8 @@ bool Spacetime::step_forwards()
 
 void Spacetime::test_harness(int type,int n)
 {
-  int i,j,d,nv;
+  int i,d,nv;
+  unsigned int l;
   double alpha;
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> vx,locus;
@@ -813,12 +814,12 @@ void Spacetime::test_harness(int type,int n)
     }
 
     // Randomize the 2D coordinates of the initial vertices...
-    for(i=0; i<geometry->dimension(); ++i) {
+    for(l=0; l<geometry->dimension(); ++l) {
       xc.push_back(0.0);
     }
     for(i=0; i<nv; ++i) {
-      for(j=0; j<geometry->dimension(); ++j) {
-        xc[j] = RND->nrandom(0.0,2.5);
+      for(l=0; l<geometry->dimension(); ++l) {
+        xc[l] = RND->nrandom(0.0,2.5);
       }
       geometry->set_coordinates(i,xc);
     }
@@ -1742,13 +1743,14 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
 void Spacetime::build_initial_state(const std::set<int>& locus)
 {
   int i,j,in1;
+  unsigned int m;
   std::string geometry_type;
   Event vt;
   Simplex S;
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
-  for(i=0; i<geometry->dimension(); ++i) {
+  for(m=0; m<geometry->dimension(); ++m) {
     svalue.push_back(0.0);
   }
   vt.incept = 0;
@@ -1761,15 +1763,16 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     geometry_type = "CARTESIAN";
     SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
-    for(i=0; i<(signed) factors.size(); ++i) {
-      j *= SYNARMOSMA::ipow(factors[i].first,factors[i].second/geometry->dimension());
+    for(m=0; m<factors.size(); ++m) {
+      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/geometry->dimension());
     }
     const int n = j;
     const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*RND->irandom(initial_size));
     const double dx = 1.0;
-    int m,k,l,d,rvalue;
+    int k,l,d,rvalue;
+    unsigned int r;
     SYNARMOSMA::hash_map::const_iterator qt;
     std::vector<int> entourage,v;
     std::vector<int>* arrangement = new std::vector<int>[initial_size];
@@ -1777,7 +1780,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     std::set<int>::const_iterator it,jt;
     std::vector<double> vpoints;
 
-    for(i=0; i<geometry->dimension(); ++i) {
+    for(m=0; m<geometry->dimension(); ++m) {
       entourage.push_back(0);
     }
     
@@ -1817,9 +1820,9 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       if (v[0] > 0) {
         in1 = (v[0]-1)*nd;
         k = nd;
-        for(j=0; j<geometry->dimension()-1; ++j) {
+        for(m=0; m<geometry->dimension()-1; ++m) {
           k /= n;
-          in1 += v[j+1]*k;
+          in1 += v[m+1]*k;
         }
         if (in1 > i) {
           S.initialize(i,in1,locus);
@@ -1831,9 +1834,9 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       if (v[0] < nm1) {
         in1 = (v[0]+1)*nd;
         k = nd;
-        for(j=0; j<geometry->dimension()-1; ++j) {
+        for(m=0; m<geometry->dimension()-1; ++m) {
           k /= n;
-          in1 += v[j+1]*k;
+          in1 += v[m+1]*k;
         }
         if (in1 > i) {
           S.initialize(i,in1,locus);
@@ -1842,14 +1845,14 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
           S.vertices.clear();
         }
       }
-      for(j=1; j<geometry->dimension(); ++j) {
-        if (v[j] > 0) {
-          v[j] -= 1;
+      for(m=1; m<geometry->dimension(); ++m) {
+        if (v[m] > 0) {
+          v[m] -= 1;
           in1 = v[0]*nd;
           k = nd;
-          for(l=0; l<geometry->dimension()-1; ++l) {
+          for(r=0; r<geometry->dimension()-1; ++r) {
             k /= n;
-            in1 += v[l+1]*k;
+            in1 += v[r+1]*k;
           }
           if (in1 > i) {
             S.initialize(i,in1,locus);
@@ -1857,15 +1860,15 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
             simplices[1].push_back(S);
             S.vertices.clear();
           }
-          v[j] += 1;
+          v[m] += 1;
         }
-        if (v[j] < nm1) {
-          v[j] += 1;
+        if (v[m] < nm1) {
+          v[m] += 1;
           in1 = v[0]*nd;
           k = nd;
-          for(l=0; l<geometry->dimension()-1; ++l) {
+          for(r=0; r<geometry->dimension()-1; ++r) {
             k /= n;
-            in1 += v[l+1]*k;
+            in1 += v[r+1]*k;
           }
           if (in1 > i) {
             S.initialize(i,in1,locus);
@@ -1873,7 +1876,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
             simplices[1].push_back(S);
             S.vertices.clear();
           }
-          v[j] -= 1;
+          v[m] -= 1;
         }
       }
     }
@@ -1884,8 +1887,8 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       k = int(double(n)/2.0);
       for(i=0; i<nperturbed; ++i) {
         j = 0;
-        for(l=0; l<geometry->dimension(); ++l) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-l)*RND->irandom(k-2,k+2);
+        for(m=0; m<geometry->dimension(); ++m) {
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
         }
         if (j < 0) j = RND->irandom(initial_size,v);
         v.push_back(j);
@@ -1915,8 +1918,8 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
           v.push_back(j);
         }
       }
-      for(i=0; i<(signed) v.size(); ++i) {
-        geometry->vertex_perturbation(v[i]);
+      for(m=0; m<v.size(); ++m) {
+        geometry->vertex_perturbation(v[m]);
       }
     }
     if (perturb_energy) {
@@ -1925,15 +1928,15 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         // near the centre of the Cartesian network...
         j = 0;
         k = int(double(n)/2.0);
-        for(i=0; i<geometry->dimension(); ++i) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-i)*RND->irandom(k-2,k+2);
+        for(m=0; m<geometry->dimension(); ++m) {
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
         }
         if (j < 0) j = RND->irandom(initial_size);
         events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
       }
       else {
-        for(i=0; i<(signed) v.size(); ++i) {
-          events[v[i]].set_energy(5.0*RND->drandom());
+        for(m=0; m<v.size(); ++m) {
+          events[v[m]].set_energy(5.0*RND->drandom());
         }
       }
     }
@@ -1955,13 +1958,13 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
     geometry_type = "MONOPLEX";
-    int ulimit = geometry->dimension();
+    unsigned int ulimit = geometry->dimension();
     if (initial_dim > geometry->dimension()) ulimit = initial_dim;
     if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND->drandom());
 
     if (!relational) {
       svalue.clear();
-      for(i=0; i<ulimit; ++i) {
+      for(m=0; m<ulimit; ++m) {
         svalue.push_back(0.0);
       }
       geometry->vertex_addition(svalue);
@@ -1969,14 +1972,14 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     events.push_back(vt);
     vx.insert(0);
 
-    for(i=1; i<=initial_dim; ++i) {
+    for(m=1; m<=initial_dim; ++m) {
       if (!relational) {
-        svalue[i-1] = 1.0;
+        svalue[m-1] = 1.0;
         geometry->vertex_addition(svalue);
-        svalue[i-1] = 0.0;
+        svalue[m-1] = 0.0;
       }
       events.push_back(vt);
-      vx.insert(i);
+      vx.insert(m);
     }
 
     if (relational) geometry->create(initial_dim,geometry_type);
@@ -2021,7 +2024,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     }
     else {
       std::vector<double> climits;
-      for(i=0; i<geometry->dimension(); ++i) {
+      for(m=0; m<geometry->dimension(); ++m) {
         climits.push_back(-10.0);
         climits.push_back(10.0);
       }
