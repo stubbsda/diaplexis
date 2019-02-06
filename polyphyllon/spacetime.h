@@ -354,7 +354,7 @@ namespace DIAPLEXIS {
     void get_deficiency_values(std::vector<double>&,int) const;
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
-    double get_geometric_distance(int,int,bool) const;
+    double get_geometric_distance(int,int) const;
     bool is_pseudomanifold(bool*,int) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;

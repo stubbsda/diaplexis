@@ -1159,14 +1159,14 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     for(j=1+i; j<na; ++j) {
       v2 = avertices[j];
-      l = geometry->get_distance(v1,v2,false);
+      l = geometry->get_squared_distance(v1,v2,false);
       if (l < 3.8025 || l > 4.2025) continue;
       // See if there is a third vertex that lies between these two...
       found = false;
       for(k=0; k<i; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_distance(v1,v3,false);
-        d2 = geometry->get_distance(v2,v3,false);
+        d1 = geometry->get_squared_distance(v1,v3,false);
+        d2 = geometry->get_squared_distance(v2,v3,false);
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -1175,8 +1175,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+i; k<j; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_distance(v1,v3,false);
-        d2 = geometry->get_distance(v2,v3,false);
+        d1 = geometry->get_squared_distance(v1,v3,false);
+        d2 = geometry->get_squared_distance(v2,v3,false);
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -1185,8 +1185,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+j; k<na; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_distance(v1,v3,false);
-        d2 = geometry->get_distance(v2,v3,false);
+        d1 = geometry->get_squared_distance(v1,v3,false);
+        d2 = geometry->get_squared_distance(v2,v3,false);
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -1216,7 +1216,7 @@ void Spacetime::structural_deficiency()
     length_deviation[v1] = 0.0;
     for(it=events[v1].neighbours.begin(); it!=events[v1].neighbours.end(); ++it) {
       j = *it;
-      l = geometry->get_distance(v1,j,true);
+      l = geometry->get_squared_distance(v1,j,false);
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += events[j].get_energy()*l_inv;
@@ -1546,7 +1546,7 @@ bool Spacetime::global_operations()
   }
 
   // Calculate the local and global errors
-  geometry->compute_distances(vmodified);
+  geometry->compute_squared_distances(vmodified);
   compute_volume();
   compute_curvature();
   compute_obliquity();
@@ -1919,7 +1919,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         }
       }
       for(m=0; m<v.size(); ++m) {
-        geometry->vertex_perturbation(v[m]);
+        geometry->mutation(v[m],true,false,0.5);
       }
     }
     if (perturb_energy) {
@@ -2160,7 +2160,7 @@ void Spacetime::initialize()
       locus.insert(i);
     }
     build_initial_state(locus);
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     compute_simplicial_dimension();
     adjust_dimension();
     compute_parity();

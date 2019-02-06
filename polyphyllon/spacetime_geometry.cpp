@@ -24,9 +24,9 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
   }
 }
 
-double Spacetime::get_geometric_distance(int n,int m,bool t) const
+double Spacetime::get_geometric_distance(int n,int m) const
 {
-  return geometry->get_distance(n,m,t);
+  return geometry->get_squared_distance(n,m,false);
 }
 
 double Spacetime::total_energy(int sheet) const
@@ -250,7 +250,7 @@ double Spacetime::compute_abnormality() const
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
-    d = geometry->get_distance(vx[0],vx[1],false);
+    d = geometry->get_squared_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
         d = std::sqrt(d);
@@ -276,12 +276,12 @@ double Spacetime::compute_abnormality(const std::vector<double>& x) const
   for(i=0; i<system_size; ++i) {
     geometry->set_element(i,x[i]);
   }
-  geometry->compute_distances();
+  geometry->compute_squared_distances();
 
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active()) continue;
     simplices[1][i].get_vertices(vx);
-    d = geometry->get_distance(vx[0],vx[1],false);
+    d = geometry->get_squared_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
         d = std::sqrt(d);
@@ -318,7 +318,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
       for(it=current.begin(); it!=current.end(); ++it) {
         vmodified.insert(*it);
       }
-      geometry->compute_distances(vmodified);
+      geometry->compute_squared_distances(vmodified);
       compute_volume();
       E = compute_abnormality();
       alpha = (E - B)/geometry_tolerance;
@@ -327,7 +327,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
       last = current;
       current.clear();
     }
-    geometry->compute_distances(last);
+    geometry->compute_squared_distances(last);
   }
   else {
     int j,k,na = 0;
@@ -360,7 +360,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         k = *it;
         geometry->get_coordinates(k,x2);
-        l = geometry->get_distance(i,k,false);
+        l = geometry->get_squared_distance(i,k,false);
         S.clear();
         S.insert(i);
         S.insert(k);
@@ -405,7 +405,7 @@ double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<
     v1 = S1[i];
     for(j=0; j<n2; ++j) {
       v2 = S2[j];
-      delta = std::abs(geometry->get_distance(v1,v2,true));
+      delta = std::abs(geometry->get_squared_distance(v1,v2,false));
       if (delta < mdelta) {
         mdelta = delta;
         vx[0] = v1;
@@ -837,7 +837,7 @@ void Spacetime::compute_lengths()
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active() || !simplices[1][i].modified) continue;
     simplices[1][i].get_vertices(vx);
-    delta = geometry->get_distance(vx[0],vx[1],true);
+    delta = geometry->get_squared_distance(vx[0],vx[1],false);
     simplices[1][i].sq_volume = delta;
     simplices[1][i].volume = std::sqrt(std::abs(delta));
     simplices[1][i].modified = false;

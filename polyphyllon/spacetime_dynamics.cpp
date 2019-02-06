@@ -427,7 +427,7 @@ void Spacetime::energy_diffusion()
       if (RND->drandom() > std::exp(-Z)) continue;
       // Now the geometric criterion: the farther away the vertex, the less
       // likely that it participates in energy transfer...
-      Z = 0.5*(geometry->get_distance(v,m,false) - 1.0);
+      Z = 0.5*(geometry->get_squared_distance(v,m,false) - 1.0);
       if (RND->drandom() > std::exp(-Z)) continue;
       dimensions.push_back(d2);
       E += events[m].get_energy();
@@ -566,7 +566,7 @@ void Spacetime::optimize()
       geometry->mutation(n,true,true,sigma);
       vmodified.insert(n);
       compute_geometric_dependency(vmodified);
-      geometry->compute_distances(vmodified);
+      geometry->compute_squared_distances(vmodified);
       compute_volume();
       compute_curvature();
       compute_obliquity();
@@ -578,7 +578,7 @@ void Spacetime::optimize()
 #endif
       vmodified.clear();
       if (error > old_error) {
-        geometry->rollback();
+        geometry->rollback(false);
         vmodified.insert(n);
         continue;
       }
@@ -634,7 +634,7 @@ void Spacetime::optimize()
       }
       geometry->load(&pool[i]);
       compute_geometric_dependency(vmodified);
-      geometry->compute_distances(vmodified);
+      geometry->compute_squared_distances(vmodified);
       compute_volume();
       compute_curvature();
       compute_obliquity();
@@ -682,7 +682,7 @@ void Spacetime::optimize()
         }
         geometry->load(&pool[i]);
         compute_geometric_dependency(vmodified);
-        geometry->compute_distances(vmodified);
+        geometry->compute_squared_distances(vmodified);
         compute_volume();
         compute_curvature();
         compute_obliquity();
@@ -735,7 +735,7 @@ void Spacetime::optimize()
 #endif
       geometry->load(initial_state);
     }
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     compute_volume();
     compute_curvature();
     compute_obliquity();
@@ -774,7 +774,7 @@ void Spacetime::optimize()
         } while(true);
         geometry->mutation(m,false,false,thermal_variance);
         compute_geometric_dependency(vmodified);
-        geometry->compute_distances(vmodified);
+        geometry->compute_squared_distances(vmodified);
         compute_volume();
         compute_curvature();
         compute_obliquity();
@@ -791,9 +791,9 @@ void Spacetime::optimize()
             E_old = error;
           }
           else {
-            geometry->geometry_restoration();
+            geometry->rollback(true);
             compute_geometric_dependency(vmodified);
-            geometry->compute_distances(vmodified);
+            geometry->compute_squared_distances(vmodified);
             compute_volume();
             compute_curvature();
             compute_obliquity();
@@ -827,7 +827,7 @@ void Spacetime::optimize()
       step = 1;
       do {
         if (step == 1) {
-          geometry->compute_distances();
+          geometry->compute_squared_distances();
           compute_volume();
           compute_curvature();
           compute_obliquity();
@@ -854,7 +854,7 @@ void Spacetime::optimize()
           // then various defect angles associated with the
           // triangles in their entourage...
           compute_geometric_dependency(vmodified);
-          geometry->compute_distances(vmodified);
+          geometry->compute_squared_distances(vmodified);
           compute_volume();
           compute_curvature();
           compute_obliquity();
@@ -879,9 +879,9 @@ void Spacetime::optimize()
             }
             else {
               E.push_back(E_old);
-              geometry->geometry_restoration();
+              geometry->rollback(true);
               compute_geometric_dependency(vmodified);
-              geometry->compute_distances(vmodified);
+              geometry->compute_squared_distances(vmodified);
               compute_volume();
               compute_curvature();
               compute_obliquity();
@@ -920,7 +920,7 @@ void Spacetime::optimize()
     }
 #endif
     geometry->load(optimal);
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     compute_volume();
     compute_curvature();
     compute_obliquity();
@@ -1014,7 +1014,7 @@ void Spacetime::optimize()
     for(i=0; i<D*nreal; ++i) {
       geometry->set_element(i,ynew[i]);
     }
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     compute_volume();
     if (!cgradient_refinement) return;
     double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
@@ -1042,7 +1042,7 @@ void Spacetime::optimize()
       for(j=0; j<system_size; ++j) {
         geometry->set_element(j,x[j] + sigma*dx[j]);
       }
-      geometry->compute_distances();
+      geometry->compute_squared_distances();
       compute_geometric_gradient(dy,false);
       d = 0.0;
       for(j=0; j<system_size; ++j) {
@@ -1055,7 +1055,7 @@ void Spacetime::optimize()
     for(i=0; i<system_size; ++i) {
       geometry->set_element(i,x[i] + alpha*dx[i]);
     }
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     E = compute_abnormality();
 
     prior = E;
@@ -1091,7 +1091,7 @@ void Spacetime::optimize()
         for(k=0; k<system_size; ++k) {
           geometry->set_element(k,x[k] + sigma*snew[k]);
         }
-        geometry->compute_distances();
+        geometry->compute_squared_distances();
         compute_geometric_gradient(dy,false);
         d = 0.0;
         for(k=0; k<system_size; ++k) {
@@ -1104,7 +1104,7 @@ void Spacetime::optimize()
       for(j=0; j<system_size; ++j) {
         geometry->set_element(j,x[j] + alpha*snew[j]);
       }
-      geometry->compute_distances();
+      geometry->compute_squared_distances();
       E = compute_abnormality();
 #ifdef VERBOSE
       std::cout << "At conjugate gradient iteration " << i+1 << ", the error is " << E << std::endl;
@@ -1113,7 +1113,7 @@ void Spacetime::optimize()
         for(j=0; j<system_size; ++j) {
           geometry->set_element(j,x[j]);
         }
-        geometry->compute_distances();
+        geometry->compute_squared_distances();
         break;
       }
       // Update the base values...
@@ -1130,7 +1130,7 @@ void Spacetime::optimize()
       std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
 #endif
       geometry->load(initial_state);
-      geometry->compute_distances();
+      geometry->compute_squared_distances();
       for(i=0; i<nv; ++i) {
         if (!events[i].active()) continue;
         events[i].geometry_modified = true;
@@ -1162,10 +1162,10 @@ void Spacetime::optimize()
       geometry->get_implied_vertices(i,vmodified);
       compute_geometric_dependency(vmodified);
       geometry->mutation(i,false,false,0.1);
-      geometry->compute_distances(vmodified);
+      geometry->compute_squared_distances(vmodified);
       geometry->store(&SR);
       S.push_back(SR);
-      geometry->geometry_restoration();
+      geometry->rollback(true);
       vmodified.clear();
       for(j=0; j<nv; ++j) {
         events[j].geometry_modified = false;
@@ -1179,7 +1179,7 @@ void Spacetime::optimize()
     // Compute the error for the new vertices...
     for(i=1; i<1+system_size; ++i) {
       geometry->load(&S[i]);
-      geometry->compute_distances();
+      geometry->compute_squared_distances();
       compute_volume();
       compute_curvature();
       compute_obliquity();
@@ -1210,7 +1210,7 @@ void Spacetime::optimize()
         SR.set_element(i,f);
       }
       geometry->load(&SR);
-      geometry->compute_distances();
+      geometry->compute_squared_distances();
       for(i=0; i<nv; ++i) {
         if (events[i].active()) events[i].geometry_modified = true;
       }
@@ -1227,7 +1227,7 @@ void Spacetime::optimize()
           SE.set_element(i,q);
         }
         geometry->load(&SE);
-        geometry->compute_distances();
+        geometry->compute_squared_distances();
         for(i=0; i<nv; ++i) {
           if (events[i].active()) events[i].geometry_modified = true;
         }
@@ -1256,7 +1256,7 @@ void Spacetime::optimize()
           SE.set_element(i,q);
         }
         geometry->load(&SE);
-        geometry->compute_distances();
+        geometry->compute_squared_distances();
         for(i=0; i<nv; ++i) {
           if (events[i].active()) events[i].geometry_modified = true;
         }
@@ -1276,7 +1276,7 @@ void Spacetime::optimize()
               S[in1].set_element(j,q);
             }
             geometry->load(&S[in1]);
-            geometry->compute_distances();
+            geometry->compute_squared_distances();
             for(j=0; j<nv; ++j) {
               if (events[j].active()) events[j].geometry_modified = true;
             }
@@ -1296,7 +1296,7 @@ void Spacetime::optimize()
           SE.set_element(i,q);
         }
         geometry->load(&SE);
-        geometry->compute_distances();
+        geometry->compute_squared_distances();
         for(i=0; i<nv; ++i) {
           if (events[i].active()) events[i].geometry_modified = true;
         }
@@ -1316,7 +1316,7 @@ void Spacetime::optimize()
               S[in1].set_element(j,q);
             }
             geometry->load(&S[in1]);
-            geometry->compute_distances();
+            geometry->compute_squared_distances();
             for(j=0; j<nv; ++j) {
               if (events[j].active()) events[j].geometry_modified = true;
             }
@@ -1346,7 +1346,7 @@ void Spacetime::optimize()
 #endif
       geometry->load(initial_state);
     }
-    geometry->compute_distances();
+    geometry->compute_squared_distances();
     compute_volume();
     compute_curvature();
     compute_obliquity();

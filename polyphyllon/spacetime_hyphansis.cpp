@@ -25,7 +25,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   assert(vertex_deletion(centre,sheet));
   for(i=0; i<(signed) events.size(); ++i) {
     if (!events[i].active(sheet)) continue;
-    l = geometry->get_distance(centre,i,false);
+    l = geometry->get_squared_distance(centre,i,false);
     if (l < size) {
       assert(vertex_deletion(i,sheet));
       continue;
@@ -156,7 +156,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     else {
       alpha = 10.0*size;
       for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
-        l = geometry->get_distance(q,*it,false);
+        l = geometry->get_squared_distance(q,*it,false);
         if (l < alpha) {
           p = *it;
           alpha = l;
@@ -169,8 +169,8 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     ambient.clear();
     for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
       if (p == *it) continue;
-      l = geometry->get_distance(q,*it,false);
-      alpha = geometry->get_distance(p,*it,false);
+      l = geometry->get_squared_distance(q,*it,false);
+      alpha = geometry->get_squared_distance(p,*it,false);
       ambient.push_back(std::pair<int,double>(*it,l + alpha));
     }
     std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
@@ -383,7 +383,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] =  x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc,false);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -426,7 +426,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] = -x[D2] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc,false);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -468,7 +468,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] = -x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc,false);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -585,7 +585,7 @@ bool Spacetime::germination(int base,int sheet)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_distance(i,xc,false);
+      delta = geometry->get_squared_distance(i,xc,false);
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -628,7 +628,7 @@ bool Spacetime::germination(int base,int sheet)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_distance(i,xc,false);
+      delta = geometry->get_squared_distance(i,xc,false);
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -702,7 +702,7 @@ bool Spacetime::correction(int base,int sheet)
     if (i == base) continue;
     if (!events[i].active(sheet)) continue;
     if (std::abs(events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
-    l = geometry->get_computed_distance(base,i,false);
+    l = geometry->get_squared_distance(base,i,true);
     if (l < 3.8025 || l > 4.2025) continue;
     // See if there is a third vertex that lies between these two...
     in1 = -1;
@@ -710,8 +710,8 @@ bool Spacetime::correction(int base,int sheet)
     dbest = 100.0;
     for(j=0; j<nv; ++j) {
       if (j == base || j == i) continue;
-      d1 = geometry->get_computed_distance(base,j,false);
-      d2 = geometry->get_computed_distance(i,j,false);
+      d1 = geometry->get_squared_distance(base,j,true);
+      d2 = geometry->get_squared_distance(i,j,true);
       if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
         l = (d1 - 1.0)*(d1 - 1.0) + (d2 - 1.0)*(d2 - 1.0);
         if (l < dbest) {
@@ -790,7 +790,7 @@ bool Spacetime::correction(int base,int sheet)
   // Add something to check here if this new vertex is within 0.5 of an existing vertex...
   for(i=0; i<nv; ++i) {
     if (!events[i].active()) continue;
-    if (geometry->get_distance(i,xc,false) <= 0.5) return false;
+    if (geometry->get_squared_distance(i,xc,false) <= 0.5) return false;
   }
 #ifdef VERBOSE
   std::cout << "Adding vertex between " << base << " and " << n << std::endl;
@@ -1039,7 +1039,7 @@ bool Spacetime::compensation_m(int base,int sheet)
     j = (vx[0] == base) ? vx[1] : vx[0];
     if (vertex_dimension(j,sheet) < 2) continue;
     if (events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
-    l = geometry->get_computed_distance(base,j,false);
+    l = geometry->get_squared_distance(base,j,true);
     if (l >= 0.81 && l <= 1.21) continue;
     s1.clear();
     s1.insert(base);
@@ -1097,7 +1097,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       if (i == base) continue;
       if (!events[i].active(sheet)) continue;
       if (edge_exists(base,i,sheet)) continue;
-      l = geometry->get_computed_distance(base,i,false);
+      l = geometry->get_squared_distance(base,i,true);
       if (l >= 0.81 && l <= 1.21) candidates.insert(i);
     }
 
@@ -1141,7 +1141,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
-      l = geometry->get_computed_distance(base,j,false);
+      l = geometry->get_squared_distance(base,j,true);
       if (l >= 0.81 && l <= 1.21) continue;
       s1.clear();
       s1.insert(base);
@@ -1724,7 +1724,7 @@ bool Spacetime::fusion_x(int base,double tolerance,int sheet)
     if (i == base) continue;
     if (!events[i].active(sheet)) continue;
     if (events[i].deficiency < std::numeric_limits<double>::epsilon()) continue;
-    if (geometry->get_computed_distance(base,i,false) > tolerance) continue;
+    if (geometry->get_squared_distance(base,i,true) > tolerance) continue;
     candidates.push_back(std::pair<int,int>(base,i));
   }
   if (candidates.empty()) return false;
@@ -2162,12 +2162,12 @@ void Spacetime::regularization(bool minimal,int sheet)
       if (cvertex[i].empty()) continue;
       // We need to choose the closest pair of vertices, not just a random pair
       n2 = (signed) cvertex[i].size();
-      mdelta = 100000.0;
+      mdelta = std::numeric_limits<double>::infinity();
       v1 = -1;
       v2 = -1;
       for(j=0; j<n1; ++j) {
         for(k=0; k<n2; ++k) {
-          l = geometry->get_computed_distance(cvertex[loc][j],cvertex[i][k],false);
+          l = geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true);
           if (l < mdelta) {
             mdelta = l;
             v1 = cvertex[loc][j];
@@ -2211,12 +2211,12 @@ void Spacetime::regularization(bool minimal,int sheet)
       if (i == loc) continue;
       if (cvertex[i].empty()) continue;
       n2 = (signed) cvertex[i].size();
-      mdelta = 100000.0;
+      mdelta = std::numeric_limits<double>::infinity();
       v1 = -1;
       v2 = -1;
       for(j=0; j<n1; ++j) {
         for(k=0; k<n2; ++k) {
-          l = geometry->get_computed_distance(cvertex[loc][j],cvertex[i][k],false);
+          l = geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true);
           if (l < mdelta) {
             mdelta = l;
             v1 = cvertex[loc][j];
@@ -2370,7 +2370,7 @@ bool Spacetime::circumvolution(int base,int sheet)
       D1 = 0.0;
       for(i=0; i<=d; ++i) {
         for(j=1+i; j<=d; ++j) {
-          delta = geometry->get_computed_distance(vx1[i],vx2[j],false);
+          delta = geometry->get_squared_distance(vx1[i],vx2[j],true);
           if (delta > D1) D1 = delta;
         }
       }
@@ -2756,7 +2756,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     if (!events[i].active()) continue;
     for(j=1+i; j<nv; ++j) {
       if (!events[j].active()) continue;
-      delta = geometry->get_distance(i,j,false);
+      delta = geometry->get_squared_distance(i,j,false);
       if (delta < alpha) candidates.push_back(std::pair<int,int>(i,j));
     }
   }
