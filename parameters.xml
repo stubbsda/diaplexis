@@ -6,7 +6,7 @@
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
 		<InitialDimension>1</InitialDimension>
-		<EuclideanGeometry>Yes</EuclideanGeometry>
+		<EuclideanGeometry>No</EuclideanGeometry>
 		<RelationalGeometry>No</RelationalGeometry>
 		<DimensionalUniformity>No</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>

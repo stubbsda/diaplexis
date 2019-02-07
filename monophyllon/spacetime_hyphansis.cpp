@@ -381,7 +381,7 @@ bool Spacetime::germination(int base)
   xc[D2] =  x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -424,7 +424,7 @@ bool Spacetime::germination(int base)
   xc[D2] = -x[D2] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -466,7 +466,7 @@ bool Spacetime::germination(int base)
   xc[D2] = -x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc,false);
+    delta = geometry->get_squared_distance(i,xc);
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -578,7 +578,7 @@ bool Spacetime::germination(int base)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_squared_distance(i,xc,false);
+      delta = geometry->get_squared_distance(i,xc);
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -619,7 +619,7 @@ bool Spacetime::germination(int base)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_squared_distance(i,xc,false);
+      delta = geometry->get_squared_distance(i,xc);
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -777,7 +777,7 @@ bool Spacetime::correction(int base)
   // Add something to check here if this new vertex is within 0.5 of an existing vertex...
   for(i=0; i<nv; ++i) {
     if (!events[i].active) continue;
-    if (geometry->get_squared_distance(i,xc,false) <= 0.5) return false;
+    if (geometry->get_squared_distance(i,xc) <= 0.5) return false;
   }
 #ifdef VERBOSE
   std::cout << "Adding vertex between " << base << " and " << n << std::endl;
