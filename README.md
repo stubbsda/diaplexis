@@ -5,11 +5,11 @@ this library requires a modern C++ compiler as well as the Synarmosma library, a
 multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that assumes the 
 entire spacetime complex exists on a single sheet (Monophyllon). The Diaplexis library also depends 
 on various external libraries, which for the most part are also needed to build the Synarmosma library: 
-the the Boost library (www.boost.org), Victor Shoup's NTL (www.shoup.net/ntl) for number theory and 
-an implementation of LAPACK that's needed for the calculation of eigenvales of dense matrices. The 
-Diaplexis library also requires the PugiXML library (www.pugixml.org) for XML processing, used with 
-the parameter and log files. The Diaplexis library is released under the Gnu Public License version 
-3.0 (see LICENSE.txt or www.fsf.org/licensing for details). 
+the the Boost library (www.boost.org), Victor Shoup's NTL (www.shoup.net/ntl) for number theory, the 
+Gnu multiprecision library (www.gmplib.org) and an implementation of LAPACK that's needed for the calculation 
+of eigenvales of dense matrices. The Diaplexis library also requires the PugiXML library (www.pugixml.org) 
+for XML processing, used with the parameter and log files. The Diaplexis library is released under the Gnu 
+Public License version 3.0 (see LICENSE.txt or www.fsf.org/licensing for details). 
 
 To install the Diaplexis library, enter the directory <code>diaplexis</code> and choose between the Monophyllon and 
 Polyphyllon versions of the library. After descending into the desired directory, the command <code>make</code> 
@@ -17,9 +17,8 @@ will carry out the build process and <code>sudo make install</code> will install
 default location, <code>/usr/local/diaplexis</code>. If you don't have root access or don't wish to install the 
 library in a system directory, you can modify the value of <code>INSTALL_DIR</code> at the beginning of the Makefile 
 to some other directory, such as <code>$HOME/diaplexis</code>. The compilation of the Diaplexis library has been 
-tested on several Unix platforms, including OS X/x86-64, OpenBSD (x86 and x86-64) and Linux (x86, 
-x86-64 and ARMv6), using both the Gnu (g++) and Intel (icpc) compilers. In principle it should also 
-run under Windows using the Cygwin environment. 
+developed and tested in a Linux environment (with x86, x86-64 and ARMv6 processor architectures), using both the 
+Gnu (g++) and Intel (icpc) compilers. In principle it should also run under Windows using the Cygwin environment. 
 
 Normally the only parameters that a user should need to modify in order to build the Diaplexis library 
 are located at the beginning of the Makefile, where various compiler arguments and libraries are all 
