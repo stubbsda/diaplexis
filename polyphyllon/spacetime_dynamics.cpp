@@ -386,64 +386,6 @@ void Spacetime::energy_diffusion()
       }
     }
   }
-  /*
-  for(i=0; i<nv; ++i) {
-    Enew[i] = -1.0;
-    vdimension.push_back(double(events[i].global_dimension));
-    if (events[i].get_energy() < std::numeric_limits<double>::epsilon()) {
-      candidates.push_back(std::pair<int,double>(i,-1.0));
-      continue;
-    }
-    if (!events[i].active()) {
-      candidates.push_back(std::pair<int,double>(i,-1.0));
-    }
-    else {
-      candidates.push_back(std::pair<int,double>(i,std::abs(events[i].deficiency)));
-    }
-  }
-  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
-  for(i=nv-1; i>0; --i) {
-    vx.clear();
-    dimensions.clear();
-    v = candidates[i].first;
-    if (Enew[v] > 0.0) continue;
-    E = events[v].get_energy();
-    d1 = events[v].global_dimension;
-    dimensions.push_back(d1);
-    vx.push_back(v);
-    // We need to reject neighbours if their dimensionality is different and/or
-    // they are far away
-    for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-      m = *it;
-      if (Enew[m] > 0.0) continue;
-      // How to handle the dimensionality issue?
-      d2 = events[m].global_dimension;
-      // 1) Forbid all inter-dimensional energy transfer...
-      //if (d1 != d2) continue;
-      // 2) Forbid it across certain "special" frontiers like 2/1...
-      //if ((d1 > 1 && d2 == 1) || (d1 == 1 && d2 > 1)) continue;
-      // 3) Forbid it according to a Boltzmann criterion...
-      Z = 0.25*double(std::abs(d1 - d2));
-      if (RND->drandom() > std::exp(-Z)) continue;
-      // Now the geometric criterion: the farther away the vertex, the less
-      // likely that it participates in energy transfer...
-      Z = 0.5*(geometry->get_squared_distance(v,m,false) - 1.0);
-      if (RND->drandom() > std::exp(-Z)) continue;
-      dimensions.push_back(d2);
-      E += events[m].get_energy();
-      vx.push_back(m);
-    }
-    if (vx.size() < 2) continue;
-    m = (signed) vx.size();
-    Z = 0.0;
-    for(n=0; n<m; ++n) {
-      Z += double(dimensions[n]);
-    }
-    for(n=0; n<m; ++n) {
-      Enew[vx[n]] = double(dimensions[n])*E/Z;
-    }
-  }
-  */
 #ifdef DEBUG
   // A check to verify that the energy has been conserved during its diffusion through the spacetime
   // network.
