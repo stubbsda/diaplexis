@@ -1,7 +1,9 @@
 monophyllon/*.o
 monophyllon/libdiaplexis.so
+monophyllon/documentation
 polyphyllon/*.o
 polyphyllon/libdiaplexis.so
+polyphyllon/documentation
 data
 euplecton
 euplecton.o
