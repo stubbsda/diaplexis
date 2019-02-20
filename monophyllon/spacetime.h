@@ -5,24 +5,14 @@
 #include <boost/filesystem.hpp>
 
 #include "synarmosma/geometry.h"
-#include "synarmosma/homology.h"
-#include "synarmosma/homotopy.h"
 #include "synarmosma/directed_graph.h"
 
-#include "event.h"
-#include "simplex.h"
+#include "complex.h"
 
 #ifndef _spacetimeh
 #define _spacetimeh
 
 namespace DIAPLEXIS {
-  typedef struct {
-    std::vector<Event> events;
-    std::vector<Simplex>* simplices;
-    SYNARMOSMA::hash_map* index_table;
-    SYNARMOSMA::Geometry geometry;
-  } Plegma;
-
   class Spacetime {
    protected:
     enum Initial_Topology
@@ -59,9 +49,7 @@ namespace DIAPLEXIS {
     int iterations = 0;
     int system_size = 0;
     int nactive = 1;
-    bool pseudomanifold = false;
-    bool boundary = false;
-    bool orientable = false;
+    bool reversible = false;
     double error = 0.0;
     double global_deficiency = 0.0;
     double topology_delta = 0.0;
@@ -70,14 +58,9 @@ namespace DIAPLEXIS {
     std::string ops = "";
     std::set<int> vx_delta;
     std::vector<int> flexible_edge;
-    std::vector<Event> events;
-    std::vector<Simplex>* simplices;
-    SYNARMOSMA::hash_map* index_table;
-    SYNARMOSMA::Random* RND;
+    Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
-    SYNARMOSMA::Homology* H;
-    SYNARMOSMA::Homotopy* pi;
-    Plegma anterior;
+    SYNARMOSMA::Random* RND;
 
     // The global parameters
     Initial_Topology initial_state = Initial_Topology::random;
@@ -145,11 +128,6 @@ namespace DIAPLEXIS {
     static const int N_IMP = 8;
     static const std::string EXP_OP[N_EXP];
     static const std::string IMP_OP[N_IMP];
-    // The combinatorial size of the subgraph used to compute
-    // the topological entwinement at a vertex
-    static const int topological_radius = 4;
-    // Maximum combinatorial dimension of the spacetime
-    static const int ND = 10;
 
     // Error tolerance for convergence
     static const double convergence_threshold;
@@ -161,63 +139,12 @@ namespace DIAPLEXIS {
     // and the energy
     static const double Lambda;
 
-    bool edge_exists(int,int) const;
-    int cardinality(int) const;
-    int cardinality_safe(int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int) const;
-    void compute_degree_distribution(bool) const;
-    void compute_connectivity_distribution() const;
-    std::pair<double,double> random_walk() const;
-    void arclength_statistics(double*) const;
-    void vertex_degree_statistics(double*) const;
-    void compute_fvector(std::vector<int>&,std::vector<int>&) const;
-    void compute_hvector(std::vector<int>&) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
-    void compute_graph(SYNARMOSMA::Graph*) const;
-    void compute_graph(SYNARMOSMA::Graph*,int*) const;
-    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int) const;
-    void compute_global_nexus(SYNARMOSMA::Nexus*) const;
-    void compute_local_nexus(SYNARMOSMA::Nexus*,int) const;
-    void simplex_membership(int,std::vector<int>&) const;
-    int chromatic_number() const;
-    double dimensional_stress(int,int) const;
-    int combinatorial_distance(int,int) const;
-    double entwinement() const;
-    double cyclic_resistance() const;
-    int max_degree() const;
-    bool delaunay() const;
-    int total_dimension() const;
-    int structural_index() const;
-    int dimension() const;
-    int vertex_valence(int) const;
-    int vertex_dimension(int) const;
-    int weighted_entourage(int,int) const;
-    int cyclicity() const;
-    double dimensional_frontier(int) const;
-    double dimensional_uniformity() const;
-    bool active_simplex(int,int) const;
-    int circuit_rank() const;
-    int euler_characteristic() const;
-    int component_analysis(std::vector<int>&) const;
-    int entourage(int) const;
-    bool connected() const;
-    bool consistent() const;
-    bool correctness();
-    void clean() const;
-    bool energy_check() const;
-    double total_energy() const;
-    void simplicial_implication(int) const;
-    int simplex_embedding(int,int) const;
-    double dimensional_stress(int) const;
-    double parity_hamiltonian(double,bool) const;
-    void write_graph(const std::string&) const;
-
     void compute_geometric_gradient(std::vector<double>&,bool);
     void compute_geometric_dependency(const std::set<int>&);
     void compute_topological_dependency(const std::set<int>&);
     void simplicial_implication();
-    void compute_simplex_energy(int,int);
-    void compute_simplex_parity(int,int);
+    void arclength_statistics(double*) const;
+
     // The various methods needed for the hyphantic operators
     void hyphansis();
     void dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
@@ -259,9 +186,6 @@ namespace DIAPLEXIS {
     bool edge_parity_mutation(int);
     bool edge_parity_mutation(int,int);
     void vertex_fusion(int,int);
-    void recompute_parity(int);
-    void recompute_parity(const std::set<int>&);
-    void compute_parity();
     void compute_neighbours();
     void compute_entourages();
     void superposition_fusion(std::set<int>&);
@@ -272,10 +196,7 @@ namespace DIAPLEXIS {
 
     void inversion();
     bool realizable(int,int) const;
-    void write_topology() const;
-    void write_incastrature(const std::string&) const;
     void determine_flexible_edges();
-    void compute_simplicial_dimension();
     void compute_volume();
     void compute_lengths();
     void compute_curvature();
@@ -287,11 +208,9 @@ namespace DIAPLEXIS {
     void structural_deficiency();
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
     void compute_lightcones();
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int) const;
     double compute_temporal_vorticity(int) const;
     double compute_temporal_nonlinearity() const;
-    void set_logical_atoms(int);
-    double logical_energy(int) const;
-    bool logical_conformity(int) const;
     double representational_energy(bool) const;
 
     void implication(std::string&) const;
@@ -300,7 +219,6 @@ namespace DIAPLEXIS {
     bool global_operations();
     void write_distribution(const std::vector<int>&) const;
     void compute_colours(std::vector<unsigned char>&,bool) const;
-    void compute_global_topology();
     void build_initial_state();
     void write_log() const;
     void read_complex(std::ifstream&);
@@ -320,9 +238,10 @@ namespace DIAPLEXIS {
     void initialize();
     void allocate();
     void clear();
+    void clean() const;
+    bool correctness();
     void write(Spacetime&) const;
     void read(const Spacetime&);
-    inline double distribution_fitness(int*,const std::vector<int>&,int) const;
 
    public:
     Spacetime();
@@ -331,7 +250,8 @@ namespace DIAPLEXIS {
     Spacetime(const std::string&,bool);
     ~Spacetime();
     void read_state(const std::string&);
-    bool step_forwards();
+    bool advance();
+    void fallback();
     void evolve();
     void chorogenesis(int);
     void distribute(int) const; 
@@ -339,114 +259,29 @@ namespace DIAPLEXIS {
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*) const;
     void set_checkpoint_frequency(int);
-    bool active_element(int,int) const;
-    void get_edge_topology(std::vector<std::set<int> >&) const;
     void get_energy_values(std::vector<double>&) const;
     void get_deficiency_values(std::vector<double>&) const;
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
     double get_geometric_distance(int,int) const;
-    bool is_pseudomanifold(bool*) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;
     void write_vertex_data(int) const;
     inline int get_background_dimension() const {return geometry->dimension();};
-    inline int get_cardinality(int d) const {return cardinality_safe(d);};
-    inline int get_event_dimension(int n) const {return vertex_dimension(n);};
-    inline double get_event_obliquity(int n) const {return events[n].obliquity;};
-    inline double get_event_energy(int n) const {return events[n].get_energy();};
-    inline double get_event_curvature(int n) const {return events[n].curvature;};
-    inline double get_event_deficiency(int n) const {return events[n].deficiency;};
-    inline double get_event_entwinement(int n) const {return events[n].entwinement;};
+    inline double get_event_obliquity(int n) const {return skeleton->events[n].obliquity;};
+    inline double get_event_energy(int n) const {return skeleton->events[n].get_energy();};
+    inline double get_event_curvature(int n) const {return skeleton->events[n].curvature;};
+    inline double get_event_deficiency(int n) const {return skeleton->events[n].deficiency;};
+    inline double get_event_entwinement(int n) const {return skeleton->events[n].entwinement;};
     inline std::string get_state_file() const {return state_file;};
-    inline std::string get_simplex_key(int d,int n) const {return SYNARMOSMA::make_key(simplices[d][n].vertices);};
     inline std::string get_ops() const {return ops;};
-    inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};
     inline void get_arclength_statistics(double* output) const {arclength_statistics(output);};
-    inline void get_vertex_degree_statistics(double* output) const {vertex_degree_statistics(output);};
-    inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar) const {compute_fvector(f,fstar);};
     inline void get_delta(double* output) const {output[0] = topology_delta; output[1] = geometry_delta; output[2] = energy_delta;};
-    inline int get_edge_index(const std::set<int>& vx) const {SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); return qt->second;};
     inline int get_iterations() const {return iterations;};
-    inline int get_dimension() const {return dimension();};
-    inline int get_cyclicity() const {return cyclicity();};
-    inline int get_circuit_rank() const {return circuit_rank();};
     inline double get_error() const {return error;};
-    inline double get_total_energy() const {return total_energy();}; 
     inline int get_maximum_iterations() const {return max_iter;};
     inline bool is_converged() const {return converged;};
-    inline bool is_orientable() const {return orientable;};
-    inline int get_euler_characteristic() const {return euler_characteristic();};
-    inline int get_events() const {return (signed) events.size();};
-    inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
-    inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
   };
-
-  inline bool Spacetime::edge_exists(int u,int v) const
-  {
-    std::set<int> vx;
-    vx.insert(u); vx.insert(v);
-    SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);
-    if (qt == index_table[1].end()) return false;
-    if (!simplices[1][qt->second].active) return false;
-    return true;
-  }
-
-  inline bool Spacetime::is_pseudomanifold(bool* bdry) const 
-  {
-    *bdry = boundary;
-    return pseudomanifold;
-  }
-
-  inline double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
-  {
-    int i,sum = 0,bcount = 0;
-    double mu,sigma = 0.0;
-    std::set<int>::const_iterator it;
-    const int nv = (signed) events.size();
-
-    for(i=0; i<nprocs; ++i) {
-      sum += volume[i];
-    }
-    mu = double(sum)/double(nprocs);
-    for(i=0; i<nprocs; ++i) {
-      sigma += (volume[i] - mu)*(volume[i] - mu);
-    }
-    sigma = std::sqrt(sigma/double(nprocs));
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active) continue;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        if (*it < i) continue;
-        if (affinity[*it] != affinity[i]) bcount++;
-      }
-    }
-    return sigma + double(bcount);
-  }
-
-  inline void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base) const
-  {
-    compute_graph(G,base,Spacetime::topological_radius);
-  }
-
-  inline int Spacetime::cardinality(int d) const
-  {
-    int i,n = 0;
-    if (d == 0) {
-      const int M = (signed) events.size();
-      for(i=0; i<M; ++i) {
-        if (!events[i].active) continue;
-        n++;
-      }
-    }
-    else {
-      const int M = (signed) simplices[d].size();
-      for(i=0; i<M; ++i) {
-        if (!simplices[d][i].active) continue;
-        n++;
-      }
-    }
-    return n;
-  }
 }
 #endif
 

@@ -31,10 +31,10 @@ LIBS        = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lgmp -lm
 INSTALL_DIR = $(HOME)/fabrica/local
 # End of user-modifiable parameters!
 
-HEADERS    = event.h simplex.h spacetime.h
+HEADERS    = event.h simplex.h complex.h spacetime.h
 
-OBJECTS = spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
-spacetime_geometry.o spacetime_hyphansis.o event.o simplex.o
+OBJECTS = spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_geometry.o \
+spacetime_hyphansis.o complex.o complex_topology.o event.o simplex.o
 
 install: diaplexis 
 	mkdir -p $(INSTALL_DIR)/lib
@@ -57,14 +57,17 @@ spacetime_dynamics.o: spacetime_dynamics.cpp $(HEADERS)
 spacetime_visualize.o: spacetime_visualize.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_visualize.cpp
 
-spacetime_topology.o: spacetime_topology.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_topology.cpp
-
 spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
 
 spacetime_geometry.o: spacetime_geometry.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_geometry.cpp
+
+complex.o: complex.cpp event.h simplex.h complex.h
+	$(CXX) $(CXX_FLAGS) -c complex.cpp
+
+complex_topology.o: complex_topology.cpp event.h simplex.h complex.h
+	$(CXX) $(CXX_FLAGS) -c complex_topology.cpp
 
 simplex.o: simplex.cpp simplex.h
 	$(CXX) $(CXX_FLAGS) -c simplex.cpp

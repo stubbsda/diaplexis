@@ -60,6 +60,156 @@ void Spacetime::arclength_statistics(double* output) const
   output[2] = avg_length;
 }
 
+void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) const
+{
+  int i,j,v;
+  std::set<int> S;
+  std::set<int>::const_iterator it;
+  std::vector<int> offset,current,next;
+  std::vector<int>::const_iterator v_it;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  const int nv = (signed) events.size();
+
+  G->clear();
+  current.push_back(base);
+  for(i=0; i<nv; ++i) {
+    offset.push_back(-1);
+  }
+  offset[base] = G->add_vertex();
+
+  do {
+    for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
+      v = *v_it;
+      for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+        j = *it;
+        S.clear();
+        S.insert(v);
+        S.insert(j);
+        qt = index_table[1].find(S);
+        if (!simplices[1][qt->second].active) continue;
+        if (!simplices[1][qt->second].timelike()) continue;
+        if (offset[j] == -1) {
+          offset[j] = G->add_vertex();
+          next.push_back(j);
+        }
+        G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
+      }
+    }
+    if (next.empty()) break;
+    current = next;
+    next.clear();
+  } while(true);
+}
+
+void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
+{
+  // This method assumes that the compute_lightcones method has already been called to fill 
+  // the anterior and posterior properties of the events!
+  int i,j;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it,jt;
+
+  // First the past cone...
+  current.insert(v);
+  past_cone.clear();
+  do {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
+      for(jt=events[i].anterior.begin(); jt!=events[i].anterior.end(); ++jt) {
+        j = *jt;
+        if (past_cone.count(j) > 0) continue;
+        next.insert(j);
+      }
+    }
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      past_cone.insert(*it);
+    }
+    current = next;
+    next.clear();
+  } while(true);
+
+  // Now the future cone...
+  current.clear();
+  current.insert(v);
+  future_cone.clear();
+  do {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
+      for(jt=events[i].posterior.begin(); jt!=events[i].posterior.end(); ++jt) {
+        j = *jt;
+        if (future_cone.count(j) > 0) continue;
+        next.insert(j);
+      }
+    }
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      future_cone.insert(*it);
+    }
+    current = next;
+    next.clear();
+  } while(true);
+}
+
+double Spacetime::compute_temporal_nonlinearity() const
+{
+  int i,nsink = 0,nsource = 0,causal_loop = 0;
+  double output,nlinearity = 0.0;
+  std::set<int> past,future;
+  SYNARMOSMA::Directed_Graph G;
+  const int nv = (signed) events.size();
+  const double na = double(cardinality(0));
+
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#endif
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active) continue;
+    // Now calculate the future and past lightcones for this vertex on this sheet...
+    compute_total_lightcone(i,past,future);
+    if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
+    // If it's a sink, that means all of its edges have orientation equal to -1;
+    // for a source, the edges must all have an orientation equal to +1.
+    if (past.empty() && !future.empty()) {
+      compute_causal_graph(&G,i);
+      nlinearity += G.cyclicity();
+      nsource++;
+    }
+    else if (!past.empty() && future.empty()) {
+      compute_causal_graph(&G,i);
+      nlinearity += G.cyclicity();
+      nsink++;
+    }
+  }
+  output = nlinearity/double(nsink + nsource) + double(causal_loop)/na;
+  return output;
+}
+
+void Spacetime::compute_lightcones()
+{
+  int i,vx[2];
+  const int n = (signed) events.size();
+  const int m = (signed) simplices[1].size();
+
+  for(i=0; i<n; ++i) {
+    events[i].anterior.clear();
+    events[i].posterior.clear();
+  }
+  for(i=0; i<m; ++i) {
+    if (!simplices[1][i].active) continue;
+    if (!simplices[1][i].timelike()) continue;
+    simplices[1][i].get_vertices(vx);
+    if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
+      events[vx[0]].posterior.insert(vx[1]);
+      events[vx[1]].anterior.insert(vx[0]);
+    }
+    else {
+      events[vx[1]].posterior.insert(vx[0]);
+      events[vx[0]].anterior.insert(vx[1]);
+    }
+  }
+}
+
 void Spacetime::chorogenesis(int nsteps)
 {
   assert(solver == Geometry_Solver::mechanical);
