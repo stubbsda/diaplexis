@@ -30,6 +30,7 @@ namespace DIAPLEXIS {
     int deserialize(std::ifstream&) override;
     int valence(int) const;
     friend std::ostream& operator <<(std::ostream&,const Event&);
+    friend class Complex;
     friend class Spacetime;
   };
 }

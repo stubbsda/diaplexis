@@ -6,8 +6,6 @@ const double Spacetime::convergence_threshold = 0.00001;
 const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
-const int Spacetime::topological_radius;
-const int Spacetime::ND;
 const int Spacetime::N_EXP;
 const int Spacetime::N_IMP;
 const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm","Y"};
@@ -45,18 +43,9 @@ Spacetime::Spacetime(const std::string& filename,bool no_disk)
 
 Spacetime::~Spacetime()
 {
-  events.clear();
-  anterior.events.clear();
-
-  delete H;
-  delete pi;
   delete RND;
+  delete skeleton;
   delete geometry;
-
-  delete[] simplices;
-  delete[] index_table;
-  delete[] anterior.simplices;
-  delete[] anterior.index_table;
 }
 
 void Spacetime::allocate()
@@ -64,8 +53,7 @@ void Spacetime::allocate()
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
-  pi = new SYNARMOSMA::Homotopy;
+  skeleton = new Complex;
   RND = new SYNARMOSMA::Random;
 }
 
@@ -91,18 +79,7 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
 
 void Spacetime::clear()
 {
-  events.clear();
-  H->clear();
-  pi->clear();
-  for(int i=1; i<=Spacetime::ND; ++i) {
-    simplices[i].clear();
-    index_table[i].clear();
-  }
-  anterior.events.clear();
-  for(int i=1; i<=Spacetime::ND; ++i) {
-    anterior.simplices[i].clear();
-    anterior.index_table[i].clear();
-  }
+  skeleton->clear();
   iterations = 0;
 }
 
@@ -110,13 +87,13 @@ void Spacetime::condense()
 {
   // First check how many ghost vertices and edges there are in this spacetime....
   int i,n = 0,m = 0;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
   for(i=0; i<nv; ++i) {
-    if (events[i].active) n++;
+    if (skeleton->events[i].active) n++;
   }
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].active) m++;
+    if (skeleton->simplices[1][i].active) m++;
   }
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
@@ -137,40 +114,40 @@ void Spacetime::condense()
   n = 0;
   for(i=0; i<nv; ++i) {
     offset[i] = -1;
-    if (!events[i].active) continue;
+    if (!skeleton->events[i].active) continue;
     geometry->get_coordinates(i,xc);
     svalues.push_back(xc);
-    nevents.push_back(events[i]);
+    nevents.push_back(skeleton->events[i]);
     offset[i] = n;
     n++;
   }
-  events = nevents;
+  skeleton->events = nevents;
   geometry->multiple_vertex_addition(svalues);
   for(i=0; i<n; ++i) {
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
       vx.insert(offset[*it]);
     }
-    events[i].neighbours = vx;
-    events[i].entourage.clear();
+    skeleton->events[i].neighbours = vx;
+    skeleton->events[i].entourage.clear();
     vx.clear();
   }
-  for(i=1; i<=Spacetime::ND; ++i) {
-    m = (signed) simplices[i].size();
-    index_table[i].clear();
+  for(i=1; i<=Complex::ND; ++i) {
+    m = (signed) skeleton->simplices[i].size();
+    skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
-      if (!simplices[i][j].active) continue;
-      S = simplices[i][j];
+      if (!skeleton->simplices[i][j].active) continue;
+      S = skeleton->simplices[i][j];
       for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
         vx.insert(offset[*it]);
       }
       S.vertices = vx;
       S.entourage.clear();
       S.calculate_faces();
-      index_table[i][S.vertices] = (signed) nsimplices.size();
+      skeleton->index_table[i][S.vertices] = (signed) nsimplices.size();
       nsimplices.push_back(S);
       vx.clear();
     }
-    simplices[i] = nsimplices;
+    skeleton->simplices[i] = nsimplices;
     nsimplices.clear();
   }
   compute_entourages();
@@ -187,18 +164,18 @@ void Spacetime::distribute(int nprocs) const
   std::vector<std::pair<int,int> > candidates;
   std::set<int> vx,neg,next;
   std::set<int>::const_iterator it;
-  const int nv = (signed) events.size();
-  const int D = dimension();
+  const int nv = (signed) skeleton->events.size();
+  const int D = skeleton->dimension();
 
   // The algorithm should begin by making current equal to the 
   // vertex with the highest simplicial dimension...
   for(i=0; i<nv; ++i) {
     affinity.push_back(-1);
-    if (!events[i].active) continue;
+    if (!skeleton->events[i].active) continue;
     nreal++;
-    if (events[i].topological_dimension > max_dim) {
+    if (skeleton->events[i].topological_dimension > max_dim) {
       current = i;
-      max_dim = events[i].topological_dimension;
+      max_dim = skeleton->events[i].topological_dimension;
     }
   }
   for(i=0; i<nprocs; ++i) {
@@ -209,18 +186,18 @@ void Spacetime::distribute(int nprocs) const
 #endif
   // First do the higher-dimensional vertices...
   do {
-    // So take all of the n-simplices (n > 1) that are active and which 
+    // So take all of the n-skeleton->simplices (n > 1) that are active and which 
     // contain the current vertex and assign all of their vertices to the 
     // current processor...
-    if (events[current].topological_dimension > 1) {
+    if (skeleton->events[current].topological_dimension > 1) {
       affinity[current] = cproc;
       volume[cproc] += 1;
-      // Need to loop over all d-simplices, d > 1
-      for(i=2; i<=events[current].topological_dimension; ++i) {
-        for(j=0; j<(signed) simplices[i].size(); ++j) {
-          if (!simplices[i][j].active) continue;
-          if (simplices[i][j].contains(current)) {
-            simplices[i][j].get_vertices(vx);
+      // Need to loop over all d-skeleton->simplices, d > 1
+      for(i=2; i<=skeleton->events[current].topological_dimension; ++i) {
+        for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+          if (!skeleton->simplices[i][j].active) continue;
+          if (skeleton->simplices[i][j].contains(current)) {
+            skeleton->simplices[i][j].get_vertices(vx);
             for(it=vx.begin(); it!=vx.end(); ++it) {
               if (affinity[*it] == -1) {
                 affinity[*it] = cproc;
@@ -233,12 +210,12 @@ void Spacetime::distribute(int nprocs) const
           }
         }
       }
-      // Now handle the neighbouring d-simplices (d > 1)...
+      // Now handle the neighbouring d-skeleton->simplices (d > 1)...
       do {
         for(i=2; i<=D; ++i) {
-          for(j=0; j<(signed) simplices[i].size(); ++j) {
-            if (!simplices[i][j].active) continue;
-            simplices[i][j].get_vertices(vx);
+          for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+            if (!skeleton->simplices[i][j].active) continue;
+            skeleton->simplices[i][j].get_vertices(vx);
             bdry = false;
             for(it=vx.begin(); it!=vx.end(); ++it) {
               if (affinity[*it] == -1) {
@@ -266,8 +243,8 @@ void Spacetime::distribute(int nprocs) const
     }    
     done = true;
     for(i=0; i<nv; ++i) {
-      if (!events[i].active) continue;
-      if (affinity[i] == -1 && events[i].topological_dimension > 1) {
+      if (!skeleton->events[i].active) continue;
+      if (affinity[i] == -1 && skeleton->events[i].topological_dimension > 1) {
         done = false;
         current = i;
         break;
@@ -286,10 +263,10 @@ void Spacetime::distribute(int nprocs) const
       // been assigned to a processor...
       candidates.clear();
       for(j=0; j<nv; ++j) {
-        if (!events[j].active) continue;
+        if (!skeleton->events[j].active) continue;
         if (affinity[j] > -1) continue;
         cneighbour = 0;
-        for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+        for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
           if (affinity[*it] > -1) cneighbour++; 
         }
         candidates.push_back(std::pair<int,int>(j,cneighbour));         
@@ -304,9 +281,9 @@ void Spacetime::distribute(int nprocs) const
     do {
       next.clear();
       for(j=0; j<nv; ++j) {
-        if (!events[j].active) continue;
+        if (!skeleton->events[j].active) continue;
         if (affinity[j] > -1) continue;
-        for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+        for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
           if (affinity[*it] == i) next.insert(j);
         }
       }
@@ -323,9 +300,9 @@ void Spacetime::distribute(int nprocs) const
     } while(!done);
   }
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
+    if (!skeleton->events[i].active) continue;
     if (affinity[i] == -1) {
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
         p = affinity[*it];
         if (p > -1) {
           affinity[i] = p;
@@ -335,15 +312,15 @@ void Spacetime::distribute(int nprocs) const
       }
     }
   }
-  current_cost = distribution_fitness(volume,affinity,nprocs);
+  current_cost = skeleton->distribution_fitness(volume,affinity,nprocs);
 #ifdef VERBOSE
   std::cout << "At iteration 0 the cost is " << current_cost << std::endl;
 #endif
   do {
     do {
       n = RND->irandom(nv);
-      if (!events[n].active) continue;
-      if (events[n].topological_dimension > 1) continue;
+      if (!skeleton->events[n].active) continue;
+      if (skeleton->events[n].topological_dimension > 1) continue;
       break;
     } while(true);
     p_old = affinity[n];
@@ -354,7 +331,7 @@ void Spacetime::distribute(int nprocs) const
     affinity[n] = p;
     volume[p] += 1;
     volume[p_old] -= 1;
-    cost = distribution_fitness(volume,affinity,nprocs);
+    cost = skeleton->distribution_fitness(volume,affinity,nprocs);
     if (cost < current_cost) {
       current_cost = cost;
     }
@@ -371,7 +348,7 @@ void Spacetime::distribute(int nprocs) const
   // Some basic sanity checks: every vertex has a processor...
   n = 0;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
+    if (!skeleton->events[i].active) continue;
     if (affinity[i] == -1) n++;
   }
   assert(n == 0);
@@ -385,9 +362,9 @@ void Spacetime::distribute(int nprocs) const
   for(i=0; i<nprocs; ++i) {
     ecount = 0; bcount = 0;
     for(j=0; j<nv; ++j) {
-      if (!events[j].active) continue;
+      if (!skeleton->events[j].active) continue;
       if (affinity[j] != i) continue;
-      for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+      for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
         k = *it;
         if (affinity[k] == i) {
           ecount++;
@@ -407,26 +384,26 @@ void Spacetime::distribute(int nprocs) const
 void Spacetime::get_energy_values(std::vector<double>& output) const
 {
   int i;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   output.clear();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    output.push_back(events[i].get_energy());
+    if (!skeleton->events[i].active) continue;
+    output.push_back(skeleton->events[i].get_energy());
   }
 }
 
 void Spacetime::get_deficiency_values(std::vector<double>& output) const
 {
   int i;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   output.clear();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    output.push_back(events[i].deficiency);
+    if (!skeleton->events[i].active) continue;
+    output.push_back(skeleton->events[i].deficiency);
   }
 }
 
@@ -684,17 +661,22 @@ void Spacetime::explication(std::string& output) const
 void Spacetime::clean() const
 {
   int i,j;
-  for(i=0; i<(signed) events.size(); ++i) {
-    assert(!events[i].topology_modified);
+  for(i=0; i<(signed) skeleton->events.size(); ++i) {
+    assert(!skeleton->events[i].topology_modified);
   }
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      assert(!simplices[i][j].modified);
+  for(i=1; i<=Complex::ND; ++i) {
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      assert(!skeleton->simplices[i][j].modified);
     }
   }
 }
 
-bool Spacetime::step_forwards()
+void Spacetime::fallback()
+{
+
+}
+
+bool Spacetime::advance()
 {
   static double htime = 0.0;
   static double gtime = 0.0;
@@ -739,7 +721,7 @@ bool Spacetime::step_forwards()
 void Spacetime::evolve()
 {
   for(int i=0; i<max_iter; ++i) {
-    if (step_forwards()) break;
+    if (advance()) break;
   }
 
   if (diskless) return;
@@ -776,7 +758,7 @@ void Spacetime::evolve()
 bool Spacetime::correctness()
 {
   int i,j;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   compute_volume();
   compute_curvature();
@@ -785,12 +767,12 @@ bool Spacetime::correctness()
   double anterior_error = error;
 
   for(i=0; i<nv; ++i) {
-    events[i].topology_modified = true;
-    events[i].geometry_modified = true;
+    skeleton->events[i].topology_modified = true;
+    skeleton->events[i].geometry_modified = true;
   }
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      simplices[i][j].modified = true;
+  for(i=1; i<=Complex::ND; ++i) {
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      skeleton->simplices[i][j].modified = true;
     }
   }
 
@@ -805,86 +787,13 @@ bool Spacetime::correctness()
 
 void Spacetime::write_vertex_data(int v) const
 {
-  if (v < 0 || v >= (signed) events.size()) return;
+  if (v < 0 || v >= (signed) skeleton->events.size()) return;
   std::cout << "For vertex " << v << " we have:" << std::endl;
-  std::cout << "    Incept = " << events[v].incept << std::endl;
-  std::cout << "    Structural deficiency = " << events[v].deficiency << std::endl;
-  std::cout << "    Energy = " << events[v].get_energy() << std::endl;
-  std::cout << "    Orthogonality = " << events[v].obliquity << std::endl;
+  std::cout << "    Incept = " << skeleton->events[v].incept << std::endl;
+  std::cout << "    Structural deficiency = " << skeleton->events[v].deficiency << std::endl;
+  std::cout << "    Energy = " << skeleton->events[v].get_energy() << std::endl;
+  std::cout << "    Orthogonality = " << skeleton->events[v].obliquity << std::endl;
   std::cout << std::endl;
-}
-
-void Spacetime::write_topology() const
-{
-  int i,j,n;
-  std::vector<int> vx;
-  SYNARMOSMA::UINT64 q;
-  const int ns = cardinality(0);
-  const int ulimit = dimension();
-
-  for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active) continue;
-    simplex_membership(i,vx);
-    std::cout << i+1 << ": [";
-    for(j=1; j<ulimit; ++j) {
-      std::cout << vx[j-1] << ",";
-    }
-    std::cout << vx[ulimit-1] << "]" << std::endl;
-  }
-  for(i=Spacetime::ND; i>=1; i--) {
-    n = cardinality(i);
-    if (n > 0) {
-      q = int(SYNARMOSMA::binomial(ns,i+1));
-      std::cout << "There are " << n << " (" << q << ") " << i << "-simplices in this complex." << std::endl;
-    }
-  }
-
-  std::cout << "There are " << ns << " (" << ns << ") 0-simplices in this complex." << std::endl;
-  std::cout << "The Euler characteristic is " << euler_characteristic() << std::endl;
-}
-
-void Spacetime::write_incastrature(const std::string& filename) const
-{
-  // A method that generates the Hasse diagram corresponding to the
-  // complex's simplicial structure, with the diagram stored in the
-  // PDF "hasse.pdf"; the method assumes that the Graphviz library
-  // has been installed on the system.
-  int i,j,k;
-
-  std::ofstream s(filename,std::ios::trunc);
-
-  s << "digraph G {" << std::endl;
-
-  for(i=Spacetime::ND; i>0; i--) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      if (!simplices[i][j].active) continue;
-      for(k=0; k<1+i; ++k) {
-        s << "  \"" << SYNARMOSMA::make_key(simplices[i][j].vertices) << "\" -> \"" << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "\";" << std::endl;
-      }
-    }
-  }
-  for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active) continue;
-    s << "  \"" << i << "\" -> \"NULL\";" << std::endl;
-  }
-  s << "}" << std::endl;
-  s.close();
-}
-
-bool Spacetime::energy_check() const
-{
-  bool output = true;
-  const int nv = (signed) events.size();
-
-  for(int i=0; i<nv; ++i) {
-    if (!events[i].zero_energy()) {
-      if (!events[i].active) {
-        std::cout << "Potential problem here: " << i << "  " << events[i].get_energy() << std::endl;
-        output = false;
-      }
-    }
-  }
-  return output;
 }
 
 void Spacetime::structural_deficiency()
@@ -906,21 +815,21 @@ void Spacetime::structural_deficiency()
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Graph G;
-  const int na = cardinality(0);
-  const int nv = (signed) events.size();
+  const int na = skeleton->cardinality(0);
+  const int nv = (signed) skeleton->events.size();
   double R[nv],gvalue[nv],length_deviation[nv],rho[nv];
   int avertices[na];
 
   for(i=0; i<nv; ++i) {
-    if (events[i].active) {
+    if (skeleton->events[i].active) {
       avertices[k] = i;
       k++;
     }
     else {
-      events[i].entwinement = 0.0;
+      skeleton->events[i].entwinement = 0.0;
     }
-    events[i].deficiency = 0.0;
-    events[i].geometric_deficiency = 0.0;
+    skeleton->events[i].deficiency = 0.0;
+    skeleton->events[i].geometric_deficiency = 0.0;
     length_deviation[i] = 0.0;
     gvalue[i] = 0.0;
     R[i] = 0.0;
@@ -932,18 +841,18 @@ void Spacetime::structural_deficiency()
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    if (!events[v1].topology_modified) continue;
-    j = vertex_dimension(v1);
-    events[v1].entwinement = 0.5*double(j - 1) + compute_temporal_vorticity(i);
-    compute_graph(&G,v1);
-    events[v1].entwinement += G.completeness();
-    if (G.order() > 1) events[v1].entwinement += G.entwinement()/double(G.order() - 1); 
-    events[v1].topological_dimension = j;
-    events[v1].topology_modified = false;
+    if (!skeleton->events[v1].topology_modified) continue;
+    j = skeleton->vertex_dimension(v1);
+    skeleton->events[v1].entwinement = 0.5*double(j - 1) + compute_temporal_vorticity(i);
+    skeleton->compute_graph(&G,v1);
+    skeleton->events[v1].entwinement += G.completeness();
+    if (G.order() > 1) skeleton->events[v1].entwinement += G.entwinement()/double(G.order() - 1); 
+    skeleton->events[v1].topological_dimension = j;
+    skeleton->events[v1].topology_modified = false;
   }
 
   for(i=0; i<nv; ++i) {
-    gvalue[i] = events[i].entwinement;
+    gvalue[i] = skeleton->events[i].entwinement;
   }
 
 #ifdef _OPENMP
@@ -1006,14 +915,14 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     sum1 = 0.0;
     sum2 = 0.0;
-    k = (events[v1].neighbours.empty()) ? 1 : (signed) events[v1].neighbours.size();
+    k = (skeleton->events[v1].neighbours.empty()) ? 1 : (signed) skeleton->events[v1].neighbours.size();
     length_deviation[v1] = 0.0;
-    for(it=events[v1].neighbours.begin(); it!=events[v1].neighbours.end(); ++it) {
+    for(it=skeleton->events[v1].neighbours.begin(); it!=skeleton->events[v1].neighbours.end(); ++it) {
       j = *it;
       l = geometry->get_squared_distance(v1,j,false);
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
-      sum2 += events[j].get_energy()*l_inv;
+      sum2 += skeleton->events[j].get_energy()*l_inv;
       if (l < 1.0) {
         // To handle the case of null edges...
         length_deviation[v1] += 10.0*(l - 1.0)*(l - 1.0);
@@ -1021,44 +930,44 @@ void Spacetime::structural_deficiency()
       else {
         length_deviation[v1] += std::log(l)*std::log(l);
       }
-      //if (simplices[1][n].orientation == SYNARMOSMA::DISPARATE) continue;
+      //if (skeleton->simplices[1][n].orientation == SYNARMOSMA::DISPARATE) continue;
       // How to determine if j lies in the chronological future of i?
-      //sigma = (simplices[1][n].orientation == SYNARMOSMA::AFTER) ? 1 : -1;
+      //sigma = (skeleton->simplices[1][n].orientation == SYNARMOSMA::AFTER) ? 1 : -1;
       //if (j < i) sigma = -sigma;
-      //sum2 += double(sigma)*events[j].get_energy()*l_inv;
+      //sum2 += double(sigma)*skeleton->events[j].get_energy()*l_inv;
     }
     length_deviation[v1] = length_deviation[v1]/double(k);
     R[v1] = gvalue[v1]; // - sum1/double(k);
-    rho[v1] = events[v1].get_energy(); // + sum2/double(k);
+    rho[v1] = skeleton->events[v1].get_energy(); // + sum2/double(k);
   }
   
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    events[v1].deficiency = R[v1] + events[v1].obliquity + length_deviation[v1] + events[v1].curvature - Spacetime::Lambda*rho[v1];
-    events[v1].geometric_deficiency = events[v1].obliquity + length_deviation[v1] + events[v1].curvature;
+    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature - Spacetime::Lambda*rho[v1];
+    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature;
   }
 
   // Now the chromatic energy sum...
   E_total = 0.0;
   for(i=0; i<nv; ++i) {
-    E_total += events[i].get_energy();
+    E_total += skeleton->events[i].get_energy();
   }
 
   E_G = representational_energy(false);
 
-  global_deficiency =  E_G + 2.0*M_PI*double(euler_characteristic()) - E_total;
+  global_deficiency =  E_G + 2.0*M_PI*double(skeleton->euler_characteristic()) - E_total;
 
   error = 0.0;
   for(i=0; i<na; ++i) {
-    delta = events[avertices[i]].deficiency;
+    delta = skeleton->events[avertices[i]].deficiency;
     error += delta*delta;
   }
   error = std::sqrt(error)/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
   for(i=0; i<na; ++i) {
-    total_error += std::abs(events[avertices[i]].deficiency);
+    total_error += std::abs(skeleton->events[avertices[i]].deficiency);
   }
   std::cout << "The total error is " << total_error << std::endl;
 #endif
@@ -1067,7 +976,7 @@ void Spacetime::structural_deficiency()
 #ifdef DEBUG
   int nv_test = 0;
   for(i=0; i<na; ++i) {
-    if (std::abs(events[avertices[i]].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[avertices[i]].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     nv_test++;
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
@@ -1075,32 +984,15 @@ void Spacetime::structural_deficiency()
   //error += std::abs(global_deficiency)/double(na);
 }
 
-void Spacetime::compute_global_topology()
-{
-  // To calculate the global deficiency, we need to compute the Betti numbers and
-  // the fundamental group, for the total spacetime, operations that are serial...
-  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
-
-  compute_global_nexus(NX);
-
-  H->compute(NX);
-  if (high_memory) pi->compute(NX);
-  // Finally, the pseudomanifold and orientability properties
-  pseudomanifold = NX->pseudomanifold(&boundary);
-  if (pseudomanifold) orientable = NX->orientable();
-
-  delete NX;
-}
-
 void Spacetime::write(Spacetime& state) const
 {
   state.system_size = system_size;
   state.error = error;
   state.global_deficiency = global_deficiency;
-  state.events = events;
-  for(int i=0; i<=Spacetime::ND; ++i) {
-    state.simplices[i] = simplices[i];
-    state.index_table[i] = index_table[i];
+  state.skeleton->events = skeleton->events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    state.skeleton->simplices[i] = skeleton->simplices[i];
+    state.skeleton->index_table[i] = skeleton->index_table[i];
   }
 }
 
@@ -1109,10 +1001,10 @@ void Spacetime::read(const Spacetime& source)
   system_size = source.system_size;
   error = source.error;
   global_deficiency = source.global_deficiency;
-  events = source.events;
-  for(int i=0; i<=Spacetime::ND; ++i) {
-    simplices[i] = source.simplices[i];
-    index_table[i] = source.index_table[i];
+  skeleton->events = source.skeleton->events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    skeleton->simplices[i] = source.skeleton->simplices[i];
+    skeleton->index_table[i] = source.skeleton->index_table[i];
   }
 }
 
@@ -1125,8 +1017,8 @@ bool Spacetime::global_operations()
   SYNARMOSMA::hash_map::const_iterator qt;
   std::vector<int> fusion;
   double mu,sigma = 0.0,delta = 0.0;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
 #ifdef VERBOSE
   std::cout << "Main thread in global operations method..." << std::endl;
 #endif
@@ -1135,68 +1027,68 @@ bool Spacetime::global_operations()
   compute_delta();
 
   for(i=0; i<nv; ++i) {
-    if (events[i].incept == -1) events[i].incept = iterations;
+    if (skeleton->events[i].incept == -1) skeleton->events[i].incept = iterations;
   }
-  for(i=0; i<=Spacetime::ND; ++i) {
-    n = (signed) simplices[i].size();
+  for(i=0; i<=Complex::ND; ++i) {
+    n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
-      if (simplices[i][j].incept == -1) simplices[i][j].incept = iterations;
+      if (skeleton->simplices[i][j].incept == -1) skeleton->simplices[i][j].incept = iterations;
     }
   }
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    if (events[i].topology_modified) events[i].topological_dimension = vertex_dimension(i);
+    if (!skeleton->events[i].active) continue;
+    if (skeleton->events[i].topology_modified) skeleton->events[i].topological_dimension = skeleton->vertex_dimension(i);
   }
 
   // First perform the geometry and energy diffusion...
-  compute_parity();
+  skeleton->compute_parity();
   compute_lightcones();
   if (adjust_dimension()) {
     compute_volume();
     compute_curvature();
     compute_obliquity();
-    compute_global_topology();
+    skeleton->compute_global_topology();
     structural_deficiency();
   }
 
   energy_diffusion();
-  for(i=1; i<dimension(); ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      compute_simplex_energy(i,j);
+  for(i=1; i<skeleton->dimension(); ++i) {
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      skeleton->compute_simplex_energy(i,j);
     }
   }
   
 #ifdef VERBOSE
   // Analyze the uniformity of the energy distribution...
   double E_avg = 0.0;
-  double nc = double(cardinality(0));
+  double nc = double(skeleton->cardinality(0));
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    E_avg += events[i].get_energy();
+    if (!skeleton->events[i].active) continue;
+    E_avg += skeleton->events[i].get_energy();
   }
   E_avg = E_avg/nc;
   sigma = 0.0;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    sigma += (events[i].get_energy() - E_avg)*(events[i].get_energy() - E_avg);
+    if (!skeleton->events[i].active) continue;
+    sigma += (skeleton->events[i].get_energy() - E_avg)*(skeleton->events[i].get_energy() - E_avg);
   }
   sigma = std::sqrt(sigma/nc);
   std::cout << "Standard deviation of vertex energy is " << sigma << std::endl;
 
   // Analyze the distribution of vertex dimensionalities...
-  int histogram[1 + Spacetime::ND],histo2[1 + Spacetime::ND];
-  for(i=0; i<=Spacetime::ND; ++i) {
+  int histogram[1 + Complex::ND],histo2[1 + Complex::ND];
+  for(i=0; i<=Complex::ND; ++i) {
     histogram[i] = 0;
     histo2[i] = 0;
   }
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    histo2[vertex_dimension(i)] += 1;
-    if (events[i].zero_energy()) continue;
-    histogram[vertex_dimension(i)] += 1;
+    if (!skeleton->events[i].active) continue;
+    histo2[skeleton->vertex_dimension(i)] += 1;
+    if (skeleton->events[i].zero_energy()) continue;
+    histogram[skeleton->vertex_dimension(i)] += 1;
   }
-  for(i=0; i<=Spacetime::ND; ++i) {
+  for(i=0; i<=Complex::ND; ++i) {
     std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional vertices." << std::endl;
   }
 #endif
@@ -1206,9 +1098,9 @@ bool Spacetime::global_operations()
 #ifdef VERBOSE
   int ninitial = 0,ntouch = 0;
   for(i=0; i<nv; ++i) {
-    if (events[i].incept == 0) {
+    if (skeleton->events[i].incept == 0) {
       ninitial++;
-      if (std::abs(events[i].deficiency) > 0.0) ntouch++;
+      if (std::abs(skeleton->events[i].deficiency) > 0.0) ntouch++;
     }
   }
   std::cout << "Percentage of perturbed initial vertices " << 100.0*double(ntouch)/double(ninitial) << std::endl;
@@ -1224,14 +1116,14 @@ bool Spacetime::global_operations()
     // Eliminate excessively long edges...
     // First calculate the average edge length and its variance...
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active) continue;
-      delta += std::abs(simplices[1][i].volume);
+      if (!skeleton->simplices[1][i].active) continue;
+      delta += std::abs(skeleton->simplices[1][i].volume);
       k++;
     }
     mu = delta/double(k);
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active) continue;
-      delta = (std::abs(simplices[1][i].volume) - mu);
+      if (!skeleton->simplices[1][i].active) continue;
+      delta = (std::abs(skeleton->simplices[1][i].volume) - mu);
       sigma += delta*delta;
     }
     sigma = std::sqrt(sigma/double(k));
@@ -1251,11 +1143,11 @@ bool Spacetime::global_operations()
   compute_curvature();
   compute_obliquity();
 #ifdef DEBUG
-  assert(consistent());
+  assert(skeleton->consistent());
 #endif
 
   compute_lightcones();
-  compute_global_topology();
+  skeleton->compute_global_topology();
 
   structural_deficiency();
 
@@ -1270,7 +1162,7 @@ bool Spacetime::global_operations()
     output = true;
     if (!diskless) {
       filename = "data/incastrature_" + date_string + "_" + pid_string + ".dot";
-      write_incastrature(filename);
+      skeleton->write_incastrature(filename);
     }
   }
 
@@ -1291,28 +1183,29 @@ bool Spacetime::global_operations()
 
 void Spacetime::analyze_convergence()
 {
+  /*
   int i,j,m;
   SYNARMOSMA::hash_map::const_iterator qt;
   int tdelta = 0;
   double edelta = 0.0;
-  const int nv = (signed) events.size();
-  const int nva = (signed) anterior.events.size();
+  const int nv = (signed) skeleton->events.size();
+  const int nva = (signed) anterior.skeleton->events.size();
 
   for(i=0; i<nva; ++i) {
-    if (events[i].active != anterior.events[i].active) {
+    if (skeleton->events[i].active != anterior.skeleton->events[i].active) {
       tdelta++;
     }
   }
   tdelta += (nv - nva);
-  for(i=1; i<=Spacetime::ND; ++i) {
-    m = (signed) simplices[i].size();
+  for(i=1; i<=Complex::ND; ++i) {
+    m = (signed) skeleton->simplices[i].size();
     for(j=0; j<m; ++j) {
-      qt = anterior.index_table[i].find(simplices[i][j].vertices);
-      if (qt == anterior.index_table[i].end()) {
+      qt = anterior.skeleton->index_table[i].find(skeleton->simplices[i][j].vertices);
+      if (qt == anterior.skeleton->index_table[i].end()) {
         tdelta++;
         continue;
       }
-      if (simplices[i][j].active != anterior.simplices[i][qt->second].active) {
+      if (skeleton->simplices[i][j].active != anterior.skeleton->simplices[i][qt->second].active) {
         tdelta++;
       }
     }
@@ -1322,28 +1215,29 @@ void Spacetime::analyze_convergence()
   geometry_delta = geometry_change(geometry,&(anterior.geometry));
 
   for(i=0; i<nva; ++i) {
-    edelta += std::abs(events[i].get_energy() - anterior.events[i].get_energy());
+    edelta += std::abs(skeleton->events[i].get_energy() - anterior.skeleton->events[i].get_energy());
   }
   for(i=nva; i<nv; ++i) {
-    edelta += events[i].get_energy();
+    edelta += skeleton->events[i].get_energy();
   }
   energy_delta = edelta;
 
-  anterior.events = events;
+  anterior.skeleton->events = skeleton->events;
   anterior.geometry.load(geometry);
-  for(i=1; i<=Spacetime::ND; ++i) {
-    anterior.simplices[i].clear();
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      anterior.simplices[i].push_back(simplices[i][j]);
+  for(i=1; i<=Complex::ND; ++i) {
+    anterior.skeleton->simplices[i].clear();
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      anterior.skeleton->simplices[i].push_back(skeleton->simplices[i][j]);
     }
   }
 
-  for(i=1; i<=Spacetime::ND; ++i) {
-    anterior.index_table[i].clear();
-    for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-      anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
+  for(i=1; i<=Complex::ND; ++i) {
+    anterior.skeleton->index_table[i].clear();
+    for(j=0; j<(signed) anterior.skeleton->simplices[i].size(); ++j) {
+      anterior.skeleton->index_table[i][anterior.skeleton->simplices[i][j].vertices] = j;
     }
   }
+  */
 }
 
 void Spacetime::build_initial_state()
@@ -1406,7 +1300,7 @@ void Spacetime::build_initial_state()
       for(m=0; m<geometry->dimension(); ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
       }
-      events.push_back(vt);
+      skeleton->events.push_back(vt);
       vt.boundary = false;
       arrangement[l] = entourage;
     }
@@ -1430,8 +1324,8 @@ void Spacetime::build_initial_state()
         }
         if (in1 > i) {
           S.initialize(i,in1);
-          index_table[1][S.vertices] = (signed) simplices[1].size();
-          simplices[1].push_back(S);
+          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
+          skeleton->simplices[1].push_back(S);
           S.vertices.clear();
         }
       }
@@ -1444,8 +1338,8 @@ void Spacetime::build_initial_state()
         }
         if (in1 > i) {
           S.initialize(i,in1);
-          index_table[1][S.vertices] = (signed) simplices[1].size();
-          simplices[1].push_back(S);
+          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
+          skeleton->simplices[1].push_back(S);
           S.vertices.clear();
         }
       }
@@ -1460,8 +1354,8 @@ void Spacetime::build_initial_state()
           }
           if (in1 > i) {
             S.initialize(i,in1);
-            index_table[1][S.vertices] = (signed) simplices[1].size();
-            simplices[1].push_back(S);
+            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
+            skeleton->simplices[1].push_back(S);
             S.vertices.clear();
           }
           v[m] += 1;
@@ -1476,8 +1370,8 @@ void Spacetime::build_initial_state()
           }
           if (in1 > i) {
             S.initialize(i,in1);
-            index_table[1][S.vertices] = (signed) simplices[1].size();
-            simplices[1].push_back(S);
+            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
+            skeleton->simplices[1].push_back(S);
             S.vertices.clear();
           }
           v[m] -= 1;
@@ -1500,15 +1394,15 @@ void Spacetime::build_initial_state()
         N.insert(v[i]);
         j = RND->irandom(2,5);
         for(l=0; l<j; ++l) {
-          N.insert(events.size());
-          v.push_back(events.size());
+          N.insert(skeleton->events.size());
+          v.push_back(skeleton->events.size());
           geometry->vertex_addition(v[i]);
-          events.push_back(vt);
+          skeleton->events.push_back(vt);
         }
         d = N.size() - 1;
         S.initialize(N);
-        simplices[d].push_back(S);
-        index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
+        skeleton->simplices[d].push_back(S);
+        skeleton->index_table[d][S.vertices] = (signed) skeleton->simplices[d].size() - 1;
         N.clear();
       }
     }
@@ -1534,11 +1428,11 @@ void Spacetime::build_initial_state()
         for(m=0; m<geometry->dimension(); ++m) {
           j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
         }
-        events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
+        skeleton->events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
       }
       else {
         for(m=0; m<v.size(); ++m) {
-          events[v[m]].set_energy(5.0*RND->drandom());
+          skeleton->events[v[m]].set_energy(5.0*RND->drandom());
         }
       }
     }
@@ -1554,7 +1448,7 @@ void Spacetime::build_initial_state()
       geometry->vertex_addition(svalue);
     }
     vt.set_energy(5000.0*(0.5 + RND->drandom()/2.0));
-    events.push_back(vt);
+    skeleton->events.push_back(vt);
   }
   else if (initial_state == Initial_Topology::monoplex) {
     // The initial spacetime is a single simplex of dimension initial_dim
@@ -1571,7 +1465,7 @@ void Spacetime::build_initial_state()
       }
       geometry->vertex_addition(svalue);
     }
-    events.push_back(vt);
+    skeleton->events.push_back(vt);
     vx.insert(0);
 
     for(m=1; m<=initial_dim; ++m) {
@@ -1580,15 +1474,15 @@ void Spacetime::build_initial_state()
         geometry->vertex_addition(svalue);
         svalue[m-1] = 0.0;
       }
-      events.push_back(vt);
+      skeleton->events.push_back(vt);
       vx.insert(m);
     }
 
     if (relational) geometry->create(initial_dim,geometry_type);
 
     S.initialize(vx);
-    simplices[initial_dim].push_back(S);
-    index_table[initial_dim][S.vertices] = 0;
+    skeleton->simplices[initial_dim].push_back(S);
+    skeleton->index_table[initial_dim][S.vertices] = 0;
   }
   else if (initial_state == Initial_Topology::random) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
@@ -1607,15 +1501,15 @@ void Spacetime::build_initial_state()
     geometry_type = "RANDOM";
     // Add the vertices
     for(i=0; i<initial_size; ++i) {
-      events.push_back(vt);
+      skeleton->events.push_back(vt);
     }
     
     // Next distribute energy among the vertices, ensuring at least one vertex 
     // has non-zero energy
     do {
       i = RND->irandom(initial_size);
-      if (!events[i].zero_energy()) continue;
-      events[i].set_energy(10.0*RND->drandom());
+      if (!skeleton->events[i].zero_energy()) continue;
+      skeleton->events[i].set_energy(10.0*RND->drandom());
       k += 1;
       percent = double(k)/nv;
     } while(percent < 0.1);
@@ -1640,24 +1534,24 @@ void Spacetime::build_initial_state()
       for(j=1+i; j<initial_size; ++j) {
         if (RND->bernoulli_variate() == false) continue;
         S.initialize(i,j);
-        index_table[1][S.vertices] = (signed) simplices[1].size();
-        simplices[1].push_back(S);
-        events[i].neighbours.insert(j);
-        events[j].neighbours.insert(i);
+        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
+        skeleton->simplices[1].push_back(S);
+        skeleton->events[i].neighbours.insert(j);
+        skeleton->events[j].neighbours.insert(i);
         S.vertices.clear();
       }
     }
 
-    // Finally we have to compute all the n-simplices (n > 1) that are implied
+    // Finally we have to compute all the n-skeleton->simplices (n > 1) that are implied
     // by this random graph
     do {
       N = new std::set<int>[level];
-      ulimit = (signed) simplices[level-1].size();
+      ulimit = (signed) skeleton->simplices[level-1].size();
       for(j=0; j<ulimit; ++j) {
-        v = simplices[level-1][j].vertices;
+        v = skeleton->simplices[level-1][j].vertices;
         i = 0;
         for(it=v.begin(); it!=v.end(); ++it) {
-          N[i] = events[*it].neighbours;
+          N[i] = skeleton->events[*it].neighbours;
           i++;
         }
         for(it=N[0].begin(); it!=N[0].end(); ++it) {
@@ -1683,15 +1577,15 @@ void Spacetime::build_initial_state()
       delete[] N;
       if (svector.empty()) break;
       for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = index_table[level].find(vit->vertices);
-        if (qt == index_table[level].end()) {
-          simplices[level].push_back(*vit);
-          index_table[level][vit->vertices] = (signed) simplices[level].size() - 1;
+        qt = skeleton->index_table[level].find(vit->vertices);
+        if (qt == skeleton->index_table[level].end()) {
+          skeleton->simplices[level].push_back(*vit);
+          skeleton->index_table[level][vit->vertices] = (signed) skeleton->simplices[level].size() - 1;
         }
       }
       svector.clear();
 #ifdef VERBOSE
-      if (!diskless) std::cout << "Finished the implied " << level << "-simplices..." << std::endl;
+      if (!diskless) std::cout << "Finished the implied " << level << "-skeleton->simplices..." << std::endl;
 #endif
       level += 1;
     } while(true);
@@ -1702,17 +1596,10 @@ void Spacetime::build_initial_state()
 
 void Spacetime::initialize()
 {
-  int i;
   std::stringstream day,month,year,pid;
 #ifdef VERBOSE
   boost::timer::cpu_timer t1;
 #endif
-
-  // Allocate the memory for the simplices and index tables...
-  simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
-  anterior.simplices = new std::vector<Simplex>[1 + Spacetime::ND];
-  anterior.index_table = new SYNARMOSMA::hash_map[1 + Spacetime::ND];
 
   if (!diskless) {
     if (std::system("mkdir -p data") < 0) throw std::runtime_error("Unable to create data directory!");
@@ -1759,34 +1646,36 @@ void Spacetime::initialize()
   else {
     build_initial_state();
     geometry->compute_squared_distances();
-    compute_simplicial_dimension();
+    skeleton->compute_simplicial_dimension();
     adjust_dimension();
-    compute_parity();
+    skeleton->compute_parity();
     compute_lightcones();
     compute_volume();
     compute_curvature();
     compute_obliquity();
     compute_lightcones();
-    compute_global_topology();
+    skeleton->compute_global_topology();
     structural_deficiency();
   }
 #ifdef DEBUG
-  assert(energy_check());
+  assert(skeleton->energy_check());
 #endif
 
   if (instrument_convergence) {
-    anterior.events = events;
-    for(i=1; i<=Spacetime::ND; ++i) {
-      anterior.simplices[i] = simplices[i];
-      anterior.index_table[i] = index_table[i];
+    /*
+    anterior.skeleton->events = skeleton->events;
+    for(int i=1; i<=Complex::ND; ++i) {
+      anterior.skeleton->simplices[i] = skeleton->simplices[i];
+      anterior.skeleton->index_table[i] = skeleton->index_table[i];
     }
+    */
   }
   if (diskless) return;
 
 #ifdef VERBOSE
-  if (pseudomanifold) {
-    if (orientable) {
-      if (boundary) {
+  if (skeleton->pseudomanifold) {
+    if (skeleton->orientable) {
+      if (skeleton->boundary) {
         std::cout << "The spacetime complex is an orientable pseudomanifold with boundary." << std::endl;
       }
       else {
@@ -1794,7 +1683,7 @@ void Spacetime::initialize()
       }
     }
     else {
-      if (boundary) {
+      if (skeleton->boundary) {
         std::cout << "The spacetime complex is a non-orientable pseudomanifold with boundary." << std::endl;
       }
       else {
@@ -1805,7 +1694,7 @@ void Spacetime::initialize()
   else {
     std::cout << "The spacetime complex is not a pseudomanifold" << std::endl;
   }
-  write_topology();
+  skeleton->write_topology();
 #endif
 
   write_state();

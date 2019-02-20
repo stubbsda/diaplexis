@@ -1,8 +1,8 @@
-#include "spacetime.h"
+#include "complex.h"
 
 using namespace DIAPLEXIS;
 
-void Spacetime::compute_simplicial_dimension()
+void Complex::compute_simplicial_dimension()
 {
   int i;
   const int nv = (signed) events.size();
@@ -13,7 +13,7 @@ void Spacetime::compute_simplicial_dimension()
   }
 }
 
-void Spacetime::get_edge_topology(std::vector<std::set<int> >& vx) const
+void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 {
   int i;
   const int nv = cardinality(0);
@@ -25,7 +25,7 @@ void Spacetime::get_edge_topology(std::vector<std::set<int> >& vx) const
   }
 }
 
-void Spacetime::compute_degree_distribution(bool logarithmic) const
+void Complex::compute_degree_distribution(bool logarithmic) const
 {
   std::vector<double> histogram;
   SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
@@ -41,7 +41,7 @@ void Spacetime::compute_degree_distribution(bool logarithmic) const
   delete G;
 }
 
-void Spacetime::compute_connectivity_distribution() const
+void Complex::compute_connectivity_distribution() const
 {
   int i,j,m = 0,l = cardinality(0);
   std::vector<int> pcount;
@@ -100,7 +100,7 @@ void Spacetime::compute_connectivity_distribution() const
   }
 }
 
-bool Spacetime::active_element(int d,int n) const
+bool Complex::active_element(int d,int n) const
 {
   if (d == 0) {
     return events[n].active;
@@ -110,7 +110,7 @@ bool Spacetime::active_element(int d,int n) const
   }
 }
 
-std::pair<double,double> Spacetime::random_walk() const
+std::pair<double,double> Complex::random_walk() const
 {
   std::pair<double,double> output;
   SYNARMOSMA::Graph G;
@@ -124,7 +124,7 @@ std::pair<double,double> Spacetime::random_walk() const
   return output;
 }
 
-double Spacetime::dimensional_stress(int d,int n) const
+double Complex::dimensional_stress(int d,int n) const
 {
   // This method measures the standard deviation of the
   // simplicial dimensions of the vertices of a given
@@ -147,7 +147,7 @@ double Spacetime::dimensional_stress(int d,int n) const
   return sigma;
 }
 
-void Spacetime::recompute_parity(int n) 
+void Complex::recompute_parity(int n) 
 {
   // The edge n has had its orientation changed, so now we need to recompute 
   // the orientation of the higher-dimensional simplices that depend on it.
@@ -157,7 +157,7 @@ void Spacetime::recompute_parity(int n)
   recompute_parity(temp);
 }
 
-void Spacetime::recompute_parity(const std::set<int>& edges) 
+void Complex::recompute_parity(const std::set<int>& edges) 
 {
   // The 1-simplices in the argument have had their orientation changed, so now 
   // we need to recompute the orientation of the higher-dimensional simplices that 
@@ -184,7 +184,7 @@ void Spacetime::recompute_parity(const std::set<int>& edges)
   } while(true);
 }
 
-void Spacetime::compute_parity()
+void Complex::compute_parity()
 {
   int i,j;
   const int d = dimension();
@@ -197,7 +197,7 @@ void Spacetime::compute_parity()
   }
 }
 
-void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) const
+void Complex::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) const
 {
   int i,j,s = 0;
   const int D = dimension();
@@ -225,7 +225,7 @@ void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) con
   fstar.push_back(f[D]);
 }
 
-void Spacetime::compute_hvector(std::vector<int>& h) const
+void Complex::compute_hvector(std::vector<int>& h) const
 {
   int i,j,sum;
   std::vector<int> f,fstar;
@@ -241,7 +241,7 @@ void Spacetime::compute_hvector(std::vector<int>& h) const
   }
 }
 
-void Spacetime::vertex_degree_statistics(double* output) const
+void Complex::vertex_degree_statistics(double* output) const
 {
   SYNARMOSMA::Graph G;  
   compute_graph(&G);
@@ -250,7 +250,7 @@ void Spacetime::vertex_degree_statistics(double* output) const
   output[2] = G.average_degree();
 }
 
-int Spacetime::cyclicity() const
+int Complex::cyclicity() const
 {
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
@@ -261,7 +261,7 @@ int Spacetime::cyclicity() const
   return (G.size() - G.bridge_count());
 }
 
-void Spacetime::set_logical_atoms(int n)
+void Complex::set_logical_atoms(int n)
 { 
 #ifdef DEBUG
   assert(n > 0);
@@ -302,7 +302,7 @@ void Spacetime::set_logical_atoms(int n)
   }
 }
 
-double Spacetime::logical_energy(int v) const
+double Complex::logical_energy(int v) const
 {
   if (events[v].neighbours.empty()) return 0.0;
   double sum = 0.0;
@@ -317,7 +317,7 @@ double Spacetime::logical_energy(int v) const
   return sum;
 }
 
-bool Spacetime::logical_conformity(int v) const
+bool Complex::logical_conformity(int v) const
 {
   std::set<int>::const_iterator it;
   SYNARMOSMA::Proposition Q = events[v].theorem;
@@ -328,7 +328,7 @@ bool Spacetime::logical_conformity(int v) const
   return Q.satisfiable();
 }
 
-void Spacetime::compute_simplex_energy(int d,int n)
+void Complex::compute_simplex_energy(int d,int n)
 {
   int i,vx[1+d];
   double alpha = 0.0;
@@ -341,7 +341,7 @@ void Spacetime::compute_simplex_energy(int d,int n)
   simplices[d][n].energy = alpha/double(1+d);
 }
 
-void Spacetime::compute_simplex_parity(int d,int n)
+void Complex::compute_simplex_parity(int d,int n)
 {
   if (d < 2) return;
   int i,j,vx[1+d];
@@ -362,7 +362,7 @@ void Spacetime::compute_simplex_parity(int d,int n)
   }
 }
 
-double Spacetime::dimensional_stress(int v) const
+double Complex::dimensional_stress(int v) const
 {
   // This method should sum the dimensional stress associated with
   // each d-simplex (d > 0) that contains the vertex v and exists on
@@ -381,12 +381,12 @@ double Spacetime::dimensional_stress(int v) const
   return sum;
 }
 
-void Spacetime::simplex_membership(int v,std::vector<int>& output) const
+void Complex::simplex_membership(int v,std::vector<int>& output) const
 {
   int i,j,m,k = 0;
 
   output.clear();
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
       if (!simplices[i][j].active) continue;
@@ -397,13 +397,13 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
   }
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G) const
 {
   int offset[events.size()];
   compute_graph(G,offset);
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
 {
   int i,vx[2];
   const int nv = (signed) events.size();
@@ -423,7 +423,7 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
   }
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
 {
   int i,v,w,hop = 1;
   const int nv = (signed) events.size();
@@ -464,48 +464,7 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
   } while(true);
 }
 
-void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) const
-{
-  int i,j,v;
-  std::set<int> S;
-  std::set<int>::const_iterator it;
-  std::vector<int> offset,current,next;
-  std::vector<int>::const_iterator v_it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
-
-  G->clear();
-  current.push_back(base);
-  for(i=0; i<nv; ++i) {
-    offset.push_back(-1);
-  }
-  offset[base] = G->add_vertex();
-
-  do {
-    for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
-      v = *v_it;
-      for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-        j = *it;
-        S.clear();
-        S.insert(v);
-        S.insert(j);
-        qt = index_table[1].find(S);
-        if (!simplices[1][qt->second].active) continue;
-        if (!simplices[1][qt->second].timelike()) continue;
-        if (offset[j] == -1) {
-          offset[j] = G->add_vertex();
-          next.push_back(j);
-        }
-        G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
-      }
-    }
-    if (next.empty()) break;
-    current = next;
-    next.clear();
-  } while(true);
-}
-
-void Spacetime::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
+void Complex::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
 {
   int i,j;
   std::vector<int> offset;
@@ -536,7 +495,7 @@ void Spacetime::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
   NX->regularization();
 }
 
-void Spacetime::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
+void Complex::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
 {
   int i,j;
   std::vector<int> offset;
@@ -567,116 +526,7 @@ void Spacetime::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
   NX->regularization();
 }
 
-void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
-{
-  // This method assumes that the compute_lightcones method has already been called to fill 
-  // the anterior and posterior properties of the events!
-  int i,j;
-  std::set<int> current,next;
-  std::set<int>::const_iterator it,jt;
-
-  // First the past cone...
-  current.insert(v);
-  past_cone.clear();
-  do {
-    for(it=current.begin(); it!=current.end(); ++it) {
-      i = *it;
-      for(jt=events[i].anterior.begin(); jt!=events[i].anterior.end(); ++jt) {
-        j = *jt;
-        if (past_cone.count(j) > 0) continue;
-        next.insert(j);
-      }
-    }
-    if (next.empty()) break;
-    for(it=next.begin(); it!=next.end(); ++it) {
-      past_cone.insert(*it);
-    }
-    current = next;
-    next.clear();
-  } while(true);
-
-  // Now the future cone...
-  current.clear();
-  current.insert(v);
-  future_cone.clear();
-  do {
-    for(it=current.begin(); it!=current.end(); ++it) {
-      i = *it;
-      for(jt=events[i].posterior.begin(); jt!=events[i].posterior.end(); ++jt) {
-        j = *jt;
-        if (future_cone.count(j) > 0) continue;
-        next.insert(j);
-      }
-    }
-    if (next.empty()) break;
-    for(it=next.begin(); it!=next.end(); ++it) {
-      future_cone.insert(*it);
-    }
-    current = next;
-    next.clear();
-  } while(true);
-}
-
-void Spacetime::compute_lightcones()
-{
-  int i,vx[2];
-  const int n = (signed) events.size();
-  const int m = (signed) simplices[1].size();
-
-  for(i=0; i<n; ++i) {
-    events[i].anterior.clear();
-    events[i].posterior.clear();
-  }
-  for(i=0; i<m; ++i) {
-    if (!simplices[1][i].active) continue;
-    if (!simplices[1][i].timelike()) continue;
-    simplices[1][i].get_vertices(vx);
-    if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
-      events[vx[0]].posterior.insert(vx[1]);
-      events[vx[1]].anterior.insert(vx[0]);
-    }
-    else {
-      events[vx[1]].posterior.insert(vx[0]);
-      events[vx[0]].anterior.insert(vx[1]);
-    }
-  }
-}
-
-double Spacetime::compute_temporal_nonlinearity() const
-{
-  int i,nsink = 0,nsource = 0,causal_loop = 0;
-  double output,nlinearity = 0.0;
-  std::set<int> past,future;
-  SYNARMOSMA::Directed_Graph G;
-  const int nv = (signed) events.size();
-  const double na = double(cardinality(0));
-
-#ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
-#endif
-  for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    // Now calculate the future and past lightcones for this vertex on this sheet...
-    compute_total_lightcone(i,past,future);
-    if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
-    // If it's a sink, that means all of its edges have orientation equal to -1;
-    // for a source, the edges must all have an orientation equal to +1.
-    if (past.empty() && !future.empty()) {
-      compute_causal_graph(&G,i);
-      nlinearity += G.cyclicity();
-      nsource++;
-    }
-    else if (!past.empty() && future.empty()) {
-      compute_causal_graph(&G,i);
-      nlinearity += G.cyclicity();
-      nsink++;
-    }
-  }
-  output = nlinearity/double(nsink + nsource) + double(causal_loop)/na;
-  return output;
-}
-
-int Spacetime::chromatic_number() const
+int Complex::chromatic_number() const
 {
   // Computes the chromatic number chi of the graph associated with the
   // colour "p"; we already know that 1 <= chi <= max_degree+1.  
@@ -689,13 +539,13 @@ int Spacetime::chromatic_number() const
   return G.chromatic_number();
 }
 
-int Spacetime::entourage(int base) const
+int Complex::entourage(int base) const
 {
   // Calculates a measure of this event's integration/implication in its
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
 
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     n = 0;
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
@@ -707,7 +557,7 @@ int Spacetime::entourage(int base) const
   return output;
 }
 
-int Spacetime::max_degree() const
+int Complex::max_degree() const
 {
   int i,n,output = 0;
   for(i=0; i<(signed) events.size(); ++i) {
@@ -718,7 +568,7 @@ int Spacetime::max_degree() const
   return output;
 }
 
-double Spacetime::entwinement() const
+double Complex::entwinement() const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
@@ -727,14 +577,14 @@ double Spacetime::entwinement() const
   return G.entwinement();
 }
 
-double Spacetime::cyclic_resistance() const
+double Complex::cyclic_resistance() const
 {
   SYNARMOSMA::Graph G;
   compute_graph(&G);
   return G.cyclic_resistance();
 }
 
-int Spacetime::combinatorial_distance(int v1,int v2) const
+int Complex::combinatorial_distance(int v1,int v2) const
 {
   // A method to calculate the topological distance
   // between the two vertices v1 and v2
@@ -752,7 +602,7 @@ int Spacetime::combinatorial_distance(int v1,int v2) const
   return d;
 }
 
-int Spacetime::cardinality_safe(int d) const
+int Complex::cardinality_safe(int d) const
 {
   int i,n = 0;
   if (d == 0) {
@@ -772,7 +622,7 @@ int Spacetime::cardinality_safe(int d) const
   return n;
 }
 
-int Spacetime::circuit_rank() const
+int Complex::circuit_rank() const
 {
   int output = cardinality(1) - cardinality(0);
   if (connected()) {
@@ -783,7 +633,7 @@ int Spacetime::circuit_rank() const
   return n + output;
 }
 
-int Spacetime::euler_characteristic() const
+int Complex::euler_characteristic() const
 {
   int i,pf = 1,chi = 0;
   const int D = dimension();
@@ -794,17 +644,17 @@ int Spacetime::euler_characteristic() const
   return chi;
 }
 
-bool Spacetime::active_simplex(int d,int i) const
+bool Complex::active_simplex(int d,int i) const
 {
   bool output = (simplices[d][i].active) ? true : false;
   return output;
 }
 
-int Spacetime::dimension() const
+int Complex::dimension() const
 {
   int i,j;
 
-  for(i=Spacetime::ND; i>0; i--) {
+  for(i=Complex::ND; i>0; i--) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (simplices[i][j].active) return i;
     }
@@ -815,7 +665,7 @@ int Spacetime::dimension() const
   return -1;
 }
 
-int Spacetime::total_dimension() const
+int Complex::total_dimension() const
 {
   int i,sum = 0;
 
@@ -826,7 +676,7 @@ int Spacetime::total_dimension() const
   return sum;
 }
 
-int Spacetime::structural_index() const
+int Complex::structural_index() const
 {
   int i,j,l,n,sum = 0,d = dimension();
 
@@ -847,13 +697,13 @@ int Spacetime::structural_index() const
   return sum;
 }
 
-int Spacetime::weighted_entourage(int n1,int n2) const
+int Complex::weighted_entourage(int n1,int n2) const
 {
   int i,j,nfound,output = 0;
   bool f1,f2;
   std::set<int>::const_iterator it;
 
-  for(i=2; i<=Spacetime::ND; ++i) {
+  for(i=2; i<=Complex::ND; ++i) {
     nfound = 0;
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n1);
@@ -869,7 +719,7 @@ int Spacetime::weighted_entourage(int n1,int n2) const
   return output;
 }
 
-int Spacetime::vertex_valence(int v) const
+int Complex::vertex_valence(int v) const
 {
   int nd = 0;
   std::set<int>::const_iterator it;
@@ -879,14 +729,14 @@ int Spacetime::vertex_valence(int v) const
   return nd;
 }
 
-int Spacetime::vertex_dimension(int v) const
+int Complex::vertex_dimension(int v) const
 {
   int i,j,n;
   if (v < 0 || v >= (signed) events.size()) return -1;
 
   if (!events[v].active) return -1;
 
-  for(i=Spacetime::ND; i>=1; i--) {
+  for(i=Complex::ND; i>=1; i--) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;
@@ -896,7 +746,7 @@ int Spacetime::vertex_dimension(int v) const
   return 0;
 }
 
-double Spacetime::dimensional_frontier(int D) const
+double Complex::dimensional_frontier(int D) const
 {
   int i,d[2],s = 0;
   for(i=0; i<(signed) simplices[1].size(); ++i) {
@@ -909,7 +759,7 @@ double Spacetime::dimensional_frontier(int D) const
   return double(s)/double(simplices[1].size());
 }
 
-double Spacetime::dimensional_uniformity() const
+double Complex::dimensional_uniformity() const
 {
   int i,n,nv,sdimension = dimension(),sum = 0;
   const int D = geometry->dimension();
@@ -926,7 +776,7 @@ double Spacetime::dimensional_uniformity() const
   return double(sum)/double(nv);
 }
 
-bool Spacetime::consistent() const
+bool Complex::consistent() const
 {
   int i,j,k,l,n,m,vx[2];
   bool found;
@@ -941,7 +791,7 @@ bool Spacetime::consistent() const
   assert(index_table[0].empty());
 #endif
 
-  for(i=Spacetime::ND; i>=2; i--) {
+  for(i=Complex::ND; i>=2; i--) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;
@@ -1051,7 +901,7 @@ bool Spacetime::consistent() const
     }
   }
   // Make sure that each n-simplex only exists once...
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       S = simplices[i][j].vertices;
@@ -1067,7 +917,7 @@ bool Spacetime::consistent() const
   return true;
 }
 
-bool Spacetime::connected() const
+bool Complex::connected() const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.
@@ -1078,7 +928,7 @@ bool Spacetime::connected() const
   return G.connected();
 }
 
-int Spacetime::component_analysis(std::vector<int>& component) const
+int Complex::component_analysis(std::vector<int>& component) const
 {
   int i,n,ct = 0;
   std::vector<int> cvalue;

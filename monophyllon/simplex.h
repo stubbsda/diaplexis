@@ -35,6 +35,7 @@ namespace DIAPLEXIS {
     Simplex& operator =(const Simplex&);
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
+    friend class Complex;
     friend class Spacetime;
   };
 
