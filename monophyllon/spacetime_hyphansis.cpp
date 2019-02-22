@@ -61,7 +61,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     S.insert(vertex_addition(xc));
     xc.clear();
   }
-  simplex_addition(S);
+  skeleton->simplex_addition(S);
 
   // Now add a set of lower-dimensional simplices to this knot and also tie it 
   // in to the existing spacetime complex...
@@ -131,7 +131,7 @@ bool Spacetime::interplication(int centre,double size,int D)
 #ifdef VERBOSE
       std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
 #endif
-      simplex_addition(S);
+      skeleton->simplex_addition(S);
       S.clear();
       nc++;
     } while(nc < m);
@@ -180,7 +180,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     else {
       S.insert(ambient[1].first);
     }
-    if (simplex_addition(S)) d++;
+    if (skeleton->simplex_addition(S)) d++;
     S.clear();
   } while(d < nbridge);
 
@@ -252,7 +252,7 @@ bool Spacetime::stellar_deletion(int base)
   }
   if (nset.size() != 3) return false;    
   vertex_deletion(base);
-  simplex_addition(nset);
+  skeleton->simplex_addition(nset);
   regularization(true);
   return true;
 }
@@ -281,17 +281,17 @@ bool Spacetime::stellar_addition(int base)
   S.clear();
   S.insert(sx[0]); S.insert(sx[1]);
   qt = index_table[1].find(S);
-  simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[2]);
   qt = index_table[1].find(S);
-  simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[1]); S.insert(sx[2]);
   qt = index_table[1].find(S);
-  simplex_deletion(1,qt->second);    
+  skeleton->simplex_deletion(1,qt->second);    
   // Now add the new vertex and the three edges...
   for(l=0; l<geometry->dimension(); ++l) {
     xc.push_back(0.0);
@@ -310,7 +310,7 @@ bool Spacetime::stellar_addition(int base)
     S.clear();
     S.insert(m);
     S.insert(sx[i]);
-    simplex_addition(S);
+    skeleton->simplex_addition(S);
   }
   regularization(true);
   return true;    
@@ -793,89 +793,6 @@ bool Spacetime::correction(int base)
   return true;
 }
 
-void Spacetime::simplicial_implication(int base) const
-{
-  // This method will calculate all of the n-simplices (n > 1) that are "implied" by
-  // the base vertex and its neighbours (via their mutual edges) and list them, as well
-  // as checking to see if they already exist in the spacetime complex.
-  // One wrinkle with this method is that it can only be used when the "entourage" and
-  // "neighbours" properties of the events are well-defined... so after the calls to
-  // "regularize".
-  int i,j,k,n,l,d,M,nsimp,nfound,w1,w2;
-  std::vector<int> C,vx;
-  std::vector<std::set<int> >* implied_simplex;
-  std::vector<std::set<int> >::const_iterator it;
-  bool failure;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  std::set<int> S,sv;
-
-  d = (signed) events[base].entourage.size();
-  M = 1 + d;
-  implied_simplex = new std::vector<std::set<int> >[M+1];
-
-  S = events[base].neighbours;
-  S.insert(base);
-  for(i=M; i>2; --i) {
-    // See how many i-dimensional simplices exist among the relations between v and its
-    // neighbours, so there should be (M choose i) such possible i-simplices
-    n = SYNARMOSMA::combinations(S,i,C);
-    for(l=0; l<n; ++l) {
-      // Grab the i elements from S and put them into the vector vx...
-      for(j=0; j<i; ++j) {
-        vx.push_back(C[l*i+j]);
-      }
-      failure = false;
-      for(j=0; j<i; ++j) {
-        for(k=1+j; k<i; ++k) {
-          w1 = vx[j];
-          w2 = vx[k];
-          sv.clear();
-          sv.insert(w1);
-          sv.insert(w2);
-          qt = index_table[1].find(sv);
-          if (qt == index_table[1].end()) {
-            failure = true;
-            break;
-          }
-          else {
-            if (!simplices[1][qt->second].active) {
-              failure = true;
-              break;
-            }
-          }
-        }
-        if (failure) break;
-      }
-      if (!failure) {
-        sv.clear();
-        for(j=0; j<i; ++j) {
-          sv.insert(vx[j]);
-        }
-        implied_simplex[i].push_back(sv);
-      }
-      vx.clear();
-    }
-  }
-  // So how many of these implied simplices actually exist? And having found one or more which officially don't
-  // exist, what to do with them? If deleting a single edge can eliminate an entire tower of dependent n-simplices
-  // (n > 1) then shouldn't recreating this same edge cause the tower of n-simplices to be restored?
-  for(i=M; i>2; --i) {
-    nsimp = 0;
-    nfound = 0;
-    for(it=implied_simplex[i].begin(); it!=implied_simplex[i].end(); ++it) {
-      qt = index_table[i-1].find(*it);
-      if (qt != index_table[i-1].end()) {
-        if (simplices[i-1][qt->second].active) nfound++;
-      }
-      nsimp++;
-    }
-#ifdef VERBOSE
-    std::cout << "There are " << nsimp << " implied " << i-1 << "-simplices of which " << nfound << " already exist in the spacetime complex." << std::endl;
-#endif
-  }
-  delete[] implied_simplex;
-}
-
 bool Spacetime::reduction(int base)
 {
   const int d = vertex_dimension(base);
@@ -903,7 +820,7 @@ bool Spacetime::reduction(int base)
 #endif
   s1.insert(base); s1.insert(vx[n]);
   qt = index_table[1].find(s1);
-  simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second);
   return true;
 }
 
@@ -926,7 +843,7 @@ bool Spacetime::contraction(int base,double l)
 #ifdef VERBOSE
   std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in localization" << std::endl;
 #endif
-  simplex_deletion(1,i);
+  skeleton->simplex_deletion(1,i);
   return true;
 }
 
@@ -972,7 +889,7 @@ bool Spacetime::compensation_m(int base)
 #ifdef VERBOSE
   std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
 #endif
-  simplex_deletion(1,j);
+  skeleton->simplex_deletion(1,j);
   return true;
 }
 
@@ -1069,7 +986,7 @@ bool Spacetime::compensation_g(int base)
 #ifdef VERBOSE
     std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
 #endif
-    simplex_deletion(1,i);
+    skeleton->simplex_deletion(1,i);
   }
   return true;
 }
@@ -1105,7 +1022,7 @@ bool Spacetime::unravel(int base)
   }
   if (in_max > -1) {
     // Eliminate the edge in_max...
-    simplex_deletion(1,in_max);
+    skeleton->simplex_deletion(1,in_max);
     return true;
   }
   if (base >= 0) {
@@ -1142,7 +1059,7 @@ bool Spacetime::unravel(int base)
   }
   if (in_max == -1) return false;
   // Eliminate the edge in_max...
-  simplex_deletion(1,in_max);
+  skeleton->simplex_deletion(1,in_max);
   return true;
 }
 
@@ -1227,79 +1144,6 @@ void Spacetime::compute_topological_dependency(const std::set<int>& vx)
 #endif
 }
 
-void Spacetime::compute_entourages()
-{
-  int i,j,k,ns,vx[2];
-  std::set<int> s,v;
-  std::set<int>::const_iterator it;
-  const int ulimit = dimension();
-  SYNARMOSMA::hash_map::const_iterator qt;
-
-  // What about removing items from the entourage of a d-simplex, when this item has
-  // changed its ubiquity?
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      if (!simplices[i][j].active) continue;
-      for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
-        if (!simplices[i+1][*it].active) continue;
-        s.insert(*it);
-      }
-      simplices[i][j].entourage = s;
-      s.clear();
-    }
-  }
-  for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active) continue;
-    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
-      if (!simplices[1][*it].active) continue;
-      s.insert(*it);
-    }
-    events[i].entourage = s;
-    s.clear();
-  }
-
-  for(i=ulimit; i>=2; i--) {
-    ns = (signed) simplices[i].size();
-    for(j=0; j<ns; ++j) {
-      if (!simplices[i][j].active) continue;
-      for(k=0; k<1+i; ++k) {
-        v = simplices[i][j].faces[k];
-        qt = index_table[i-1].find(v);
-        if (qt == index_table[i-1].end()) throw std::runtime_error("Missing entourage element!");
-        simplices[i-1][qt->second].active = true;
-        simplices[i-1][qt->second].entourage.insert(j);
-      }
-    }
-  }
-  // Now the edges...
-  ns = (signed) simplices[1].size();
-  for(i=0; i<ns; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
-
-    events[vx[0]].active = true;
-    events[vx[0]].entourage.insert(i);
-
-    events[vx[1]].active = true;
-    events[vx[1]].entourage.insert(i);
-  }
-}
-
-void Spacetime::compute_neighbours()
-{
-  int i,vx[2];
-
-  for(i=0; i<(signed) events.size(); ++i) {
-    events[i].neighbours.clear();
-  }
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
-    events[vx[0]].neighbours.insert(vx[1]);
-    events[vx[1]].neighbours.insert(vx[0]);
-  }
-}
-
 int Spacetime::compression(double threshold,std::set<int>& vmodified)
 {
   int i,n,nc,vx[2];
@@ -1320,7 +1164,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   nc = (signed) candidates.size();
   for(i=0; i<nc; ++i) {
     n = candidates[i];
-    simplex_deletion(1,n);
+    skeleton->simplex_deletion(1,n);
     // Remove the references in events[v/w].neighbours and
     // events[v/w].entourage
     simplices[1][n].get_vertices(vx);
@@ -1427,39 +1271,6 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   return nc;
 }
 
-void Spacetime::inversion()
-{
-  int i,j;
-  std::set<int> hold;
-  std::set<int>::const_iterator it;
-  Simplex S;
-  const int nv = (signed) events.size();
-
-  for(i=0; i<nv; ++i) {
-    // hold = V / events[i].neighbours
-    for(j=0; j<nv; ++j) {
-      if (!events[j].active) continue;
-      if (j == i) continue;
-      it = std::find(events[i].neighbours.begin(),events[i].neighbours.end(),j);
-      if (it == events[i].neighbours.end()) hold.insert(j);
-    }
-    events[i].neighbours = hold;
-    hold.clear();
-  }
-  simplices[1].clear();
-  index_table[1].clear();
-  for(i=0; i<nv; ++i) {
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-      j = *it;
-      if (i < j) {
-        S.initialize(i,j);
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
-      }
-    }
-  }
-}
-
 bool Spacetime::foliation_m(int base)
 {
   int i,p,n1,n2,vx[2];
@@ -1530,7 +1341,7 @@ bool Spacetime::foliation_x(int base)
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) return false;
   if (!simplices[1][qt->second].active) return false;
-  simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second);
   return true;
 }
 
@@ -1563,7 +1374,7 @@ bool Spacetime::amputation(int base,double tolerance)
     p = (signed) simplices[i].size();
     for(j=0; j<p; ++j) {
       if (!simplices[i][j].active) continue;
-      if (simplices[i][j].contains(n)) simplex_deletion(i,j);
+      if (simplices[i][j].contains(n)) skeleton->simplex_deletion(i,j);
     }
   }
   if (!events[n].active) {
@@ -1732,141 +1543,13 @@ bool Spacetime::fission(int base,double density)
   }
 }
 
-void Spacetime::simplex_deletion(int d,int n)
-{
-  std::set<int>::const_iterator it;
-  std::set<int> parents;
-  int i,dp1 = d + 1;
-  
-  simplices[d][n].active = false;
-  parents = simplices[d][n].entourage;
-  for(it=parents.begin(); it!=parents.end(); ++it) {
-    i = *it;
-    simplex_deletion(dp1,i);
-  }
-}
-
-bool Spacetime::simplex_addition(const std::set<int>& S)
-{
-  int i,j;
-  std::set<int> fc;
-  std::set<int>::const_iterator it;
-  std::vector<int> vec,vx;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int d = (signed) S.size() - 1;
-  Simplex s(S);
-
-  qt = index_table[d].find(S);
-  if (qt == index_table[d].end()) {
-    simplices[d].push_back(s);
-    index_table[d][S] = simplices[d].size() - 1;
-  }
-  else {
-    if (simplices[d][qt->second].active) {
-      return false;
-    }
-    else {
-      simplices[d][qt->second].active = true;
-    }
-  }
-
-#ifdef VERBOSE
-  std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
-#endif
-
-  for(it=S.begin(); it!=S.end(); ++it) {
-    vx_delta.insert(*it);
-  }
-
-  if (d == 1) {
-    int vn[2];
-    s.get_vertices(vn);
-    events[vn[0]].neighbours.insert(vn[1]);
-    events[vn[1]].neighbours.insert(vn[0]);
-    return true;
-  }
-  for(it=S.begin(); it!=S.end(); ++it) {
-    vx.push_back(*it);
-  }
-
-  for(i=d-1; i>=1; i--) {
-    for(j=0; j<=i; ++j) {
-      vec.push_back(j);
-      fc.insert(vx[j]);
-    }
-    // Add this simplex...
-    qt = index_table[i].find(fc);
-    if (qt == index_table[i].end()) {
-      simplices[i].push_back(Simplex(fc));
-      index_table[i][fc] = simplices[i].size() - 1;
-    }
-    else {
-      simplices[i][qt->second].active = true;
-    }
-    fc.clear();
-    while(SYNARMOSMA::next_combination(vec,1+d)) {
-      for(j=0; j<=i; ++j) {
-        fc.insert(vx[vec[j]]);
-      }
-      qt = index_table[i].find(fc);
-      if (qt == index_table[i].end()) {
-        simplices[i].push_back(Simplex(fc));
-        index_table[i][fc] = simplices[i].size() - 1;
-      }
-      else {
-        simplices[i][qt->second].active = true;
-      }
-      fc.clear();
-    }
-    vec.clear();
-  }
-  simplicial_implication();
-  return true;
-}
-
-void Spacetime::simplicial_implication()
-{
-  int i,j,k,n,m,vx[2];
-  const int ulimit = dimension();
-  Simplex S;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  std::set<int>::const_iterator itz;
-
-  for(i=ulimit; i>=2; i--) {
-    n = (signed) simplices[i].size();
-    m = (signed) simplices[i-1].size();
-    for(j=0; j<n; ++j) {
-      if (!simplices[i][j].active) continue;
-      for(k=0; k<1+i; ++k) {
-        qt = index_table[i-1].find(simplices[i][j].faces[k]);
-        if (qt == index_table[i-1].end()) {
-          S.initialize(simplices[i][j].faces[k]);
-          simplices[i-1].push_back(S);
-          index_table[i-1][S.vertices] = m;
-          m++;
-        }
-        else {
-          simplices[i-1][qt->second].active = true;
-        }
-      }
-    }
-  }
-  n = (signed) simplices[1].size();
-  for(i=0; i<n; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
-    events[vx[0]].active = true;
-    events[vx[1]].active = true;
-  }
-}
-
 void Spacetime::regularization(bool minimal)
 {
-  if (!minimal) simplicial_implication();
+  if (!minimal) skeleton->simplicial_implication();
 
-  compute_neighbours();
-  if (connected()) {
-    compute_entourages();
+  skeleton->compute_neighbours();
+  if (skeleton->connected()) {
+    skeleton->compute_entourages();
     return;
   }
 
@@ -1962,11 +1645,11 @@ void Spacetime::regularization(bool minimal)
     events[v1].active = true;
     events[v2].active = true;
   }
-  compute_neighbours();
+  skeleton->compute_neighbours();
 #ifdef DEBUG
-  assert(connected());
+  assert(skeleton->connected());
 #endif
-  compute_entourages();
+  skeleton->compute_entourages();
   delete[] cvertex;
 }
 
@@ -2216,7 +1899,7 @@ bool Spacetime::expansion(int base,double creativity)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with " << novum << " new vertices." << std::endl;
 #endif
-  simplex_addition(vx);
+  skeleton->simplex_addition(vx);
   return true;
 }
 
@@ -2243,7 +1926,7 @@ bool Spacetime::expansion(int base)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with base " << base << std::endl;
 #endif
-  simplex_addition(vx);
+  skeleton->simplex_addition(vx);
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vtx);
@@ -2389,8 +2072,8 @@ void Spacetime::vertex_fusion(int n1,int n2)
   }
 
   // Then recalculate the entourages...
-  compute_entourages();
-  compute_neighbours();
+  skeleton->compute_entourages();
+  skeleton->compute_neighbours();
 }
 
 void Spacetime::superposition_fusion(std::set<int>& vmodified)
@@ -2453,8 +2136,8 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   }
 
   // Then recalculate the entourages...
-  compute_entourages();
-  compute_neighbours();
+  skeleton->compute_entourages();
+  skeleton->compute_neighbours();
 }
 
 void Spacetime::superposition_fission(std::set<int>& vmodified)
@@ -2624,7 +2307,7 @@ bool Spacetime::perforation(int base,int d)
   std::cout << "Perforating a " << d << "-simplex." << std::endl;
 #endif
   n = RND->irandom(candidates);
-  simplex_deletion(d,n);
+  skeleton->simplex_deletion(d,n);
   return true;
 }
 
@@ -2644,7 +2327,7 @@ bool Spacetime::deflation(int base)
 #ifdef VERBOSE
   std::cout << "Deflating a " << d << "-simplex with base " << base << " to a " << dw << "-simplex." << std::endl;
 #endif
-  simplex_deletion(dw,n);
+  skeleton->simplex_deletion(dw,n);
   return true;
 }
 
@@ -2656,7 +2339,7 @@ bool Spacetime::vertex_deletion(int n)
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vx);
-    if (vx[0] == n || vx[1] == n) simplex_deletion(1,i);
+    if (vx[0] == n || vx[1] == n) skeleton->simplex_deletion(1,i);
   }
   return true;  
 }
@@ -2822,7 +2505,7 @@ bool Spacetime::inflation(int base,double creativity)
     std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex" << std::endl;
 #endif
   }
-  simplex_addition(vx);
+  skeleton->simplex_addition(vx);
   return true;
 }
 

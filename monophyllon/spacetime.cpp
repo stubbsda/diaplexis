@@ -671,6 +671,50 @@ void Spacetime::clean() const
   }
 }
 
+double Spacetime::set_logical_atoms(int n)
+{ 
+#ifdef DEBUG
+  assert(n > 0);
+#endif
+  int i,j,natoms;
+  double sigma,output = 0.0;
+  std::set<int> cset;
+  const int nvertex = (signed) events.size();
+
+  for(int i=0; i<nvertex; ++i) {
+    events[i].theorem.clear();
+  }
+ 
+  // Set the logical atoms in a purely random manner, the argument 
+  // "n" represents the total number of propositional atoms in the 
+  // entire spacetime
+  for(i=0; i<nvertex; ++i) {
+    if (!events[i].active) continue;
+    cset.clear();
+    // The more energetic and the higher the topological dimension of a 
+    // vertex, the greater the number of atomic propositions in its theorem 
+    // property.
+    sigma = (1.0 + events[i].energy)*double(4 + events[i].topological_dimension);
+    sigma *= RND->drandom(1.0,1.5);
+    natoms = int(sigma);
+    if (natoms >= n) {
+      for(j=0; j<n; ++j) {
+        cset.insert(j); 
+      }
+    }
+    else {
+      do {
+        cset.insert(RND->irandom(n));
+        if ((signed) cset.size() == natoms) break;
+      } while(true);
+    }
+    events[i].theorem.set_atoms(cset);
+    output += double(cset.size());   
+  }
+  output = output/double(skeleton->cardinality(0));
+  return output;
+}
+
 void Spacetime::fallback()
 {
 

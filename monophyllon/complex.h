@@ -26,8 +26,14 @@ namespace DIAPLEXIS {
     static const int topological_radius = 4;
 
     void allocate();
+    void inversion();
+    void compute_neighbours();
+    void compute_entourages();
+    bool simplex_addition(const std::set<int>&);
+    void simplex_deletion(int,int);
+    void simplicial_implication();
+    void simplicial_implication(int);
     void compute_simplicial_dimension();
-    void set_logical_atoms(int);
     double logical_energy(int) const;
     bool logical_conformity(int) const;
     void compute_simplex_energy(int,int);
@@ -40,7 +46,7 @@ namespace DIAPLEXIS {
     int cardinality_safe(int) const;
     void compute_graph(SYNARMOSMA::Graph*,int) const;
     void compute_degree_distribution(bool) const;
-    void compute_connectivity_distribution() const;
+    void compute_connectivity_distribution(bool) const;
     std::pair<double,double> random_walk() const;
     void vertex_degree_statistics(double*) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&) const;
@@ -67,7 +73,7 @@ namespace DIAPLEXIS {
     int weighted_entourage(int,int) const;
     int cyclicity() const;
     double dimensional_frontier(int) const;
-    double dimensional_uniformity() const;
+    double dimensional_uniformity(int) const;
     bool active_simplex(int,int) const;
     int circuit_rank() const;
     int euler_characteristic() const;
@@ -93,6 +99,8 @@ namespace DIAPLEXIS {
     void clear();
     void get_edge_topology(std::vector<std::set<int> >&) const;
     bool active_element(int,int) const;
+    inline bool active_event(int n) const {return events[n].active;};
+    inline bool active_simplex(int n,int d) const {return simplices[d][n].active;};
     inline int get_dimension() const {return dimension();};
     inline int get_event_dimension(int n) const {return vertex_dimension(n);};
     inline int get_cardinality(int d) const {return cardinality_safe(d);};
