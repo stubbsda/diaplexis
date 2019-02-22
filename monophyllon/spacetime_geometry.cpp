@@ -249,7 +249,7 @@ void Spacetime::chorogenesis(int nsteps)
   // We have now verified all the necessary conditions and can begin  
   compute_degree_distribution(false);
   
-  compute_connectivity_distribution();
+  compute_connectivity_distribution(!geometry->get_memory_type());
 
   int vx[2];
   unsigned int d,cfactor,derror,csize;
@@ -319,7 +319,7 @@ void Spacetime::chorogenesis(int nsteps)
 #ifdef VERBOSE
     std::cout << "Vertex degree error is " << derror << std::endl;
 #endif
-    compute_connectivity_distribution();
+    compute_connectivity_distribution(!geometry->get_memory_type());
     // Now the geometry...
     optimize();
     // Prepare for the next iteration...

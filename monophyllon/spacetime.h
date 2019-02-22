@@ -142,8 +142,8 @@ namespace DIAPLEXIS {
     void compute_geometric_gradient(std::vector<double>&,bool);
     void compute_geometric_dependency(const std::set<int>&);
     void compute_topological_dependency(const std::set<int>&);
-    void simplicial_implication();
     void arclength_statistics(double*) const;
+    double set_logical_atoms(int);
 
     // The various methods needed for the hyphantic operators
     void hyphansis();
@@ -156,8 +156,6 @@ namespace DIAPLEXIS {
     int vertex_addition(const std::set<int>&);
     int vertex_addition(int);
     bool vertex_deletion(int);
-    bool simplex_addition(const std::set<int>&);
-    void simplex_deletion(int,int);
     bool interplication(int,double,int);
     bool circumvolution();
     bool circumvolution(int);
@@ -186,15 +184,12 @@ namespace DIAPLEXIS {
     bool edge_parity_mutation(int);
     bool edge_parity_mutation(int,int);
     void vertex_fusion(int,int);
-    void compute_neighbours();
-    void compute_entourages();
     void superposition_fusion(std::set<int>&);
     void superposition_fission(std::set<int>&);
     void assemble_indices();
     void regularization(bool);
     void entourage(std::vector<int>&) const;
 
-    void inversion();
     bool realizable(int,int) const;
     void determine_flexible_edges();
     void compute_volume();
