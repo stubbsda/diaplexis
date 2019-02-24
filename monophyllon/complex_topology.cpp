@@ -498,6 +498,52 @@ int Complex::chromatic_number() const
   return G.chromatic_number();
 }
 
+bool Complex::edge_parity_mutation(int base)
+{
+  int n;
+  std::set<int> candidates;
+  std::set<int>::const_iterator it;
+
+  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
+    if (simplices[1][*it].active) {
+      candidates.insert(*it);
+    }
+  }
+  if (candidates.empty()) return false;      
+  n = RND->irandom(candidates);
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
+  }
+  else {
+    simplices[1][n].parity *= -1;
+  }
+  recompute_parity(n);
+  return true;
+}
+
+bool Complex::edge_parity_mutation(int u,int v)
+{
+  // This is the method used for dynamic hyphansis where there is a single call 
+  // to recompute the parity of all the higher-dimensional simplices, so no 
+  // need to include one at the method's end. 
+  int n;
+  std::set<int> S;
+  SYNARMOSMA::hash_map::const_iterator qt;
+
+  S.insert(u); S.insert(v);
+  qt = index_table[1].find(S);
+  if (qt == index_table[1].end()) return false;
+  if (!simplices[1][qt->second].active) return false;
+  n = qt->second;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
+  }
+  else {
+    simplices[1][n].parity *= -1;
+  }
+  return true;
+}
+
 void Complex::compute_entourages()
 {
   int i,j,k,ns,vx[2];
@@ -508,7 +554,7 @@ void Complex::compute_entourages()
 
   // What about removing items from the entourage of a d-simplex, when this item has
   // changed its ubiquity?
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (!simplices[i][j].active) continue;
       for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
@@ -585,7 +631,7 @@ void Complex::simplex_deletion(int d,int n)
   }
 }
 
-bool Complex::simplex_addition(const std::set<int>& S)
+bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& vx_delta)
 {
   int i,j;
   std::set<int> fc;
@@ -696,7 +742,7 @@ void Complex::inversion()
   }
 }
 
-void Spacetime::simplicial_implication()
+void Complex::simplicial_implication()
 {
   int i,j,k,n,m,vx[2];
   const int ulimit = dimension();
@@ -918,12 +964,6 @@ int Complex::euler_characteristic() const
     pf *= -1;
   }
   return chi;
-}
-
-bool Complex::active_simplex(int d,int i) const
-{
-  bool output = (simplices[d][i].active) ? true : false;
-  return output;
 }
 
 int Complex::dimension() const

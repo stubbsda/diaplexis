@@ -33,8 +33,8 @@ INSTALL_DIR = $(HOME)/fabrica/local
 
 HEADERS    = event.h simplex.h complex.h spacetime.h
 
-OBJECTS = spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_geometry.o \
-spacetime_hyphansis.o complex.o complex_topology.o event.o simplex.o
+OBJECTS = spacetime.o spacetime_disk.o spacetime_visualization.o spacetime_optimization.o spacetime_geometry.o \
+spacetime_hyphansis.o spacetime_initialization.o complex.o complex_topology.o complex_dynamics.o event.o simplex.o
 
 install: diaplexis 
 	mkdir -p $(INSTALL_DIR)/lib
@@ -51,11 +51,14 @@ spacetime.o: spacetime.cpp $(HEADERS)
 spacetime_disk.o: spacetime_disk.cpp $(HEADERS) 
 	$(CXX) $(CXX_FLAGS) -c spacetime_disk.cpp
 
-spacetime_dynamics.o: spacetime_dynamics.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_dynamics.cpp
+spacetime_optimization.o: spacetime_optimization.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_optimization.cpp
 
-spacetime_visualize.o: spacetime_visualize.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_visualize.cpp
+spacetime_visualization.o: spacetime_visualization.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_visualization.cpp
+
+spacetime_initialization.o: spacetime_initialization.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_initialization.cpp
 
 spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
@@ -65,6 +68,9 @@ spacetime_geometry.o: spacetime_geometry.cpp $(HEADERS)
 
 complex.o: complex.cpp event.h simplex.h complex.h
 	$(CXX) $(CXX_FLAGS) -c complex.cpp
+
+complex_dynamics.o: complex_dynamics.cpp event.h simplex.h complex.h
+	$(CXX) $(CXX_FLAGS) -c complex_dynamics.cpp
 
 complex_topology.o: complex_topology.cpp event.h simplex.h complex.h
 	$(CXX) $(CXX_FLAGS) -c complex_topology.cpp

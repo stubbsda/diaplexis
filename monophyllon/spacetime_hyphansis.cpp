@@ -2,6 +2,257 @@
 
 using namespace DIAPLEXIS;
 
+std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
+{
+  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // (diatonic notes) and four chromatic notes
+  // The implicative scale is the treble clef in the F major scale, so the following 
+  // twelve piano keys in ascending pitch, 
+  // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
+  // The four chromatic notes are G4 sharp, C5 sharp, F5 sharp and G5
+  // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
+  // V <=> G5*
+  // P <=> F5 sharp*
+  // E3 <=> F5
+  // F3 <=> E5
+  // Om <=> D5
+  // F2 <=> C5 sharp*
+  // F1 <=> C5 
+  // E2 <=> A4 sharp
+  // Um <=> A4
+  // I2 <=> G4 sharp*
+  // E1 <=> G4
+  // I1 <=> F4 
+  std::string output = "NULL";
+  parameters.clear();
+  switch (key) {
+    case 45:
+      output = "I";
+      parameters.push_back(0.25);
+      break;
+    case 47:
+      output = "E";
+      parameters.push_back(0.25);
+      break;
+    case 48:
+      output = "I";
+      parameters.push_back(0.75);
+      break;
+    case 49:
+      output = "Um";
+      break;
+    case 50:
+      output = "E";
+      parameters.push_back(0.5);
+      break;
+    case 52:
+      output = "F";
+      parameters.push_back(0.25);
+      break;
+    case 53:
+      output = "F";
+      parameters.push_back(0.5);
+      break;
+    case 54:
+      output = "Om";
+      break;
+    case 56:
+      output = "F";
+      parameters.push_back(0.75);
+      break;
+    case 57:
+      output = "E";
+      parameters.push_back(0.75);
+      break;
+    case 58:
+      output = "P";
+      parameters.push_back(double(3));
+      break;
+    case 59:
+      output = "V";
+      break;
+    default:
+      throw std::invalid_argument("Illegal key value in implicative scale!"); 
+      break;
+  }
+  return output;
+}
+
+std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters) const
+{
+  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // (diatonic notes) and four chromatic notes
+  // The explicative scale is the bass clef in the F major scale, so the following 
+  // twelve piano keys in descending pitch, 
+  // A3, G3, F3 sharp, F3, E3, D3, C3 sharp, C3, A2 sharp, A2, G2, F2 
+  // The four chromatic notes are A3, G3, F3 sharp and C3 sharp
+  // The twelve explicative operations are D, Ox, R, C, G, Sg, Sm, A, N1, N2, Ux1 and Ux2
+  // G <=> F2
+  // A <=> G2
+  // D <=> A2
+  // C <=> A2 sharp
+  // Sg <=> C3
+  // N2 <=> C3 sharp*
+  // Ux2 <=> D3 
+  // Sm <=> E3
+  // R <=> F3
+  // Ox <=> F3 sharp*
+  // N1 <=> G3*
+  // Ux1 <=> A3*
+  std::string output = "NULL";
+  parameters.clear();
+  switch (key) {
+    case 37:
+      output = "Ux";
+      parameters.push_back(0.2);
+      break;
+    case 35:
+      output = "N";
+      parameters.push_back(2.5);
+      break;
+    case 34:
+      output = "Ox";
+      break;
+    case 33:
+      output = "R";
+      break;
+    case 32:
+      output = "Sm";
+      break;
+    case 30:
+      output = "Ux";
+      parameters.push_back(0.5);
+      break;
+    case 29:
+      output = "N";
+      parameters.push_back(1.2);
+      break;
+    case 28:
+      output = "Sg";
+      break;
+    case 26:
+      output = "C";
+      break;
+    case 25:
+      output = "D";
+      break;
+    case 23:
+      output = "A";
+      break;
+    case 21:
+      output = "G";
+      break;
+    default:
+      throw std::invalid_argument("Illegal key value in explicative scale!");
+      break;
+  }
+  return output;
+}
+
+void Spacetime::implication(std::string& output) const
+{
+  // Should return one of the implicative operators: {F,Um,Om,E,I,P,V,Δ}
+  double alpha;
+  if (iterations < 50) {
+    alpha = RND->drandom();
+    if (alpha < 0.3) {
+      output = "F";
+    }
+    else if (alpha < 0.6) {
+      if (RND->drandom() < 0.5) {
+        output = "E";
+      }
+      else {
+        output = "I";
+      }
+    }
+    else if (alpha < 0.75) {
+      output = "Om";
+    }
+    else if (alpha < 0.9) {
+      output = "Um";
+    }
+    else {
+      if (RND->drandom() < 0.33) {
+        output = "P";
+      }
+      else {
+        output = "V";
+      }
+    }
+  }
+  else {
+    if (RND->drandom() < 0.5) {
+      if (RND->drandom() < 0.5) {
+        output = "P";
+      }
+      else {
+        output = "V";
+      }
+    }
+    else {
+      alpha = RND->drandom();
+      if (alpha < 0.4) {
+        output = "Om";
+      }
+      else if (alpha < 0.6) {
+        output = "Um";
+      }
+      else if (alpha < 0.8) {
+        output = "F";
+      }
+      else {
+        if (RND->drandom() < 0.67) {
+          output = "E";
+        }
+        else {
+          output = "I";
+        }
+      }
+    }
+  }
+}
+
+void Spacetime::explication(std::string& output) const
+{
+  // Should return one of the explicative operators: {G,C,A,Sg,Sm,D,N,Y,R,Ox,Ux}
+  //if (RND->drandom() < 0.1) return 'G';
+  double alpha;
+  if (iterations < 50) {
+    if (RND->drandom() < (0.35 + 1.0/(1+iterations/2))) {
+      output = "Sg";
+    }
+    else {
+      if (iterations <= 10) {
+        output = "C";
+      }
+      else {
+        if (RND->drandom() < 0.5) {
+          output = "C";
+        }
+        else {
+          output = "A";
+        }
+      }
+    }
+  }
+  else {
+    alpha = RND->drandom();
+    if (alpha < 0.25) {
+      output = "C";
+    }
+    else if (alpha < 0.5) {
+      output = "Sg";
+    }
+    else if (alpha < 0.75) {
+      output = "N";
+    }
+    else {
+      output = "Ux";
+    }
+  }
+}
+
 bool Spacetime::interplication(int centre,double size,int D)
 {
   // Method to construct a highly-entwined knot after carving out a hole for 
@@ -61,7 +312,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     S.insert(vertex_addition(xc));
     xc.clear();
   }
-  skeleton->simplex_addition(S);
+  skeleton->simplex_addition(S,vx_delta);
 
   // Now add a set of lower-dimensional simplices to this knot and also tie it 
   // in to the existing spacetime complex...
@@ -131,7 +382,7 @@ bool Spacetime::interplication(int centre,double size,int D)
 #ifdef VERBOSE
       std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
 #endif
-      skeleton->simplex_addition(S);
+      skeleton->simplex_addition(S,vx_delta);
       S.clear();
       nc++;
     } while(nc < m);
@@ -180,57 +431,11 @@ bool Spacetime::interplication(int centre,double size,int D)
     else {
       S.insert(ambient[1].first);
     }
-    if (skeleton->simplex_addition(S)) d++;
+    if (skeleton->simplex_addition(S,vx_delta)) d++;
     S.clear();
   } while(d < nbridge);
 
   regularization(true);
-  return true;
-}
-
-bool Spacetime::edge_parity_mutation(int base)
-{
-  int n;
-  std::set<int> candidates;
-  std::set<int>::const_iterator it;
-
-  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
-    if (simplices[1][*it].active) {
-      candidates.insert(*it);
-    }
-  }
-  if (candidates.empty()) return false;      
-  n = RND->irandom(candidates);
-  if (simplices[1][n].parity == 0) {
-    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
-  }
-  else {
-    simplices[1][n].parity *= -1;
-  }
-  recompute_parity(n);
-  return true;
-}
-
-bool Spacetime::edge_parity_mutation(int u,int v)
-{
-  // This is the method used for dynamic hyphansis where there is a single call 
-  // to recompute the parity of all the higher-dimensional simplices, so no 
-  // need to include one at the method's end. 
-  int n;
-  std::set<int> S;
-  SYNARMOSMA::hash_map::const_iterator qt;
-
-  S.insert(u); S.insert(v);
-  qt = index_table[1].find(S);
-  if (qt == index_table[1].end()) return false;
-  if (!simplices[1][qt->second].active) return false;
-  n = qt->second;
-  if (simplices[1][n].parity == 0) {
-    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
-  }
-  else {
-    simplices[1][n].parity *= -1;
-  }
   return true;
 }
 
@@ -252,7 +457,7 @@ bool Spacetime::stellar_deletion(int base)
   }
   if (nset.size() != 3) return false;    
   vertex_deletion(base);
-  skeleton->simplex_addition(nset);
+  skeleton->simplex_addition(nset,vx_delta);
   regularization(true);
   return true;
 }
@@ -310,7 +515,7 @@ bool Spacetime::stellar_addition(int base)
     S.clear();
     S.insert(m);
     S.insert(sx[i]);
-    skeleton->simplex_addition(S);
+    skeleton->simplex_addition(S,vx_delta);
   }
   regularization(true);
   return true;    
@@ -1899,7 +2104,7 @@ bool Spacetime::expansion(int base,double creativity)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with " << novum << " new vertices." << std::endl;
 #endif
-  skeleton->simplex_addition(vx);
+  skeleton->simplex_addition(vx,vx_delta);
   return true;
 }
 
@@ -1926,7 +2131,7 @@ bool Spacetime::expansion(int base)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with base " << base << std::endl;
 #endif
-  skeleton->simplex_addition(vx);
+  skeleton->simplex_addition(vx,vx_delta);
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vtx);
@@ -2505,7 +2710,7 @@ bool Spacetime::inflation(int base,double creativity)
     std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex" << std::endl;
 #endif
   }
-  skeleton->simplex_addition(vx);
+  skeleton->simplex_addition(vx,vx_delta);
   return true;
 }
 
@@ -2921,6 +3126,6 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       }
     }
   }
-  recompute_parity(r_edges);
+  skeleton->recompute_parity(r_edges);
   s.close();
 }

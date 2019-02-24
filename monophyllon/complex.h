@@ -29,7 +29,7 @@ namespace DIAPLEXIS {
     void inversion();
     void compute_neighbours();
     void compute_entourages();
-    bool simplex_addition(const std::set<int>&);
+    bool simplex_addition(const std::set<int>&,std::set<int>&);
     void simplex_deletion(int,int);
     void simplicial_implication();
     void simplicial_implication(int);
@@ -38,9 +38,12 @@ namespace DIAPLEXIS {
     bool logical_conformity(int) const;
     void compute_simplex_energy(int,int);
     void compute_simplex_parity(int,int);
+    bool edge_parity_mutation(int);
+    bool edge_parity_mutation(int,int);
     void recompute_parity(int);
     void recompute_parity(const std::set<int>&);
     void compute_parity();
+    void determine_flexible_edges(std::vector<int>&);
     bool edge_exists(int,int) const;
     int cardinality(int) const;
     int cardinality_safe(int) const;
@@ -56,7 +59,7 @@ namespace DIAPLEXIS {
     void compute_graph(SYNARMOSMA::Graph*,int*) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int) const;
-    void compute_global_topology();
+    void compute_global_topology(bool);
     void simplex_membership(int,std::vector<int>&) const;
     int chromatic_number() const;
     double dimensional_stress(int,int) const;
@@ -64,7 +67,6 @@ namespace DIAPLEXIS {
     double entwinement() const;
     double cyclic_resistance() const;
     int max_degree() const;
-    bool delaunay() const;
     int total_dimension() const;
     int structural_index() const;
     int dimension() const;
@@ -74,7 +76,6 @@ namespace DIAPLEXIS {
     int cyclicity() const;
     double dimensional_frontier(int) const;
     double dimensional_uniformity(int) const;
-    bool active_simplex(int,int) const;
     int circuit_rank() const;
     int euler_characteristic() const;
     int component_analysis(std::vector<int>&) const;
@@ -85,9 +86,13 @@ namespace DIAPLEXIS {
     void write_topology() const;
     bool energy_check() const;
     double total_energy() const;
+    void energy_diffusion(double);
+    void energy_diffusion(int);
     void simplicial_implication(int) const;
     int simplex_embedding(int,int) const;
     double dimensional_stress(int) const;
+    void compute_delta(std::set<int>&);
+
     double parity_hamiltonian(double,bool) const;
     void write_graph(const std::string&) const;
     inline double distribution_fitness(int*,const std::vector<int>&,int) const;
@@ -96,11 +101,22 @@ namespace DIAPLEXIS {
     Complex();
     Complex(const Complex&);
     ~Complex();
+    int serialize(std::ofstream&) const;
+    int deserialize(std::ifstream&);
     void clear();
     void get_edge_topology(std::vector<std::set<int> >&) const;
     bool active_element(int,int) const;
+    void write_vertex_data(int) const;
+    void get_energy_values(std::vector<double>&) const;
+    void get_deficiency_values(std::vector<double>&) const;
+    inline void get_homotopy(std::string& s) const {s = pi1->write();};
+    inline void get_homology(std::string& s) const {s = H->write();};
+    inline void set_homology_field(SYNARMOSMA::Homology::Field F) {H->set_field(F);};
+    inline void set_homology_method(SYNARMOSMA::Homology::Method M) {H->set_method(M);};
+    inline SYNARMOSMA::Homology::Field get_homology_field() const {return H->get_field();};
+    inline SYNARMOSMA::Homology::Method get_homology_method() const {return H->get_method();};
     inline bool active_event(int n) const {return events[n].active;};
-    inline bool active_simplex(int n,int d) const {return simplices[d][n].active;};
+    inline bool active_simplex(int d,int n) const {return simplices[d][n].active;};
     inline int get_dimension() const {return dimension();};
     inline int get_event_dimension(int n) const {return vertex_dimension(n);};
     inline int get_cardinality(int d) const {return cardinality_safe(d);};

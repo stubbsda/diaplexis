@@ -111,22 +111,22 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "HomologyMethod") {
       boost::to_upper(value);
       if (value == "GAP") {
-        H->set_method(SYNARMOSMA::Homology::Method::gap); 
+        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::gap); 
       }
       else if (value == "NATIVE") {
-        H->set_method(SYNARMOSMA::Homology::Method::native);
+        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::native);
       }
     }
     else if (name == "HomologyBase") {
       boost::to_upper(value);
       if (value == "INT") {
-        H->set_field(SYNARMOSMA::Homology::Field::int32);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::int32);
       }
       else if (value == "NTL::ZZ") {
-        H->set_field(SYNARMOSMA::Homology::Field::multiprecision);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::multiprecision);
       }
       else if (value == "GF2") {
-        H->set_field(SYNARMOSMA::Homology::Field::mod2);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::mod2);
       }
     }
     else if (name == "Compressible") {
@@ -266,7 +266,6 @@ void Spacetime::read_parameters(const std::string& filename)
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);
-  if (instrument_convergence) anterior.geometry.initialize(euclidean,relational,uniform,high_memory,D);
 
   if (initial_state == Initial_Topology::random) {
     assert(edge_probability > std::numeric_limits<double>::epsilon() && (edge_probability - 1.0) < -std::numeric_limits<double>::epsilon());
@@ -281,7 +280,7 @@ void Spacetime::read_parameters(const std::string& filename)
     }
   }
   else if (initial_state == Initial_Topology::monoplex) {
-    assert(initial_dim <= Spacetime::ND);
+    assert(initial_dim <= Complex::ND);
   }
   else if (initial_state == Initial_Topology::singleton) {
     assert(initial_size == 1);
@@ -338,8 +337,8 @@ void Spacetime::write_log() const
   std::set<int> S;
   std::set<int>::const_iterator it;
   std::string group_string,bvalue[] = {"False","True"};
-  const int Nv = (signed) events.size();
-  const int Ne = (signed) simplices[1].size();
+  const int Nv = (signed) skeleton->events.size();
+  const int Ne = (signed) skeleton->simplices[1].size();
   int vdimension[Nv];
 
   if (fcall) {
@@ -357,9 +356,9 @@ void Spacetime::write_log() const
     s << "<StartDate>" << start_time.date() << "</StartDate>" << std::endl;
     s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
-    s << "<MaximumDimension>" << Spacetime::ND << "</MaximumDimension>" << std::endl;
+    s << "<MaximumDimension>" << Complex::ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
-    s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
+    s << "<TopologicalRadius>" << Complex::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<ConvergenceThreshold>" << Spacetime::convergence_threshold << "</ConvergenceThreshold>" << std::endl;
     s << "<InitialAnnealingTemperature>" << Spacetime::T_zero << "</InitialAnnealingTemperature>" << std::endl;
     s << "<ThermalDecayRate>" << Spacetime::kappa << "</ThermalDecayRate>" << std::endl;
@@ -390,19 +389,19 @@ void Spacetime::write_log() const
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (H->get_method() == SYNARMOSMA::Homology::Method::gap) {
+    if (skeleton->get_homology_method() == SYNARMOSMA::Homology::Method::gap) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
-    else if (H->get_method() == SYNARMOSMA::Homology::Method::native) {
+    else if (skeleton->get_homology_method() == SYNARMOSMA::Homology::Method::native) {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (H->get_field() == SYNARMOSMA::Homology::Field::int32) {
+    if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::int32) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::Field::multiprecision) {
+    else if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::multiprecision) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::Field::mod2) {
+    else if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::mod2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     if (weaving == Hyphansis::dynamic) {
@@ -462,13 +461,13 @@ void Spacetime::write_log() const
     fcall = false;
   }
 
-  nn = cardinality(0);
+  nn = skeleton->cardinality(0);
   avg_ven = 0.0;
   max_ven = 0.0;
   min_ven = 10000.0;
   for(i=0; i<Nv; ++i) {
-    if (!events[i].active) continue;
-    w = events[i].get_energy();
+    if (!skeleton->active_event(i)) continue;
+    w = skeleton->events[i].get_energy();
     if (w > max_ven) max_ven = w;
     if (w < min_ven) min_ven = w;
     avg_ven += w;
@@ -482,16 +481,16 @@ void Spacetime::write_log() const
   for(i=0; i<Nv; ++i) {
     // Is this vertex atemporal (no timelike edges) or chiral
     // (number of FUTURE edges != number of PAST edges)?
-    if (!events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     nf = 0;
     np = 0;
     atemporal = true;
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
       in1 = *it;
       S.clear();
       S.insert(i); S.insert(in1);
-      qt = index_table[1].find(S);
-      if (!simplices[1][qt->second].timelike()) continue;
+      qt = skeleton->index_table[1].find(S);
+      if (!skeleton->simplices[1][qt->second].timelike()) continue;
       atemporal = false;
       if (geometry->get_temporal_order(i,in1) == SYNARMOSMA::Relation::before) {
         nf++;
@@ -513,11 +512,11 @@ void Spacetime::write_log() const
   ntime = 0;
   nnull = 0;
   for(i=0; i<Ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    if (simplices[1][i].timelike()) {
+    if (!skeleton->active_simplex(1,i)) continue;
+    if (skeleton->simplices[1][i].timelike()) {
       ntime++;
     }
-    else if (simplices[1][i].spacelike()) {
+    else if (skeleton->simplices[1][i].spacelike()) {
       nspace++;
     }
     else {
@@ -551,16 +550,16 @@ void Spacetime::write_log() const
   }
 
   atom = rstep.append_child("Pseudomanifold");
-  nvalue = (pseudomanifold) ? "True" : "False";
+  nvalue = (skeleton->pseudomanifold) ? "True" : "False";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  if (pseudomanifold) {
+  if (skeleton->pseudomanifold) {
     atom = rstep.append_child("Boundary");
-    nvalue = (boundary) ? "True" : "False";
+    nvalue = (skeleton->boundary) ? "True" : "False";
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = rstep.append_child("Orientable");
-    nvalue = (orientable) ? "True" : "False";
+    nvalue = (skeleton->orientable) ? "True" : "False";
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   }
   else {
@@ -572,16 +571,16 @@ void Spacetime::write_log() const
   }
 
   atom = rstep.append_child("Homology");
-  nvalue = H->write();
+  skeleton->get_homology(nvalue);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   if (high_memory) {
     atom = rstep.append_child("Homotopy");
-    nvalue = pi->write();
+    skeleton->get_homotopy(nvalue);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   }
 
-  ne = cardinality(1);
+  ne = skeleton->cardinality(1);
   atom = rstep.append_child("CircuitRank");
   nvalue = boost::lexical_cast<std::string>(ne-nn+1);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -615,7 +614,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("CyclicEdges");
-  nvalue = boost::lexical_cast<std::string>(cyclicity());
+  nvalue = boost::lexical_cast<std::string>(skeleton->cyclicity());
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   arclength_statistics(vdata);
@@ -631,7 +630,7 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(vdata[0]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  vertex_degree_statistics(vdata);
+  skeleton->vertex_degree_statistics(vdata);
   atom = rstep.append_child("MinimumEventDegree");
   nvalue = boost::lexical_cast<std::string>(vdata[1]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -645,7 +644,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("TotalEnergy");
-  nvalue = boost::lexical_cast<std::string>(total_energy());
+  nvalue = boost::lexical_cast<std::string>(skeleton->total_energy());
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MinimumEventEnergy");
@@ -669,7 +668,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("EulerCharacteristic");
-  nvalue = boost::lexical_cast<std::string>(euler_characteristic());
+  nvalue = boost::lexical_cast<std::string>(skeleton->euler_characteristic());
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("HyphanticSequence");
@@ -684,12 +683,12 @@ void Spacetime::write_log() const
 #pragma omp parallel for default(shared) private(i)
 #endif
   for(i=0; i<Nv; ++i) {
-    vdimension[i] = (!events[i].active) ? -1 : vertex_dimension(i);    
+    vdimension[i] = (!skeleton->active_event(i)) ? -1 : skeleton->vertex_dimension(i);    
   }
 
   sum = 0;
   mx = 0;
-  mn = Spacetime::ND;
+  mn = Complex::ND;
   for(i=0; i<Nv; ++i) {
     v = vdimension[i];
     if (v == -1) continue;
@@ -697,7 +696,7 @@ void Spacetime::write_log() const
     if (v > mx) mx = v;
     if (v < mn) mn = v;
   }
-  vd_avg = double(sum)/double(cardinality(0));
+  vd_avg = double(sum)/double(skeleton->cardinality(0));
   vd_min = mn;
   vd_max = mx;
 
@@ -716,41 +715,33 @@ void Spacetime::write_log() const
   logfile.save_file(log_file.c_str());
 }
 
-void Spacetime::read_complex(std::ifstream& s)
+void Spacetime::write(Spacetime& state) const
 {
-  int i,j,n;
-  Event v;
-  Simplex S;
-
-  s.read((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    v.deserialize(s);
-    events.push_back(v);
+  state.system_size = system_size;
+  state.error = error;
+  state.global_deficiency = global_deficiency;
+  state.skeleton->events = skeleton->events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    state.skeleton->simplices[i] = skeleton->simplices[i];
+    state.skeleton->index_table[i] = skeleton->index_table[i];
   }
+}
 
-  for(i=1; i<=Spacetime::ND; ++i) {
-    s.read((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      S.deserialize(s);
-      simplices[i].push_back(S);
-    }
+void Spacetime::read(const Spacetime& source)
+{
+  system_size = source.system_size;
+  error = source.error;
+  global_deficiency = source.global_deficiency;
+  skeleton->events = source.skeleton->events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    skeleton->simplices[i] = source.skeleton->simplices[i];
+    skeleton->index_table[i] = source.skeleton->index_table[i];
   }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      index_table[i][simplices[i][j].vertices] = j;
-    }
-  }
-  compute_entourages();
-
-  // Now the algebraic properties...
-  H->deserialize(s);
-  pi->deserialize(s);
 }
 
 void Spacetime::read_state(const std::string& filename)
 {
-  int i,j,n;
+  int n;
   std::string cmodel,fmodel;
   unsigned int q;
   double x;
@@ -776,9 +767,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Spacetime::ND) {
+  if (n != Complex::ND) {
     s.close();
-    std::cerr << "The compiled binary's maximum simplicial dimension " << Spacetime::ND << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's maximum simplicial dimension " << Complex::ND << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -792,9 +783,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Spacetime::topological_radius) {
+  if (n != Complex::topological_radius) {
     s.close();
-    std::cerr << "The compiled binary's topological radius " << Spacetime::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's topological radius " << Complex::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -883,110 +874,17 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&global_deficiency),sizeof(double));
   s.read((char*)(&error),sizeof(double));
   s.read((char*)(&converged),sizeof(bool));
-  s.read((char*)(&pseudomanifold),sizeof(bool));
-  s.read((char*)(&boundary),sizeof(bool));
-  s.read((char*)(&orientable),sizeof(bool));
 
   geometry->deserialize(s);
+  skeleton->deserialize(s);
 
-  read_complex(s);
-
-  // Now read the anterior spacetime state and calculate the deltas...
-  if (instrument_convergence) {
-    Event v;
-    Simplex S;
-
-    s.read((char*)(&topology_delta),sizeof(double));
-    s.read((char*)(&geometry_delta),sizeof(double));
-    s.read((char*)(&energy_delta),sizeof(double));
-
-    s.read((char*)(&n),sizeof(int));
-    for(i=0; i<n; ++i) {
-      v.deserialize(s);
-      anterior.events.push_back(v);
-    }
-
-    for(i=1; i<=Spacetime::ND; ++i) {
-      s.read((char*)(&n),sizeof(int));
-      for(j=0; j<n; ++j) {
-        S.deserialize(s);
-        anterior.simplices[i].push_back(S);
-      }
-    }
-
-    // Regenerate the anterior index table...
-    for(i=1; i<=Spacetime::ND; ++i) {
-      for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-        anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
-      }
-    }
-  }
   s.close();
   RND->set_seed(q);
 }
 
-void Spacetime::write_graph(const std::string& filename) const
-{
-  int i,j,vx[2],N1 = 0;
-  double E;
-  std::vector<int> offset;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
-
-  for(i=0; i<nv; ++i) {
-    offset.push_back(-1);
-  }
-
-  std::ofstream s(filename,std::ios::out | std::ios::trunc | std::ios::binary);
-  i = cardinality(0);
-  s.write((char*)(&i),sizeof(int));
-  i = cardinality(1);
-  s.write((char*)(&i),sizeof(int));
-  // First calculate the appropriate vertex offset and write out the energy...
-  for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-    offset[i] = N1;
-    N1++;
-    E = events[i].get_energy();
-    s.write((char*)(&E),sizeof(double));
-  }
-  // Finally the edges...
-  for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
-    j = offset[vx[0]];
-    s.write((char*)(&j),sizeof(int));
-    j = offset[vx[1]];
-    s.write((char*)(&j),sizeof(int));
-  }
-  s.close();
-}
-
-void Spacetime::write_complex(std::ofstream& s) const
-{
-  int i,j,n;
-
-  n = (signed) events.size();
-  s.write((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    events[i].serialize(s);
-  }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
-    n = (signed) simplices[i].size();
-    s.write((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      simplices[i][j].serialize(s);
-    }
-  }
-  // Now the algebraic properties...
-  H->serialize(s);
-  pi->serialize(s);
-}
-
 void Spacetime::write_state() const
 {
-  int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
+  int n = SYNARMOSMA::Proposition::get_clause_size();
   // This is a monophyllon file, so the first value is 1...
   const int ftype = 1;
 
@@ -998,9 +896,9 @@ void Spacetime::write_state() const
 
   // First the global parameters...
   s.write((char*)(&ftype),sizeof(int));
-  s.write((char*)(&Spacetime::ND),sizeof(int));
+  s.write((char*)(&Complex::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
-  s.write((char*)(&Spacetime::topological_radius),sizeof(int));
+  s.write((char*)(&Complex::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::convergence_threshold),sizeof(double));
   s.write((char*)(&Spacetime::T_zero),sizeof(double));
   s.write((char*)(&Spacetime::kappa),sizeof(double));
@@ -1064,35 +962,11 @@ void Spacetime::write_state() const
   s.write((char*)(&global_deficiency),sizeof(double));
   s.write((char*)(&error),sizeof(double));
   s.write((char*)(&converged),sizeof(bool));
-  s.write((char*)(&pseudomanifold),sizeof(bool));
-  s.write((char*)(&boundary),sizeof(bool));
-  s.write((char*)(&orientable),sizeof(bool));
 
   // The principal body of the file...
   geometry->serialize(s);
+  skeleton->serialize(s);
 
-  write_complex(s);
-
-  // Now write the deltas and the anterior spacetime state...
-  if (instrument_convergence) {
-    s.write((char*)(&topology_delta),sizeof(double));
-    s.write((char*)(&geometry_delta),sizeof(double));
-    s.write((char*)(&energy_delta),sizeof(double));
-
-    n = (signed) anterior.events.size();
-    s.write((char*)(&n),sizeof(int));
-    for(i=0; i<n; ++i) {
-      anterior.events[i].serialize(s);
-    }
-
-    for(i=1; i<=Spacetime::ND; ++i) {
-      n = (signed) anterior.simplices[i].size();
-      s.write((char*)(&n),sizeof(int));
-      for(j=0; j<n; ++j) {
-        anterior.simplices[i][j].serialize(s);
-      }
-    }
-  }
   // Close the file and return...
   s.close();
 }
