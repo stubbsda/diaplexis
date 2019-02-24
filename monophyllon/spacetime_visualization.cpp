@@ -10,13 +10,13 @@ void Spacetime::get_energy_extrema(double* output) const
 
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    u_ex = events[i].get_energy();
+    u_ex = skeleton->events[i].get_energy();
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    alpha = complex->events[i].get_energy();
+    alpha = skeleton->events[i].get_energy();
     if (u_ex < alpha) u_ex = alpha;
     if (l_ex > alpha) l_ex = alpha;
   }
@@ -267,7 +267,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
   }
   else {
     for(i=0; i<nv; ++i) {
-      if (!events[i].active) continue;
+      if (!skeleton->active_event(i)) continue;
       x = skeleton->events[i].deficiency;
       xvalue[i] = x;
       if (x > x_max) x_max = x;
@@ -324,7 +324,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
       chi.push_back(255);
       continue;
     }
-    simplices[1][i].get_vertices(vx);
+    skeleton->simplices[1][i].get_vertices(vx);
     theta = 0.5*(xvalue[vx[0]] + xvalue[vx[1]]);
     SYNARMOSMA::RGB_intensity(theta,out);
     chi.push_back(out[0]);
@@ -380,7 +380,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   j = 0;
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
-    simplices[1][i].get_vertices(vx);
+    skeleton->simplices[1][i].get_vertices(vx);
     evertex.push_back(offset[vx[0]]);
     evertex.push_back(offset[vx[1]]);
     ++j;

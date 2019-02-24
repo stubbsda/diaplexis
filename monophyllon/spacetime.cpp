@@ -150,7 +150,7 @@ void Spacetime::condense()
     skeleton->simplices[i] = nsimplices;
     nsimplices.clear();
   }
-  compute_entourages();
+  skeleton->compute_entourages();
 }
 
 void Spacetime::distribute(int nprocs) const
@@ -381,283 +381,6 @@ void Spacetime::distribute(int nprocs) const
   write_distribution(affinity);
 }
 
-void Spacetime::get_energy_values(std::vector<double>& output) const
-{
-  int i;
-  const int nv = (signed) skeleton->events.size();
-
-  output.clear();
-
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
-    output.push_back(skeleton->events[i].get_energy());
-  }
-}
-
-void Spacetime::get_deficiency_values(std::vector<double>& output) const
-{
-  int i;
-  const int nv = (signed) skeleton->events.size();
-
-  output.clear();
-
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
-    output.push_back(skeleton->events[i].deficiency);
-  }
-}
-
-std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
-{
-  // This consists of twelve "notes", eight of which belong to the scale itself 
-  // (diatonic notes) and four chromatic notes
-  // The implicative scale is the treble clef in the F major scale, so the following 
-  // twelve piano keys in ascending pitch, 
-  // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
-  // The four chromatic notes are G4 sharp, C5 sharp, F5 sharp and G5
-  // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
-  // V <=> G5*
-  // P <=> F5 sharp*
-  // E3 <=> F5
-  // F3 <=> E5
-  // Om <=> D5
-  // F2 <=> C5 sharp*
-  // F1 <=> C5 
-  // E2 <=> A4 sharp
-  // Um <=> A4
-  // I2 <=> G4 sharp*
-  // E1 <=> G4
-  // I1 <=> F4 
-  std::string output = "NULL";
-  parameters.clear();
-  switch (key) {
-    case 45:
-      output = "I";
-      parameters.push_back(0.25);
-      break;
-    case 47:
-      output = "E";
-      parameters.push_back(0.25);
-      break;
-    case 48:
-      output = "I";
-      parameters.push_back(0.75);
-      break;
-    case 49:
-      output = "Um";
-      break;
-    case 50:
-      output = "E";
-      parameters.push_back(0.5);
-      break;
-    case 52:
-      output = "F";
-      parameters.push_back(0.25);
-      break;
-    case 53:
-      output = "F";
-      parameters.push_back(0.5);
-      break;
-    case 54:
-      output = "Om";
-      break;
-    case 56:
-      output = "F";
-      parameters.push_back(0.75);
-      break;
-    case 57:
-      output = "E";
-      parameters.push_back(0.75);
-      break;
-    case 58:
-      output = "P";
-      parameters.push_back(double(3));
-      break;
-    case 59:
-      output = "V";
-      break;
-    default:
-      throw std::invalid_argument("Illegal key value in implicative scale!"); 
-      break;
-  }
-  return output;
-}
-
-std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters) const
-{
-  // This consists of twelve "notes", eight of which belong to the scale itself 
-  // (diatonic notes) and four chromatic notes
-  // The explicative scale is the bass clef in the F major scale, so the following 
-  // twelve piano keys in descending pitch, 
-  // A3, G3, F3 sharp, F3, E3, D3, C3 sharp, C3, A2 sharp, A2, G2, F2 
-  // The four chromatic notes are A3, G3, F3 sharp and C3 sharp
-  // The twelve explicative operations are D, Ox, R, C, G, Sg, Sm, A, N1, N2, Ux1 and Ux2
-  // G <=> F2
-  // A <=> G2
-  // D <=> A2
-  // C <=> A2 sharp
-  // Sg <=> C3
-  // N2 <=> C3 sharp*
-  // Ux2 <=> D3 
-  // Sm <=> E3
-  // R <=> F3
-  // Ox <=> F3 sharp*
-  // N1 <=> G3*
-  // Ux1 <=> A3*
-  std::string output = "NULL";
-  parameters.clear();
-  switch (key) {
-    case 37:
-      output = "Ux";
-      parameters.push_back(0.2);
-      break;
-    case 35:
-      output = "N";
-      parameters.push_back(2.5);
-      break;
-    case 34:
-      output = "Ox";
-      break;
-    case 33:
-      output = "R";
-      break;
-    case 32:
-      output = "Sm";
-      break;
-    case 30:
-      output = "Ux";
-      parameters.push_back(0.5);
-      break;
-    case 29:
-      output = "N";
-      parameters.push_back(1.2);
-      break;
-    case 28:
-      output = "Sg";
-      break;
-    case 26:
-      output = "C";
-      break;
-    case 25:
-      output = "D";
-      break;
-    case 23:
-      output = "A";
-      break;
-    case 21:
-      output = "G";
-      break;
-    default:
-      throw std::invalid_argument("Illegal key value in explicative scale!");
-      break;
-  }
-  return output;
-}
-
-void Spacetime::implication(std::string& output) const
-{
-  // Should return one of the implicative operators: {F,Um,Om,E,I,P,V,Δ}
-  double alpha;
-  if (iterations < 50) {
-    alpha = RND->drandom();
-    if (alpha < 0.3) {
-      output = "F";
-    }
-    else if (alpha < 0.6) {
-      if (RND->drandom() < 0.5) {
-        output = "E";
-      }
-      else {
-        output = "I";
-      }
-    }
-    else if (alpha < 0.75) {
-      output = "Om";
-    }
-    else if (alpha < 0.9) {
-      output = "Um";
-    }
-    else {
-      if (RND->drandom() < 0.33) {
-        output = "P";
-      }
-      else {
-        output = "V";
-      }
-    }
-  }
-  else {
-    if (RND->drandom() < 0.5) {
-      if (RND->drandom() < 0.5) {
-        output = "P";
-      }
-      else {
-        output = "V";
-      }
-    }
-    else {
-      alpha = RND->drandom();
-      if (alpha < 0.4) {
-        output = "Om";
-      }
-      else if (alpha < 0.6) {
-        output = "Um";
-      }
-      else if (alpha < 0.8) {
-        output = "F";
-      }
-      else {
-        if (RND->drandom() < 0.67) {
-          output = "E";
-        }
-        else {
-          output = "I";
-        }
-      }
-    }
-  }
-}
-
-void Spacetime::explication(std::string& output) const
-{
-  // Should return one of the explicative operators: {G,C,A,Sg,Sm,D,N,Y,R,Ox,Ux}
-  //if (RND->drandom() < 0.1) return 'G';
-  double alpha;
-  if (iterations < 50) {
-    if (RND->drandom() < (0.35 + 1.0/(1+iterations/2))) {
-      output = "Sg";
-    }
-    else {
-      if (iterations <= 10) {
-        output = "C";
-      }
-      else {
-        if (RND->drandom() < 0.5) {
-          output = "C";
-        }
-        else {
-          output = "A";
-        }
-      }
-    }
-  }
-  else {
-    alpha = RND->drandom();
-    if (alpha < 0.25) {
-      output = "C";
-    }
-    else if (alpha < 0.5) {
-      output = "Sg";
-    }
-    else if (alpha < 0.75) {
-      output = "N";
-    }
-    else {
-      output = "Ux";
-    }
-  }
-}
-
 void Spacetime::clean() const
 {
   int i,j;
@@ -679,22 +402,22 @@ double Spacetime::set_logical_atoms(int n)
   int i,j,natoms;
   double sigma,output = 0.0;
   std::set<int> cset;
-  const int nvertex = (signed) events.size();
+  const int nvertex = (signed) skeleton->events.size();
 
   for(int i=0; i<nvertex; ++i) {
-    events[i].theorem.clear();
+    skeleton->events[i].theorem.clear();
   }
  
   // Set the logical atoms in a purely random manner, the argument 
   // "n" represents the total number of propositional atoms in the 
   // entire spacetime
   for(i=0; i<nvertex; ++i) {
-    if (!events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     cset.clear();
     // The more energetic and the higher the topological dimension of a 
     // vertex, the greater the number of atomic propositions in its theorem 
     // property.
-    sigma = (1.0 + events[i].energy)*double(4 + events[i].topological_dimension);
+    sigma = (1.0 + skeleton->events[i].get_energy())*double(4 + skeleton->events[i].topological_dimension);
     sigma *= RND->drandom(1.0,1.5);
     natoms = int(sigma);
     if (natoms >= n) {
@@ -708,7 +431,7 @@ double Spacetime::set_logical_atoms(int n)
         if ((signed) cset.size() == natoms) break;
       } while(true);
     }
-    events[i].theorem.set_atoms(cset);
+    skeleton->events[i].theorem.set_atoms(cset);
     output += double(cset.size());   
   }
   output = output/double(skeleton->cardinality(0));
@@ -717,7 +440,9 @@ double Spacetime::set_logical_atoms(int n)
 
 void Spacetime::fallback()
 {
+  if (!reversible) return;
 
+  reversible = false;
 }
 
 bool Spacetime::advance()
@@ -759,6 +484,8 @@ bool Spacetime::advance()
     std::cout << "Time required for topological hyphansis was " << htime << " seconds." << std::endl;
     std::cout << "Time required for global operations was " << gtime << " seconds." << std::endl;
   }
+  reversible = true;
+
   return done;
 }
 
@@ -827,17 +554,6 @@ bool Spacetime::correctness()
   if (std::abs(anterior_error - error) < std::numeric_limits<double>::epsilon()) return true;
   std::cout << "Error difference is " << anterior_error << "  " << error << "  " << std::abs(anterior_error - error) << std::endl;
   return false;
-}
-
-void Spacetime::write_vertex_data(int v) const
-{
-  if (v < 0 || v >= (signed) skeleton->events.size()) return;
-  std::cout << "For vertex " << v << " we have:" << std::endl;
-  std::cout << "    Incept = " << skeleton->events[v].incept << std::endl;
-  std::cout << "    Structural deficiency = " << skeleton->events[v].deficiency << std::endl;
-  std::cout << "    Energy = " << skeleton->events[v].get_energy() << std::endl;
-  std::cout << "    Orthogonality = " << skeleton->events[v].obliquity << std::endl;
-  std::cout << std::endl;
 }
 
 void Spacetime::structural_deficiency()
@@ -1028,30 +744,6 @@ void Spacetime::structural_deficiency()
   //error += std::abs(global_deficiency)/double(na);
 }
 
-void Spacetime::write(Spacetime& state) const
-{
-  state.system_size = system_size;
-  state.error = error;
-  state.global_deficiency = global_deficiency;
-  state.skeleton->events = skeleton->events;
-  for(int i=0; i<=Complex::ND; ++i) {
-    state.skeleton->simplices[i] = skeleton->simplices[i];
-    state.skeleton->index_table[i] = skeleton->index_table[i];
-  }
-}
-
-void Spacetime::read(const Spacetime& source)
-{
-  system_size = source.system_size;
-  error = source.error;
-  global_deficiency = source.global_deficiency;
-  skeleton->events = source.skeleton->events;
-  for(int i=0; i<=Complex::ND; ++i) {
-    skeleton->simplices[i] = source.skeleton->simplices[i];
-    skeleton->index_table[i] = source.skeleton->index_table[i];
-  }
-}
-
 bool Spacetime::global_operations()
 {
   int i,j,n,k = 0;
@@ -1068,7 +760,7 @@ bool Spacetime::global_operations()
 #endif
   iterations++;
 
-  compute_delta();
+  skeleton->compute_delta(vx_delta);
 
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].incept == -1) skeleton->events[i].incept = iterations;
@@ -1092,11 +784,11 @@ bool Spacetime::global_operations()
     compute_volume();
     compute_curvature();
     compute_obliquity();
-    skeleton->compute_global_topology();
+    skeleton->compute_global_topology(geometry->get_memory_type());
     structural_deficiency();
   }
 
-  energy_diffusion();
+  skeleton->energy_diffusion(Spacetime::Lambda);
   for(i=1; i<skeleton->dimension(); ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
       skeleton->compute_simplex_energy(i,j);
@@ -1176,7 +868,7 @@ bool Spacetime::global_operations()
   }
 
   if (superposable || compressible) {
-    compute_entourages();
+    skeleton->compute_entourages();
     compute_topological_dependency(vmodified);
     compute_geometric_dependency(vmodified);
   }
@@ -1191,7 +883,7 @@ bool Spacetime::global_operations()
 #endif
 
   compute_lightcones();
-  skeleton->compute_global_topology();
+  skeleton->compute_global_topology(geometry->get_memory_type());
 
   structural_deficiency();
 
@@ -1282,479 +974,4 @@ void Spacetime::analyze_convergence()
     }
   }
   */
-}
-
-void Spacetime::build_initial_state()
-{
-  int i,j,in1;
-  unsigned int m;
-  std::string geometry_type;
-  Event vt;
-  Simplex S;
-  const bool relational = geometry->get_relational();
-  std::vector<double> svalue;
-
-  for(m=0; m<geometry->dimension(); ++m) {
-    svalue.push_back(0.0);
-  }
-  vt.incept = 0;
-  S.incept = 0;
-
-  if (initial_state == Initial_Topology::cartesian) {
-    std::vector<std::pair<long,int> > factors;
-    geometry_type = "CARTESIAN";
-    SYNARMOSMA::factorize(initial_size,factors);
-    j = 1;
-    for(m=0; m<factors.size(); ++m) {
-      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/geometry->dimension());
-    }
-    const int n = j;
-    const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
-    const int nm1 = n - 1;
-    const int nperturbed = 10 + int(0.01*RND->irandom(initial_size));
-    const double dx = 1.0;
-    int k,l,d,rvalue;
-    unsigned int r;
-    SYNARMOSMA::hash_map::const_iterator qt;
-    std::vector<int> entourage,v;
-    std::vector<int>* arrangement = new std::vector<int>[initial_size];
-    std::set<int> N;
-    std::set<int>::const_iterator it,jt;
-    std::vector<double> vpoints;
-
-    for(m=0; m<geometry->dimension(); ++m) {
-      entourage.push_back(0);
-    }
-    
-    // First the vertices, making sure (if this is a non-relational
-    // model) that the vertex coordinates are balanced...
-    for(l=0; l<initial_size; ++l) {
-      k = nd;
-      in1 = l/k;
-      entourage[0] = in1;
-      rvalue = l - in1*nd;
-      vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
-      for(m=1; m<geometry->dimension(); ++m) {
-        k /= n;
-        in1 = rvalue/k;
-        entourage[m] = in1;
-        rvalue -= k*in1;
-        vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
-      }
-      for(m=0; m<geometry->dimension(); ++m) {
-        if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
-      }
-      skeleton->events.push_back(vt);
-      vt.boundary = false;
-      arrangement[l] = entourage;
-    }
-
-    if (relational) {
-      geometry->create(n,geometry_type);
-    }
-    else {
-      geometry->multiple_vertex_addition(initial_size,false,vpoints);
-    }
-
-    // Now the edges...
-    for(i=0; i<initial_size; ++i) {
-      v = arrangement[i];
-      if (v[0] > 0) {
-        in1 = (v[0]-1)*nd;
-        k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
-          k /= n;
-          in1 += v[m+1]*k;
-        }
-        if (in1 > i) {
-          S.initialize(i,in1);
-          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-          skeleton->simplices[1].push_back(S);
-          S.vertices.clear();
-        }
-      }
-      if (v[0] < nm1) {
-        in1 = (v[0]+1)*nd;
-        k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
-          k /= n;
-          in1 += v[m+1]*k;
-        }
-        if (in1 > i) {
-          S.initialize(i,in1);
-          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-          skeleton->simplices[1].push_back(S);
-          S.vertices.clear();
-        }
-      }
-      for(m=1; m<geometry->dimension(); ++m) {
-        if (v[m] > 0) {
-          v[m] -= 1;
-          in1 = v[0]*nd;
-          k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
-            k /= n;
-            in1 += v[r+1]*k;
-          }
-          if (in1 > i) {
-            S.initialize(i,in1);
-            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-            skeleton->simplices[1].push_back(S);
-            S.vertices.clear();
-          }
-          v[m] += 1;
-        }
-        if (v[m] < nm1) {
-          v[m] += 1;
-          in1 = v[0]*nd;
-          k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
-            k /= n;
-            in1 += v[r+1]*k;
-          }
-          if (in1 > i) {
-            S.initialize(i,in1);
-            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-            skeleton->simplices[1].push_back(S);
-            S.vertices.clear();
-          }
-          v[m] -= 1;
-        }
-      }
-    }
-    delete[] arrangement;
-    v.clear();
-    // We need to see about introducing an initial perturbation...
-    if (perturb_topology) {
-      k = int(double(n)/2.0);
-      for(i=0; i<nperturbed; ++i) {
-        j = 0;
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
-        }
-        v.push_back(j);
-        // Now add some edges among the neighbours of this
-        // vertex
-        N.insert(v[i]);
-        j = RND->irandom(2,5);
-        for(l=0; l<j; ++l) {
-          N.insert(skeleton->events.size());
-          v.push_back(skeleton->events.size());
-          geometry->vertex_addition(v[i]);
-          skeleton->events.push_back(vt);
-        }
-        d = N.size() - 1;
-        S.initialize(N);
-        skeleton->simplices[d].push_back(S);
-        skeleton->index_table[d][S.vertices] = (signed) skeleton->simplices[d].size() - 1;
-        N.clear();
-      }
-    }
-    if (perturb_geometry) {
-      // No changes to the spacetime topology, merely the geometry of some
-      // existing vertices are altered...
-      if (v.empty()) {  
-        for(i=0; i<nperturbed; ++i) {
-          j = RND->irandom(initial_size,v);
-          v.push_back(j);
-        }
-      }
-      for(m=0; m<v.size(); ++m) {
-        geometry->mutation(v[m],true,false,0.5);
-      }
-    }
-    if (perturb_energy) {
-      if (v.empty()) {
-        // In this particular case I will simply alter the energy value of a single vertex
-        // near the centre of the Cartesian network...
-        j = 0;
-        k = int(double(n)/2.0);
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
-        }
-        skeleton->events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
-      }
-      else {
-        for(m=0; m<v.size(); ++m) {
-          skeleton->events[v[m]].set_energy(5.0*RND->drandom());
-        }
-      }
-    }
-  }
-  else if (initial_state == Initial_Topology::singleton) {
-    // An initial spacetime consisting of a single isolated vertex, though with very
-    // high energy
-    geometry_type = "SINGLETON";
-    if (relational) {
-      geometry->create(0,geometry_type);
-    }
-    else {
-      geometry->vertex_addition(svalue);
-    }
-    vt.set_energy(5000.0*(0.5 + RND->drandom()/2.0));
-    skeleton->events.push_back(vt);
-  }
-  else if (initial_state == Initial_Topology::monoplex) {
-    // The initial spacetime is a single simplex of dimension initial_dim
-    std::set<int> vx;
-    geometry_type = "MONOPLEX";
-    int ulimit = geometry->dimension();
-    if (initial_dim > geometry->dimension()) ulimit = initial_dim;
-    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND->drandom());
-
-    if (!relational) {
-      svalue.clear();
-      for(i=0; i<ulimit; ++i) {
-        svalue.push_back(0.0);
-      }
-      geometry->vertex_addition(svalue);
-    }
-    skeleton->events.push_back(vt);
-    vx.insert(0);
-
-    for(m=1; m<=initial_dim; ++m) {
-      if (!relational) {
-        svalue[m-1] = 1.0;
-        geometry->vertex_addition(svalue);
-        svalue[m-1] = 0.0;
-      }
-      skeleton->events.push_back(vt);
-      vx.insert(m);
-    }
-
-    if (relational) geometry->create(initial_dim,geometry_type);
-
-    S.initialize(vx);
-    skeleton->simplices[initial_dim].push_back(S);
-    skeleton->index_table[initial_dim][S.vertices] = 0;
-  }
-  else if (initial_state == Initial_Topology::random) {
-    // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
-    // assemble a random graph, with n = initial_size
-    int level = 2,k = 0,ulimit;
-    double percent = 0.0;
-    bool found;
-    std::set<int>* N;
-    std::vector<Simplex> svector;
-    std::vector<Simplex>::const_iterator vit;
-    SYNARMOSMA::hash_map::const_iterator qt;
-    std::set<int> v,vx,current;
-    std::set<int>::const_iterator it,chk;
-    const double nv = double(initial_size);
-
-    geometry_type = "RANDOM";
-    // Add the vertices
-    for(i=0; i<initial_size; ++i) {
-      skeleton->events.push_back(vt);
-    }
-    
-    // Next distribute energy among the vertices, ensuring at least one vertex 
-    // has non-zero energy
-    do {
-      i = RND->irandom(initial_size);
-      if (!skeleton->events[i].zero_energy()) continue;
-      skeleton->events[i].set_energy(10.0*RND->drandom());
-      k += 1;
-      percent = double(k)/nv;
-    } while(percent < 0.1);
-
-    // Next initialize the geometry
-    if (relational) {
-      geometry->create(initial_size,geometry_type);
-    }
-    else {
-      std::vector<double> climits;
-      for(m=0; m<geometry->dimension(); ++m) {
-        climits.push_back(-10.0);
-        climits.push_back(10.0);
-      }
-      geometry->multiple_vertex_addition(initial_size,true,climits);
-    }
-
-    // Now initialize the probability distribution for creating edges...
-    RND->initialize_bernoulli(edge_probability);
-    // and create the edges
-    for(i=0; i<initial_size; ++i) {
-      for(j=1+i; j<initial_size; ++j) {
-        if (RND->bernoulli_variate() == false) continue;
-        S.initialize(i,j);
-        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-        skeleton->simplices[1].push_back(S);
-        skeleton->events[i].neighbours.insert(j);
-        skeleton->events[j].neighbours.insert(i);
-        S.vertices.clear();
-      }
-    }
-
-    // Finally we have to compute all the n-skeleton->simplices (n > 1) that are implied
-    // by this random graph
-    do {
-      N = new std::set<int>[level];
-      ulimit = (signed) skeleton->simplices[level-1].size();
-      for(j=0; j<ulimit; ++j) {
-        v = skeleton->simplices[level-1][j].vertices;
-        i = 0;
-        for(it=v.begin(); it!=v.end(); ++it) {
-          N[i] = skeleton->events[*it].neighbours;
-          i++;
-        }
-        for(it=N[0].begin(); it!=N[0].end(); ++it) {
-          found = true;
-          for(i=1; i<level; ++i) {
-            chk = std::find(N[i].begin(),N[i].end(),*it);
-            if (chk == N[i].end()) {
-              found = false;
-              break;
-            }
-          }
-          if (found) vx.insert(*it);
-        }
-        for(it=vx.begin(); it!=vx.end(); ++it) {
-          in1 = *it;
-          current = v;
-          current.insert(in1);
-          svector.push_back(Simplex(current));
-        }
-        vx.clear();
-        v.clear();
-      }
-      delete[] N;
-      if (svector.empty()) break;
-      for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = skeleton->index_table[level].find(vit->vertices);
-        if (qt == skeleton->index_table[level].end()) {
-          skeleton->simplices[level].push_back(*vit);
-          skeleton->index_table[level][vit->vertices] = (signed) skeleton->simplices[level].size() - 1;
-        }
-      }
-      svector.clear();
-#ifdef VERBOSE
-      if (!diskless) std::cout << "Finished the implied " << level << "-skeleton->simplices..." << std::endl;
-#endif
-      level += 1;
-    } while(true);
-  }
- 
-  regularization(false);
-}
-
-void Spacetime::initialize()
-{
-  std::stringstream day,month,year,pid;
-#ifdef VERBOSE
-  boost::timer::cpu_timer t1;
-#endif
-
-  if (!diskless) {
-    if (std::system("mkdir -p data") < 0) throw std::runtime_error("Unable to create data directory!");
-  }
-
-  // Get the date and the process ID so that we can construct the
-  // state_file and log_file names...
-  start_time = boost::posix_time::second_clock::local_time();
-  boost::gregorian::date d = start_time.date();
-  boost::gregorian::date::ymd_type ymd = d.year_month_day();
-
-  day.width(2);
-  day << std::setfill('0') << ymd.day.as_number();
-  month.width(2);
-  month << std::setfill('0') << ymd.month.as_number();
-  year.width(4);
-  year << ymd.year;
-  // Using the ISO 8601 norm
-  date_string = year.str() + "-" + month.str() + "-" + day.str();
-
-  pid.width(5);
-  pid << std::setfill('0') << getpid();
-  pid_string = pid.str();
-  if (diskless) {
-    state_file = "";
-    log_file = "";
-    hyphansis_file = "";
-  }
-  else {
-    state_file += "_" + date_string + "_" + pid_string;
-    log_file += "_" + date_string + "_" + pid_string + ".log";
-    hyphansis_file += "_" + date_string + "_" + pid_string + ".xml";
-  }
-
-  if (initial_state == Initial_Topology::diskfile) {
-    read_state(input_file);
-    if (converged) {
-      std::cout << "This spacetime complex has already converged!" << std::endl;
-    }
-    else if (iterations >= max_iter) {
-      std::cout << "This spacetime complex has already exceeded its maximum iterations!" << std::endl;
-    }
-  }
-  else {
-    build_initial_state();
-    geometry->compute_squared_distances();
-    skeleton->compute_simplicial_dimension();
-    adjust_dimension();
-    skeleton->compute_parity();
-    compute_lightcones();
-    compute_volume();
-    compute_curvature();
-    compute_obliquity();
-    compute_lightcones();
-    skeleton->compute_global_topology();
-    structural_deficiency();
-  }
-#ifdef DEBUG
-  assert(skeleton->energy_check());
-#endif
-
-  if (instrument_convergence) {
-    /*
-    anterior.skeleton->events = skeleton->events;
-    for(int i=1; i<=Complex::ND; ++i) {
-      anterior.skeleton->simplices[i] = skeleton->simplices[i];
-      anterior.skeleton->index_table[i] = skeleton->index_table[i];
-    }
-    */
-  }
-  if (diskless) return;
-
-#ifdef VERBOSE
-  if (skeleton->pseudomanifold) {
-    if (skeleton->orientable) {
-      if (skeleton->boundary) {
-        std::cout << "The spacetime complex is an orientable pseudomanifold with boundary." << std::endl;
-      }
-      else {
-        std::cout << "The spacetime complex is an orientable pseudomanifold." << std::endl;
-      }
-    }
-    else {
-      if (skeleton->boundary) {
-        std::cout << "The spacetime complex is a non-orientable pseudomanifold with boundary." << std::endl;
-      }
-      else {
-        std::cout << "The spacetime complex is a non-orientable pseudomanifold." << std::endl;
-      }
-    }
-  }
-  else {
-    std::cout << "The spacetime complex is not a pseudomanifold" << std::endl;
-  }
-  skeleton->write_topology();
-#endif
-
-  write_state();
-  write_log();
-
-  if (iterations == 0) {
-    std::ofstream s(hyphansis_file,std::ios::trunc);
-    s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
-    s.close();
-  }
-#ifdef VERBOSE
-  std::cout << "At relaxation step " << iterations << " the global error is " << error << std::endl;
-#endif
-
-#ifdef VERBOSE
-  t1.stop();
-  std::cout << "Spacetime initialization required " << boost::timer::format(t1.elapsed(),3,"%w") << " seconds to complete." << std::endl;
-#endif
 }

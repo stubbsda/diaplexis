@@ -151,6 +151,8 @@ namespace DIAPLEXIS {
     void musical_hyphansis(const std::vector<std::pair<int,double> >&);
     std::string implicative_scale(int,std::vector<double>&) const;
     std::string explicative_scale(int,std::vector<double>&) const;
+    void implication(std::string&) const;
+    void explication(std::string&) const;
     int select_vertex(const std::vector<int>&,double) const;
     int vertex_addition(const std::vector<double>&);
     int vertex_addition(const std::set<int>&);
@@ -181,8 +183,6 @@ namespace DIAPLEXIS {
     bool vertex_twist();
     bool stellar_addition(int);
     bool stellar_deletion(int);
-    bool edge_parity_mutation(int);
-    bool edge_parity_mutation(int,int);
     void vertex_fusion(int,int);
     void superposition_fusion(std::set<int>&);
     void superposition_fission(std::set<int>&);
@@ -191,7 +191,6 @@ namespace DIAPLEXIS {
     void entourage(std::vector<int>&) const;
 
     bool realizable(int,int) const;
-    void determine_flexible_edges();
     void compute_volume();
     void compute_lengths();
     void compute_curvature();
@@ -208,23 +207,16 @@ namespace DIAPLEXIS {
     double compute_temporal_nonlinearity() const;
     double representational_energy(bool) const;
 
-    void implication(std::string&) const;
-    void explication(std::string&) const;
-    void compute_delta();
     bool global_operations();
     void write_distribution(const std::vector<int>&) const;
     void compute_colours(std::vector<unsigned char>&,bool) const;
     void build_initial_state();
     void write_log() const;
-    void read_complex(std::ifstream&);
     void read_state();
-    void write_complex(std::ofstream&) const;
     void write_state() const;
     void read_parameters(const std::string&);
     void set_default_values();
     void update_viewer();
-    void energy_diffusion();
-    void energy_diffusion(int);
     void optimize();
     bool adjust_dimension();
     void analyze_convergence();
@@ -254,14 +246,11 @@ namespace DIAPLEXIS {
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*) const;
     void set_checkpoint_frequency(int);
-    void get_energy_values(std::vector<double>&) const;
-    void get_deficiency_values(std::vector<double>&) const;
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
-    double get_geometric_distance(int,int) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;
-    void write_vertex_data(int) const;
+    inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
     inline double get_event_obliquity(int n) const {return skeleton->events[n].obliquity;};
     inline double get_event_energy(int n) const {return skeleton->events[n].get_energy();};
