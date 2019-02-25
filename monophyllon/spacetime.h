@@ -139,12 +139,6 @@ namespace DIAPLEXIS {
     // and the energy
     static const double Lambda;
 
-    void compute_geometric_gradient(std::vector<double>&,bool);
-    void compute_geometric_dependency(const std::set<int>&);
-    void compute_topological_dependency(const std::set<int>&);
-    void arclength_statistics(double*) const;
-    double set_logical_atoms(int);
-
     // The various methods needed for the hyphantic operators
     void hyphansis();
     void dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
@@ -163,7 +157,6 @@ namespace DIAPLEXIS {
     bool circumvolution(int);
     int compression(double,std::set<int>&);
     bool unravel(int);
-    bool reduction(int);
     bool contraction(int,double);
     bool compensation_m(int);
     bool compensation_g(int);
@@ -197,7 +190,13 @@ namespace DIAPLEXIS {
     void compute_obliquity();
     double compute_abnormality() const;
     double compute_abnormality(const std::vector<double>&) const;
+    void compute_geometric_gradient(std::vector<double>&,bool);
     void mechanical_force(const std::vector<int>&,const std::vector<double>&,double*) const;
+    void mechanical_solver();
+    void annealing_solver();
+    void simplex_solver();
+    void evolutionary_solver();
+    void optimize();
     double minimize_lengths(const std::vector<int>&,const std::vector<int>&,int*) const;
     void structural_deficiency();
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
@@ -217,10 +216,10 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     void set_default_values();
     void update_viewer();
-    void optimize();
     bool adjust_dimension();
     void analyze_convergence();
     void test_harness(int,int);
+    void arclength_statistics(double*) const;
     void condense();
     void initialize();
     void allocate();
