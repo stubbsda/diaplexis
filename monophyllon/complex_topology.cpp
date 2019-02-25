@@ -124,6 +124,118 @@ std::pair<double,double> Complex::random_walk() const
   return output;
 }
 
+bool Complex::reduction(int base)
+{
+  const int d = vertex_dimension(base);
+  if (d < 2) return false;
+  int i,n,m,vx[1+d];
+  std::set<int> candidates,s1;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  const int N = (signed) simplices[d].size();
+
+  // Find which edges this vertex possesses are used in n-simplices (n > 1) and
+  // eliminate one of them...
+  for(i=0; i<N; ++i) {
+    if (!simplices[d][i].active) continue;
+    if (simplices[d][i].contains(base)) candidates.insert(i);
+  }
+  m = RND->irandom(candidates);
+  simplices[d][m].get_vertices(vx);
+  do {
+    n = RND->irandom(1+d);
+    if (vx[n] != base) break;
+  } while(true);
+  // Delete the edge v:vx[n]...
+#ifdef VERBOSE
+  std::cout << "Deleting edge with key " << base << ":" << vx[n] << std::endl;
+#endif
+  s1.insert(base); s1.insert(vx[n]);
+  qt = index_table[1].find(s1);
+  simplex_deletion(1,qt->second);
+  return true;
+}
+
+void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
+{
+  // A method that takes a set of vertices whose coordinates have
+  // been modified and determines which simplices will have their
+  // modified property set to true...
+  if (vx.empty()) return;
+  int i,m,n;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it,jt,kt;
+
+#ifdef VERBOSE
+  std::cout << "There are " << vx.size() << " vertices directly implicated." << std::endl;
+#endif
+  // We assume that the cardinality of vmodified is small relative
+  // to the total number of vertices in the spacetime complex
+  for(it=vx.begin(); it!=vx.end(); ++it) {
+    n = *it;
+    current = events[n].entourage;
+    for(i=1; i<=Complex::ND; ++i) {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        simplices[i][m].modified = true;
+        for(kt=simplices[i][m].entourage.begin(); kt!=simplices[i][m].entourage.end(); ++kt) {
+          next.insert(*kt);
+        }
+      }
+      if (next.empty()) break;
+      current = next;
+      next.clear();
+    }
+  }
+}
+
+void Spacetime::compute_topological_dependency(const std::set<int>& vx)
+{
+  int i,n,m,l,nhop,nmod = 0;
+  std::set<int> next,current;
+  std::set<int>::const_iterator it,jt,kt;
+  const int nv = (signed) events.size();
+  int done[nv];
+  for(i=0; i<nv; ++i) {
+    done[i] = 0;
+  }
+  for(it=vx.begin(); it!=vx.end(); ++it) {
+    n = *it;
+    nhop = 0;
+    // Every vertex within topological_radius hops of n is labelled as
+    // modified
+    current.insert(n);
+    done[n] = 1;
+    do {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
+          l = *kt;
+          if (done[l] == 0) next.insert(l);
+        }
+      }
+      if (next.empty()) break;
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
+        done[*jt] = 1;
+      }
+      current = next;
+      nhop++;
+      next.clear();
+    } while(nhop < Complex::topological_radius);
+    current.clear();
+    next.clear();
+    for(i=0; i<nv; ++i) {
+      if (done[i] == 1) events[i].topology_modified = true;
+      done[i] = 0;
+    }
+  }
+  for(i=0; i<nv; ++i) {
+    if (events[i].topology_modified) nmod++;
+  }
+#ifdef VERBOSE
+  std::cout << "There are " << nmod << " modified vertices out of " << nv << std::endl;
+#endif
+}
+
 double Complex::dimensional_stress(int d,int n) const
 {
   // This method measures the standard deviation of the
@@ -259,6 +371,50 @@ int Complex::cyclicity() const
   compute_graph(&G);
   if (!G.connected()) return 0;
   return (G.size() - G.bridge_count());
+}
+
+double Complex::set_logical_atoms(int n)
+{ 
+#ifdef DEBUG
+  assert(n > 0);
+#endif
+  int i,j,natoms;
+  double sigma,output = 0.0;
+  std::set<int> cset;
+  const int nvertex = (signed) events.size();
+
+  for(int i=0; i<nvertex; ++i) {
+    events[i].theorem.clear();
+  }
+ 
+  // Set the logical atoms in a purely random manner, the argument 
+  // "n" represents the total number of propositional atoms in the 
+  // entire spacetime
+  for(i=0; i<nvertex; ++i) {
+    if (!events[i].active) continue;
+    cset.clear();
+    // The more energetic and the higher the topological dimension of a 
+    // vertex, the greater the number of atomic propositions in its theorem 
+    // property.
+    sigma = (1.0 + events[i].get_energy())*double(4 + events[i].topological_dimension);
+    sigma *= RND->drandom(1.0,1.5);
+    natoms = int(sigma);
+    if (natoms >= n) {
+      for(j=0; j<n; ++j) {
+        cset.insert(j); 
+      }
+    }
+    else {
+      do {
+        cset.insert(RND->irandom(n));
+        if ((signed) cset.size() == natoms) break;
+      } while(true);
+    }
+    events[i].theorem.set_atoms(cset);
+    output += double(cset.size());   
+  }
+  output = output/double(cardinality(0));
+  return output;
 }
 
 double Complex::logical_energy(int v) const

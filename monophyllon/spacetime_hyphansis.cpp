@@ -253,6 +253,422 @@ void Spacetime::explication(std::string& output) const
   }
 }
 
+int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity) const
+{
+  if (candidates.empty()) return -1;
+  // The closer the intensity is to unity, the more we should try to choose an element 
+  // of candidates close to the beginning
+  int i,output,n = (signed) candidates.size();
+  double cdeficit,tdeficit;
+  std::vector<int> vcandidates;
+
+  for(i=0; i<n; ++i) {
+    if (!events[candidates[i]].active) continue;
+    vcandidates.push_back(candidates[i]);
+  }
+  if (vcandidates.empty()) return -1;
+  if (vcandidates.size() == 1) return vcandidates[0];
+  n = (signed) vcandidates.size();
+  tdeficit = std::abs(events[vcandidates[0]].deficiency - events[vcandidates[n-1]].deficiency);
+  for(i=0; i<n; ++i) {
+    output = vcandidates[i];
+    cdeficit = std::abs(events[output].deficiency - events[vcandidates[0]].deficiency);
+    if (intensity <= cdeficit/tdeficit) break;
+  }
+  return output;
+}
+
+void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates)
+{
+  int i,j,v,its,opcount;
+  double m_width = 1.0,x_width = 1.0;
+  bool success = false;
+  std::string line,op;
+  std::stringstream opstring;
+  std::vector<int> key_list,m_vertices,x_vertices,neutral_vertices,m_keys,x_keys;
+  std::vector<std::string> elements;
+  std::vector<double> pvalues;
+  boost::char_separator<char> sp("/");
+  const int nc = (signed) candidates.size();
+
+  // Open the file containing the hyphantic score 
+  std::ifstream mscore;
+  mscore.exceptions(std::ifstream::badbit);
+  try {
+    mscore.open(hyphansis_score);
+
+    // Now read the measure that corresponds to this iteration and sheet...
+    while(mscore.good()) {
+      getline(mscore,line);
+      // Break the line up at the forward slash
+      elements.clear();
+      boost::tokenizer<boost::char_separator<char> > tok(line,sp);
+      for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
+        elements.push_back(*beg);
+      }
+      if (elements.empty()) continue;
+#ifdef DEBUG
+      assert(elements.size() == 3);
+#endif
+      its = boost::lexical_cast<int>(elements[0]) - 1;
+      if (its < iterations) continue;
+      if (its > iterations) break;
+      // So this is a line for this relaxation step, check if it is the right sheet/voice...
+      v = boost::lexical_cast<int>(elements[1]);
+      // So, grab the piano key...
+      key_list.push_back(boost::lexical_cast<int>(elements[2]));
+    }
+  }
+  catch (const std::ifstream::failure& e) {
+    std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
+  }
+  // Close the score file
+  mscore.close();
+
+  // Open the hyphantic log file
+  std::ofstream s(hyphansis_file,std::ios::app);
+
+  if (key_list.empty()) {
+    // We're done!
+    s.close();
+    return; 
+  }
+
+  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
+  opcount = (signed) key_list.size();
+
+  // This is a fairly complicated operation - we need to play the notes the in the right order, 
+  // while at the same time highest pitched key above 44 is assigned to the vertex with the most 
+  // negative deficiency, the next highest pitched key above 44 acts upon the vertex with the  
+  // second most negative deficiency etc.
+  // We need to create a list of the distinct explicative and implicative piano keys in this measure, 
+  // paired to the appropriate vertex
+  for(i=0; i<opcount; ++i) {
+    if (key_list[i] > 40) {
+      if (std::count(m_keys.begin(),m_keys.end(),key_list[i]) == 0) m_keys.push_back(key_list[i]);
+    }
+    else if (key_list[i] < 40) {
+      if (std::count(x_keys.begin(),x_keys.end(),key_list[i]) == 0) x_keys.push_back(key_list[i]);
+    }
+  }
+  // Now sort these piano key values in the correct order, meaning ascending 
+  // for explicative (1 to 44) and descending for implicative (88 to 45)
+  std::sort(m_keys.begin(),m_keys.end(),std::greater<int>());
+  std::sort(x_keys.begin(),x_keys.end());
+
+  for(i=nc-1; i>0; --i) {
+    v = candidates[i].first;
+    if (!events[v].active) continue;
+    neutral_vertices.push_back(v);
+    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+      m_vertices.push_back(v);
+    }
+    else if (events[v].deficiency > std::numeric_limits<double>::epsilon()) {
+      x_vertices.push_back(v);
+    }
+  }
+
+  if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
+  if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
+  for(i=0; i<opcount; ++i) {
+    j = key_list[i];
+    if (j > 40) {
+      v = select_vertex(m_vertices,double(j - m_keys.back())/m_width);
+    }
+    else if (j < 40) {
+      v = select_vertex(x_vertices,double(j - x_keys[0])/x_width);
+    }
+    else {
+      // Any active vertex will do for a neutral operator
+      v = RND->irandom(neutral_vertices);
+    }
+    if (v == -1) continue;
+    // Now we have the base vertex v, next we need to get the operator and 
+    // parameters for this piano key
+    if (j > 40) {
+      op = implicative_scale(j,pvalues);
+    }
+    else if (j < 40) {
+      op = explicative_scale(j,pvalues);
+    }
+    else {
+      // Edge reorientation
+      op = "T";
+    }
+    opstring << op << "," << v;
+    if (op == "F") {
+      success = fission(v,pvalues[0]);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "Um") {
+      success = fusion_m(v);
+    }
+    else if (op == "Om") {
+      success = foliation_m(v);
+    }
+    else if (op == "E") {
+      success = expansion(v,pvalues[0]);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "I") {
+      success = inflation(v,pvalues[0]);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "P") {
+      success = perforation(v,0);
+      opstring << ",0"; 
+    }
+    else if (op == "V") {
+      success = circumvolution(v);
+    }
+    else if (op == "D") {
+      success = deflation(v);
+    }
+    else if (op == "Ux") {
+      success = fusion_x(v,pvalues[0]);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "Ox") {
+      success = foliation_x(v);
+    }
+    else if (op == "Sg") {
+      success = compensation_g(v);
+    }
+    else if (op == "Sm") {
+      success = compensation_m(v);
+    }
+    else if (op == "R") {
+      success = reduction(v);
+    }
+    else if (op == "C") {
+      success = correction(v);
+    }
+    else if (op == "Δ") {
+      success = stellar_deletion(v);
+    }
+    else if (op == "Y") {
+      success = stellar_addition(v);
+    }
+    else if (op == "N") {
+      success = contraction(v,pvalues[0]);
+      opstring << "," << pvalues[0]; 
+    }
+    else if (op == "A") {
+      success = amputation(v,10.0);
+      opstring << ",10.0"; 
+    }
+    else if (op == "G") {
+      success = germination(v);
+    }
+    else if (op == "T") {
+      success = edge_parity_mutation(v);
+    }
+    if (success) {
+      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      regularization(false);
+      ops += op;
+    }
+    opstring.str("");
+  }
+
+  // We're done, so close the hyphantic log file and return
+  s.close(); 
+}
+
+void Spacetime::hyphansis()
+{
+  int v;
+  double alpha;
+  std::vector<std::pair<int,double> > candidates;
+  const int nv = (signed) events.size();
+
+  ops = "";
+
+  std::ofstream s(hyphansis_file,std::ios::app);
+#ifdef VERBOSE
+  int npos = 0,nneg = 0,nze = 0;
+#endif
+  for(int i=0; i<nv; ++i) {
+    if (!events[i].active) continue;
+#ifdef VERBOSE
+    if (!events[i].zero_energy()) nze++;
+    if (events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
+    if (events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
+#endif
+    // Eliminate vertices whose structural deficiency is close to zero...
+    alpha = std::abs(events[i].deficiency);
+    if (alpha < std::numeric_limits<double>::epsilon()) continue;
+    candidates.push_back(std::pair<int,double>(i,alpha));
+  }
+#ifdef VERBOSE
+  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(cardinality(0)) << " percent of the total." << std::endl;
+  std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
+#endif
+  if (candidates.empty()) {
+    s.close();
+    return;
+  }
+
+  if (candidates.size() == 1) {
+    v = candidates[0].first;
+    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+      assert(expansion(v));
+      ops += 'E';
+      regularization(false);
+      s << "  <Operation>E," << v << "</Operation>" << std::endl;
+      s.close();
+      return;
+    }
+  }
+  s.close();
+  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
+
+  if (weaving == Hyphansis::dynamic) {
+    dynamic_hyphansis(candidates);
+  }
+  else {
+    musical_hyphansis(candidates);
+  }
+}
+
+void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates)
+{
+  int i,v,n,vx[2],nsuccess = 0;
+  double alpha;
+  std::string op;
+  std::stringstream opstring;
+  std::set<int> r_edges;
+  bool success = false;
+  const int nc = (signed) candidates.size();
+
+  std::ofstream s(hyphansis_file,std::ios::app);
+
+  for(i=nc-1; i>0; --i) {
+    v = candidates[i].first;
+    // An earlier hyphantic operation may have rendered this
+    // vertex inactive...
+    if (!events[v].active) continue;
+    alpha = events[v].deficiency;
+    if (alpha < -std::numeric_limits<double>::epsilon()) {
+      implication(op);
+      opstring << op << "," << v;
+      if (op == "F") {
+        success = fission(v,0.4);
+        opstring << ",0.4";
+      }
+      else if (op == "Um") {
+        success = fusion_m(v);
+      }
+      else if (op == "Om") {
+        success = foliation_m(v);
+      }
+      else if (op == "E") {
+        success = expansion(v,0.15);
+        opstring << ",0.15";
+      }
+      else if (op == "I") {
+        success = inflation(v,0.25);
+        opstring << ",0.25";
+      }
+      else if (op == "P") {
+        success = perforation(v,0);
+        opstring << ",0";
+      }
+      else if (op == "V") {
+        success = circumvolution(v);
+      }
+      else if (op == "Δ") {
+        success = stellar_deletion(v);
+      }
+    }
+    else if (alpha > std::numeric_limits<double>::epsilon()) {
+      if (vertex_dimension(v) > 1) {
+        if (RND->drandom() < alpha/10.0) {
+          op = "D";
+          success = deflation(v);
+          opstring << "D," << v;
+        }
+        else {
+          op = "R";
+          success = reduction(v);
+          opstring << "R," << v;
+        }
+      }
+      else {
+        explication(op);
+        opstring << op << "," << v;
+        if (op == "C") {
+          success = correction(v);
+        }
+        else if (op == "N") {
+          success = contraction(v,1.2);
+          opstring << ",1.2";
+        }
+        else if (op == "Ux") {
+          success = fusion_x(v,0.5);
+          opstring << "0.5";
+        }
+        else if (op == "Sg") {
+          success = compensation_g(v);
+        }
+        else if (op == "Sm") {
+          success = compensation_m(v);
+        }
+        else if (op == "G") {
+          success = germination(v);
+        }
+        else if (op == "Y") {
+          success = stellar_addition(v);
+        }
+        else if (op == "A") {
+          success = amputation(v,10.0);
+          opstring << ",10.0";
+        }
+        if (!success && op == "R") {
+          opstring.str("");
+          if (RND->irandom(2) == 0) {
+            op = "N";
+            success = contraction(v,1.2);
+            opstring << "N," << v << ",1.2"; 
+          }
+          else {
+            op = "Ux";
+            success = fusion_x(v,0.5);
+            opstring << "Ux," << v << ",0.5";
+          }
+        }
+        if (!success) {
+          op = "Sg";
+          success = compensation_g(v);
+          opstring.str("");
+          opstring << "Sg," << v; 
+        }
+      }
+    }
+    if (success) {
+      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      regularization(false);
+      ops += op;
+      nsuccess++;
+      opstring.str("");
+    }
+    if (double(nsuccess)/nactive > 0.1) break;
+  }
+  n = (signed) simplices[1].size();
+  for(i=0; i<n; ++i) {
+    if (!simplices[1][i].active) continue;
+    if (RND->drandom() < parity_mutation) {
+      simplices[1][i].get_vertices(vx);
+      if (edge_parity_mutation(vx[0],vx[1])) {
+        s << "  <Operation>T," << vx[0] << "</Operation>" << std::endl;
+        r_edges.insert(i);
+      }
+    }
+  }
+  skeleton->recompute_parity(r_edges);
+  s.close();
+}
+
 bool Spacetime::interplication(int centre,double size,int D)
 {
   // Method to construct a highly-entwined knot after carving out a hole for 
@@ -443,7 +859,7 @@ bool Spacetime::stellar_deletion(int base)
 {
   // If this vertex is already part of a d-simplex, d >= 2, then
   // this operation is pointless...
-  if (vertex_dimension(base) >= 2) return false;
+  if (skeleton->vertex_dimension(base) >= 2) return false;
   int m,vx[2];
   std::set<int> nset;
   std::set<int>::const_iterator it;
@@ -464,10 +880,10 @@ bool Spacetime::stellar_deletion(int base)
 
 bool Spacetime::stellar_addition(int base)
 {
-  if (vertex_dimension(base) < 2) return false;
+  if (skeleton->vertex_dimension(base) < 2) return false;
   // Take one of these 2-simplices and eliminate it in favour of a 
   // new vertex
-  int i,m = (signed) simplices[2].size();
+  int i,m = (signed) skeleton->simplices[2].size();
   unsigned int l;
   std::vector<int> sx;
   std::vector<double> xc,xtemp;
@@ -475,27 +891,27 @@ bool Spacetime::stellar_addition(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
 
   for(i=0; i<m; ++i) {
-    if (!simplices[2][i].active) continue;
-    if (simplices[2][i].contains(base)) candidates.insert(i);
+    if (!skeleton->active_simplex(2,i)) continue;
+    if (skeleton->simplices[2][i].contains(base)) candidates.insert(i);
   }
   // Choose a 2-simplex at random, get its three vertices and then 
   // eliminate each of the three edges in succession...
   m = RND->irandom(candidates);
-  simplices[2][m].get_vertices(sx);
+  skeleton->simplices[2][m].get_vertices(sx);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[1]);
-  qt = index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[2]);
-  qt = index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[1]); S.insert(sx[2]);
-  qt = index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);    
   // Now add the new vertex and the three edges...
   for(l=0; l<geometry->dimension(); ++l) {
@@ -525,7 +941,7 @@ bool Spacetime::germination(int base)
 {
   // This method constructs new neighbour vertices w_i for the vertex base which are
   // unit distance from v and orthogonal to v's existing edges, if possible.
-  if (events[base].boundary) return false;
+  if (skeleton->events[base].boundary) return false;
 
   bool good,modified = false;
   double a,b,d_min,delta;
@@ -535,20 +951,20 @@ bool Spacetime::germination(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   int i,j,vx[2],D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const int D = (signed) geometry->dimension();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->active_simplex(1,i)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
     N.insert(j);
   }
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
-    if (events[n].active) break;
+    if (skeleton->active_event(n)) break;
   }
 #ifdef VERBOSE
   std::cout << "Germination with " << base << "  " << n << std::endl;
@@ -888,12 +1304,12 @@ bool Spacetime::correction(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> candidates;
   Simplex s1;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    if (!events[i].active) continue;
-    if (std::abs(events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (!skeleton->active_event(i)) continue;
+    if (std::abs(skeleton->events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,i,true);
     if (l < 3.8025 || l > 4.2025) continue;
     // See if there is a third vertex that lies between these two...
@@ -989,43 +1405,12 @@ bool Spacetime::correction(int base)
 #endif
   m = vertex_addition(xc);
   s1.initialize(base,m);
-  simplices[1].push_back(s1);
-  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+  skeleton->simplices[1].push_back(s1);
+  skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
   s1.initialize(n,m);
-  simplices[1].push_back(s1);
-  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+  skeleton->simplices[1].push_back(s1);
+  skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
 
-  return true;
-}
-
-bool Spacetime::reduction(int base)
-{
-  const int d = vertex_dimension(base);
-  if (d < 2) return false;
-  int i,n,m,vx[1+d];
-  std::set<int> candidates,s1;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int N = (signed) simplices[d].size();
-
-  // Find which edges this vertex possesses are used in n-simplices (n > 1) and
-  // eliminate one of them...
-  for(i=0; i<N; ++i) {
-    if (!simplices[d][i].active) continue;
-    if (simplices[d][i].contains(base)) candidates.insert(i);
-  }
-  m = RND->irandom(candidates);
-  simplices[d][m].get_vertices(vx);
-  do {
-    n = RND->irandom(1+d);
-    if (vx[n] != base) break;
-  } while(true);
-  // Delete the edge v:vx[n]...
-#ifdef VERBOSE
-  std::cout << "Deleting edge with key " << base << ":" << vx[n] << std::endl;
-#endif
-  s1.insert(base); s1.insert(vx[n]);
-  qt = index_table[1].find(s1);
-  skeleton->simplex_deletion(1,qt->second);
   return true;
 }
 
@@ -1034,11 +1419,11 @@ bool Spacetime::contraction(int base,double l)
   int i,u,vx[2];
   std::set<int> pool;
   const double L2 = l*l;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[i][i].get_vertices(vx);
+    if (!skeleton->active_simplex(1,i)) continue;
+    skeleton->simplices[i][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     u = (vx[0] == base) ? vx[1] : vx[0];
     if (geometry->get_squared_distance(base,u,true) > L2) pool.insert(i);
@@ -1046,7 +1431,7 @@ bool Spacetime::contraction(int base,double l)
   if (pool.empty()) return false;
   i = RND->irandom(pool);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in localization" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][i].vertices) << " in localization" << std::endl;
 #endif
   skeleton->simplex_deletion(1,i);
   return true;
@@ -1058,29 +1443,29 @@ bool Spacetime::compensation_m(int base)
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
-  if (vertex_dimension(base) < 2) return false;
+  if (skeleton->vertex_dimension(base) < 2) return false;
 
 #ifdef VERBOSE
-  std::cout << "Compensation with " << dimension() << std::endl;
+  std::cout << "Compensation with " << skeleton->dimension() << std::endl;
 #endif
 
   // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
   // is also excessive *and* which is relatively far away (edge length >> 1)
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->active_simplex(1,i)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
     if (vertex_dimension(j) < 2) continue;
-    if (events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
+    if (skeleton->events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,j,true);
     if (l >= 0.81 && l <= 1.21) continue;
     s1.clear();
     s1.insert(base);
     s1.insert(j);
-    qt = index_table[1].find(s1);
+    qt = skeleton->index_table[1].find(s1);
     candidates.insert(qt->second);
   }
 
@@ -1092,7 +1477,7 @@ bool Spacetime::compensation_m(int base)
   }
   j = RND->irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
 #endif
   skeleton->simplex_deletion(1,j);
   return true;
@@ -1104,18 +1489,18 @@ bool Spacetime::compensation_g(int base)
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   unsigned int sdegree = 0;
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->active_simplex(1,i)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     sdegree++;
   }
   if (sdegree == 2*geometry->dimension()) return false;
   const unsigned int idegree = 2*geometry->dimension();
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   bool up = (sdegree < idegree) ? true : false;
 #ifdef VERBOSE
@@ -1127,8 +1512,8 @@ bool Spacetime::compensation_g(int base)
     // then do nothing and return false!
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      if (!events[i].active) continue;
-      if (edge_exists(base,i)) continue;
+      if (!skeleton->active_event(i)) continue;
+      if (skeleton->edge_exists(base,i)) continue;
       l = geometry->get_squared_distance(base,i,true);
       if (l >= 0.81 && l <= 1.21) candidates.insert(i);
     }
@@ -1145,15 +1530,15 @@ bool Spacetime::compensation_g(int base)
     s1.clear();
     s1.insert(base);
     s1.insert(j);
-    qt = index_table[1].find(s1);
-    if (qt != index_table[1].end()) {
+    qt = skeleton->index_table[1].find(s1);
+    if (qt != skeleton->index_table[1].end()) {
 #ifdef DEBUG
-      assert(!simplices[1][qt->second].active);
+      assert(!skeleton->active_simplex(1,qt->second));
 #endif
 #ifdef VERBOSE
-      std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
+      std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
 #endif
-      simplices[1][qt->second].active = true;
+      skeleton->simplices[1][qt->second].active = true;
     }
     else {
 #ifdef VERBOSE
@@ -1161,16 +1546,16 @@ bool Spacetime::compensation_g(int base)
 #endif
       Simplex S(base,j);
       // Now add this simplex to the spacetime complex...
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      skeleton->index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
     }
   }
   else {
     // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
     // is also excessive *and* which is relatively far away (edge length >> 1)
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->active_simplex(1,i)) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = geometry->get_squared_distance(base,j,true);
@@ -1266,87 +1651,6 @@ bool Spacetime::unravel(int base)
   // Eliminate the edge in_max...
   skeleton->simplex_deletion(1,in_max);
   return true;
-}
-
-void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
-{
-  // A method that takes a set of vertices whose coordinates have
-  // been modified and determines which simplices will have their
-  // modified property set to true...
-  if (vx.empty()) return;
-  int i,m,n;
-  std::set<int> current,next;
-  std::set<int>::const_iterator it,jt,kt;
-
-#ifdef VERBOSE
-  std::cout << "There are " << vx.size() << " vertices directly implicated." << std::endl;
-#endif
-  // We assume that the cardinality of vmodified is small relative
-  // to the total number of vertices in the spacetime complex
-  for(it=vx.begin(); it!=vx.end(); ++it) {
-    n = *it;
-    current = events[n].entourage;
-    for(i=1; i<=Spacetime::ND; ++i) {
-      for(jt=current.begin(); jt!=current.end(); ++jt) {
-        m = *jt;
-        simplices[i][m].modified = true;
-        for(kt=simplices[i][m].entourage.begin(); kt!=simplices[i][m].entourage.end(); ++kt) {
-          next.insert(*kt);
-        }
-      }
-      if (next.empty()) break;
-      current = next;
-      next.clear();
-    }
-  }
-}
-
-void Spacetime::compute_topological_dependency(const std::set<int>& vx)
-{
-  int i,n,m,l,nhop,nmod = 0;
-  std::set<int> next,current;
-  std::set<int>::const_iterator it,jt,kt;
-  const int nv = (signed) events.size();
-  int done[nv];
-  for(i=0; i<nv; ++i) {
-    done[i] = 0;
-  }
-  for(it=vx.begin(); it!=vx.end(); ++it) {
-    n = *it;
-    nhop = 0;
-    // Every vertex within topological_radius hops of n is labelled as
-    // modified
-    current.insert(n);
-    done[n] = 1;
-    do {
-      for(jt=current.begin(); jt!=current.end(); ++jt) {
-        m = *jt;
-        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
-          l = *kt;
-          if (done[l] == 0) next.insert(l);
-        }
-      }
-      if (next.empty()) break;
-      for(jt=next.begin(); jt!=next.end(); ++jt) {
-        done[*jt] = 1;
-      }
-      current = next;
-      nhop++;
-      next.clear();
-    } while(nhop < Spacetime::topological_radius);
-    current.clear();
-    next.clear();
-    for(i=0; i<nv; ++i) {
-      if (done[i] == 1) events[i].topology_modified = true;
-      done[i] = 0;
-    }
-  }
-  for(i=0; i<nv; ++i) {
-    if (events[i].topology_modified) nmod++;
-  }
-#ifdef VERBOSE
-  std::cout << "There are " << nmod << " modified vertices out of " << nv << std::endl;
-#endif
 }
 
 int Spacetime::compression(double threshold,std::set<int>& vmodified)
@@ -2712,420 +3016,4 @@ bool Spacetime::inflation(int base,double creativity)
   }
   skeleton->simplex_addition(vx,vx_delta);
   return true;
-}
-
-int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity) const
-{
-  if (candidates.empty()) return -1;
-  // The closer the intensity is to unity, the more we should try to choose an element 
-  // of candidates close to the beginning
-  int i,output,n = (signed) candidates.size();
-  double cdeficit,tdeficit;
-  std::vector<int> vcandidates;
-
-  for(i=0; i<n; ++i) {
-    if (!events[candidates[i]].active) continue;
-    vcandidates.push_back(candidates[i]);
-  }
-  if (vcandidates.empty()) return -1;
-  if (vcandidates.size() == 1) return vcandidates[0];
-  n = (signed) vcandidates.size();
-  tdeficit = std::abs(events[vcandidates[0]].deficiency - events[vcandidates[n-1]].deficiency);
-  for(i=0; i<n; ++i) {
-    output = vcandidates[i];
-    cdeficit = std::abs(events[output].deficiency - events[vcandidates[0]].deficiency);
-    if (intensity <= cdeficit/tdeficit) break;
-  }
-  return output;
-}
-
-void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates)
-{
-  int i,j,v,its,opcount;
-  double m_width = 1.0,x_width = 1.0;
-  bool success = false;
-  std::string line,op;
-  std::stringstream opstring;
-  std::vector<int> key_list,m_vertices,x_vertices,neutral_vertices,m_keys,x_keys;
-  std::vector<std::string> elements;
-  std::vector<double> pvalues;
-  boost::char_separator<char> sp("/");
-  const int nc = (signed) candidates.size();
-
-  // Open the file containing the hyphantic score 
-  std::ifstream mscore;
-  mscore.exceptions(std::ifstream::badbit);
-  try {
-    mscore.open(hyphansis_score);
-
-    // Now read the measure that corresponds to this iteration and sheet...
-    while(mscore.good()) {
-      getline(mscore,line);
-      // Break the line up at the forward slash
-      elements.clear();
-      boost::tokenizer<boost::char_separator<char> > tok(line,sp);
-      for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-        elements.push_back(*beg);
-      }
-      if (elements.empty()) continue;
-#ifdef DEBUG
-      assert(elements.size() == 3);
-#endif
-      its = boost::lexical_cast<int>(elements[0]) - 1;
-      if (its < iterations) continue;
-      if (its > iterations) break;
-      // So this is a line for this relaxation step, check if it is the right sheet/voice...
-      v = boost::lexical_cast<int>(elements[1]);
-      // So, grab the piano key...
-      key_list.push_back(boost::lexical_cast<int>(elements[2]));
-    }
-  }
-  catch (const std::ifstream::failure& e) {
-    std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
-  }
-  // Close the score file
-  mscore.close();
-
-  // Open the hyphantic log file
-  std::ofstream s(hyphansis_file,std::ios::app);
-
-  if (key_list.empty()) {
-    // We're done!
-    s.close();
-    return; 
-  }
-
-  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
-  opcount = (signed) key_list.size();
-
-  // This is a fairly complicated operation - we need to play the notes the in the right order, 
-  // while at the same time highest pitched key above 44 is assigned to the vertex with the most 
-  // negative deficiency, the next highest pitched key above 44 acts upon the vertex with the  
-  // second most negative deficiency etc.
-  // We need to create a list of the distinct explicative and implicative piano keys in this measure, 
-  // paired to the appropriate vertex
-  for(i=0; i<opcount; ++i) {
-    if (key_list[i] > 40) {
-      if (std::count(m_keys.begin(),m_keys.end(),key_list[i]) == 0) m_keys.push_back(key_list[i]);
-    }
-    else if (key_list[i] < 40) {
-      if (std::count(x_keys.begin(),x_keys.end(),key_list[i]) == 0) x_keys.push_back(key_list[i]);
-    }
-  }
-  // Now sort these piano key values in the correct order, meaning ascending 
-  // for explicative (1 to 44) and descending for implicative (88 to 45)
-  std::sort(m_keys.begin(),m_keys.end(),std::greater<int>());
-  std::sort(x_keys.begin(),x_keys.end());
-
-  for(i=nc-1; i>0; --i) {
-    v = candidates[i].first;
-    if (!events[v].active) continue;
-    neutral_vertices.push_back(v);
-    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
-      m_vertices.push_back(v);
-    }
-    else if (events[v].deficiency > std::numeric_limits<double>::epsilon()) {
-      x_vertices.push_back(v);
-    }
-  }
-
-  if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
-  if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
-  for(i=0; i<opcount; ++i) {
-    j = key_list[i];
-    if (j > 40) {
-      v = select_vertex(m_vertices,double(j - m_keys.back())/m_width);
-    }
-    else if (j < 40) {
-      v = select_vertex(x_vertices,double(j - x_keys[0])/x_width);
-    }
-    else {
-      // Any active vertex will do for a neutral operator
-      v = RND->irandom(neutral_vertices);
-    }
-    if (v == -1) continue;
-    // Now we have the base vertex v, next we need to get the operator and 
-    // parameters for this piano key
-    if (j > 40) {
-      op = implicative_scale(j,pvalues);
-    }
-    else if (j < 40) {
-      op = explicative_scale(j,pvalues);
-    }
-    else {
-      // Edge reorientation
-      op = "T";
-    }
-    opstring << op << "," << v;
-    if (op == "F") {
-      success = fission(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
-    }
-    else if (op == "Um") {
-      success = fusion_m(v);
-    }
-    else if (op == "Om") {
-      success = foliation_m(v);
-    }
-    else if (op == "E") {
-      success = expansion(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
-    }
-    else if (op == "I") {
-      success = inflation(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
-    }
-    else if (op == "P") {
-      success = perforation(v,0);
-      opstring << ",0"; 
-    }
-    else if (op == "V") {
-      success = circumvolution(v);
-    }
-    else if (op == "D") {
-      success = deflation(v);
-    }
-    else if (op == "Ux") {
-      success = fusion_x(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
-    }
-    else if (op == "Ox") {
-      success = foliation_x(v);
-    }
-    else if (op == "Sg") {
-      success = compensation_g(v);
-    }
-    else if (op == "Sm") {
-      success = compensation_m(v);
-    }
-    else if (op == "R") {
-      success = reduction(v);
-    }
-    else if (op == "C") {
-      success = correction(v);
-    }
-    else if (op == "Δ") {
-      success = stellar_deletion(v);
-    }
-    else if (op == "Y") {
-      success = stellar_addition(v);
-    }
-    else if (op == "N") {
-      success = contraction(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
-    }
-    else if (op == "A") {
-      success = amputation(v,10.0);
-      opstring << ",10.0"; 
-    }
-    else if (op == "G") {
-      success = germination(v);
-    }
-    else if (op == "T") {
-      success = edge_parity_mutation(v);
-    }
-    if (success) {
-      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
-      regularization(false);
-      ops += op;
-    }
-    opstring.str("");
-  }
-
-  // We're done, so close the hyphantic log file and return
-  s.close(); 
-}
-
-void Spacetime::hyphansis()
-{
-  int v;
-  double alpha;
-  std::vector<std::pair<int,double> > candidates;
-  const int nv = (signed) events.size();
-
-  ops = "";
-
-  std::ofstream s(hyphansis_file,std::ios::app);
-#ifdef VERBOSE
-  int npos = 0,nneg = 0,nze = 0;
-#endif
-  for(int i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
-#ifdef VERBOSE
-    if (!events[i].zero_energy()) nze++;
-    if (events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
-    if (events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
-#endif
-    // Eliminate vertices whose structural deficiency is close to zero...
-    alpha = std::abs(events[i].deficiency);
-    if (alpha < std::numeric_limits<double>::epsilon()) continue;
-    candidates.push_back(std::pair<int,double>(i,alpha));
-  }
-#ifdef VERBOSE
-  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(cardinality(0)) << " percent of the total." << std::endl;
-  std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
-#endif
-  if (candidates.empty()) {
-    s.close();
-    return;
-  }
-
-  if (candidates.size() == 1) {
-    v = candidates[0].first;
-    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
-      assert(expansion(v));
-      ops += 'E';
-      regularization(false);
-      s << "  <Operation>E," << v << "</Operation>" << std::endl;
-      s.close();
-      return;
-    }
-  }
-  s.close();
-  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
-
-  if (weaving == Hyphansis::dynamic) {
-    dynamic_hyphansis(candidates);
-  }
-  else {
-    musical_hyphansis(candidates);
-  }
-}
-
-void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates)
-{
-  int i,v,n,vx[2],nsuccess = 0;
-  double alpha;
-  std::string op;
-  std::stringstream opstring;
-  std::set<int> r_edges;
-  bool success = false;
-  const int nc = (signed) candidates.size();
-
-  std::ofstream s(hyphansis_file,std::ios::app);
-
-  for(i=nc-1; i>0; --i) {
-    v = candidates[i].first;
-    // An earlier hyphantic operation may have rendered this
-    // vertex inactive...
-    if (!events[v].active) continue;
-    alpha = events[v].deficiency;
-    if (alpha < -std::numeric_limits<double>::epsilon()) {
-      implication(op);
-      opstring << op << "," << v;
-      if (op == "F") {
-        success = fission(v,0.4);
-        opstring << ",0.4";
-      }
-      else if (op == "Um") {
-        success = fusion_m(v);
-      }
-      else if (op == "Om") {
-        success = foliation_m(v);
-      }
-      else if (op == "E") {
-        success = expansion(v,0.15);
-        opstring << ",0.15";
-      }
-      else if (op == "I") {
-        success = inflation(v,0.25);
-        opstring << ",0.25";
-      }
-      else if (op == "P") {
-        success = perforation(v,0);
-        opstring << ",0";
-      }
-      else if (op == "V") {
-        success = circumvolution(v);
-      }
-      else if (op == "Δ") {
-        success = stellar_deletion(v);
-      }
-    }
-    else if (alpha > std::numeric_limits<double>::epsilon()) {
-      if (vertex_dimension(v) > 1) {
-        if (RND->drandom() < alpha/10.0) {
-          op = "D";
-          success = deflation(v);
-          opstring << "D," << v;
-        }
-        else {
-          op = "R";
-          success = reduction(v);
-          opstring << "R," << v;
-        }
-      }
-      else {
-        explication(op);
-        opstring << op << "," << v;
-        if (op == "C") {
-          success = correction(v);
-        }
-        else if (op == "N") {
-          success = contraction(v,1.2);
-          opstring << ",1.2";
-        }
-        else if (op == "Ux") {
-          success = fusion_x(v,0.5);
-          opstring << "0.5";
-        }
-        else if (op == "Sg") {
-          success = compensation_g(v);
-        }
-        else if (op == "Sm") {
-          success = compensation_m(v);
-        }
-        else if (op == "G") {
-          success = germination(v);
-        }
-        else if (op == "Y") {
-          success = stellar_addition(v);
-        }
-        else if (op == "A") {
-          success = amputation(v,10.0);
-          opstring << ",10.0";
-        }
-        if (!success && op == "R") {
-          opstring.str("");
-          if (RND->irandom(2) == 0) {
-            op = "N";
-            success = contraction(v,1.2);
-            opstring << "N," << v << ",1.2"; 
-          }
-          else {
-            op = "Ux";
-            success = fusion_x(v,0.5);
-            opstring << "Ux," << v << ",0.5";
-          }
-        }
-        if (!success) {
-          op = "Sg";
-          success = compensation_g(v);
-          opstring.str("");
-          opstring << "Sg," << v; 
-        }
-      }
-    }
-    if (success) {
-      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
-      regularization(false);
-      ops += op;
-      nsuccess++;
-      opstring.str("");
-    }
-    if (double(nsuccess)/nactive > 0.1) break;
-  }
-  n = (signed) simplices[1].size();
-  for(i=0; i<n; ++i) {
-    if (!simplices[1][i].active) continue;
-    if (RND->drandom() < parity_mutation) {
-      simplices[1][i].get_vertices(vx);
-      if (edge_parity_mutation(vx[0],vx[1])) {
-        s << "  <Operation>T," << vx[0] << "</Operation>" << std::endl;
-        r_edges.insert(i);
-      }
-    }
-  }
-  skeleton->recompute_parity(r_edges);
-  s.close();
 }
