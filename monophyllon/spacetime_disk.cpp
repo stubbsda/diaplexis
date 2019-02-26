@@ -59,7 +59,7 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "RandomSeed") {
       rs = boost::lexical_cast<unsigned int>(value);
       if (rs == 0) rs = (unsigned) std::time(nullptr);
-      RND->set_seed(rs);
+      skeleton->RND->set_seed(rs);
     }
     else if (name == "BackgroundDimension") {
       D = boost::lexical_cast<int>(value);
@@ -372,7 +372,7 @@ void Spacetime::write_log() const
     s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
-    s << "<RandomSeed>" << RND->get_seed() << "</RandomSeed>" << std::endl;
+    s << "<RandomSeed>" << skeleton->RND->get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
     s << "<Compressible>" << bvalue[compressible] << "</Compressible>" << std::endl;
     if (initial_state == Initial_Topology::diskfile) {
@@ -672,11 +672,11 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("HyphanticSequence");
-  if (ops == "") {
+  if (hyphantic_ops == "") {
     atom.append_child(pugi::node_pcdata).set_value("NULL");
   }
   else {
-    atom.append_child(pugi::node_pcdata).set_value(ops.c_str());
+    atom.append_child(pugi::node_pcdata).set_value(hyphantic_ops.c_str());
   }
 
 #ifdef _OPENMP
@@ -742,9 +742,9 @@ void Spacetime::read(const Spacetime& source)
 void Spacetime::read_state(const std::string& filename)
 {
   int n;
-  std::string cmodel,fmodel;
-  unsigned int q;
+  char c;
   double x;
+  std::string cmodel,fmodel;
 
   std::ifstream s(filename,std::ios::in | std::ios::binary);
   if (!s.is_open()) {
@@ -825,7 +825,6 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&initial_size),sizeof(int));
   s.read((char*)(&initial_dim),sizeof(int));
   s.read((char*)(&max_iter),sizeof(int));
-  s.read((char*)(&q),sizeof(int));
   s.read((char*)(&checkpoint_frequency),sizeof(int));
   // Skip changing the initial_state as it should remain DISKFILE...
   s.read((char*)(&original_state),sizeof(Initial_Topology));
@@ -875,16 +874,24 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&error),sizeof(double));
   s.read((char*)(&converged),sizeof(bool));
 
+  s.read((char*)(&n),sizeof(int));
+  for(i=0; i<n; ++i) {
+    s.read((char*)(&c),sizeof(char));
+    hyphantic_ops += std::string(c);
+  }
+
   geometry->deserialize(s);
   skeleton->deserialize(s);
 
   s.close();
-  RND->set_seed(q);
 }
 
 void Spacetime::write_state() const
 {
-  int n = SYNARMOSMA::Proposition::get_clause_size();
+  int i,n = SYNARMOSMA::Proposition::get_clause_size();
+  char c;
+  unsigned long q;
+
   // This is a monophyllon file, so the first value is 1...
   const int ftype = 1;
 
@@ -909,9 +916,6 @@ void Spacetime::write_state() const
   s.write((char*)(&initial_size),sizeof(int));
   s.write((char*)(&initial_dim),sizeof(int));
   s.write((char*)(&max_iter),sizeof(int));
-  // Write the initial random number seed to disk...
-  unsigned int q = RND->get_seed();
-  s.write((char*)(&q),sizeof(int));
   s.write((char*)(&checkpoint_frequency),sizeof(int));
   s.write((char*)(&initial_state),sizeof(Initial_Topology));
   s.write((char*)(&instrument_convergence),sizeof(bool));
@@ -962,6 +966,14 @@ void Spacetime::write_state() const
   s.write((char*)(&global_deficiency),sizeof(double));
   s.write((char*)(&error),sizeof(double));
   s.write((char*)(&converged),sizeof(bool));
+
+  // Now write out the hyphantic operations that have been performed...
+  n = hyphantic_ops.length();
+  s.write((char*)(&n),sizeof(int));
+  for(i=0; i<n; ++i) {
+    c = hyphantic_ops[i];
+    s.write((char*)(&c),sizeof(char));
+  }
 
   // The principal body of the file...
   geometry->serialize(s);

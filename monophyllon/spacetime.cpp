@@ -43,7 +43,6 @@ Spacetime::Spacetime(const std::string& filename,bool no_disk)
 
 Spacetime::~Spacetime()
 {
-  delete RND;
   delete skeleton;
   delete geometry;
 }
@@ -54,7 +53,6 @@ void Spacetime::allocate()
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
   skeleton = new Complex;
-  RND = new SYNARMOSMA::Random;
 }
 
 void Spacetime::set_checkpoint_frequency(int a)
@@ -65,10 +63,10 @@ void Spacetime::set_checkpoint_frequency(int a)
 void Spacetime::restart(const std::string& filename,bool save_seed)
 {
   if (save_seed) {
-    unsigned int n = RND->get_seed();
+    unsigned int n = skeleton->RND->get_seed();
     clear();
     read_parameters(filename);
-    RND->set_seed(n);
+    skeleton->RND->set_seed(n);
   }
   else {
     clear();
@@ -80,6 +78,7 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
 void Spacetime::clear()
 {
   skeleton->clear();
+  hyphantic_ops = "";
   iterations = 0;
 }
 
@@ -318,14 +317,14 @@ void Spacetime::distribute(int nprocs) const
 #endif
   do {
     do {
-      n = RND->irandom(nv);
+      n = skeleton->RND->irandom(nv);
       if (!skeleton->events[n].active) continue;
       if (skeleton->events[n].topological_dimension > 1) continue;
       break;
     } while(true);
     p_old = affinity[n];
     do {
-      p = RND->irandom(nprocs);
+      p = skeleton->RND->irandom(nprocs);
       if (p != p_old) break;
     } while(true);
     affinity[n] = p;
@@ -488,7 +487,6 @@ bool Spacetime::correctness()
   const int nv = (signed) skeleton->events.size();
 
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   double anterior_error = error;
@@ -504,7 +502,6 @@ bool Spacetime::correctness()
   }
 
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   if (std::abs(anterior_error - error) < std::numeric_limits<double>::epsilon()) return true;
@@ -660,8 +657,8 @@ void Spacetime::structural_deficiency()
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature - Spacetime::Lambda*rho[v1];
-    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature;
+    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].obliquity + length_deviation[v1] - Spacetime::Lambda*rho[v1];
+    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].obliquity + length_deviation[v1];
   }
 
   // Now the chromatic energy sum...
@@ -738,7 +735,6 @@ bool Spacetime::global_operations()
   compute_lightcones();
   if (adjust_dimension()) {
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     skeleton->compute_global_topology(geometry->get_memory_type());
     structural_deficiency();
@@ -832,7 +828,6 @@ bool Spacetime::global_operations()
   // Calculate the local and global errors
   geometry->compute_squared_distances(vmodified);
   compute_volume();
-  compute_curvature();
   compute_obliquity();
 #ifdef DEBUG
   assert(skeleton->consistent());
@@ -858,7 +853,7 @@ bool Spacetime::global_operations()
     }
   }
 
-  RND->increment_seed();
+  skeleton->RND->increment_seed();
 
   // Write the current state to disk if necessary...
   if (checkpoint_frequency > 0) {

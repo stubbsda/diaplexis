@@ -55,12 +55,11 @@ namespace DIAPLEXIS {
     double topology_delta = 0.0;
     double geometry_delta = 0.0;
     double energy_delta = 0.0;
-    std::string ops = "";
+    std::string hyphantic_ops = "";
     std::set<int> vx_delta;
     std::vector<int> flexible_edge;
     Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
-    SYNARMOSMA::Random* RND;
 
     // The global parameters
     Initial_Topology initial_state = Initial_Topology::random;
@@ -186,7 +185,6 @@ namespace DIAPLEXIS {
     bool realizable(int,int) const;
     void compute_volume();
     void compute_lengths();
-    void compute_curvature();
     void compute_obliquity();
     double compute_abnormality() const;
     double compute_abnormality(const std::vector<double>&) const;
@@ -251,13 +249,8 @@ namespace DIAPLEXIS {
     void get_deficiency_extrema(double*) const;
     inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
-    inline double get_event_obliquity(int n) const {return skeleton->events[n].obliquity;};
-    inline double get_event_energy(int n) const {return skeleton->events[n].get_energy();};
-    inline double get_event_curvature(int n) const {return skeleton->events[n].curvature;};
-    inline double get_event_deficiency(int n) const {return skeleton->events[n].deficiency;};
-    inline double get_event_entwinement(int n) const {return skeleton->events[n].entwinement;};
     inline std::string get_state_file() const {return state_file;};
-    inline std::string get_ops() const {return ops;};
+    inline std::string get_hyphantic_operations() const {return hyphantic_ops;};
     inline void get_arclength_statistics(double* output) const {arclength_statistics(output);};
     inline void get_delta(double* output) const {output[0] = topology_delta; output[1] = geometry_delta; output[2] = energy_delta;};
     inline int get_iterations() const {return iterations;};

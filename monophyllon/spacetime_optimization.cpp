@@ -308,7 +308,7 @@ void Spacetime::evolutionary_solver()
   for(i=0; i<pool_size; ++i) {
     geometry->store(&pool[i]);
     for(j=0; j<pmagnitude; ++j) {
-      n = RND->irandom(system_size);
+      n = skeleton->RND->irandom(system_size);
       pool[i].get_implied_vertices(n,vx);
       viable = false;
       for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -325,7 +325,6 @@ void Spacetime::evolutionary_solver()
     skeleton->compute_geometric_dependency(vmodified);
     geometry->compute_squared_distances(vmodified);
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     structural_deficiency();
     fitness[i] = error;
@@ -352,11 +351,11 @@ void Spacetime::evolutionary_solver()
     std::cout << "At generation " << generation << " the average population fitness is " << p/double(pool_size) << " and minimum fitness is " << f1 << " with global optimum at " << fbest << std::endl;
 #endif
     // Now the mutations
-    RND->initialize_beta(1.0,double(generation)/10.0);
+    skeleton->RND->initialize_beta(1.0,double(generation)/10.0);
     for(i=pool_size; i<2*pool_size; ++i) {
-      severity = RND->beta_variate();
+      severity = skeleton->RND->beta_variate();
       for(j=0; j<system_size; ++j) {
-        if (RND->drandom() >= severity) continue;
+        if (skeleton->RND->drandom() >= severity) continue;
         pool[i].get_implied_vertices(j,vx);
         viable = false;
         for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -373,7 +372,6 @@ void Spacetime::evolutionary_solver()
       skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
-      compute_curvature();
       compute_obliquity();
       structural_deficiency();
       fitness[i] = error;
@@ -386,12 +384,12 @@ void Spacetime::evolutionary_solver()
       f1 = fitness[i];
       vc = 0;
       do {
-        in1 = RND->irandom(2*pool_size);
+        in1 = skeleton->RND->irandom(2*pool_size);
         if (in1 == i) continue;
         f2 = fitness[in1];
         // Calculate the probability that f1 emerges triumphant...
         p = 0.5*(1.0 + std::tanh(10.0*(f2 - f1)));
-        if (p > RND->drandom()) vc++;
+        if (p > skeleton->RND->drandom()) vc++;
         joust += 1;
       } while(joust < njousts);
       vcount[i] = std::pair<int,int>(i,vc);
@@ -426,7 +424,6 @@ void Spacetime::evolutionary_solver()
   }
   geometry->compute_squared_distances();
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   delete optimal;
@@ -454,7 +451,7 @@ void Spacetime::annealing_solver()
     E_old = initial_error;
     for(i=0; i<1000; ++i) {
       do {
-        m = RND->irandom(system_size);
+        m = skeleton->RND->irandom(system_size);
         geometry->get_implied_vertices(m,vmodified);
         viable = false;
         for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
@@ -467,7 +464,6 @@ void Spacetime::annealing_solver()
       skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
-      compute_curvature();
       compute_obliquity();
       structural_deficiency();
       if (error < E_old) {
@@ -475,7 +471,7 @@ void Spacetime::annealing_solver()
         E_old = error;
       }
       else {
-        q = RND->drandom();
+        q = skeleton->RND->drandom();
         sigma = error - E_old;
         if (q < std::exp(-sigma/temperature)) {
           naccept++;
@@ -486,7 +482,6 @@ void Spacetime::annealing_solver()
           skeleton->compute_geometric_dependency(vmodified);
           geometry->compute_squared_distances(vmodified);
           compute_volume();
-          compute_curvature();
           compute_obliquity();
           structural_deficiency();
         }
@@ -520,7 +515,6 @@ void Spacetime::annealing_solver()
       if (step == 1) {
         geometry->compute_squared_distances();
         compute_volume();
-        compute_curvature();
         compute_obliquity();
         structural_deficiency();
         E_old = error;
@@ -531,7 +525,7 @@ void Spacetime::annealing_solver()
       nwo_r = 0;
       for(j=0; j<thermal_sweep; ++j) {
         do {
-          n = RND->irandom(system_size);
+          n = skeleton->RND->irandom(system_size);
           geometry->get_implied_vertices(n,vmodified);
           viable = false;
           for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
@@ -547,7 +541,6 @@ void Spacetime::annealing_solver()
         skeleton->compute_geometric_dependency(vmodified);
         geometry->compute_squared_distances(vmodified);
         compute_volume();
-        compute_curvature();
         compute_obliquity();
         structural_deficiency();
         q = error;
@@ -562,7 +555,7 @@ void Spacetime::annealing_solver()
         }
         else {
           t = std::exp((E_old - q)/temperature);
-          sigma = RND->drandom();
+          sigma = skeleton->RND->drandom();
           if (sigma < t) {
             E_old = q;
             E.push_back(q);
@@ -574,7 +567,6 @@ void Spacetime::annealing_solver()
             skeleton->compute_geometric_dependency(vmodified);
             geometry->compute_squared_distances(vmodified);
             compute_volume();
-            compute_curvature();
             compute_obliquity();
             structural_deficiency();
             nwo_r++;
@@ -613,7 +605,6 @@ void Spacetime::annealing_solver()
   geometry->load(optimal);
   geometry->compute_squared_distances();
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   delete optimal;
@@ -663,7 +654,6 @@ void Spacetime::simplex_solver()
     geometry->load(&S[i]);
     geometry->compute_squared_distances();
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     structural_deficiency();
     fitness.push_back(std::pair<int,double>(i,error));
@@ -697,7 +687,6 @@ void Spacetime::simplex_solver()
       if (skeleton->active_event(i)) skeleton->events[i].geometry_modified = true;
     }
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     structural_deficiency();
     f = error;
@@ -714,7 +703,6 @@ void Spacetime::simplex_solver()
         if (skeleton->active_event(i)) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
-      compute_curvature();
       compute_obliquity();
       structural_deficiency();
       if (error < f) {
@@ -743,7 +731,6 @@ void Spacetime::simplex_solver()
         if (skeleton->active_event(i)) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
-      compute_curvature();
       compute_obliquity();
       structural_deficiency();
       if (error < f) {
@@ -763,7 +750,6 @@ void Spacetime::simplex_solver()
             if (skeleton->active_event(j)) skeleton->events[j].geometry_modified = true;
           }
           compute_volume();
-          compute_curvature();
           compute_obliquity();
           structural_deficiency();
           fitness[i].second = error;
@@ -783,7 +769,6 @@ void Spacetime::simplex_solver()
         if (skeleton->active_event(i)) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
-      compute_curvature();
       compute_obliquity();
       structural_deficiency();
       if (error < fitness[system_size].second) {
@@ -803,7 +788,6 @@ void Spacetime::simplex_solver()
             if (skeleton->active_event(j)) skeleton->events[j].geometry_modified = true;
           }
           compute_volume();
-          compute_curvature();
           compute_obliquity();
           structural_deficiency();
           fitness[i].second = error;
@@ -830,7 +814,6 @@ void Spacetime::simplex_solver()
   }
   geometry->compute_squared_distances();
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   delete initial_state;
@@ -890,7 +873,7 @@ void Spacetime::optimize()
       its++;
       // This is decidedly not very clever but it is quick!
       // First the geometry...
-      n = RND->irandom(candidates);
+      n = skeleton->RND->irandom(candidates);
       // In fact the variance we use should grow smaller as the geometric deficiency of the
       // vertex diminishes with 0.05 the maximum
       sigma = 0.1*skeleton->events[n].geometric_deficiency;
@@ -900,7 +883,6 @@ void Spacetime::optimize()
       skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
-      compute_curvature();
       compute_obliquity();
 
       // Finally, see if it's an improvement...

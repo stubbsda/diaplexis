@@ -21,6 +21,7 @@ Complex::~Complex()
   delete[] index_table;
   delete H;
   delete pi1;
+  delete RND;
 }
 
 void Complex::allocate()
@@ -29,6 +30,7 @@ void Complex::allocate()
   pi1 = new SYNARMOSMA::Homotopy;
   simplices = new std::vector<Simplex>[1+Complex::ND];
   index_table = new SYNARMOSMA::hash_map[1+Complex::ND];
+  RND = new SYNARMOSMA::Random;
 }
 
 void Complex::clear()
@@ -209,10 +211,15 @@ void Complex::write_graph(const std::string& filename) const
 int Complex::serialize(std::ofstream& s) const
 {
   int i,j,n,output = 0;
+  unsigned long q;
 
   s.write((char*)(&pseudomanifold),sizeof(bool)); output += sizeof(bool);
   s.write((char*)(&boundary),sizeof(bool)); output += sizeof(bool);
   s.write((char*)(&orientable),sizeof(bool)); output += sizeof(bool);
+
+  // Write the initial random number seed to disk...
+  q = RND->get_seed();
+  s.write((char*)(&q),sizeof(long)); output += sizeof(long);
 
   n = (signed) events.size();
   s.write((char*)(&n),sizeof(int)); output += sizeof(int);
@@ -237,12 +244,18 @@ int Complex::serialize(std::ofstream& s) const
 int Complex::deserialize(std::ifstream& s)
 {
   int i,j,n,output = 0;
+  unsigned long q;
   Event v;
   Simplex S;
+
+  clear();
 
   s.read((char*)(&pseudomanifold),sizeof(bool)); output += sizeof(bool);
   s.read((char*)(&boundary),sizeof(bool)); output += sizeof(bool);
   s.read((char*)(&orientable),sizeof(bool)); output += sizeof(bool);
+
+  s.read((char*)(&q),sizeof(long)); output += sizeof(long);
+  RND->set_seed(q);
 
   s.read((char*)(&n),sizeof(int)); output += sizeof(int);
   for(i=0; i<n; ++i) {
