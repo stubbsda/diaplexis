@@ -302,7 +302,7 @@ void Spacetime::chorogenesis(int nsteps)
       break;
     }
     csize = candidates.size();
-    cfactor = int(RND->drandom(0.1*temperature,temperature)*csize);
+    cfactor = int(skeleton->RND->drandom(0.1*temperature,temperature)*csize);
     if (cfactor == 0) {
       std::cout << "Temperature too low for topological operations, exiting loop..." << std::endl;
       break;
@@ -312,7 +312,7 @@ void Spacetime::chorogenesis(int nsteps)
     std::cout << "There are " << csize << " and " << cfactor << " edges to delete at temperature " << temperature << std::endl;
 #endif
     d = 0;
-    RND->shuffle(reorder,csize);
+    skeleton->RND->shuffle(reorder,csize);
     for(i=0; i<csize; ++i) {
       j = candidates[reorder[i]];
       skeleton->simplex_deletion(1,j);
@@ -351,7 +351,6 @@ void Spacetime::chorogenesis(int nsteps)
   } while(true);
   if (iterations == 1) optimize();
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   write_state();
@@ -625,25 +624,6 @@ void Spacetime::compute_obliquity()
     rho = rho/double(skeleton->events[i].neighbours.size() - 1);
     if (rho < std::numeric_limits<double>::epsilon()) rho = 0.0;
     skeleton->events[i].obliquity = rho;
-  }
-}
-
-void Spacetime::compute_curvature()
-{
-  int i;
-  double alpha;
-  const int nv = (signed) skeleton->events.size();
-
-  for(i=0; i<nv; ++i) {
-    skeleton->events[i].curvature = 0.0;
-  }
-  for(i=0; i<nv; ++i) {
-    // To calculate the curvature of v, we need to find the greatest
-    // simplicial dimension of v subject to the requirement that its
-    // entourage at this dimensionality be greater than one.
-    if (!skeleton->active_event(i)) continue;
-    alpha = 0.0;
-    skeleton->events[i].curvature = alpha;
   }
 }
 

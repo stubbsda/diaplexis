@@ -18,6 +18,7 @@ namespace DIAPLEXIS {
     SYNARMOSMA::hash_map* index_table;
     SYNARMOSMA::Homology* H;
     SYNARMOSMA::Homotopy* pi1;
+    SYNARMOSMA::Random* RND;
 
     // Maximum combinatorial dimension of the spacetime
     static const int ND = 10;
@@ -133,6 +134,10 @@ namespace DIAPLEXIS {
     inline int get_circuit_rank() const {return circuit_rank();};
     inline bool is_orientable() const {return orientable;};
     inline int get_euler_characteristic() const {return euler_characteristic();};
+    inline double get_event_obliquity(int n) const {return events[n].obliquity;};
+    inline double get_event_energy(int n) const {return events[n].get_energy();};
+    inline double get_event_deficiency(int n) const {return events[n].deficiency;};
+    inline double get_event_entwinement(int n) const {return events[n].entwinement;};
     inline int get_events() const {return (signed) events.size();};
     inline double get_total_energy() const {return total_energy();}; 
     inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 

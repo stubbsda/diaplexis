@@ -29,7 +29,7 @@ void Spacetime::build_initial_state()
     const int n = j;
     const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
     const int nm1 = n - 1;
-    const int nperturbed = 10 + int(0.01*RND->irandom(initial_size));
+    const int nperturbed = 10 + int(0.01*skeleton->RND->irandom(initial_size));
     const double dx = 1.0;
     int k,l,d,rvalue;
     unsigned int r;
@@ -148,13 +148,13 @@ void Spacetime::build_initial_state()
       for(i=0; i<nperturbed; ++i) {
         j = 0;
         for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*skeleton->RND->irandom(k-2,k+2);
         }
         v.push_back(j);
         // Now add some edges among the neighbours of this
         // vertex
         N.insert(v[i]);
-        j = RND->irandom(2,5);
+        j = skeleton->RND->irandom(2,5);
         for(l=0; l<j; ++l) {
           N.insert(skeleton->events.size());
           v.push_back(skeleton->events.size());
@@ -173,7 +173,7 @@ void Spacetime::build_initial_state()
       // existing vertices are altered...
       if (v.empty()) {  
         for(i=0; i<nperturbed; ++i) {
-          j = RND->irandom(initial_size,v);
+          j = skeleton->RND->irandom(initial_size,v);
           v.push_back(j);
         }
       }
@@ -188,13 +188,13 @@ void Spacetime::build_initial_state()
         j = 0;
         k = int(double(n)/2.0);
         for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
+          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*skeleton->RND->irandom(k-2,k+2);
         }
-        skeleton->events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
+        skeleton->events[j].set_energy(1000.0*(0.5 + skeleton->RND->drandom()/2.0));
       }
       else {
         for(m=0; m<v.size(); ++m) {
-          skeleton->events[v[m]].set_energy(5.0*RND->drandom());
+          skeleton->events[v[m]].set_energy(5.0*skeleton->RND->drandom());
         }
       }
     }
@@ -209,7 +209,7 @@ void Spacetime::build_initial_state()
     else {
       geometry->vertex_addition(svalue);
     }
-    vt.set_energy(5000.0*(0.5 + RND->drandom()/2.0));
+    vt.set_energy(5000.0*(0.5 + skeleton->RND->drandom()/2.0));
     skeleton->events.push_back(vt);
   }
   else if (initial_state == Initial_Topology::monoplex) {
@@ -218,7 +218,7 @@ void Spacetime::build_initial_state()
     geometry_type = "MONOPLEX";
     int ulimit = geometry->dimension();
     if (initial_dim > geometry->dimension()) ulimit = initial_dim;
-    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND->drandom());
+    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*skeleton->RND->drandom());
 
     if (!relational) {
       svalue.clear();
@@ -269,9 +269,9 @@ void Spacetime::build_initial_state()
     // Next distribute energy among the vertices, ensuring at least one vertex 
     // has non-zero energy
     do {
-      i = RND->irandom(initial_size);
+      i = skeleton->RND->irandom(initial_size);
       if (!skeleton->events[i].zero_energy()) continue;
-      skeleton->events[i].set_energy(10.0*RND->drandom());
+      skeleton->events[i].set_energy(10.0*skeleton->RND->drandom());
       k += 1;
       percent = double(k)/nv;
     } while(percent < 0.1);
@@ -290,11 +290,11 @@ void Spacetime::build_initial_state()
     }
 
     // Now initialize the probability distribution for creating edges...
-    RND->initialize_bernoulli(edge_probability);
+    skeleton->RND->initialize_bernoulli(edge_probability);
     // and create the edges
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
-        if (RND->bernoulli_variate() == false) continue;
+        if (skeleton->RND->bernoulli_variate() == false) continue;
         S.initialize(i,j);
         skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
         skeleton->simplices[1].push_back(S);
@@ -413,7 +413,6 @@ void Spacetime::initialize()
     skeleton->compute_parity();
     compute_lightcones();
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     compute_lightcones();
     skeleton->compute_global_topology(geometry->get_memory_type());

@@ -13,7 +13,6 @@ namespace DIAPLEXIS {
     bool topology_modified = true;
     bool geometry_modified = true;
     double entwinement = 0.0;
-    double curvature = 0.0;
     double obliquity = 0.0;
     double geometric_deficiency = 0.0;
     double deficiency = 0.0;
