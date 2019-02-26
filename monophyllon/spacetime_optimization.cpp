@@ -7,8 +7,8 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
   int i,j,l,m,k;
   double delta,r_true;
   std::set<int>::const_iterator it;
-  const int nv = (signed) events.size();
-  const int nreal = cardinality(0);
+  const int nv = (signed) skeleton->events.size();
+  const int nreal = skeleton->cardinality(0);
   const int D = geometry->dimension();
   const double pfactor = (2.0/M_PI)*5.0;
   double force[D*nreal];
@@ -17,7 +17,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
 #pragma omp parallel for default(shared) private(i,j,k,m,l,r_true,it,delta)
 #endif 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     k = offset[i];
     // This vertex's force begins at zero...
     for(j=0; j<D; ++j) {
@@ -25,10 +25,10 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
     }
     // Vertex-Vertex Repulsion...
     for(j=0; j<nv; ++j) {
-      if (!events[j].active) continue;
+      if (!skeleton->active_event(j)) continue;
       m = offset[j];
       if (k == m) continue;
-      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(events[i].get_energy() + events[j].get_energy())));
+      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(skeleton->events[i].get_energy() + skeleton->events[j].get_energy())));
       delta = 0.0;
       for(l=0; l<D; ++l) {
         delta += (y[D*k+l] - y[D*m+l])*(y[D*k+l] - y[D*m+l]);
@@ -41,7 +41,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
     // This means two edges, so four vertices would have their force 
     // modified 
     // Spring-like attraction between connected vertices...
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
       j = offset[*it];
       for(l=0; l<D; ++l) {
         force[D*k+l] += spring_constant*(y[D*k+l] - y[D*j+l]); 
@@ -154,7 +154,7 @@ void Spacetime::mechanical_solver()
   SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
   std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
-  skeleton->determine_flexible_edges();
+  skeleton->determine_flexible_edges(flexible_edge);
   E_initial = compute_abnormality();
 #ifdef VERBOSE
   std::cout << "Initial error is " << E_initial << std::endl;
@@ -266,7 +266,7 @@ void Spacetime::mechanical_solver()
     geometry->compute_squared_distances();
     for(i=0; i<nv; ++i) {
       if (!skeleton->active_event(i)) continue;
-      events[i].geometry_modified = true;
+      skeleton->events[i].geometry_modified = true;
     }
     compute_volume();
   }
@@ -275,7 +275,7 @@ void Spacetime::mechanical_solver()
 
 void Spacetime::evolutionary_solver()
 {
-  int i,j,in1,vc,joust,generation = 1;
+  int i,j,n,in1,vc,joust,generation = 1;
   bool viable;
   double p,f1,f2,severity,fbest,fitness[2*pool_size],ftemp[pool_size];
   std::vector<std::pair<int,int> > vcount;
@@ -312,7 +312,7 @@ void Spacetime::evolutionary_solver()
       pool[i].get_implied_vertices(n,vx);
       viable = false;
       for(it=vx.begin(); it!=vx.end(); ++it) {
-        if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+        if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
       }
       if (!viable) continue;
       pool[i].mutation(n,false,false,0.05);
@@ -322,7 +322,7 @@ void Spacetime::evolutionary_solver()
       vx.clear();
     }
     geometry->load(&pool[i]);
-    compute_geometric_dependency(vmodified);
+    skeleton->compute_geometric_dependency(vmodified);
     geometry->compute_squared_distances(vmodified);
     compute_volume();
     compute_curvature();
@@ -360,7 +360,7 @@ void Spacetime::evolutionary_solver()
         pool[i].get_implied_vertices(j,vx);
         viable = false;
         for(it=vx.begin(); it!=vx.end(); ++it) {
-          if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+          if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (!viable) continue;
         pool[i].mutation(j,false,false,severity);
@@ -370,7 +370,7 @@ void Spacetime::evolutionary_solver()
         vx.clear();
       }
       geometry->load(&pool[i]);
-      compute_geometric_dependency(vmodified);
+      skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
       compute_curvature();
@@ -458,13 +458,13 @@ void Spacetime::annealing_solver()
         geometry->get_implied_vertices(m,vmodified);
         viable = false;
         for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-          if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+          if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (viable) break;
         vmodified.clear();
       } while(true);
       geometry->mutation(m,false,false,thermal_variance);
-      compute_geometric_dependency(vmodified);
+      skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
       compute_curvature();
@@ -483,7 +483,7 @@ void Spacetime::annealing_solver()
         }
         else {
           geometry->rollback(true);
-          compute_geometric_dependency(vmodified);
+          skeleton->compute_geometric_dependency(vmodified);
           geometry->compute_squared_distances(vmodified);
           compute_volume();
           compute_curvature();
@@ -535,7 +535,7 @@ void Spacetime::annealing_solver()
           geometry->get_implied_vertices(n,vmodified);
           viable = false;
           for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-            if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+            if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
           }
           if (viable) break;
           vmodified.clear();
@@ -544,7 +544,7 @@ void Spacetime::annealing_solver()
         // Now we need to recaculate some edge lengths and
         // then various defect angles associated with the
         // triangles in their entourage...
-        compute_geometric_dependency(vmodified);
+        skeleton->compute_geometric_dependency(vmodified);
         geometry->compute_squared_distances(vmodified);
         compute_volume();
         compute_curvature();
@@ -571,7 +571,7 @@ void Spacetime::annealing_solver()
           else {
             E.push_back(E_old);
             geometry->rollback(true);
-            compute_geometric_dependency(vmodified);
+            skeleton->compute_geometric_dependency(vmodified);
             geometry->compute_squared_distances(vmodified);
             compute_volume();
             compute_curvature();
@@ -642,7 +642,7 @@ void Spacetime::simplex_solver()
   fitness.push_back(std::pair<int,double>(0,error));
   for(i=0; i<system_size; ++i) {
     geometry->get_implied_vertices(i,vmodified);
-    compute_geometric_dependency(vmodified);
+    skeleton->compute_geometric_dependency(vmodified);
     geometry->mutation(i,false,false,0.1);
     geometry->compute_squared_distances(vmodified);
     geometry->store(&SR);
@@ -897,7 +897,7 @@ void Spacetime::optimize()
       if (sigma > 0.05) sigma = 0.05;
       geometry->mutation(n,true,true,sigma);
       vmodified.insert(n);
-      compute_geometric_dependency(vmodified);
+      skeleton->compute_geometric_dependency(vmodified);
       geometry->compute_squared_distances(vmodified);
       compute_volume();
       compute_curvature();

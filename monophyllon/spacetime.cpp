@@ -825,8 +825,8 @@ bool Spacetime::global_operations()
 
   if (superposable || compressible) {
     skeleton->compute_entourages();
-    compute_topological_dependency(vmodified);
-    compute_geometric_dependency(vmodified);
+    skeleton->compute_topological_dependency(vmodified);
+    skeleton->compute_geometric_dependency(vmodified);
   }
 
   // Calculate the local and global errors

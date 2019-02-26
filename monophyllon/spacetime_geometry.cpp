@@ -432,7 +432,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
     for(i=0; i<system_size; ++i) {
       geometry->add(i,geometry_tolerance);
       geometry->get_implied_vertices(i,current);
-      compute_geometric_dependency(current);
+      skeleton->compute_geometric_dependency(current);
       vmodified = last;
       for(it=current.begin(); it!=current.end(); ++it) {
         vmodified.insert(*it);

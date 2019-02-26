@@ -155,7 +155,7 @@ bool Complex::reduction(int base)
   return true;
 }
 
-void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
+void Complex::compute_geometric_dependency(const std::set<int>& vx)
 {
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
@@ -188,7 +188,7 @@ void Spacetime::compute_geometric_dependency(const std::set<int>& vx)
   }
 }
 
-void Spacetime::compute_topological_dependency(const std::set<int>& vx)
+void Complex::compute_topological_dependency(const std::set<int>& vx)
 {
   int i,n,m,l,nhop,nmod = 0;
   std::set<int> next,current;
