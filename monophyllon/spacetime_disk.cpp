@@ -741,7 +741,7 @@ void Spacetime::read(const Spacetime& source)
 
 void Spacetime::read_state(const std::string& filename)
 {
-  int n;
+  int i,n;
   char c;
   double x;
   std::string cmodel,fmodel;
@@ -877,7 +877,7 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&n),sizeof(int));
   for(i=0; i<n; ++i) {
     s.read((char*)(&c),sizeof(char));
-    hyphantic_ops += std::string(c);
+    hyphantic_ops += c;
   }
 
   geometry->deserialize(s);
@@ -890,7 +890,6 @@ void Spacetime::write_state() const
 {
   int i,n = SYNARMOSMA::Proposition::get_clause_size();
   char c;
-  unsigned long q;
 
   // This is a monophyllon file, so the first value is 1...
   const int ftype = 1;
