@@ -438,7 +438,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = compensation_m(v);
     }
     else if (op == "R") {
-      success = reduction(v);
+      success = skeleton->reduction(v);
     }
     else if (op == "C") {
       success = correction(v);
@@ -461,7 +461,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       success = germination(v);
     }
     else if (op == "T") {
-      success = edge_parity_mutation(v);
+      success = skeleton->edge_parity_mutation(v);
     }
     if (success) {
       s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
@@ -480,7 +480,7 @@ void Spacetime::hyphansis()
   int v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   hyphantic_ops = "";
 
@@ -501,7 +501,7 @@ void Spacetime::hyphansis()
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
 #ifdef VERBOSE
-  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(cardinality(0)) << " percent of the total." << std::endl;
+  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(skeleton->cardinality(0)) << " percent of the total." << std::endl;
   std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
 #endif
   if (candidates.empty()) {
@@ -590,7 +590,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
         }
         else {
           op = "R";
-          success = reduction(v);
+          success = skeleton->reduction(v);
           opstring << "R," << v;
         }
       }
@@ -901,17 +901,17 @@ bool Spacetime::stellar_addition(int base)
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[1]);
-  qt = skeleton->skeleton->index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[2]);
-  qt = skeleton->skeleton->index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);
 
   S.clear();
   S.insert(sx[1]); S.insert(sx[2]);
-  qt = skeleton->skeleton->index_table[1].find(S);
+  qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);    
   // Now add the new vertex and the three edges...
   for(l=0; l<geometry->dimension(); ++l) {
@@ -1406,10 +1406,10 @@ bool Spacetime::correction(int base)
   m = vertex_addition(xc);
   s1.initialize(base,m);
   skeleton->simplices[1].push_back(s1);
-  skeleton->skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
+  skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
   s1.initialize(n,m);
   skeleton->simplices[1].push_back(s1);
-  skeleton->skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
+  skeleton->index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
 
   return true;
 }
@@ -1458,14 +1458,14 @@ bool Spacetime::compensation_m(int base)
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
-    if (vertex_dimension(j) < 2) continue;
+    if (skeleton->vertex_dimension(j) < 2) continue;
     if (skeleton->events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,j,true);
     if (l >= 0.81 && l <= 1.21) continue;
     s1.clear();
     s1.insert(base);
     s1.insert(j);
-    qt = skeleton->skeleton->index_table[1].find(s1);
+    qt = skeleton->index_table[1].find(s1);
     candidates.insert(qt->second);
   }
 
@@ -1530,8 +1530,8 @@ bool Spacetime::compensation_g(int base)
     s1.clear();
     s1.insert(base);
     s1.insert(j);
-    qt = skeleton->skeleton->index_table[1].find(s1);
-    if (qt != skeleton->skeleton->index_table[1].end()) {
+    qt = skeleton->index_table[1].find(s1);
+    if (qt != skeleton->index_table[1].end()) {
 #ifdef DEBUG
       assert(!skeleton->active_simplex(1,qt->second));
 #endif
@@ -1547,7 +1547,7 @@ bool Spacetime::compensation_g(int base)
       Simplex S(base,j);
       // Now add this simplex to the spacetime complex...
       skeleton->simplices[1].push_back(S);
-      skeleton->skeleton->index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
   }
   else {
@@ -1574,7 +1574,7 @@ bool Spacetime::compensation_g(int base)
     }
     i = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
+    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][i].vertices) << " in negative compensation" << std::endl;
 #endif
     skeleton->simplex_deletion(1,i);
   }
@@ -1691,7 +1691,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     vmodified.insert(vx[0]);
     vmodified.insert(vx[1]);
   }
-  if (!(connected())) {
+  if (!skeleton->connected()) {
     // We need to add enough (short!) edges to keep the spacetime connected...
     int j,k,nsedge,ncomp;
     double l,tlength;
@@ -1701,7 +1701,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::vector<std::tuple<int,int,double> > connect;
     Simplex S;
 
-    ncomp = component_analysis(component);
+    ncomp = skeleton->component_analysis(component);
 #ifdef VERBOSE
     std::cout << "There are " << ncomp << " components in this spacetime." << std::endl;
 #endif
@@ -1859,7 +1859,7 @@ bool Spacetime::amputation(int base,double tolerance)
   int i,j,n,p,vx[2];
   std::set<int> candidates;
   const int ne = (signed) skeleton->simplices[1].size();
-  const int ulimit = dimension();
+  const int ulimit = skeleton->dimension();
 
   if (skeleton->events[base].deficiency > tolerance) candidates.insert(base);
   for(i=0; i<ne; ++i) {
@@ -1977,7 +1977,7 @@ bool Spacetime::fission(int base,double density)
     // includes between 1 and (1+d)^2 links the new d-simplex and its ancestor.
     std::set<int> nsimplex;
 
-    if (dimension() < 1) return false;
+    if (skeleton->dimension() < 1) return false;
 
     if (skeleton->RND->drandom() < 0.5) {
       // The simplest case: we just need to add a new vertex, clone the antecedent
@@ -1986,7 +1986,7 @@ bool Spacetime::fission(int base,double density)
       int d;
 
       do {
-        p = skeleton->RND->irandom(events.size());
+        p = skeleton->RND->irandom(skeleton->events.size());
         if (events[p].active) break;
       } while(true);
       q = vertex_addition(p);
@@ -2023,7 +2023,7 @@ bool Spacetime::fission(int base,double density)
       std::set<int> antecedent;
 
       do {
-        n = skeleton->RND->irandom(simplices[1].size());
+        n = skeleton->RND->irandom(skeleton->simplices[1].size());
         if (simplices[1][n].active) break;
       } while(true);
       skeleton->simplices[1][n].get_vertices(vx);
@@ -2072,7 +2072,7 @@ void Spacetime::regularization(bool minimal)
   SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) skeleton->events.size();
 
-  nc = component_analysis(component);
+  nc = skeleton->component_analysis(component);
 #ifdef VERBOSE
   std::cout << "There are " << nc << " components in this spacetime." << std::endl;
 #endif
@@ -2170,13 +2170,13 @@ bool Spacetime::circumvolution()
   std::set<int> edge_set,S;
   std::set<int>::const_iterator it,jt;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int D = dimension();
+  const int D = skeleton->dimension();
   int vx[D];
 
   for(i=0; i<(signed) skeleton->simplices[D].size(); ++i) {
     if (!simplices[D][i].active) continue;
     for(j=0; j<=D; ++j) {
-      qt = skeleton->index_table[D-1].find(simplices[D][i].faces[j]);
+      qt = skeleton->index_table[D-1].find(skeleton->simplices[D][i].faces[j]);
       if (skeleton->simplices[D-1][qt->second].entourage.size() == 1) {
         skeleton->simplices[D-1][qt->second].get_vertices(vx);
         for(k=0; k<D; ++k) {
@@ -2207,16 +2207,16 @@ bool Spacetime::circumvolution()
       skeleton->simplices[1][n1].get_vertices(w);
       skeleton->simplices[1][n2].get_vertices(u);
 
-      d = combinatorial_distance(w[0],u[0]);
+      d = skeleton->combinatorial_distance(w[0],u[0]);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[1],u[0]);
+      d = skeleton->combinatorial_distance(w[1],u[0]);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[0],u[1]);
+      d = skeleton->combinatorial_distance(w[0],u[1]);
       if (d <= 2) continue;
 
-      d = combinatorial_distance(w[1],u[1]);
+      d = skeleton->combinatorial_distance(w[1],u[1]);
       if (d <= 2) continue;
 
       candidates.push_back(n1);
@@ -2277,7 +2277,7 @@ bool Spacetime::circumvolution(int base)
     std::set<int> slist;
     std::set<int>::const_iterator it;
 
-    simplices[d][s1].get_vertices(vx1);
+    skeleton->simplices[d][s1].get_vertices(vx1);
     for(it=candidates.begin(); it!=candidates.end(); ++it) {
       skeleton->simplices[d][*it].get_vertices(vx2);
       D1 = 0.0;
@@ -2294,7 +2294,7 @@ bool Spacetime::circumvolution(int base)
   }
   else {
     do {
-      d = skeleton->RND->irandom(1,dimension());
+      d = skeleton->RND->irandom(1,skeleton->dimension());
       for(i=0; i<(signed) skeleton->simplices[d].size(); ++i) {
         if (simplices[d][i].active) candidates.insert(i);
       }
@@ -2374,7 +2374,7 @@ bool Spacetime::expansion(int base,double creativity)
 
     i = skeleton->dimension();
     d = (i <= 2) ? 3 : skeleton->RND->irandom(2,i);
-    if (double(d+1)/double(events.size()) > 0.8) creativity = 1.0;
+    if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
         // Create a new vertex...
@@ -2414,7 +2414,7 @@ bool Spacetime::expansion(int base,double creativity)
 
 bool Spacetime::expansion(int base)
 {
-  int n = vertex_dimension(base);
+  int n = skeleton->vertex_dimension(base);
   if (n == Complex::ND) return false;
   int i,u,d,m,vtx[2];
   std::set<int> vx,s,N;
@@ -2495,7 +2495,7 @@ void Spacetime::vertex_fusion(int n1,int n2)
       skeleton->simplices[im1].push_back(skeleton->simplices[i][in1]);
       mutation[im1].push_back(n);
       n++;
-      skeleton->simplices[i].erase(simplices[i].begin() + in1);
+      skeleton->simplices[i].erase(skeleton->simplices[i].begin() + in1);
       for(j=0; j<(signed) mutation[i].size(); ++j) {
         k = mutation[i][j];
         if (k == in1) continue;
@@ -2518,7 +2518,7 @@ void Spacetime::vertex_fusion(int n1,int n2)
   }
   for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
     in1 = *it;
-    skeleton->simplices[1].erase(simplices[1].begin() + in1);
+    skeleton->simplices[1].erase(skeleton->simplices[1].begin() + in1);
     for(j=0; j<m; ++j) {
       k = mutation[1][j];
       if (k == in1) continue;
@@ -2546,13 +2546,13 @@ void Spacetime::vertex_fusion(int n1,int n2)
         if (l == in1) continue;
         if (skeleton->simplices[i][l].vertices == vx) {
           duplicate.insert(in1);
-          simplices[i][l].active = true;
+          skeleton->simplices[i][l].active = true;
         }
       }
     }
     for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
       in1 = *it;
-      skeleton->simplices[i].erase(simplices[i].begin() + in1);
+      skeleton->simplices[i].erase(skeleton->simplices[i].begin() + in1);
     }
     duplicate.clear();
   }
@@ -2560,9 +2560,9 @@ void Spacetime::vertex_fusion(int n1,int n2)
   skeleton->events[n2].active = false;
   delete[] mutation;
 
-  if (!events[n2].active) {
+  if (!skeleton->active_event(n2)) {
     if (!skeleton->events[n2].zero_energy()) {
-      skeleton->events[n1].increment_energy(events[n2].get_energy());
+      skeleton->events[n1].increment_energy(skeleton->events[n2].get_energy());
       skeleton->events[n2].nullify_energy();
     }
   }
@@ -2576,7 +2576,7 @@ void Spacetime::vertex_fusion(int n1,int n2)
       skeleton->index_table[i][skeleton->simplices[i][j].vertices] = j;
     }
   }
-  for(i=0; i<(signed) events.size(); ++i) {
+  for(i=0; i<(signed) skeleton->events.size(); ++i) {
     skeleton->events[i].entourage.clear();
   }
 
@@ -2701,13 +2701,13 @@ bool Spacetime::vertex_twist()
   static bool first = true;
 
 #ifdef DEBUG
-  assert(consistent());
+  assert(skeleton->consistent());
 #endif
 
   tolerance = (first) ? 2 : 1;
 
   for(i=0; i<n; ++i) {
-    if (events[i].active) candidates.push_back(i);
+    if (skeleton->active_event(i)) candidates.push_back(i);
   }
   nc = (signed) candidates.size();
   if (nc < 3) return false;
@@ -2722,7 +2722,7 @@ bool Spacetime::vertex_twist()
   // occurrence of v1 to v2.
   for(i=0; i<nc; ++i) {
     for(j=1+i; j<nc; ++j) {
-      delta = combinatorial_distance(candidates[i],candidates[j]);
+      delta = skeleton->combinatorial_distance(candidates[i],candidates[j]);
       if (delta > tolerance) {
         slist.push_back(std::pair<int,int>(candidates[i],candidates[j]));
       }
@@ -2735,7 +2735,7 @@ bool Spacetime::vertex_twist()
 #ifdef VERBOSE
   std::cout << "Twist is " << n1 << " => " << n2 << std::endl;
 #endif
-  events[n2].active = false;
+  skeleton->events[n2].active = false;
   vx_delta.insert(n2);
   if (!events[n2].active) {
     if (!skeleton->events[n2].zero_energy()) {
@@ -2877,7 +2877,7 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents)
 
 int Spacetime::vertex_addition(int base)
 {
-  int n = (signed) events.size();
+  int n = (signed) skeleton->events.size();
   Event vt;
 
   if (skeleton->events[base].zero_energy()) {
@@ -2916,7 +2916,7 @@ bool Spacetime::inflation(int base,double creativity)
     tau = std::abs(skeleton->events[base].deficiency) + 25.0;
     delta = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
-    for(i=0; i<(signed) simplices[n1].size(); ++i) {
+    for(i=0; i<(signed) skeleton->simplices[n1].size(); ++i) {
       if (!simplices[n1][i].active) continue;
       if (skeleton->simplices[n1][i].contains(base)) candidates.insert(i);
     }
@@ -3005,7 +3005,7 @@ bool Spacetime::inflation(int base,double creativity)
         } while(its < (signed) skeleton->events.size());
         if (success == false) {
           k = (signed) skeleton->events.size();
-          events.push_back(vt);
+          skeleton->events.push_back(vt);
         }
       }
       vx.insert(k);
