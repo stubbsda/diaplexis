@@ -6,10 +6,6 @@ const double Spacetime::convergence_threshold = 0.00001;
 const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
-const int Spacetime::N_EXP;
-const int Spacetime::N_IMP;
-const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm","Y"};
-const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
 
 Spacetime::Spacetime()
 {

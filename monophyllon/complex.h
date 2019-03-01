@@ -44,7 +44,6 @@ namespace DIAPLEXIS {
     void compute_simplex_parity(int,int);
     bool edge_parity_mutation(int);
     bool edge_parity_mutation(int,int);
-    bool reduction(int);
     void recompute_parity(int);
     void recompute_parity(const std::set<int>&);
     void compute_parity();
