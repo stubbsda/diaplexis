@@ -34,7 +34,8 @@ INSTALL_DIR = $(HOME)/fabrica/local
 HEADERS    = event.h simplex.h complex.h spacetime.h
 
 OBJECTS = spacetime.o spacetime_disk.o spacetime_visualization.o spacetime_optimization.o spacetime_geometry.o \
-spacetime_hyphansis.o spacetime_initialization.o complex.o complex_topology.o complex_dynamics.o event.o simplex.o
+spacetime_hyphansis.o spacetime_initialization.o spacetime_explication.o spacetime_implication.o event.o complex.o \
+spacetime_topology.o complex_topology.o complex_dynamics.o simplex.o
 
 install: diaplexis 
 	mkdir -p $(INSTALL_DIR)/lib
@@ -53,6 +54,15 @@ spacetime_disk.o: spacetime_disk.cpp $(HEADERS)
 
 spacetime_optimization.o: spacetime_optimization.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_optimization.cpp
+
+spacetime_explication.o: spacetime_explication.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_explication.cpp
+
+spacetime_implication.o: spacetime_implication.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_implication.cpp
+
+spacetime_topology.o: spacetime_topology.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_topology.cpp
 
 spacetime_visualization.o: spacetime_visualization.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_visualization.cpp

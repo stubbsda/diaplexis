@@ -151,11 +151,11 @@ namespace DIAPLEXIS {
     int vertex_addition(const std::set<int>&);
     int vertex_addition(int);
     bool vertex_deletion(int);
-    bool interplication(int,double,int);
+    void vertex_fusion(int,int);
+    bool vertex_twist();
+
     bool circumvolution();
     bool circumvolution(int);
-    int compression(double,std::set<int>&);
-    bool unravel(int);
     bool contraction(int,double);
     bool compensation_m(int);
     bool compensation_g(int);
@@ -163,6 +163,7 @@ namespace DIAPLEXIS {
     bool expansion(int,double);
     bool foliation_m(int);
     bool foliation_x(int);
+    bool reduction(int);
     bool amputation(int,double);
     bool fusion_x(int,double);
     bool fusion_m(int);
@@ -172,13 +173,13 @@ namespace DIAPLEXIS {
     bool perforation(int,int);
     bool correction(int);
     bool germination(int);
-    bool vertex_twist();
     bool stellar_addition(int);
     bool stellar_deletion(int);
-    void vertex_fusion(int,int);
+
+    bool interplication(int,double,int);
+    int compression(double,std::set<int>&);
     void superposition_fusion(std::set<int>&);
     void superposition_fission(std::set<int>&);
-    void assemble_indices();
     void regularization(bool);
     void entourage(std::vector<int>&) const;
 
@@ -209,14 +210,14 @@ namespace DIAPLEXIS {
     void compute_colours(std::vector<unsigned char>&,bool) const;
     void build_initial_state();
     void write_log() const;
-    void read_state();
-    void write_state() const;
+    void write(Spacetime&) const;
+    void read(const Spacetime&);
+    void read_state(const std::string&);
+    void write_state(const std::string& = "") const;
     void read_parameters(const std::string&);
     void set_default_values();
-    void update_viewer();
     bool adjust_dimension();
     void analyze_convergence();
-    void test_harness(int,int);
     void arclength_statistics(double*) const;
     void condense();
     void initialize();
@@ -224,8 +225,6 @@ namespace DIAPLEXIS {
     void clear();
     void clean() const;
     bool correctness();
-    void write(Spacetime&) const;
-    void read(const Spacetime&);
 
    public:
     Spacetime();
@@ -233,7 +232,6 @@ namespace DIAPLEXIS {
     Spacetime(const std::string&);
     Spacetime(const std::string&,bool);
     ~Spacetime();
-    void read_state(const std::string&);
     bool advance();
     void fallback();
     void evolve();

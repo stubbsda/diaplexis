@@ -2,6 +2,122 @@
 
 using namespace DIAPLEXIS;
 
+void Complex::inversion()
+{
+  int i,j;
+  std::set<int> hold;
+  std::set<int>::const_iterator it;
+  Simplex S;
+  const int nv = (signed) events.size();
+
+  for(i=0; i<nv; ++i) {
+    // hold = V / events[i].neighbours
+    for(j=0; j<nv; ++j) {
+      if (!events[j].active) continue;
+      if (j == i) continue;
+      it = std::find(events[i].neighbours.begin(),events[i].neighbours.end(),j);
+      if (it == events[i].neighbours.end()) hold.insert(j);
+    }
+    events[i].neighbours = hold;
+    hold.clear();
+  }
+  simplices[1].clear();
+  index_table[1].clear();
+  for(i=0; i<nv; ++i) {
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      j = *it;
+      if (i < j) {
+        S.initialize(i,j);
+        simplices[1].push_back(S);
+        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      }
+    }
+  }
+}
+
+double Complex::set_logical_atoms(int n)
+{ 
+#ifdef DEBUG
+  assert(n > 0);
+#endif
+  int i,j,natoms;
+  double sigma,output = 0.0;
+  std::set<int> cset;
+  const int nvertex = (signed) events.size();
+
+  for(int i=0; i<nvertex; ++i) {
+    events[i].theorem.clear();
+  }
+ 
+  // Set the logical atoms in a purely random manner, the argument 
+  // "n" represents the total number of propositional atoms in the 
+  // entire spacetime
+  for(i=0; i<nvertex; ++i) {
+    if (!events[i].active) continue;
+    cset.clear();
+    // The more energetic and the higher the topological dimension of a 
+    // vertex, the greater the number of atomic propositions in its theorem 
+    // property.
+    sigma = (1.0 + events[i].get_energy())*double(4 + events[i].topological_dimension);
+    sigma *= RND->drandom(1.0,1.5);
+    natoms = int(sigma);
+    if (natoms >= n) {
+      for(j=0; j<n; ++j) {
+        cset.insert(j); 
+      }
+    }
+    else {
+      do {
+        cset.insert(RND->irandom(n));
+        if ((signed) cset.size() == natoms) break;
+      } while(true);
+    }
+    events[i].theorem.set_atoms(cset);
+    output += double(cset.size());   
+  }
+  output = output/double(cardinality(0));
+  return output;
+}
+
+double Complex::logical_energy(int v) const
+{
+  if (events[v].neighbours.empty()) return 0.0;
+  double sum = 0.0;
+  std::set<int>::const_iterator it;
+  SYNARMOSMA::Proposition q,p = events[v].theorem;
+
+  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+    q = p & events[*it].theorem;
+    sum += double(q.satisfiable());
+  }
+  sum = sum/double(events[v].neighbours.size());
+  return sum;
+}
+
+bool Complex::logical_conformity(int v) const
+{
+  std::set<int>::const_iterator it;
+  SYNARMOSMA::Proposition Q = events[v].theorem;
+
+  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+    Q = Q & events[*it].theorem;
+  }
+  return Q.satisfiable();
+}
+
+void Complex::compute_simplex_energy(int d,int n)
+{
+  int i,vx[1+d];
+  double alpha = 0.0;
+
+  simplices[d][n].get_vertices(vx);
+
+  for(i=0; i<1+d; ++i) {
+    alpha += events[vx[i]].get_energy();
+  }
+  simplices[d][n].energy = alpha/double(1+d);
+}
+
 void Complex::compute_delta(std::set<int>& vx_delta)
 {
   unsigned int i,j,n;
