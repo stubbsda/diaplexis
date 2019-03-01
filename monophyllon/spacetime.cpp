@@ -396,7 +396,7 @@ void Spacetime::clean() const
 void Spacetime::fallback()
 {
   if (!reversible) return;
-
+  read_state("data/.previous_step.dat");
   reversible = false;
 }
 
@@ -406,6 +406,9 @@ bool Spacetime::advance()
   static double gtime = 0.0;
   boost::timer::cpu_times Z;
   boost::timer::cpu_timer t1;
+
+  write_state("data/.previous_step.dat");
+  reversible = true;
 
   // Begin the hyphantic phase...
   std::ofstream s1(hyphansis_file,std::ios::app);
@@ -439,8 +442,7 @@ bool Spacetime::advance()
     std::cout << "Time required for topological hyphansis was " << htime << " seconds." << std::endl;
     std::cout << "Time required for global operations was " << gtime << " seconds." << std::endl;
   }
-  reversible = true;
-
+ 
   return done;
 }
 

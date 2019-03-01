@@ -28,6 +28,12 @@ namespace DIAPLEXIS {
     int serialize(std::ofstream&) const override; 
     int deserialize(std::ifstream&) override;
     int valence(int) const;
+    inline void activate() {active = true;};
+    inline void deactivate() {active = false;};
+    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    inline void get_entourage(std::set<int> N) const {N = entourage;};
+    inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
+    inline void add_neighbour(int n) {neighbours.insert(n);};
     friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;
     friend class Spacetime;

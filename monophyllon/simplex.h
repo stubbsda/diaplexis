@@ -33,6 +33,13 @@ namespace DIAPLEXIS {
     Simplex(const std::set<int>&);
     ~Simplex() override;
     Simplex& operator =(const Simplex&);
+    inline void activate() {active = true;};
+    inline void deactivate() {active = false;};
+    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    inline void set_volume(double V) {volume = V;};
+    inline double get_volume() const {return volume;};
+    inline void set_squared_volume(double V) {sq_volume = V;};
+    inline double get_squared_volume() const {return sq_volume;};
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
     friend class Complex;
