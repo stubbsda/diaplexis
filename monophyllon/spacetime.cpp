@@ -711,7 +711,7 @@ bool Spacetime::global_operations()
 #endif
   iterations++;
 
-  skeleton->compute_delta(vx_delta);
+  skeleton->compute_delta(modified_vertices);
 
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].incept == -1) skeleton->events[i].incept = iterations;
@@ -864,63 +864,4 @@ bool Spacetime::global_operations()
 #endif
   if (!diskless) write_log();
   return output;
-}
-
-void Spacetime::analyze_convergence()
-{
-  /*
-  int i,j,m;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  int tdelta = 0;
-  double edelta = 0.0;
-  const int nv = (signed) skeleton->events.size();
-  const int nva = (signed) anterior.skeleton->events.size();
-
-  for(i=0; i<nva; ++i) {
-    if (skeleton->events[i].active != anterior.skeleton->events[i].active) {
-      tdelta++;
-    }
-  }
-  tdelta += (nv - nva);
-  for(i=1; i<=Complex::ND; ++i) {
-    m = (signed) skeleton->simplices[i].size();
-    for(j=0; j<m; ++j) {
-      qt = anterior.skeleton->index_table[i].find(skeleton->simplices[i][j].vertices);
-      if (qt == anterior.skeleton->index_table[i].end()) {
-        tdelta++;
-        continue;
-      }
-      if (skeleton->simplices[i][j].active != anterior.skeleton->simplices[i][qt->second].active) {
-        tdelta++;
-      }
-    }
-  }
-  topology_delta = double(tdelta);
-
-  geometry_delta = geometry_change(geometry,&(anterior.geometry));
-
-  for(i=0; i<nva; ++i) {
-    edelta += std::abs(skeleton->events[i].get_energy() - anterior.skeleton->events[i].get_energy());
-  }
-  for(i=nva; i<nv; ++i) {
-    edelta += skeleton->events[i].get_energy();
-  }
-  energy_delta = edelta;
-
-  anterior.skeleton->events = skeleton->events;
-  anterior.geometry.load(geometry);
-  for(i=1; i<=Complex::ND; ++i) {
-    anterior.skeleton->simplices[i].clear();
-    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-      anterior.skeleton->simplices[i].push_back(skeleton->simplices[i][j]);
-    }
-  }
-
-  for(i=1; i<=Complex::ND; ++i) {
-    anterior.skeleton->index_table[i].clear();
-    for(j=0; j<(signed) anterior.skeleton->simplices[i].size(); ++j) {
-      anterior.skeleton->index_table[i][anterior.skeleton->simplices[i][j].vertices] = j;
-    }
-  }
-  */
 }

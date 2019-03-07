@@ -288,7 +288,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     S.insert(vertex_addition(xc));
     xc.clear();
   }
-  skeleton->simplex_addition(S,vx_delta);
+  skeleton->simplex_addition(S,modified_vertices);
 
   // Now add a set of lower-dimensional simplices to this knot and also tie it 
   // in to the existing spacetime complex...
@@ -358,7 +358,7 @@ bool Spacetime::interplication(int centre,double size,int D)
 #ifdef VERBOSE
       std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
 #endif
-      skeleton->simplex_addition(S,vx_delta);
+      skeleton->simplex_addition(S,modified_vertices);
       S.clear();
       nc++;
     } while(nc < m);
@@ -407,7 +407,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     else {
       S.insert(ambient[1].first);
     }
-    if (skeleton->simplex_addition(S,vx_delta)) d++;
+    if (skeleton->simplex_addition(S,modified_vertices)) d++;
     S.clear();
   } while(d < nbridge);
 

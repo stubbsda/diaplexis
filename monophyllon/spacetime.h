@@ -52,12 +52,8 @@ namespace DIAPLEXIS {
     bool reversible = false;
     double error = 0.0;
     double global_deficiency = 0.0;
-    double topology_delta = 0.0;
-    double geometry_delta = 0.0;
-    double energy_delta = 0.0;
     std::string hyphantic_ops = "";
-    std::set<int> vx_delta;
-    std::vector<int> flexible_edge;
+    std::set<int> modified_vertices;
     Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
 
@@ -84,7 +80,6 @@ namespace DIAPLEXIS {
     bool compressible = false;
     bool converged = false;
     bool high_memory = true;
-    bool instrument_convergence = true;
     int checkpoint_frequency = 50;
     std::string hyphansis_file = "data/hyphansis";
     std::string hyphansis_score = "";
@@ -187,9 +182,9 @@ namespace DIAPLEXIS {
     void compute_volume();
     void compute_lengths();
     void compute_obliquity();
-    double compute_abnormality() const;
-    double compute_abnormality(const std::vector<double>&) const;
-    void compute_geometric_gradient(std::vector<double>&,bool);
+    double compute_abnormality(const std::vector<int>&) const;
+    double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
+    void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
     void mechanical_force(const std::vector<int>&,const std::vector<double>&,double*) const;
     void mechanical_solver();
     void annealing_solver();
@@ -217,7 +212,6 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     void set_default_values();
     bool adjust_dimension();
-    void analyze_convergence();
     void arclength_statistics(double*) const;
     void condense();
     void initialize();
@@ -250,7 +244,6 @@ namespace DIAPLEXIS {
     inline std::string get_state_file() const {return state_file;};
     inline std::string get_hyphantic_operations() const {return hyphantic_ops;};
     inline void get_arclength_statistics(double* output) const {arclength_statistics(output);};
-    inline void get_delta(double* output) const {output[0] = topology_delta; output[1] = geometry_delta; output[2] = energy_delta;};
     inline int get_iterations() const {return iterations;};
     inline double get_error() const {return error;};
     inline int get_maximum_iterations() const {return max_iter;};

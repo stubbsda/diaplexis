@@ -118,15 +118,16 @@ void Complex::compute_simplex_energy(int d,int n)
   simplices[d][n].energy = alpha/double(1+d);
 }
 
-void Complex::compute_delta(std::set<int>& vx_delta)
+void Complex::compute_delta(std::set<int>& modified_vertices)
 {
   unsigned int i,j,n;
   int m,l,nhop;
-  std::set<int> vx,current,next;
+  std::set<int> current,next,vx = modified_vertices;
   std::set<int>::const_iterator it,jt,kt;
   const unsigned int nv = events.size();
   int done[nv];
 
+  modified_vertices.clear();
   for(i=0; i<nv; ++i) {
     done[i] = 0;
     events[i].topology_modified = false;
@@ -147,15 +148,10 @@ void Complex::compute_delta(std::set<int>& vx_delta)
     }
   }
 
-  for(it=vx_delta.begin(); it!=vx_delta.end(); ++it) {
-    vx.insert(*it);
-  }
-  vx_delta.clear();
-
   // Now with this know we can calculate which events need to have their
   // entwinement and/or dimensional stress recalculated
 #ifdef VERBOSE
-  std::cout << "There are " << vx.size() << " vertices directly implicated" << std::endl;
+  std::cout << "There are " << vx.size() << " vertices directly modified in this relaxation step." << std::endl;
 #endif
   for(it=vx.begin(); it!=vx.end(); ++it) {
     // Every vertex within topological_radius hops of n is labelled as
@@ -191,7 +187,7 @@ void Complex::compute_delta(std::set<int>& vx_delta)
     if (events[i].topology_modified) nmod++;
   }
 #ifdef VERBOSE
-  std::cout << "There are " << nmod << " modified vertices out of " << nv << std::endl;
+  std::cout << "There are " << nmod << " modified vertices out of " << nv << " in this relaxation step." << std::endl;
 #endif
 }
 

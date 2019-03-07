@@ -20,7 +20,7 @@ bool Spacetime::stellar_deletion(int base)
   }
   if (nset.size() != 3) return false;    
   vertex_deletion(base);
-  skeleton->simplex_addition(nset,vx_delta);
+  skeleton->simplex_addition(nset,modified_vertices);
   regularization(true);
   return true;
 }
@@ -65,8 +65,8 @@ bool Spacetime::foliation_m(int base)
   s1.insert(n1); s1.insert(n2);
   qt = skeleton->index_table[1].find(s1);
   skeleton->simplices[1][qt->second].active = true;
-  vx_delta.insert(n1);
-  vx_delta.insert(n2);
+  modified_vertices.insert(n1);
+  modified_vertices.insert(n2);
   return true;
 }
 
@@ -272,8 +272,8 @@ bool Spacetime::circumvolution()
   n2 = candidates[2*i+1];
   skeleton->simplices[1][n1].get_vertices(w);
   skeleton->simplices[1][n2].get_vertices(u);
-  vx_delta.insert(u[0]);
-  vx_delta.insert(u[1]);
+  modified_vertices.insert(u[0]);
+  modified_vertices.insert(u[1]);
   if (skeleton->RND->drandom() < 0.5) {
     vertex_fusion(w[0],u[0]);
     vertex_fusion(w[1],u[1]);
@@ -364,7 +364,7 @@ bool Spacetime::circumvolution(int base)
   skeleton->simplices[d][s2].get_vertices(v2);
 
   for(i=0; i<=d; ++i) {
-    vx_delta.insert(v2[order[i]]);
+    modified_vertices.insert(v2[order[i]]);
     vertex_fusion(v1[i],v2[order[i]]);
   }
   return true;
@@ -433,7 +433,7 @@ bool Spacetime::expansion(int base,double creativity)
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
             skeleton->events[k].active = true;
-            vx_delta.insert(k);
+            modified_vertices.insert(k);
             success = true;
             break;
           }
@@ -450,7 +450,7 @@ bool Spacetime::expansion(int base,double creativity)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with " << novum << " new vertices." << std::endl;
 #endif
-  skeleton->simplex_addition(vx,vx_delta);
+  skeleton->simplex_addition(vx,modified_vertices);
   return true;
 }
 
@@ -477,7 +477,7 @@ bool Spacetime::expansion(int base)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with base " << base << std::endl;
 #endif
-  skeleton->simplex_addition(vx,vx_delta);
+  skeleton->simplex_addition(vx,modified_vertices);
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vtx);
@@ -702,6 +702,6 @@ bool Spacetime::inflation(int base,double creativity)
     std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex" << std::endl;
 #endif
   }
-  skeleton->simplex_addition(vx,vx_delta);
+  skeleton->simplex_addition(vx,modified_vertices);
   return true;
 }

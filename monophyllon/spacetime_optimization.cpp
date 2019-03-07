@@ -152,6 +152,7 @@ void Spacetime::mechanical_solver()
   if (!cgradient_refinement) return;
   double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
   SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
+  std::vector<int> flexible_edge;
   std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
   skeleton->determine_flexible_edges(flexible_edge);
@@ -165,7 +166,7 @@ void Spacetime::mechanical_solver()
     snew.push_back(0.0);
   }
 
-  compute_geometric_gradient(dx,true);
+  compute_geometric_gradient(dx,true,flexible_edge);
   for(i=0; i<system_size; ++i) {
     fx.push_back(-dx[i]);
     c.push_back(dx[i]*fx[i]);
@@ -176,7 +177,7 @@ void Spacetime::mechanical_solver()
       geometry->set_element(j,x[j] + sigma*dx[j]);
     }
     geometry->compute_squared_distances();
-    compute_geometric_gradient(dy,false);
+    compute_geometric_gradient(dy,false,flexible_edge);
     d = 0.0;
     for(j=0; j<system_size; ++j) {
       d += dy[j]*dx[j] - c[j];
@@ -189,7 +190,7 @@ void Spacetime::mechanical_solver()
     geometry->set_element(i,x[i] + alpha*dx[i]);
   }
   geometry->compute_squared_distances();
-  E = compute_abnormality();
+  E = compute_abnormality(flexible_edge);
 
   prior = E;
   s = dx;
@@ -201,7 +202,7 @@ void Spacetime::mechanical_solver()
   std::cout << "At conjugate gradient iteration 1, the error is " << E << std::endl;
 #endif
   for(i=1; i<max_CG_steps; ++i) {
-    compute_geometric_gradient(dx,true);
+    compute_geometric_gradient(dx,true,flexible_edge);
     nx = 0.0;
     d = 0.0;
     for(j=0; j<system_size; ++j) {
@@ -225,7 +226,7 @@ void Spacetime::mechanical_solver()
         geometry->set_element(k,x[k] + sigma*snew[k]);
       }
       geometry->compute_squared_distances();
-      compute_geometric_gradient(dy,false);
+      compute_geometric_gradient(dy,false,flexible_edge);
       d = 0.0;
       for(k=0; k<system_size; ++k) {
         d += dy[k]*snew[k] - c[k];
@@ -238,7 +239,7 @@ void Spacetime::mechanical_solver()
       geometry->set_element(j,x[j] + alpha*snew[j]);
     }
     geometry->compute_squared_distances();
-    E = compute_abnormality();
+    E = compute_abnormality(flexible_edge);
 #ifdef VERBOSE
     std::cout << "At conjugate gradient iteration " << i+1 << ", the error is " << E << std::endl;
 #endif

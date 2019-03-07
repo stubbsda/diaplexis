@@ -357,7 +357,7 @@ void Spacetime::chorogenesis(int nsteps)
   delete G;
 }
 
-double Spacetime::compute_abnormality() const
+double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -383,7 +383,7 @@ double Spacetime::compute_abnormality() const
   return output;
 }
 
-double Spacetime::compute_abnormality(const std::vector<double>& x) const
+double Spacetime::compute_abnormality(const std::vector<double>& x,const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -414,7 +414,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x) const
   return output;
 }
 
-void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
+void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,const std::vector<int>& flexible_edge)
 {
   int i;
   std::set<int>::const_iterator it;
