@@ -600,7 +600,7 @@ void Complex::simplex_deletion(int d,int n)
   }
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& vx_delta)
+bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices)
 {
   int i,j;
   std::set<int> fc;
@@ -629,7 +629,7 @@ bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& vx_delta)
 #endif
 
   for(it=S.begin(); it!=S.end(); ++it) {
-    vx_delta.insert(*it);
+    modified_vertices.insert(*it);
   }
 
   if (d == 1) {

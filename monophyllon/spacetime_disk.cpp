@@ -89,10 +89,6 @@ void Spacetime::read_parameters(const std::string& filename)
       boost::to_upper(value);
       high_memory = (value == "HIGH") ? true : false;
     }
-    else if (name == "InstrumentConvergence") {
-      boost::to_upper(value);
-      instrument_convergence = (value == "YES") ? true : false;
-    }
     else if (name == "Hyphansis") {
       boost::to_upper(value);
       if (value == "MUSICAL") {
@@ -535,20 +531,6 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(error);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  if (instrument_convergence) {
-    atom = rstep.append_child("TopologyDelta");
-    nvalue = boost::lexical_cast<std::string>(topology_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-
-    atom = rstep.append_child("GeometryDelta");
-    nvalue = boost::lexical_cast<std::string>(geometry_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-
-    atom = rstep.append_child("EnergyDelta");
-    nvalue = boost::lexical_cast<std::string>(energy_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-  }
-
   atom = rstep.append_child("Pseudomanifold");
   nvalue = (skeleton->pseudomanifold) ? "True" : "False";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -828,7 +810,6 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&checkpoint_frequency),sizeof(int));
   // Skip changing the initial_state as it should remain DISKFILE...
   s.read((char*)(&original_state),sizeof(Initial_Topology));
-  s.read((char*)(&instrument_convergence),sizeof(bool));
   s.read((char*)(&high_memory),sizeof(bool));
   s.read((char*)(&superposable),sizeof(bool));
   s.read((char*)(&compressible),sizeof(bool));
@@ -922,7 +903,6 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&max_iter),sizeof(int));
   s.write((char*)(&checkpoint_frequency),sizeof(int));
   s.write((char*)(&initial_state),sizeof(Initial_Topology));
-  s.write((char*)(&instrument_convergence),sizeof(bool));
   s.write((char*)(&high_memory),sizeof(bool));
   s.write((char*)(&superposable),sizeof(bool));
   s.write((char*)(&compressible),sizeof(bool));
