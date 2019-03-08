@@ -14,7 +14,6 @@
 		<SheetDynamics>Yes</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>Low</MemoryFootprint>
-		<InstrumentConvergence>No</InstrumentConvergence>
 		<Superposable>No</Superposable>
 		<Compressible>No</Compressible>
 		<Permutable>Yes</Permutable>

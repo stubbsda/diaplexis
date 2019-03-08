@@ -426,7 +426,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
   if (geometry->get_relational()) {
     std::set<int> vmodified,last,current;
     double E,alpha;
-    const double B = compute_abnormality();
+    const double B = compute_abnormality(flexible_edge);
 
     for(i=0; i<system_size; ++i) {
       geometry->add(i,geometry_tolerance);
@@ -438,7 +438,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
       }
       geometry->compute_squared_distances(vmodified);
       compute_volume();
-      E = compute_abnormality();
+      E = compute_abnormality(flexible_edge);
       alpha = (E - B)/geometry_tolerance;
       df[i] = alpha;
       geometry->add(i,-geometry_tolerance);
@@ -632,14 +632,19 @@ double Spacetime::representational_energy(bool weighted) const
   // A routine that follows the algorithm outlined in C. Godsil and G. Royle, "Algebraic
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
   if (skeleton->dimension() < 1) return 0.0;
-  int i,n = 0;
+  int i,j,k,l,nelements,n = 0;
+  double w,E = 0.0;
+  std::vector<double> xc,Lx;
+  std::vector<unsigned int> Lc;
   std::vector<int> offset;
   SYNARMOSMA::Graph G;
   const int nv = (signed) skeleton->events.size();
-  
-  skeleton->compute_graph(&G);
+  const int N = skeleton->cardinality(0);
+  const int D = geometry->dimension();  
+  double coordinates[N][D],result[N][D],sum[D];
+  SYNARMOSMA::Matrix<double> L(N);
 
-  SYNARMOSMA::Matrix<double> L(G.order());
+  skeleton->compute_graph(&G);
   
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) {
@@ -647,12 +652,15 @@ double Spacetime::representational_energy(bool weighted) const
       continue;
     }
     offset.push_back(n);
+    geometry->get_coordinates(i,xc);
+    for(j=0; j<D; ++j) {
+      coordinates[n][j] = xc[j];
+    }
     n++;
   }
 
   if (weighted) {
-    int j,k,vx[2];
-    double w;
+    int vx[2];
     const int ne = (signed) skeleton->simplices[1].size();
   
     for(i=0; i<ne; ++i) {
@@ -673,7 +681,30 @@ double Spacetime::representational_energy(bool weighted) const
     G.compute_laplacian(&L);
   }
 
-  return geometry->inner_product(L,offset);
+  for(i=0; i<N; ++i) {
+    for(j=0; j<D; ++j) {
+      sum[j] = 0.0;
+    }
+    L.get_row(Lx,Lc,i);
+    nelements = (signed) Lx.size();
+    for(j=0; j<nelements; ++j) {
+      for(k=0; k<D; ++k) {
+        sum[k] += coordinates[Lc[j]][k]*Lx[j];
+      }
+    }
+    for(j=0; j<D; ++j) {
+      result[i][j] = sum[j];
+    }
+  }
+
+  for(i=0; i<D; ++i) {
+    w = 0.0;
+    for(l=0; l<N; ++l) {
+      w += result[l][i]*coordinates[l][i];
+    }
+    E += w;
+  }
+  return E;
 }
 
 bool Spacetime::realizable(int d,int n) const
