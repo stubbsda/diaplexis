@@ -156,7 +156,7 @@ void Spacetime::mechanical_solver()
   std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
   skeleton->determine_flexible_edges(flexible_edge);
-  E_initial = compute_abnormality();
+  E_initial = compute_abnormality(flexible_edge);
 #ifdef VERBOSE
   std::cout << "Initial error is " << E_initial << std::endl;
 #endif

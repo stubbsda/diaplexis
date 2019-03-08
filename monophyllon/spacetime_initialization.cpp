@@ -422,15 +422,6 @@ void Spacetime::initialize()
   assert(skeleton->energy_check());
 #endif
 
-  if (instrument_convergence) {
-    /*
-    anterior.skeleton->events = skeleton->events;
-    for(int i=1; i<=Complex::ND; ++i) {
-      anterior.skeleton->simplices[i] = skeleton->simplices[i];
-      anterior.skeleton->index_table[i] = skeleton->index_table[i];
-    }
-    */
-  }
   if (diskless) return;
 
 #ifdef VERBOSE

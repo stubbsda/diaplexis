@@ -836,8 +836,6 @@ bool Spacetime::global_operations()
 
   structural_deficiency();
 
-  if (instrument_convergence) analyze_convergence();
-
   if (error < Spacetime::convergence_threshold || iterations >= max_iter) converged = true;
 #ifdef VERBOSE
   std::cout << iterations << "  " << error << "  " << Spacetime::convergence_threshold << "  " << converged << std::endl;
