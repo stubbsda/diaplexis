@@ -85,10 +85,10 @@ void Spacetime::condense()
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
   for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].active) n++;
+    if (skeleton->active_event(i)) n++;
   }
   for(i=0; i<ne; ++i) {
-    if (skeleton->simplices[1][i].active) m++;
+    if (skeleton->active_simplex(1,i)) m++;
   }
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
@@ -99,7 +99,7 @@ void Spacetime::condense()
   // So we need to condense this spacetime to reduce memory pressure...
   int j,offset[nv];
   Simplex S;
-  std::set<int> vx;
+  std::set<int> N,vx;
   std::vector<double> xc;
   std::vector<std::vector<double> > svalues;
   std::set<int>::const_iterator it;
@@ -109,7 +109,7 @@ void Spacetime::condense()
   n = 0;
   for(i=0; i<nv; ++i) {
     offset[i] = -1;
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     geometry->get_coordinates(i,xc);
     svalues.push_back(xc);
     nevents.push_back(skeleton->events[i]);
@@ -119,18 +119,19 @@ void Spacetime::condense()
   skeleton->events = nevents;
   geometry->multiple_vertex_addition(svalues);
   for(i=0; i<n; ++i) {
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    skeleton->events[i].get_neighbours(N);
+    for(it=N.begin(); it!=N.end(); ++it) {
       vx.insert(offset[*it]);
     }
-    skeleton->events[i].neighbours = vx;
-    skeleton->events[i].entourage.clear();
+    skeleton->events[i].set_neighbours(vx);
+    skeleton->events[i].clear_entourage();
     vx.clear();
   }
   for(i=1; i<=Complex::ND; ++i) {
     m = (signed) skeleton->simplices[i].size();
     skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
-      if (!skeleton->simplices[i][j].active) continue;
+      if (!skeleton->active_simplex(i,j)) continue;
       S = skeleton->simplices[i][j];
       for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
         vx.insert(offset[*it]);
@@ -157,7 +158,7 @@ void Spacetime::distribute(int nprocs) const
   double cost,current_cost;
   std::vector<int> affinity;
   std::vector<std::pair<int,int> > candidates;
-  std::set<int> vx,neg,next;
+  std::set<int> S,vx,neg,next;
   std::set<int>::const_iterator it;
   const int nv = (signed) skeleton->events.size();
   const int D = skeleton->dimension();
@@ -166,7 +167,7 @@ void Spacetime::distribute(int nprocs) const
   // vertex with the highest simplicial dimension...
   for(i=0; i<nv; ++i) {
     affinity.push_back(-1);
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     nreal++;
     if (skeleton->events[i].topological_dimension > max_dim) {
       current = i;
@@ -190,7 +191,7 @@ void Spacetime::distribute(int nprocs) const
       // Need to loop over all d-skeleton->simplices, d > 1
       for(i=2; i<=skeleton->events[current].topological_dimension; ++i) {
         for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-          if (!skeleton->simplices[i][j].active) continue;
+          if (!skeleton->active_simplex(i,j)) continue;
           if (skeleton->simplices[i][j].contains(current)) {
             skeleton->simplices[i][j].get_vertices(vx);
             for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -209,7 +210,7 @@ void Spacetime::distribute(int nprocs) const
       do {
         for(i=2; i<=D; ++i) {
           for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-            if (!skeleton->simplices[i][j].active) continue;
+            if (!skeleton->active_simplex(i,j)) continue;
             skeleton->simplices[i][j].get_vertices(vx);
             bdry = false;
             for(it=vx.begin(); it!=vx.end(); ++it) {
@@ -238,7 +239,7 @@ void Spacetime::distribute(int nprocs) const
     }    
     done = true;
     for(i=0; i<nv; ++i) {
-      if (!skeleton->events[i].active) continue;
+      if (!skeleton->active_event(i)) continue;
       if (affinity[i] == -1 && skeleton->events[i].topological_dimension > 1) {
         done = false;
         current = i;
@@ -258,10 +259,11 @@ void Spacetime::distribute(int nprocs) const
       // been assigned to a processor...
       candidates.clear();
       for(j=0; j<nv; ++j) {
-        if (!skeleton->events[j].active) continue;
+        if (!skeleton->active_event(j)) continue;
         if (affinity[j] > -1) continue;
         cneighbour = 0;
-        for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
+        skeleton->events[j].get_neighbours(S);
+        for(it=S.begin(); it!=S.end(); ++it) {
           if (affinity[*it] > -1) cneighbour++; 
         }
         candidates.push_back(std::pair<int,int>(j,cneighbour));         
@@ -276,9 +278,10 @@ void Spacetime::distribute(int nprocs) const
     do {
       next.clear();
       for(j=0; j<nv; ++j) {
-        if (!skeleton->events[j].active) continue;
+        if (!skeleton->active_event(j)) continue;
         if (affinity[j] > -1) continue;
-        for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
+        skeleton->events[j].get_neighbours(S);
+        for(it=S.begin(); it!=S.end(); ++it) {
           if (affinity[*it] == i) next.insert(j);
         }
       }
@@ -295,9 +298,10 @@ void Spacetime::distribute(int nprocs) const
     } while(!done);
   }
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     if (affinity[i] == -1) {
-      for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+      skeleton->events[i].get_neighbours(S);
+      for(it=S.begin(); it!=S.end(); ++it) {
         p = affinity[*it];
         if (p > -1) {
           affinity[i] = p;
@@ -314,7 +318,7 @@ void Spacetime::distribute(int nprocs) const
   do {
     do {
       n = skeleton->RND->irandom(nv);
-      if (!skeleton->events[n].active) continue;
+      if (!skeleton->active_event(n)) continue;
       if (skeleton->events[n].topological_dimension > 1) continue;
       break;
     } while(true);
@@ -343,7 +347,7 @@ void Spacetime::distribute(int nprocs) const
   // Some basic sanity checks: every vertex has a processor...
   n = 0;
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     if (affinity[i] == -1) n++;
   }
   assert(n == 0);
@@ -357,9 +361,10 @@ void Spacetime::distribute(int nprocs) const
   for(i=0; i<nprocs; ++i) {
     ecount = 0; bcount = 0;
     for(j=0; j<nv; ++j) {
-      if (!skeleton->events[j].active) continue;
+      if (!skeleton->active_event(j)) continue;
       if (affinity[j] != i) continue;
-      for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
+      skeleton->events[j].get_neighbours(S);
+      for(it=S.begin(); it!=S.end(); ++it) {
         k = *it;
         if (affinity[k] == i) {
           ecount++;
@@ -523,6 +528,7 @@ void Spacetime::structural_deficiency()
   int i,j,v1,v2,v3,k = 0;
   double sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
+  std::set<int> S;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Graph G;
@@ -620,15 +626,16 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,v1,l,l_inv,it,sum1,sum2) 
+#pragma omp parallel for default(shared) private(i,j,k,S,v1,l,l_inv,it,sum1,sum2) 
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
     sum1 = 0.0;
     sum2 = 0.0;
-    k = (skeleton->events[v1].neighbours.empty()) ? 1 : (signed) skeleton->events[v1].neighbours.size();
+    skeleton->events[v1].get_neighbours(S);
+    k = (S.empty()) ? 1 : (signed) S.size();
     length_deviation[v1] = 0.0;
-    for(it=skeleton->events[v1].neighbours.begin(); it!=skeleton->events[v1].neighbours.end(); ++it) {
+    for(it=S.begin(); it!=S.end(); ++it) {
       j = *it;
       l = geometry->get_squared_distance(v1,j,false);
       l_inv = 1.0/(1.0 + l);
@@ -671,14 +678,14 @@ void Spacetime::structural_deficiency()
 
   error = 0.0;
   for(i=0; i<na; ++i) {
-    delta = skeleton->events[avertices[i]].deficiency;
+    delta = skeleton->events[avertices[i]].get_deficiency();
     error += delta*delta;
   }
   error = std::sqrt(error)/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
   for(i=0; i<na; ++i) {
-    total_error += std::abs(skeleton->events[avertices[i]].deficiency);
+    total_error += std::abs(skeleton->events[avertices[i]].get_deficiency());
   }
   std::cout << "The total error is " << total_error << std::endl;
 #endif
@@ -687,7 +694,7 @@ void Spacetime::structural_deficiency()
 #ifdef DEBUG
   int nv_test = 0;
   for(i=0; i<na; ++i) {
-    if (std::abs(skeleton->events[avertices[i]].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[avertices[i]].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     nv_test++;
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
@@ -714,7 +721,7 @@ bool Spacetime::global_operations()
   skeleton->compute_delta(modified_vertices);
 
   for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].incept == -1) skeleton->events[i].incept = iterations;
+    if (skeleton->events[i].get_incept() == -1) skeleton->events[i].set_incept(iterations);
   }
   for(i=0; i<=Complex::ND; ++i) {
     n = (signed) skeleton->simplices[i].size();
@@ -724,7 +731,7 @@ bool Spacetime::global_operations()
   }
 
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     if (skeleton->events[i].topology_modified) skeleton->events[i].topological_dimension = skeleton->vertex_dimension(i);
   }
 
@@ -750,13 +757,13 @@ bool Spacetime::global_operations()
   double E_avg = 0.0;
   double nc = double(skeleton->cardinality(0));
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     E_avg += skeleton->events[i].get_energy();
   }
   E_avg = E_avg/nc;
   sigma = 0.0;
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     sigma += (skeleton->events[i].get_energy() - E_avg)*(skeleton->events[i].get_energy() - E_avg);
   }
   sigma = std::sqrt(sigma/nc);
@@ -769,7 +776,7 @@ bool Spacetime::global_operations()
     histo2[i] = 0;
   }
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active) continue;
+    if (!skeleton->active_event(i)) continue;
     histo2[skeleton->vertex_dimension(i)] += 1;
     if (skeleton->events[i].zero_energy()) continue;
     histogram[skeleton->vertex_dimension(i)] += 1;
@@ -784,9 +791,9 @@ bool Spacetime::global_operations()
 #ifdef VERBOSE
   int ninitial = 0,ntouch = 0;
   for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].incept == 0) {
+    if (skeleton->events[i].get_incept() == 0) {
       ninitial++;
-      if (std::abs(skeleton->events[i].deficiency) > 0.0) ntouch++;
+      if (std::abs(skeleton->events[i].get_deficiency()) > 0.0) ntouch++;
     }
   }
   std::cout << "Percentage of perturbed initial vertices " << 100.0*double(ntouch)/double(ninitial) << std::endl;
@@ -794,8 +801,8 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping vertices
   if (superposable) {
-    superposition_fusion(vmodified);
-    superposition_fission(vmodified);
+    superposition_fusion(vmodified); assert(skeleton->consistent());
+    superposition_fission(vmodified); assert(skeleton->consistent());
   }
 
   if (compressible) {
@@ -814,7 +821,7 @@ bool Spacetime::global_operations()
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    i = compression(mu+sigma,vmodified);
+    i = compression(mu+sigma,vmodified); assert(skeleton->consistent());
   }
 
   if (superposable || compressible) {

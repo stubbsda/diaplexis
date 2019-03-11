@@ -27,19 +27,20 @@ void Spacetime::get_energy_extrema(double* output) const
 void Spacetime::get_deficiency_extrema(double* output) const
 {
   unsigned int i;
-  double u_ex = 0.0,l_ex = 0.0;
+  double t,u_ex = 0.0,l_ex = 0.0;
   const unsigned int nv = skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    u_ex = skeleton->events[i].deficiency;
+    u_ex = skeleton->events[i].get_deficiency();
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    if (u_ex < skeleton->events[i].deficiency) u_ex = skeleton->events[i].deficiency;
-    if (l_ex > skeleton->events[i].deficiency) l_ex = skeleton->events[i].deficiency;
+    t = skeleton->events[i].get_deficiency();
+    if (u_ex < t) u_ex = t;
+    if (l_ex > t) l_ex = t;
   }
   output[0] = u_ex;
   output[1] = l_ex;
@@ -251,7 +252,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
   // set the vertex colour according to a thermal palette.
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    x_min = (use_energy) ? skeleton->events[i].get_energy() : skeleton->events[i].deficiency;
+    x_min = (use_energy) ? skeleton->events[i].get_energy() : skeleton->events[i].get_deficiency();
     x_max = x_min;
     break;
   }
@@ -268,7 +269,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
   else {
     for(i=0; i<nv; ++i) {
       if (!skeleton->active_event(i)) continue;
-      x = skeleton->events[i].deficiency;
+      x = skeleton->events[i].get_deficiency();
       xvalue[i] = x;
       if (x > x_max) x_max = x;
       if (x < x_min) x_min = x;

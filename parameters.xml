@@ -6,16 +6,16 @@
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
 		<InitialDimension>1</InitialDimension>
-		<EuclideanGeometry>No</EuclideanGeometry>
+		<EuclideanGeometry>Yes</EuclideanGeometry>
 		<RelationalGeometry>No</RelationalGeometry>
-		<DimensionalUniformity>No</DimensionalUniformity>
+		<DimensionalUniformity>Yes</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
 		<MaximumIterations>10</MaximumIterations>
 		<SheetDynamics>Yes</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>Low</MemoryFootprint>
-		<Superposable>No</Superposable>
-		<Compressible>No</Compressible>
+		<Superposable>Yes</Superposable>
+		<Compressible>Yes</Compressible>
 		<Permutable>Yes</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
 		<!--InitialState>MONOPLEX</InitialState-->
@@ -39,10 +39,10 @@
 		<ParityMutation>0.05</ParityMutation>
 	</Global>
 	<GeometrySolver>
-		<SolverType>MINIMAL</SolverType>
+		<!--SolverType>MINIMAL</SolverType-->
 		<!--SolverType>EVOLUTIONARY</SolverType-->
 		<!--SolverType>ANNEALING</SolverType-->
-		<!--SolverType>MECHANICAL</SolverType-->
+		<SolverType>MECHANICAL</SolverType>
 		<!--SolverType>SIMPLEX</SolverType-->
 		<SolverIterations>100</SolverIterations>
 		<GeometryTolerance>0.00005</GeometryTolerance>

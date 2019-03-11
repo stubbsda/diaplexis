@@ -2,49 +2,46 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<double>& y,double* output) const
+void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<int>& vx_map,const std::vector<double>& energy,const std::vector<double>& y,double* output) const
 {
-  int i,j,l,m,k;
+  int i,j,k;
   double delta,r_true;
+  std::set<int> S;
   std::set<int>::const_iterator it;
-  const int nv = (signed) skeleton->events.size();
   const int nreal = skeleton->cardinality(0);
   const int D = geometry->dimension();
   const double pfactor = (2.0/M_PI)*5.0;
   double force[D*nreal];
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,m,l,r_true,it,delta)
+#pragma omp parallel for default(shared) private(i,j,k,S,r_true,it,delta)
 #endif 
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
-    k = offset[i];
+  for(i=0; i<nreal; ++i) {
     // This vertex's force begins at zero...
     for(j=0; j<D; ++j) {
-      force[D*k+j] = 0.0;
+      force[D*i+j] = 0.0;
     }
     // Vertex-Vertex Repulsion...
-    for(j=0; j<nv; ++j) {
-      if (!skeleton->active_event(j)) continue;
-      m = offset[j];
-      if (k == m) continue;
-      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(skeleton->events[i].get_energy() + skeleton->events[j].get_energy())));
+    for(j=0; j<nreal; ++j) {
+      if (i == j) continue;
+      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(energy[i] + energy[j])));
       delta = 0.0;
-      for(l=0; l<D; ++l) {
-        delta += (y[D*k+l] - y[D*m+l])*(y[D*k+l] - y[D*m+l]);
+      for(k=0; k<D; ++k) {
+        delta += (y[D*i+k] - y[D*j+k])*(y[D*i+k] - y[D*j+k]);
       }
-      for(l=0; l<D; ++l) {
-        force[D*k+l] += r_true*(y[D*k+l] - y[D*m+l])/delta;
+      for(k=0; k<D; ++k) {
+        force[D*i+k] += r_true*(y[D*i+k] - y[D*j+k])/delta;
       }
     }
     // Edge-Edge Repulsion?
     // This means two edges, so four vertices would have their force 
     // modified 
     // Spring-like attraction between connected vertices...
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
-      j = offset[*it];
-      for(l=0; l<D; ++l) {
-        force[D*k+l] += spring_constant*(y[D*k+l] - y[D*j+l]); 
+    skeleton->events[offset[i]].get_neighbours(S);
+    for(it=S.begin(); it!=S.end(); ++it) {
+      j = vx_map[*it];
+      for(k=0; k<D; ++k) {
+        force[D*i+k] += spring_constant*(y[D*i+k] - y[D*j+k]); 
       } 
     }
   }
@@ -66,8 +63,8 @@ void Spacetime::mechanical_solver()
   // the geometry's abnormality. 
   int i,j,m = 0,k = 0,its = 1;
   double vnorm;
-  std::vector<int> offset;
-  std::vector<double> y,ynew;
+  std::vector<int> offset,vx_map;
+  std::vector<double> xc,y,ynew,energy;
   const int nv = (signed) skeleton->events.size();
   const int nreal = skeleton->cardinality(0);
   const int D = geometry->dimension();
@@ -77,13 +74,22 @@ void Spacetime::mechanical_solver()
 #endif
 
   for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
-    offset.push_back(m);
+    if (!skeleton->active_event(i)) {
+      vx_map.push_back(-1);
+      continue;
+    }
+    vx_map.push_back(m);
+    offset.push_back(i);
+    energy.push_back(skeleton->events[i].get_energy());
     m++;
   }
   // Initial position from current geometry...
-  for(i=0; i<D*nreal; ++i) {
-    y.push_back(geometry->get_element(i));
+  for(i=0; i<nreal; ++i) {
+    k = offset[i];
+    geometry->get_coordinates(k,xc);
+    for(j=0; j<D; ++j) {
+      y.push_back(xc[j]);
+    }
   }
 
   // Initial velocity is zero...
@@ -96,7 +102,7 @@ void Spacetime::mechanical_solver()
   if (engine == Integrator::euler) {
     double F[2*D*nreal];
     do {
-      mechanical_force(offset,y,F);
+      mechanical_force(offset,vx_map,energy,y,F);
       // This just uses the Euler method, not very sophisticated...
       for(i=0; i<2*D*nreal; ++i) {
         ynew[i] = y[i] + step_size*F[i];
@@ -118,19 +124,19 @@ void Spacetime::mechanical_solver()
       temp.push_back(0.0);
     }
     do {
-      mechanical_force(offset,y,k1);
+      mechanical_force(offset,vx_map,energy,y,k1);
       for(i=0; i<2*D*nreal; ++i) {
         temp[i] = y[i] + 0.5*step_size*k1[i];
       }
-      mechanical_force(offset,temp,k2);
+      mechanical_force(offset,vx_map,energy,temp,k2);
       for(i=0; i<2*D*nreal; ++i) {
         temp[i] = y[i] + 0.5*step_size*k2[i];
       }
-      mechanical_force(offset,temp,k3);
+      mechanical_force(offset,vx_map,energy,temp,k3);
       for(i=0; i<2*D*nreal; ++i) {
         temp[i] = y[i] + step_size*k3[i];
       }
-      mechanical_force(offset,temp,k4);    
+      mechanical_force(offset,vx_map,energy,temp,k4);    
       for(i=0; i<2*D*nreal; ++i) {
         ynew[i] = y[i] + step_size/6.0*(k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]); 
       }
@@ -139,17 +145,44 @@ void Spacetime::mechanical_solver()
         vnorm += ynew[i]*ynew[i];
       }
       vnorm = std::sqrt(vnorm);
-      if (vnorm < geometry_tolerance || its > max_int_steps) break;
+      if (vnorm < geometry_tolerance) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver converged, exiting loop..." << std::endl;
+#endif
+        break;
+      }
+      else if (vnorm > 100.0*double(nreal)) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver has excessive velocity norm " << vnorm << " after " << its << " iterations, exiting loop..." << std::endl;
+#endif
+        break;
+      } 
+      else if (its > max_int_steps) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver reached maximum iterations with velocity norm " << vnorm << ", exiting loop..." << std::endl;
+#endif
+        break;
+      }
+      for(i=0; i<2*D*nreal; ++i) {
+        if (std::isnan(ynew[i])) {
+          std::cout << "NaN detected in mechanical solver at iteration " << its << std::endl;
+          std::exit(1);
+        }
+      }
       y = ynew; 
       its++;
     } while(true);
   }
-  for(i=0; i<D*nreal; ++i) {
-    geometry->set_element(i,ynew[i]);
+  for(i=0; i<nreal; ++i) {
+    for(j=0; j<D; ++j) {
+      xc[j] = ynew[D*i+j];
+    }
+    k = offset[i];
+    geometry->set_coordinates(k,xc);
   }
   geometry->compute_squared_distances();
   compute_volume();
-  if (!cgradient_refinement) return;
+  if (!cgradient_refinement || geometry->get_euclidean() == false) return;
   double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
   SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
   std::vector<int> flexible_edge;
@@ -157,6 +190,7 @@ void Spacetime::mechanical_solver()
 
   skeleton->determine_flexible_edges(flexible_edge);
   E_initial = compute_abnormality(flexible_edge);
+  if (std::isnan(E_initial)) std::exit(1);
 #ifdef VERBOSE
   std::cout << "Initial error is " << E_initial << std::endl;
 #endif
@@ -283,8 +317,8 @@ void Spacetime::evolutionary_solver()
   std::set<int> vmodified,vx;
   std::set<int>::const_iterator it;
   std::vector<SYNARMOSMA::Geometry> pool,ptemp;
-  SYNARMOSMA::Geometry* optimal = new SYNARMOSMA::Geometry(*geometry);
-  SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
+  SYNARMOSMA::Geometry optimal; 
+  SYNARMOSMA::Geometry initial_state; 
   const int pmagnitude = int(0.15*system_size);
   const double initial_error = error;
 
@@ -300,8 +334,8 @@ void Spacetime::evolutionary_solver()
     ptemp.push_back(SYNARMOSMA::Geometry(*geometry));
   }
 
-  geometry->store(initial_state);
-  geometry->store(optimal);
+  geometry->store(&initial_state);
+  geometry->store(&optimal);
   fbest = initial_error;
 
   // Initialize the population based on some Gaussian flux around the
@@ -330,7 +364,7 @@ void Spacetime::evolutionary_solver()
     structural_deficiency();
     fitness[i] = error;
     vmodified.clear();
-    geometry->load(initial_state);
+    geometry->load(&initial_state);
   }
 
   // During each generation, a single individual creates one child
@@ -344,7 +378,7 @@ void Spacetime::evolutionary_solver()
       p += fitness[i];
       if (fitness[i] < f1) f1 = fitness[i];
       if (fitness[i] < fbest) {
-        optimal = &pool[i];
+        optimal = pool[i];
         fbest = f1;
       }
     }
@@ -415,20 +449,18 @@ void Spacetime::evolutionary_solver()
 #ifdef VERBOSE
     std::cout << "Loading optimized geometry with " << 100.0*(initial_error - fbest)/initial_error << " percent improvement" << std::endl;
 #endif
-    geometry->load(optimal);
+    geometry->load(&optimal);
   }
   else {
 #ifdef VERBOSE
     std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
 #endif
-    geometry->load(initial_state);
+    geometry->load(&initial_state);
   }
   geometry->compute_squared_distances();
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  delete optimal;
-  delete initial_state;
 }
 
 void Spacetime::annealing_solver()

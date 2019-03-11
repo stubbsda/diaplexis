@@ -68,10 +68,11 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
 
 void Spacetime::superposition_fission(std::set<int>& vmodified)
 {
-  int i,n,nc;
+  int i,n,nc,ne;
+  std::set<int> S;
   std::set<int>::const_iterator it;
   Event vx;
-  Simplex S;
+  //Simplex S;
   const int nv = (signed) skeleton->events.size();
   const int fmax = int(1.05*double(nv));
 
@@ -83,21 +84,24 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
     if (!skeleton->active_event(n)) continue;
     if (skeleton->RND->drandom() > 0.01) continue;
     vx = skeleton->events[n];
+    ne = 0;
+    geometry->vertex_addition(n);
+    skeleton->events.push_back(vx);
     for(it=vx.neighbours.begin(); it!=vx.neighbours.end(); ++it) {
       i = *it;
-      skeleton->events[i].neighbours.insert(nc);
+      //skeleton->events[i].neighbours.insert(nc);
       vmodified.insert(i);
-      S.initialize(nc,i);
-      skeleton->simplices[1].push_back(S);
-      skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
+      S.insert(nc); S.insert(i);
+      if (skeleton->simplex_addition(S,vmodified)) ne++;
+      //S.initialize(nc,i);
+      //skeleton->simplices[1].push_back(S);
+      //skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       S.clear();
     }
     vmodified.insert(nc);
-    geometry->vertex_addition(n);
-    skeleton->events.push_back(vx);
     nc++;
 #ifdef VERBOSE
-    std::cout << "Created vertex " << nc - 1 << " from " << n << std::endl;
+    std::cout << "Created vertex " << nc - 1 << " from " << n << " with " << ne << " edges." << std::endl;
 #endif
   } while(nc < fmax);
 }
@@ -145,10 +149,10 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     int j,k,nsedge,ncomp;
     double l,tlength;
     std::set<int>::const_iterator jt,kt;
-    std::set<int> linked;
+    std::set<int> linked,S;
     std::vector<int> component,sedge;
     std::vector<std::tuple<int,int,double> > connect;
-    Simplex S;
+    //Simplex S;
 
     ncomp = skeleton->component_analysis(component);
 #ifdef VERBOSE
@@ -212,13 +216,17 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<nsedge; ++i) {
       j = sedge[2*i];
       k = sedge[2*i+1];
-      S.initialize(j,k);
+      S.insert(j); S.insert(k);
+      skeleton->simplex_addition(S,vmodified);
+      S.clear();
+      /*
       skeleton->simplices[1].push_back(S);
       skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       skeleton->events[j].neighbours.insert(k);
       skeleton->events[k].neighbours.insert(j);
       vmodified.insert(k);
       vmodified.insert(j);
+      */
     }
     nc -= nsedge;
 #ifdef DEBUG
@@ -509,11 +517,11 @@ void Spacetime::regularization(bool minimal)
       assert(!skeleton->active_simplex(1,qt->second));
 #endif
 #ifdef VERBOSE
-      std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
+      std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(S.vertices) << " to maintain the complex's connectedness" << std::endl;
 #endif
       skeleton->simplices[1][qt->second].active = true;
     }
-    // Need to ensure that v1 and v2 are also coloured by sheet...
+    // Need to ensure that v1 and v2 are also active...
     skeleton->events[v1].active = true;
     skeleton->events[v2].active = true;
   }
@@ -523,4 +531,6 @@ void Spacetime::regularization(bool minimal)
 #endif
   skeleton->compute_entourages();
   delete[] cvertex;
+
+  assert(skeleton->consistent());
 }
