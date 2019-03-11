@@ -149,238 +149,6 @@ void Spacetime::condense()
   skeleton->compute_entourages();
 }
 
-void Spacetime::distribute(int nprocs) const
-{
-  assert(nprocs > 0);
-  int i,j,k,n,p,p_old,ecount,bcount,its = 0,volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
-  int cneighbour;
-  bool done,bdry;
-  double cost,current_cost;
-  std::vector<int> affinity;
-  std::vector<std::pair<int,int> > candidates;
-  std::set<int> S,vx,neg,next;
-  std::set<int>::const_iterator it;
-  const int nv = (signed) skeleton->events.size();
-  const int D = skeleton->dimension();
-
-  // The algorithm should begin by making current equal to the 
-  // vertex with the highest simplicial dimension...
-  for(i=0; i<nv; ++i) {
-    affinity.push_back(-1);
-    if (!skeleton->active_event(i)) continue;
-    nreal++;
-    if (skeleton->events[i].topological_dimension > max_dim) {
-      current = i;
-      max_dim = skeleton->events[i].topological_dimension;
-    }
-  }
-  for(i=0; i<nprocs; ++i) {
-    volume[i] = 0;
-  }
-#ifdef VERBOSE
-  std::cout << "Distributing " << nreal << " vertices across " << nprocs << " processor elements, with maximum simplicial dimension of " << max_dim << "." << std::endl;
-#endif
-  // First do the higher-dimensional vertices...
-  do {
-    // So take all of the n-skeleton->simplices (n > 1) that are active and which 
-    // contain the current vertex and assign all of their vertices to the 
-    // current processor...
-    if (skeleton->events[current].topological_dimension > 1) {
-      affinity[current] = cproc;
-      volume[cproc] += 1;
-      // Need to loop over all d-skeleton->simplices, d > 1
-      for(i=2; i<=skeleton->events[current].topological_dimension; ++i) {
-        for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-          if (!skeleton->active_simplex(i,j)) continue;
-          if (skeleton->simplices[i][j].contains(current)) {
-            skeleton->simplices[i][j].get_vertices(vx);
-            for(it=vx.begin(); it!=vx.end(); ++it) {
-              if (affinity[*it] == -1) {
-                affinity[*it] = cproc;
-                volume[cproc] += 1;
-              }
-              else {
-                assert(affinity[*it] == cproc);
-              }
-            }
-          }
-        }
-      }
-      // Now handle the neighbouring d-skeleton->simplices (d > 1)...
-      do {
-        for(i=2; i<=D; ++i) {
-          for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-            if (!skeleton->active_simplex(i,j)) continue;
-            skeleton->simplices[i][j].get_vertices(vx);
-            bdry = false;
-            for(it=vx.begin(); it!=vx.end(); ++it) {
-              if (affinity[*it] == -1) {
-                neg.insert(*it);
-              }
-              else {
-                assert(affinity[*it] == cproc);
-                bdry = true;
-              }
-            }
-            if (!neg.empty() && bdry) {
-              for(it=neg.begin(); it!=neg.end(); ++it) {
-                next.insert(*it);
-              }
-            }
-            neg.clear(); 
-          }
-        }
-        if (next.empty()) break;
-        for(it=next.begin(); it!=next.end(); ++it) {
-          affinity[*it] = cproc;
-        }  
-        next.clear();
-      } while(true);
-    }    
-    done = true;
-    for(i=0; i<nv; ++i) {
-      if (!skeleton->active_event(i)) continue;
-      if (affinity[i] == -1 && skeleton->events[i].topological_dimension > 1) {
-        done = false;
-        current = i;
-        break;
-      }
-    }
-    cproc = (cproc + 1)%nprocs;
-  } while(!done);
-  // Now everything else, adding vertices to equilibrate the population counts 
-  // and minimize the number of boundary edges...
-#ifdef VERBOSE
-  std::cout << "Done handling higher-dimensional vertices, now doing edges and vertices..." << std::endl;
-#endif  
-  for(i=0; i<nprocs; ++i) {
-    if (volume[i] == 0) {
-      // Find an initial vertex, ideally far from any existing vertices that have 
-      // been assigned to a processor...
-      candidates.clear();
-      for(j=0; j<nv; ++j) {
-        if (!skeleton->active_event(j)) continue;
-        if (affinity[j] > -1) continue;
-        cneighbour = 0;
-        skeleton->events[j].get_neighbours(S);
-        for(it=S.begin(); it!=S.end(); ++it) {
-          if (affinity[*it] > -1) cneighbour++; 
-        }
-        candidates.push_back(std::pair<int,int>(j,cneighbour));         
-      }
-      if (candidates.empty()) break;
-      std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_int);
-      n = candidates[0].first;
-      affinity[n] = i;
-      volume[i] += 1;
-    }
-    done = false;
-    do {
-      next.clear();
-      for(j=0; j<nv; ++j) {
-        if (!skeleton->active_event(j)) continue;
-        if (affinity[j] > -1) continue;
-        skeleton->events[j].get_neighbours(S);
-        for(it=S.begin(); it!=S.end(); ++it) {
-          if (affinity[*it] == i) next.insert(j);
-        }
-      }
-      if (next.empty()) break;
-      for(it=next.begin(); it!=next.end(); ++it) {
-        assert(affinity[*it] == -1);
-        affinity[*it] = i;
-        volume[i] += 1;
-        if (volume[i] >= nreal/nprocs) {
-          done = true;
-          break;
-        }
-      }
-    } while(!done);
-  }
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
-    if (affinity[i] == -1) {
-      skeleton->events[i].get_neighbours(S);
-      for(it=S.begin(); it!=S.end(); ++it) {
-        p = affinity[*it];
-        if (p > -1) {
-          affinity[i] = p;
-          volume[p] += 1;
-          break;
-        }
-      }
-    }
-  }
-  current_cost = skeleton->distribution_fitness(volume,affinity,nprocs);
-#ifdef VERBOSE
-  std::cout << "At iteration 0 the cost is " << current_cost << std::endl;
-#endif
-  do {
-    do {
-      n = skeleton->RND->irandom(nv);
-      if (!skeleton->active_event(n)) continue;
-      if (skeleton->events[n].topological_dimension > 1) continue;
-      break;
-    } while(true);
-    p_old = affinity[n];
-    do {
-      p = skeleton->RND->irandom(nprocs);
-      if (p != p_old) break;
-    } while(true);
-    affinity[n] = p;
-    volume[p] += 1;
-    volume[p_old] -= 1;
-    cost = skeleton->distribution_fitness(volume,affinity,nprocs);
-    if (cost < current_cost) {
-      current_cost = cost;
-    }
-    else {
-      affinity[n] = p_old;
-      volume[p] -= 1;
-      volume[p_old] += 1;
-    }
-    its++;
-#ifdef VERBOSE
-    if (its % 250 == 0) std::cout << "At iteration " << its << " the cost is " << current_cost << std::endl; 
-#endif
-  } while(its < 10000);
-  // Some basic sanity checks: every vertex has a processor...
-  n = 0;
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
-    if (affinity[i] == -1) n++;
-  }
-  assert(n == 0);
-  // And the processors haven't overcounted the vertices.
-  n = 0;
-  for(i=0; i<nprocs; ++i) {
-    n += volume[i];
-  }
-  assert(n == nreal);
-  // Analysis of the distribution of vertices and edges among the processors...
-  for(i=0; i<nprocs; ++i) {
-    ecount = 0; bcount = 0;
-    for(j=0; j<nv; ++j) {
-      if (!skeleton->active_event(j)) continue;
-      if (affinity[j] != i) continue;
-      skeleton->events[j].get_neighbours(S);
-      for(it=S.begin(); it!=S.end(); ++it) {
-        k = *it;
-        if (affinity[k] == i) {
-          ecount++;
-        }
-        else {
-          bcount++;
-        }
-      }
-    }
-#ifdef VERBOSE 
-    std::cout << "Processor " << i << " owns " << volume[i] << " vertices and " << ecount << " edges, with " << bcount << " boundary edges." << std::endl;
-#endif
-  }
-  write_distribution(affinity);
-}
-
 void Spacetime::clean() const
 {
   int i,j;
@@ -526,7 +294,7 @@ void Spacetime::structural_deficiency()
   geometry (vertex coordinates) and energy.
   */
   int i,j,v1,v2,v3,k = 0;
-  double sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
+  double sum1,sum2,l,l_inv,alpha,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
   std::set<int> S;
   std::set<int>::const_iterator it;
@@ -543,9 +311,9 @@ void Spacetime::structural_deficiency()
       k++;
     }
     else {
-      skeleton->events[i].entwinement = 0.0;
+      skeleton->events[i].set_entwinement(0.0);
     }
-    skeleton->events[i].deficiency = 0.0;
+    skeleton->events[i].set_deficiency(0.0);
     skeleton->events[i].geometric_deficiency = 0.0;
     length_deviation[i] = 0.0;
     gvalue[i] = 0.0;
@@ -554,22 +322,23 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,v1,G)
+#pragma omp parallel for default(shared) private(i,j,alpha,v1,G)
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
     if (!skeleton->events[v1].topology_modified) continue;
     j = skeleton->vertex_dimension(v1);
-    skeleton->events[v1].entwinement = 0.5*double(j - 1) + compute_temporal_vorticity(i);
+    alpha = 0.5*double(j - 1) + compute_temporal_vorticity(i);
     skeleton->compute_graph(&G,v1);
-    skeleton->events[v1].entwinement += G.completeness();
-    if (G.order() > 1) skeleton->events[v1].entwinement += G.entwinement()/double(G.order() - 1); 
+    alpha += G.completeness();
+    if (G.order() > 1) alpha += G.entwinement()/double(G.order() - 1); 
+    skeleton->events[v1].set_entwinement(alpha);
     skeleton->events[v1].topological_dimension = j;
     skeleton->events[v1].topology_modified = false;
   }
 
   for(i=0; i<nv; ++i) {
-    gvalue[i] = skeleton->events[i].entwinement;
+    gvalue[i] = skeleton->events[i].get_entwinement();
   }
 
 #ifdef _OPENMP
@@ -579,14 +348,14 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     for(j=1+i; j<na; ++j) {
       v2 = avertices[j];
-      l = geometry->get_squared_distance(v1,v2,false);
+      l = std::abs(geometry->get_squared_distance(v1,v2,false));
       if (l < 3.8025 || l > 4.2025) continue;
       // See if there is a third vertex that lies between these two...
       found = false;
       for(k=0; k<i; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -595,8 +364,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+i; k<j; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -605,8 +374,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+j; k<na; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -637,7 +406,7 @@ void Spacetime::structural_deficiency()
     length_deviation[v1] = 0.0;
     for(it=S.begin(); it!=S.end(); ++it) {
       j = *it;
-      l = geometry->get_squared_distance(v1,j,false);
+      l = std::abs(geometry->get_squared_distance(v1,j,false));
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += skeleton->events[j].get_energy()*l_inv;
@@ -648,22 +417,17 @@ void Spacetime::structural_deficiency()
       else {
         length_deviation[v1] += std::log(l)*std::log(l);
       }
-      //if (skeleton->simplices[1][n].orientation == SYNARMOSMA::DISPARATE) continue;
-      // How to determine if j lies in the chronological future of i?
-      //sigma = (skeleton->simplices[1][n].orientation == SYNARMOSMA::AFTER) ? 1 : -1;
-      //if (j < i) sigma = -sigma;
-      //sum2 += double(sigma)*skeleton->events[j].get_energy()*l_inv;
     }
     length_deviation[v1] = length_deviation[v1]/double(k);
-    R[v1] = gvalue[v1]; // - sum1/double(k);
-    rho[v1] = skeleton->events[v1].get_energy(); // + sum2/double(k);
+    R[v1] = gvalue[v1]; 
+    rho[v1] = skeleton->events[v1].get_energy(); 
   }
   
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].obliquity + length_deviation[v1] - Spacetime::Lambda*rho[v1];
-    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].obliquity + length_deviation[v1];
+    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].get_obliquity() + length_deviation[v1] - Spacetime::Lambda*rho[v1];
+    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].get_obliquity() + length_deviation[v1];
   }
 
   // Now the chromatic energy sum...
@@ -699,7 +463,7 @@ void Spacetime::structural_deficiency()
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
 #endif
-  //error += std::abs(global_deficiency)/double(na);
+  error += std::abs(global_deficiency)/double(na);
 }
 
 bool Spacetime::global_operations()
@@ -746,7 +510,7 @@ bool Spacetime::global_operations()
   }
 
   skeleton->energy_diffusion(Spacetime::Lambda);
-  for(i=1; i<skeleton->dimension(); ++i) {
+  for(i=1; i<=skeleton->dimension(); ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
       skeleton->compute_simplex_energy(i,j);
     }
@@ -809,19 +573,19 @@ bool Spacetime::global_operations()
     // Eliminate excessively long edges...
     // First calculate the average edge length and its variance...
     for(i=0; i<ne; ++i) {
-      if (!skeleton->simplices[1][i].active) continue;
+      if (!skeleton->active_simplex(1,i)) continue;
       delta += std::abs(skeleton->simplices[1][i].volume);
       k++;
     }
     mu = delta/double(k);
     for(i=0; i<ne; ++i) {
-      if (!skeleton->simplices[1][i].active) continue;
-      delta = (std::abs(skeleton->simplices[1][i].volume) - mu);
+      if (!skeleton->active_simplex(1,i)) continue;
+      delta = std::abs(skeleton->simplices[1][i].volume) - mu;
       sigma += delta*delta;
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    i = compression(mu+sigma,vmodified); assert(skeleton->consistent());
+    i = compression(mu + sigma,vmodified); assert(skeleton->consistent());
   }
 
   if (superposable || compressible) {
