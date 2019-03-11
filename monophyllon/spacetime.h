@@ -201,7 +201,6 @@ namespace DIAPLEXIS {
     double representational_energy(bool) const;
 
     bool global_operations();
-    void write_distribution(const std::vector<int>&) const;
     void compute_colours(std::vector<unsigned char>&,bool) const;
     void build_initial_state();
     void write_log() const;
@@ -230,7 +229,6 @@ namespace DIAPLEXIS {
     void fallback();
     void evolve();
     void chorogenesis(int);
-    void distribute(int) const; 
     void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*) const;

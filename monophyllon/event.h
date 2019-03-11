@@ -37,6 +37,11 @@ namespace DIAPLEXIS {
     inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
     inline void add_neighbour(int n) {neighbours.insert(n);};
     inline double get_deficiency() const {return deficiency;};
+    inline void set_deficiency(double x) {deficiency = x;};
+    inline double get_entwinement() const {return entwinement;};
+    inline void set_entwinement(double x) {entwinement = x;};
+    inline double get_obliquity() const {return obliquity;};
+    inline void set_obliquity(double x) {obliquity = x;};
     inline int get_incept() const {return incept;};
     friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;

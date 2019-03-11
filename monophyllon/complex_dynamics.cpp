@@ -35,6 +35,233 @@ void Complex::inversion()
   }
 }
 
+void Complex::distribute(int nprocs) const
+{
+  assert(nprocs > 0);
+  int i,j,k,n,p,p_old,ecount,bcount,its = 0,volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
+  int cneighbour;
+  bool done,bdry;
+  double cost,current_cost;
+  std::vector<int> affinity;
+  std::vector<std::pair<int,int> > candidates;
+  std::set<int> vx,neg,next;
+  std::set<int>::const_iterator it;
+  const int nv = (signed) events.size();
+  const int D = dimension();
+
+  // The algorithm should begin by making current equal to the 
+  // vertex with the highest simplicial dimension...
+  for(i=0; i<nv; ++i) {
+    affinity.push_back(-1);
+    if (!events[i].active) continue;
+    nreal++;
+    if (events[i].topological_dimension > max_dim) {
+      current = i;
+      max_dim = events[i].topological_dimension;
+    }
+  }
+  for(i=0; i<nprocs; ++i) {
+    volume[i] = 0;
+  }
+#ifdef VERBOSE
+  std::cout << "Distributing " << nreal << " vertices across " << nprocs << " processor elements, with maximum simplicial dimension of " << max_dim << "." << std::endl;
+#endif
+  // First do the higher-dimensional vertices...
+  do {
+    // So take all of the n-skeleton->simplices (n > 1) that are active and which 
+    // contain the current vertex and assign all of their vertices to the 
+    // current processor...
+    if (events[current].topological_dimension > 1) {
+      affinity[current] = cproc;
+      volume[cproc] += 1;
+      // Need to loop over all d-skeleton->simplices, d > 1
+      for(i=2; i<=events[current].topological_dimension; ++i) {
+        for(j=0; j<(signed) simplices[i].size(); ++j) {
+          if (!simplices[i][j].active) continue;
+          if (simplices[i][j].contains(current)) {
+            simplices[i][j].get_vertices(vx);
+            for(it=vx.begin(); it!=vx.end(); ++it) {
+              if (affinity[*it] == -1) {
+                affinity[*it] = cproc;
+                volume[cproc] += 1;
+              }
+              else {
+                assert(affinity[*it] == cproc);
+              }
+            }
+          }
+        }
+      }
+      // Now handle the neighbouring d-skeleton->simplices (d > 1)...
+      do {
+        for(i=2; i<=D; ++i) {
+          for(j=0; j<(signed) simplices[i].size(); ++j) {
+            if (!simplices[i][j].active) continue;
+            simplices[i][j].get_vertices(vx);
+            bdry = false;
+            for(it=vx.begin(); it!=vx.end(); ++it) {
+              if (affinity[*it] == -1) {
+                neg.insert(*it);
+              }
+              else {
+                assert(affinity[*it] == cproc);
+                bdry = true;
+              }
+            }
+            if (!neg.empty() && bdry) {
+              for(it=neg.begin(); it!=neg.end(); ++it) {
+                next.insert(*it);
+              }
+            }
+            neg.clear(); 
+          }
+        }
+        if (next.empty()) break;
+        for(it=next.begin(); it!=next.end(); ++it) {
+          affinity[*it] = cproc;
+        }  
+        next.clear();
+      } while(true);
+    }    
+    done = true;
+    for(i=0; i<nv; ++i) {
+      if (!events[i].active) continue;
+      if (affinity[i] == -1 && events[i].topological_dimension > 1) {
+        done = false;
+        current = i;
+        break;
+      }
+    }
+    cproc = (cproc + 1)%nprocs;
+  } while(!done);
+  // Now everything else, adding vertices to equilibrate the population counts 
+  // and minimize the number of boundary edges...
+#ifdef VERBOSE
+  std::cout << "Done handling higher-dimensional vertices, now doing edges and vertices..." << std::endl;
+#endif  
+  for(i=0; i<nprocs; ++i) {
+    if (volume[i] == 0) {
+      // Find an initial vertex, ideally far from any existing vertices that have 
+      // been assigned to a processor...
+      candidates.clear();
+      for(j=0; j<nv; ++j) {
+        if (!skeleton->active_event(j)) continue;
+        if (affinity[j] > -1) continue;
+        cneighbour = 0;
+        for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+          if (affinity[*it] > -1) cneighbour++; 
+        }
+        candidates.push_back(std::pair<int,int>(j,cneighbour));         
+      }
+      if (candidates.empty()) break;
+      std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_int);
+      n = candidates[0].first;
+      affinity[n] = i;
+      volume[i] += 1;
+    }
+    done = false;
+    do {
+      next.clear();
+      for(j=0; j<nv; ++j) {
+        if (!events[j].active) continue;
+        if (affinity[j] > -1) continue;
+        for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+          if (affinity[*it] == i) next.insert(j);
+        }
+      }
+      if (next.empty()) break;
+      for(it=next.begin(); it!=next.end(); ++it) {
+        assert(affinity[*it] == -1);
+        affinity[*it] = i;
+        volume[i] += 1;
+        if (volume[i] >= nreal/nprocs) {
+          done = true;
+          break;
+        }
+      }
+    } while(!done);
+  }
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active) continue;
+    if (affinity[i] == -1) {
+      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+        p = affinity[*it];
+        if (p > -1) {
+          affinity[i] = p;
+          volume[p] += 1;
+          break;
+        }
+      }
+    }
+  }
+  current_cost = distribution_fitness(volume,affinity,nprocs);
+#ifdef VERBOSE
+  std::cout << "At iteration 0 the cost is " << current_cost << std::endl;
+#endif
+  do {
+    do {
+      n = RND->irandom(nv);
+      if (!events[n].active) continue;
+      if (events[n].topological_dimension > 1) continue;
+      break;
+    } while(true);
+    p_old = affinity[n];
+    do {
+      p = RND->irandom(nprocs);
+      if (p != p_old) break;
+    } while(true);
+    affinity[n] = p;
+    volume[p] += 1;
+    volume[p_old] -= 1;
+    cost = distribution_fitness(volume,affinity,nprocs);
+    if (cost < current_cost) {
+      current_cost = cost;
+    }
+    else {
+      affinity[n] = p_old;
+      volume[p] -= 1;
+      volume[p_old] += 1;
+    }
+    its++;
+#ifdef VERBOSE
+    if (its % 250 == 0) std::cout << "At iteration " << its << " the cost is " << current_cost << std::endl; 
+#endif
+  } while(its < 10000);
+  // Some basic sanity checks: every vertex has a processor...
+  n = 0;
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active) continue;
+    if (affinity[i] == -1) n++;
+  }
+  assert(n == 0);
+  // And the processors haven't overcounted the vertices.
+  n = 0;
+  for(i=0; i<nprocs; ++i) {
+    n += volume[i];
+  }
+  assert(n == nreal);
+  // Analysis of the distribution of vertices and edges among the processors...
+  for(i=0; i<nprocs; ++i) {
+    ecount = 0; bcount = 0;
+    for(j=0; j<nv; ++j) {
+      if (!events[j].active) continue;
+      if (affinity[j] != i) continue;
+      for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+        k = *it;
+        if (affinity[k] == i) {
+          ecount++;
+        }
+        else {
+          bcount++;
+        }
+      }
+    }
+#ifdef VERBOSE 
+    std::cout << "Processor " << i << " owns " << volume[i] << " vertices and " << ecount << " edges, with " << bcount << " boundary edges." << std::endl;
+#endif
+  }
+}
+
 double Complex::set_logical_atoms(int n)
 { 
 #ifdef DEBUG
@@ -115,7 +342,7 @@ void Complex::compute_simplex_energy(int d,int n)
   for(i=0; i<1+d; ++i) {
     alpha += events[vx[i]].get_energy();
   }
-  simplices[d][n].energy = alpha/double(1+d);
+  simplices[d][n].energy = alpha/double(1 + d);
 }
 
 void Complex::compute_delta(std::set<int>& modified_vertices)

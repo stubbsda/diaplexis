@@ -105,6 +105,7 @@ namespace DIAPLEXIS {
     Complex();
     Complex(const Complex&);
     ~Complex();
+    void distribute(int) const; 
     int serialize(std::ofstream&) const;
     int deserialize(std::ifstream&);
     void clear();
