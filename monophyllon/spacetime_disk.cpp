@@ -330,7 +330,7 @@ void Spacetime::write_log() const
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
   SYNARMOSMA::hash_map::const_iterator qt;
-  std::set<int> S;
+  std::set<int> S,edge;
   std::set<int>::const_iterator it;
   std::string group_string,bvalue[] = {"False","True"};
   const int Nv = (signed) skeleton->events.size();
@@ -481,11 +481,12 @@ void Spacetime::write_log() const
     nf = 0;
     np = 0;
     atemporal = true;
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    skeleton->events[i].get_neighbours(S);
+    for(it=S.begin(); it!=S.end(); ++it) {
       in1 = *it;
-      S.clear();
-      S.insert(i); S.insert(in1);
-      qt = skeleton->index_table[1].find(S);
+      edge.clear();
+      edge.insert(i); edge.insert(in1);
+      qt = skeleton->index_table[1].find(edge);
       if (!skeleton->simplices[1][qt->second].timelike()) continue;
       atemporal = false;
       if (geometry->get_temporal_order(i,in1) == SYNARMOSMA::Relation::before) {

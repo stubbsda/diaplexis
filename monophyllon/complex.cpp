@@ -249,7 +249,7 @@ bool Complex::consistent() const
       for(k=0; k<n; ++k) {
         if (k == j) continue;
         if (S == simplices[i][k].vertices) {
-          std::cout << "Illegal " << i << "-simplex duplication with " << SYNARMOSMA::make_key(S) << std::endl;
+          std::cout << "Illegal " << i << "-simplex duplication with " << SYNARMOSMA::make_key(S) << " for indices " << k << " and " << j << std::endl;
           return false;
         }
       }

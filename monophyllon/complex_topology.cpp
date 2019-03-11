@@ -450,6 +450,7 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
         S.insert(v);
         S.insert(w);
         qt = index_table[1].find(S);
+        assert(qt != index_table[1].end());
         if (!simplices[1][qt->second].active) continue;
         if (offset[w] == -1) {
           offset[w] = G->add_vertex();

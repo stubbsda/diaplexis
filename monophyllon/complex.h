@@ -113,6 +113,7 @@ namespace DIAPLEXIS {
     void write_vertex_data(int) const;
     void get_energy_values(std::vector<double>&) const;
     void get_deficiency_values(std::vector<double>&) const;
+    inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
     inline void get_homotopy(std::string& s) const {s = pi1->write();};
     inline void get_homology(std::string& s) const {s = H->write();};
     inline void set_homology_field(SYNARMOSMA::Homology::Field F) {H->set_field(F);};

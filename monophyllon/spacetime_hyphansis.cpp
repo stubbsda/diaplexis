@@ -474,6 +474,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       hyphantic_ops += op;
     }
     opstring.str("");
+    assert(skeleton->consistent());
   }
 
   // We're done, so close the hyphantic log file and return
@@ -601,6 +602,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       nsuccess++;
       opstring.str("");
     }
+    assert(skeleton->consistent());
     if (double(nsuccess)/nactive > 0.1) break;
   }
   n = (signed) skeleton->simplices[1].size();

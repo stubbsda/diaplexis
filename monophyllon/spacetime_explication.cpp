@@ -258,17 +258,18 @@ bool Spacetime::compensation_g(int base)
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
+  const int D = (signed) geometry->dimension();
   const int ne = (signed) skeleton->simplices[1].size();
 
-  unsigned int sdegree = 0;
+  int sdegree = 0;
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     sdegree++;
   }
-  if (sdegree == 2*geometry->dimension()) return false;
-  const unsigned int idegree = 2*geometry->dimension();
+  if (sdegree == 2*D) return false;
+  const int idegree = 2*D;
   const int nv = (signed) skeleton->events.size();
 
   bool up = (sdegree < idegree) ? true : false;
