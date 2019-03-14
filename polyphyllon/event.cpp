@@ -20,7 +20,6 @@ Event::Event(const Event& source)
   posterior = source.posterior;
   theorem = source.theorem;
   entwinement = source.entwinement;
-  curvature = source.curvature;
   obliquity = source.obliquity;
   geometric_deficiency = source.geometric_deficiency;
   boundary = source.boundary;
@@ -43,7 +42,6 @@ Event& Event::operator =(const Event& source)
   posterior = source.posterior;
   theorem = source.theorem;
   entwinement = source.entwinement;
-  curvature = source.curvature;
   obliquity = source.obliquity;
   geometric_deficiency = source.geometric_deficiency;
   boundary = source.boundary;
@@ -67,7 +65,6 @@ void Event::clear()
   topology_modified = true;
   geometry_modified = true;
   deficiency = 0.0;
-  curvature = 0.0;
   obliquity = 0.0;
   geometric_deficiency = 0.0;
   entwinement.clear();
@@ -83,7 +80,6 @@ int Event::serialize(std::ofstream& s) const
   count += SYNARMOSMA::Vertex::serialize(s);
 
   s.write((char*)(&deficiency),sizeof(double)); count += sizeof(double);
-  s.write((char*)(&curvature),sizeof(double)); count += sizeof(double);
   s.write((char*)(&obliquity),sizeof(double)); count += sizeof(double);
   s.write((char*)(&geometric_deficiency),sizeof(double)); count += sizeof(double);
   s.write((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
@@ -114,7 +110,6 @@ int Event::deserialize(std::ifstream& s)
   count += SYNARMOSMA::Vertex::deserialize(s);
 
   s.read((char*)(&deficiency),sizeof(double)); count += sizeof(double);
-  s.read((char*)(&curvature),sizeof(double)); count += sizeof(double);
   s.read((char*)(&obliquity),sizeof(double)); count += sizeof(double);
   s.read((char*)(&geometric_deficiency),sizeof(double)); count += sizeof(double);
   s.read((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
@@ -145,7 +140,7 @@ namespace DIAPLEXIS {
       s << *it << "  ";
     }
     s << "]" << std::endl;
-    s << source.deficiency << "  " << source.energy << "  " << source.curvature << "  " << source.obliquity << "  " << source.geometric_deficiency << std::endl;
+    s << source.deficiency << "  " << source.energy << "  " << source.obliquity << "  " << source.geometric_deficiency << std::endl;
     s << source.theorem;
 
     return s;

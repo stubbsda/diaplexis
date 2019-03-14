@@ -20,13 +20,6 @@ namespace DIAPLEXIS {
     void clear() override;
     void initialize(int,int,const std::set<int>&,int = 0);
     void initialize(const std::set<int>&,const std::set<int>&);
-    inline bool active() const {return !ubiquity.empty();};
-    inline bool active(int n) const {return (ubiquity.count(n) > 0);};
-    inline void set_inactive(int n) {ubiquity.erase(n);};
-    inline void set_active(int n) {ubiquity.insert(n);};
-    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S;};
-    inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
-    inline int presence() const {return (signed) ubiquity.size();};
     inline int get_parity(int,int) const;
     inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
     inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
@@ -43,9 +36,21 @@ namespace DIAPLEXIS {
     Simplex(const Simplex&);
     Simplex& operator =(const Simplex&);
     ~Simplex() override;
+    inline bool active() const {return !ubiquity.empty();};
+    inline bool active(int n) const {return (ubiquity.count(n) > 0);};
+    inline void set_inactive(int n) {ubiquity.erase(n);};
+    inline void set_active(int n) {ubiquity.insert(n);};
+    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S;};
+    inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
+    inline int presence() const {return (signed) ubiquity.size();};
+    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    inline void set_volume(double V) {volume = V;};
+    inline double get_volume() const {return volume;};
+    inline void set_squared_volume(double V) {sq_volume = V;};
+    inline double get_squared_volume() const {return sq_volume;}; 
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
-    friend class Spacetime;
+    friend class Complex;
   };
 
   inline int Simplex::get_parity(int u,int v) const

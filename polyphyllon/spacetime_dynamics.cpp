@@ -2,49 +2,46 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<double>& y,double* output) const
+void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<int>& vx_map,const std::vector<double>& energy,const std::vector<double>& y,double* output) const
 {
-  int i,j,l,m,k;
+  int i,j,k;
   double delta,r_true;
+  std::set<int> S;
   std::set<int>::const_iterator it;
-  const int nv = (signed) events.size();
-  const int nreal = cardinality(0,-1);
+  const int nreal = skeleton->cardinality(0,-1);
   const int D = geometry->dimension();
   const double pfactor = (2.0/M_PI)*5.0;
   double force[D*nreal];
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,m,l,r_true,it,delta)
+#pragma omp parallel for default(shared) private(i,j,k,S,r_true,it,delta)
 #endif 
-  for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    k = offset[i];
+  for(i=0; i<nreal; ++i) {
     // This vertex's force begins at zero...
     for(j=0; j<D; ++j) {
-      force[D*k+j] = 0.0;
+      force[D*i+j] = 0.0;
     }
     // Vertex-Vertex Repulsion...
-    for(j=0; j<nv; ++j) {
-      if (!events[j].active()) continue;
-      m = offset[j];
-      if (k == m) continue;
-      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(events[i].get_energy() + events[j].get_energy())));
+    for(j=0; j<nreal; ++j) {
+      if (i == j) continue;
+      r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(energy[i] + energy[j])));
       delta = 0.0;
-      for(l=0; l<D; ++l) {
-        delta += (y[D*k+l] - y[D*m+l])*(y[D*k+l] - y[D*m+l]);
+      for(k=0; k<D; ++k) {
+        delta += (y[D*i+k] - y[D*j+k])*(y[D*i+k] - y[D*j+k]);
       }
-      for(l=0; l<D; ++l) {
-        force[D*k+l] += r_true*(y[D*k+l] - y[D*m+l])/delta;
+      for(k=0; k<D; ++k) {
+        force[D*i+k] += r_true*(y[D*i+k] - y[D*j+k])/delta;
       }
     }
     // Edge-Edge Repulsion?
     // This means two edges, so four vertices would have their force 
     // modified 
     // Spring-like attraction between connected vertices...
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-      j = offset[*it];
-      for(l=0; l<D; ++l) {
-        force[D*k+l] += spring_constant*(y[D*k+l] - y[D*j+l]); 
+    skeleton->events[offset[i]].get_neighbours(S);
+    for(it=S.begin(); it!=S.end(); ++it) {
+      j = vx_map[*it];
+      for(k=0; k<D; ++k) {
+        force[D*i+k] += spring_constant*(y[D*i+k] - y[D*j+k]); 
       } 
     }
   }
@@ -535,8 +532,8 @@ void Spacetime::optimize()
     std::set<int> vmodified,vx;
     std::set<int>::const_iterator it;
     std::vector<SYNARMOSMA::Geometry> pool,ptemp;
-    SYNARMOSMA::Geometry* optimal = new SYNARMOSMA::Geometry(*geometry);
-    SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
+    SYNARMOSMA::Geometry optimal; //= new SYNARMOSMA::Geometry(*geometry);
+    SYNARMOSMA::Geometry initial_state; //= new SYNARMOSMA::Geometry(*geometry); 
     const int pmagnitude = int(0.15*system_size);
     const double initial_error = error;
 
@@ -552,8 +549,8 @@ void Spacetime::optimize()
       ptemp.push_back(SYNARMOSMA::Geometry(*geometry));
     }
 
-    geometry->store(initial_state);
-    geometry->store(optimal);
+    geometry->store(&initial_state);
+    geometry->store(&optimal);
     fbest = initial_error;
 
     // Initialize the population based on some Gaussian flux around the
@@ -583,7 +580,7 @@ void Spacetime::optimize()
       structural_deficiency();
       fitness[i] = error;
       vmodified.clear();
-      geometry->load(initial_state);
+      geometry->load(&initial_state);
     }
 
     // During each generation, a single individual creates one child
@@ -597,7 +594,7 @@ void Spacetime::optimize()
         p += fitness[i];
         if (fitness[i] < f1) f1 = fitness[i];
         if (fitness[i] < fbest) {
-          optimal = &pool[i];
+          optimal = pool[i];
           fbest = f1;
         }
       }
@@ -669,21 +666,19 @@ void Spacetime::optimize()
 #ifdef VERBOSE
       std::cout << "Loading optimized geometry with " << 100.0*(initial_error - fbest)/initial_error << " percent improvement" << std::endl;
 #endif
-      geometry->load(optimal);
+      geometry->load(&optimal);
     }
     else {
 #ifdef VERBOSE
       std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
 #endif
-      geometry->load(initial_state);
+      geometry->load(&initial_state);
     }
     geometry->compute_squared_distances();
     compute_volume();
     compute_curvature();
     compute_obliquity();
     structural_deficiency();
-    delete optimal;
-    delete initial_state;
   }
   else if (solver == Geometry_Solver::annealing) {
     int j,m,step,naccept,nim,nwo_a,nwo_r;

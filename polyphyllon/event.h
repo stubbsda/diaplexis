@@ -11,7 +11,6 @@ namespace DIAPLEXIS {
     bool boundary = false;
     bool topology_modified = true;
     bool geometry_modified = true;
-    double curvature = 0.0;
     double obliquity = 0.0;
     double deficiency = 0.0;
     double geometric_deficiency = 0.0;
@@ -35,9 +34,21 @@ namespace DIAPLEXIS {
     inline void set_ubiquity(const std::set<int>& S) {ubiquity = S;};
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
-    int valence(int) const;
+    inline void clear_entourage() {entourage.clear();};
+    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    inline void get_entourage(std::set<int> N) const {N = entourage;};
+    inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
+    inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
+    inline void add_neighbour(int n) {neighbours.insert(n);};
+    inline double get_deficiency() const {return deficiency;};
+    inline void set_deficiency(double x) {deficiency = x;};
+    inline double get_entwinement() const {return entwinement;};
+    inline void set_entwinement(double x) {entwinement = x;};
+    inline double get_obliquity() const {return obliquity;};
+    inline void set_obliquity(double x) {obliquity = x;};
+    inline int get_incept() const {return incept;};
     friend std::ostream& operator <<(std::ostream&,const Event&);    
-    friend class Spacetime;
+    friend class Complex;
   };
 }
 #endif
