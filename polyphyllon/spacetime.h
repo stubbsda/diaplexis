@@ -8,20 +8,12 @@
 #include "synarmosma/directed_graph.h"
 
 #include "sheet.h"
-#include "event.h"
-#include "simplex.h"
+#include "complex.h"
 
 #ifndef _spacetimeh
 #define _spacetimeh
 
 namespace DIAPLEXIS {
-  typedef struct {
-    std::vector<Event> events;
-    std::vector<Simplex>* simplices;
-    SYNARMOSMA::hash_map* index_table;
-    SYNARMOSMA::Geometry geometry;
-  } Plegma;
-
   class Spacetime {
    protected:
     enum Initial_Topology
@@ -58,24 +50,14 @@ namespace DIAPLEXIS {
     int iterations = 0;
     int system_size = 0;
     int nactive = 1;
-    bool pseudomanifold = false;
-    bool boundary = false;
-    bool orientable = false;
+    bool reversible = false;
     double error = 0.0;
     double global_deficiency = 0.0;
-    double topology_delta = 0.0;
-    double geometry_delta = 0.0;
-    double energy_delta = 0.0;
-    std::vector<int> flexible_edge;
-    std::vector<Event> events;
-    std::vector<Sheet> codex;
-    std::vector<Simplex>* simplices;
-    SYNARMOSMA::hash_map* index_table;
-    SYNARMOSMA::Random* RND;
+    std::string hyphantic_ops = "";
+    std::set<int> modified_vertices;
+    Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
-    SYNARMOSMA::Homology* H;
-    SYNARMOSMA::Homotopy* pi;
-    Plegma anterior;
+    std::vector<Sheet> codex;
 
     // The global parameters
     Initial_Topology initial_state = Initial_Topology::random;
@@ -103,7 +85,6 @@ namespace DIAPLEXIS {
     bool converged = false;
     bool foliodynamics = false;
     bool high_memory = true;
-    bool instrument_convergence = true;
     int checkpoint_frequency = 50;
     std::string hyphansis_file = "data/hyphansis";
     std::string hyphansis_score = "";
