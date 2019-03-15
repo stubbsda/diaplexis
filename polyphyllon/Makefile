@@ -27,14 +27,15 @@ LAPACK      = -llapack -lblas
 BOOST       = -lboost_timer -lboost_filesystem -lboost_system
 # All the necessary libraries: Synarmosma, LAPACK, Boost, PugiXML and NTL
 LIBS        = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lgmp -lm
-# Where to install the Diaplexis library, requires root privileges
+# Where to install the Diaplexis library
 INSTALL_DIR = $(HOME)/fabrica/local
 # End of user-modifiable parameters!
 
 HEADERS    = event.h simplex.h sheet.h spacetime.h
 
-OBJECTS = spacetime.o spacetime_disk.o spacetime_visualize.o spacetime_dynamics.o spacetime_topology.o \
-spacetime_geometry.o spacetime_hyphansis.o event.o simplex.o sheet.o 
+OBJECTS = spacetime.o spacetime_disk.o spacetime_visualization.o spacetime_optimization.o spacetime_geometry.o \
+spacetime_hyphansis.o spacetime_initialization.o spacetime_explication.o spacetime_implication.o event.o complex.o \
+spacetime_topology.o complex_topology.o complex_dynamics.o simplex.o sheet.o
 
 install: diaplexis 
 	mkdir -p $(INSTALL_DIR)/lib
@@ -51,20 +52,38 @@ spacetime.o: spacetime.cpp $(HEADERS)
 spacetime_disk.o: spacetime_disk.cpp $(HEADERS) 
 	$(CXX) $(CXX_FLAGS) -c spacetime_disk.cpp
 
-spacetime_dynamics.o: spacetime_dynamics.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_dynamics.cpp
+spacetime_optimization.o: spacetime_optimization.cpp $(HEADERS)
+        $(CXX) $(CXX_FLAGS) -c spacetime_optimization.cpp
 
-spacetime_visualize.o: spacetime_visualize.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_visualize.cpp
+spacetime_explication.o: spacetime_explication.cpp $(HEADERS)
+        $(CXX) $(CXX_FLAGS) -c spacetime_explication.cpp
 
-spacetime_topology.o: spacetime_topology.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_topology.cpp
+spacetime_implication.o: spacetime_implication.cpp $(HEADERS)
+        $(CXX) $(CXX_FLAGS) -c spacetime_implication.cpp
 
 spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
 
+spacetime_topology.o: spacetime_topology.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_topology.cpp
+
 spacetime_geometry.o: spacetime_geometry.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_geometry.cpp
+
+spacetime_visualization.o: spacetime_visualization.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_visualization.cpp
+
+spacetime_initialization.o: spacetime_initialization.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_initialization.cpp
+
+complex.o: complex.cpp event.h simplex.h complex.h
+        $(CXX) $(CXX_FLAGS) -c complex.cpp
+
+complex_dynamics.o: complex_dynamics.cpp event.h simplex.h complex.h
+        $(CXX) $(CXX_FLAGS) -c complex_dynamics.cpp
+
+complex_topology.o: complex_topology.cpp event.h simplex.h complex.h
+        $(CXX) $(CXX_FLAGS) -c complex_topology.cpp
 
 sheet.o: sheet.cpp sheet.h 
 	$(CXX) $(CXX_FLAGS) -c sheet.cpp

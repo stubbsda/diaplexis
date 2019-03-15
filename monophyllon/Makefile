@@ -27,7 +27,7 @@ LAPACK      = -llapack -lblas
 BOOST       = -lboost_timer -lboost_filesystem -lboost_system
 # All the necessary libraries: Synarmosma, LAPACK, Boost, PugiXML and NTL
 LIBS        = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lgmp -lm
-# Where to install the Diaplexis library, requires root privileges
+# Where to install the Diaplexis library
 INSTALL_DIR = $(HOME)/fabrica/local
 # End of user-modifiable parameters!
 
@@ -61,20 +61,20 @@ spacetime_explication.o: spacetime_explication.cpp $(HEADERS)
 spacetime_implication.o: spacetime_implication.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_implication.cpp
 
+spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
+
 spacetime_topology.o: spacetime_topology.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_topology.cpp
+
+spacetime_geometry.o: spacetime_geometry.cpp $(HEADERS)
+	$(CXX) $(CXX_FLAGS) -c spacetime_geometry.cpp
 
 spacetime_visualization.o: spacetime_visualization.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_visualization.cpp
 
 spacetime_initialization.o: spacetime_initialization.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_initialization.cpp
-
-spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
-
-spacetime_geometry.o: spacetime_geometry.cpp $(HEADERS)
-	$(CXX) $(CXX_FLAGS) -c spacetime_geometry.cpp
 
 complex.o: complex.cpp event.h simplex.h complex.h
 	$(CXX) $(CXX_FLAGS) -c complex.cpp
