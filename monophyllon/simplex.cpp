@@ -28,9 +28,10 @@ Simplex::Simplex(int v1,int v2,int d)
   parity = (v1 < v2) ? d : -d;
 }
 
-Simplex::Simplex(const std::set<int>& vx)
+Simplex::Simplex(const std::set<int>& vx,int n)
 {
   vertices = vx;
+  incept = n;
   calculate_faces();
 }
 

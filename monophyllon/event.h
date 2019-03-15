@@ -33,9 +33,11 @@ namespace DIAPLEXIS {
     inline void clear_entourage() {entourage.clear();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
     inline void get_entourage(std::set<int> N) const {N = entourage;};
+    inline bool drop_entourage(int);
     inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
     inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
-    inline void add_neighbour(int n) {neighbours.insert(n);};
+    inline bool add_neighbour(int);
+    inline bool drop_neighbour(int);
     inline double get_deficiency() const {return deficiency;};
     inline void set_deficiency(double x) {deficiency = x;};
     inline double get_entwinement() const {return entwinement;};
@@ -43,8 +45,49 @@ namespace DIAPLEXIS {
     inline double get_obliquity() const {return obliquity;};
     inline void set_obliquity(double x) {obliquity = x;};
     inline int get_incept() const {return incept;};
+    inline void set_incept(int n) {incept = n;};
+    inline bool get_boundary() const {return boundary;};
+    inline void set_boundary(bool t) {boundary = t;}; 
+    inline bool get_topology_modified() const {return topology_modified;};
+    inline void set_topology_modified(bool t) {topology_modified = t;};
+    inline bool get_geometry_modified() const {return geometry_modified;};
+    inline void set_geometry_modified(bool t) {geometry_modified = t;};
+    inline double get_geometric_deficiency() const {return geometric_deficiency;};
+    inline void set_geometric_deficiency(double x) {geometric_deficiency = x;};
+    inline int get_topological_dimension() const {return topological_dimension;};
+    inline void set_topological_dimension(int n) {topological_dimension = n;};
     friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;
   };
+
+  bool Event::add_neighbour(int n) 
+  {
+    if (neighbours.count(n) == 0) {
+      neighbours.insert(n);
+      return true;
+    }
+    return false;
+  }
+
+  bool Event::drop_neighbour(int n) 
+  {
+    std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
+    if (it != neighbours.end()) {
+      neighbours.erase(it);
+      return true;
+    }
+    return false;
+  }
+
+  bool Event::drop_entourage(int n) 
+  {
+    std::set<int>::const_iterator it = std::find(entourage.begin(),entourage.end(),n);
+    if (it != entourage.end()) {
+      entourage.erase(it);
+      return true;
+    }
+    return false;
+  }
+
 }
 #endif
