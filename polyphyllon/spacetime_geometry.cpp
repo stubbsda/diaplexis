@@ -29,6 +29,45 @@ double Spacetime::get_geometric_distance(int n,int m) const
   return geometry->get_squared_distance(n,m,false);
 }
 
+bool Spacetime::adjust_dimension()
+{
+  // This method handles the geometry and energy changes to
+  // minimize the structural deficiency...
+  int i,n;
+  bool modified;
+  std::vector<int> vdimension;
+  const int nv = (signed) events.size();
+  const int D = (signed) geometry->dimension();
+  const bool uniform = geometry->get_uniform();
+
+  system_size = 0;
+
+  if (uniform) {
+    for(i=0; i<nv; ++i) {
+      if (!events[i].active()) {
+        vdimension.push_back(-1);
+        continue;
+      }
+      n = events[i].topological_dimension;
+      system_size += D;
+      vdimension.push_back(n);
+    }
+  }
+  else {
+    for(i=0; i<nv; ++i) {
+      if (!events[i].active()) {
+        vdimension.push_back(-1);
+        continue;
+      }
+      n = events[i].topological_dimension;
+      system_size += (n <= D) ? D : n;
+      vdimension.push_back(n);
+    }
+  }
+  modified = geometry->adjust_dimension(vdimension);
+  return modified;
+}
+
 double Spacetime::total_energy(int sheet) const
 {
   const int nv = (signed) events.size();
