@@ -44,10 +44,16 @@ namespace DIAPLEXIS {
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    inline void clear_entourage() {entourage.clear();};
+    inline int get_parity(int,int) const;
+    inline bool get_modified() const {return modified;};
+    inline void set_modified(bool t) {modified = t;};
+    inline int get_incept() const {return incept;};
+    inline void set_incept(int n) {incept = n;};
     inline void set_volume(double V) {volume = V;};
     inline double get_volume() const {return volume;};
     inline void set_squared_volume(double V) {sq_volume = V;};
-    inline double get_squared_volume() const {return sq_volume;}; 
+    inline double get_squared_volume() const {return sq_volume;};
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
     friend class Complex;

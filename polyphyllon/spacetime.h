@@ -127,11 +127,6 @@ namespace DIAPLEXIS {
     static const int N_IMP = 8;
     static const std::string EXP_OP[N_EXP];
     static const std::string IMP_OP[N_IMP];
-    // The combinatorial size of the subgraph used to compute
-    // the topological entwinement at a vertex
-    static const int topological_radius = 4;
-    // Maximum combinatorial dimension of the spacetime
-    static const int ND = 10;
 
     // The intensity of branching in the polycosmos, 0 < x < 1
     static const double ramosity;
@@ -146,64 +141,7 @@ namespace DIAPLEXIS {
     static const double Lambda;
 
     std::string sheet_activity() const;
-    bool edge_exists(int,int,int) const;
-    int cardinality(int,int) const;
-    // A non-inlined version to avoid problems for external programs that need this method
-    int cardinality_safe(int,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
-    void compute_degree_distribution(bool,int) const;
-    void compute_connectivity_distribution(int) const;
-    std::pair<double,double> random_walk(int) const;
-    void arclength_statistics(double*,int) const;
-    void vertex_degree_statistics(double*,int) const;
-    void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
-    void compute_hvector(std::vector<int>&,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
-    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
-    void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
-    void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
-    void simplex_membership(int,std::vector<int>&) const;
-    int chromatic_number(int) const;
-    double dimensional_stress(int,int) const;
-    int combinatorial_distance(int,int,int) const;
-    double entwinement(int) const;
-    double cyclic_resistance(int) const;
-    int max_degree() const;
-    bool delaunay() const;
-    int total_dimension(int) const;
-    int structural_index(int) const;
-    int dimension(int) const;
-    int vertex_valence(int,int) const;
-    int vertex_dimension(int,int) const;
-    int weighted_entourage(int,int) const;
-    int cyclicity(int) const;
-    double dimensional_frontier(int,int) const;
-    double dimensional_uniformity(int) const;
-    bool active_simplex(int,int,int) const;
-    int circuit_rank(int) const;
-    int euler_characteristic(int) const;
-    int component_analysis(std::vector<int>&,int) const;
-    int entourage(int,int) const;
-    bool connected(int) const;
-    bool consistent(int) const;
-    bool correctness();
-    void clean() const;
-    bool energy_check() const;
-    double total_energy(int) const;
-    void simplicial_implication(int,int) const;
-    int simplex_embedding(int,int) const;
-    double dimensional_stress(int,int,int) const;
-    double parity_hamiltonian(double,bool,int) const;
-    void write_graph(const std::string&,int) const;
-
     void compute_geometric_gradient(std::vector<double>&,bool);
-    void compute_geometric_dependency(const std::set<int>&);
-    void compute_topological_dependency(const std::set<int>&);
-    void simplicial_implication(int);
-    void compute_simplex_energy(int,int);
-    void compute_simplex_parity(int,int);
     // The various methods needed for the hyphantic operators
     void hyphansis(int);
     void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
@@ -258,13 +196,9 @@ namespace DIAPLEXIS {
 
     void inversion();
     bool realizable(int,int) const;
-    void write_topology(int) const;
-    void write_incastrature(const std::string&,int) const;
-    void determine_flexible_edges();
     void compute_simplicial_dimension();
     void compute_volume();
     void compute_lengths();
-    void compute_curvature();
     void compute_obliquity();
     double compute_abnormality() const;
     double compute_abnormality(const std::vector<double>&) const;
@@ -275,9 +209,6 @@ namespace DIAPLEXIS {
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
     double compute_temporal_vorticity(int,int) const;
     double compute_temporal_nonlinearity() const;
-    void set_logical_atoms(int);
-    double logical_energy(int) const;
-    bool logical_conformity(int) const;
     double representational_energy(bool) const;
 
     void implication(std::string&) const;
@@ -286,7 +217,6 @@ namespace DIAPLEXIS {
     int sheet_fission(int);
     int sheet_dynamics();
     bool global_operations();
-    void write_distribution(const std::vector<int>&) const;
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
     void compute_global_topology(int);
     void build_initial_state(const std::set<int>&);
@@ -298,19 +228,18 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     int ubiquity_permutation(double,std::set<int>&);
     void update_viewer();
-    void energy_diffusion();
-    void energy_diffusion(int);
+    void mechanical_solver();
+    void evolutionary_solver();
+    void annealing_solver();
+    void simplex_solver();
     void optimize();
     bool adjust_dimension();
-    void analyze_convergence();
-    void test_harness(int,int);
     void condense();
     void initialize();
     void allocate();
     void clear();
     void write(Spacetime&) const;
     void read(const Spacetime&);
-    double distribution_fitness(int*,const std::vector<int>&,int) const;
 
    public:
     Spacetime();
@@ -322,7 +251,6 @@ namespace DIAPLEXIS {
     bool step_forwards();
     void evolve();
     void chorogenesis(int);
-    void distribute(int) const; 
     void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*,int) const;
@@ -346,7 +274,6 @@ namespace DIAPLEXIS {
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
     inline double get_event_obliquity(int n) const {return events[n].obliquity;};
     inline double get_event_energy(int n) const {return events[n].get_energy();};
-    inline double get_event_curvature(int n) const {return events[n].curvature;};
     inline double get_event_deficiency(int n) const {return events[n].deficiency;};
     inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
     inline std::string get_state_file() const {return state_file;};

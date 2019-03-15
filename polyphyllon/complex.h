@@ -26,6 +26,70 @@ namespace DIAPLEXIS {
     // the topological entwinement at a vertex
     static const int topological_radius = 4;
 
+    void determine_flexible_edges(std::vector<int>&) const;
+    void write_topology(int) const;
+    void write_incastrature(const std::string&,int) const;
+    bool edge_exists(int,int,int) const;
+    int cardinality(int,int) const;
+    // A non-inlined version to avoid problems for external programs that need this method
+    int cardinality_safe(int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    void compute_degree_distribution(bool,int) const;
+    void compute_connectivity_distribution(int) const;
+    std::pair<double,double> random_walk(int) const;
+    void arclength_statistics(double*,int) const;
+    void vertex_degree_statistics(double*,int) const;
+    void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
+    void compute_hvector(std::vector<int>&,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
+    void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
+    void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
+    void simplex_membership(int,std::vector<int>&) const;
+    int chromatic_number(int) const;
+    double dimensional_stress(int,int) const;
+    int combinatorial_distance(int,int,int) const;
+    double entwinement(int) const;
+    double cyclic_resistance(int) const;
+    int max_degree() const;
+    bool delaunay() const;
+    int total_dimension(int) const;
+    int structural_index(int) const;
+    int dimension(int) const;
+    int vertex_valence(int,int) const;
+    int vertex_dimension(int,int) const;
+    int weighted_entourage(int,int) const;
+    int cyclicity(int) const;
+    double dimensional_frontier(int,int) const;
+    double dimensional_uniformity(int) const;
+    bool active_simplex(int,int,int) const;
+    int circuit_rank(int) const;
+    int euler_characteristic(int) const;
+    int component_analysis(std::vector<int>&,int) const;
+    int entourage(int,int) const;
+    bool connected(int) const;
+    bool consistent(int) const;
+    bool correctness();
+    void clean() const;
+    bool energy_check() const;
+    double total_energy(int) const;
+    void simplicial_implication(int,int) const;
+    int simplex_embedding(int,int) const;
+    double dimensional_stress(int,int,int) const;
+    double parity_hamiltonian(double,bool,int) const;
+    void write_graph(const std::string&,int) const;
+    void compute_geometric_dependency(const std::set<int>&);
+    void compute_topological_dependency(const std::set<int>&);
+    void simplicial_implication(int);
+    void compute_simplex_energy(int,int);
+    void compute_simplex_parity(int,int);
+    double distribution_fitness(int*,const std::vector<int>&,int) const;
+    void set_logical_atoms(int);
+    double logical_energy(int) const;
+    bool logical_conformity(int) const;
+
    public:
     Complex();
     Complex(const Complex&);
@@ -33,6 +97,7 @@ namespace DIAPLEXIS {
     int serialize(std::ofstream&) const;
     int deserialize(std::ifstream&);
     void clear();
+    void distribute(int) const; 
     void get_energy_values(std::vector<double>&) const;
     void get_deficiency_values(std::vector<double>&) const;
     inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
