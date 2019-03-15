@@ -145,7 +145,7 @@ void Complex::distribute(int nprocs) const
       // been assigned to a processor...
       candidates.clear();
       for(j=0; j<nv; ++j) {
-        if (!skeleton->active_event(j)) continue;
+        if (!events[j].active) continue;
         if (affinity[j] > -1) continue;
         cneighbour = 0;
         for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {

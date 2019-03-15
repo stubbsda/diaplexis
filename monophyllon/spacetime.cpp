@@ -98,8 +98,7 @@ void Spacetime::condense()
   if (rho_v > 0.5 || rho_e > 0.5) return;
   // So we need to condense this spacetime to reduce memory pressure...
   int j,offset[nv];
-  Simplex S;
-  std::set<int> N,vx;
+  std::set<int> N,S,vx;
   std::vector<double> xc;
   std::vector<std::vector<double> > svalues;
   std::set<int>::const_iterator it;
@@ -132,15 +131,12 @@ void Spacetime::condense()
     skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
       if (!skeleton->active_simplex(i,j)) continue;
-      S = skeleton->simplices[i][j];
-      for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
+      skeleton->simplices[i][j].get_vertices(S);
+      for(it=S.begin(); it!=S.end(); ++it) {
         vx.insert(offset[*it]);
       }
-      S.vertices = vx;
-      S.entourage.clear();
-      S.calculate_faces();
-      skeleton->index_table[i][S.vertices] = (signed) nsimplices.size();
-      nsimplices.push_back(S);
+      skeleton->index_table[i][vx] = (signed) nsimplices.size();
+      nsimplices.push_back(Simplex(vx));
       vx.clear();
     }
     skeleton->simplices[i] = nsimplices;
@@ -153,11 +149,11 @@ void Spacetime::clean() const
 {
   int i,j;
   for(i=0; i<(signed) skeleton->events.size(); ++i) {
-    assert(!skeleton->events[i].topology_modified);
+    assert(!skeleton->events[i].get_topology_modified());
   }
   for(i=1; i<=Complex::ND; ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-      assert(!skeleton->simplices[i][j].modified);
+      assert(!skeleton->simplices[i][j].get_modified());
     }
   }
 }
@@ -263,12 +259,12 @@ bool Spacetime::correctness()
   double anterior_error = error;
 
   for(i=0; i<nv; ++i) {
-    skeleton->events[i].topology_modified = true;
-    skeleton->events[i].geometry_modified = true;
+    skeleton->events[i].set_topology_modified(true);
+    skeleton->events[i].set_geometry_modified(true);
   }
   for(i=1; i<=Complex::ND; ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-      skeleton->simplices[i][j].modified = true;
+      skeleton->simplices[i][j].set_modified(true);
     }
   }
 
@@ -306,7 +302,7 @@ void Spacetime::structural_deficiency()
   int avertices[na];
 
   for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].active) {
+    if (skeleton->active_event(i)) {
       avertices[k] = i;
       k++;
     }
@@ -314,7 +310,7 @@ void Spacetime::structural_deficiency()
       skeleton->events[i].set_entwinement(0.0);
     }
     skeleton->events[i].set_deficiency(0.0);
-    skeleton->events[i].geometric_deficiency = 0.0;
+    skeleton->events[i].set_geometric_deficiency(0.0);
     length_deviation[i] = 0.0;
     gvalue[i] = 0.0;
     R[i] = 0.0;
@@ -326,15 +322,15 @@ void Spacetime::structural_deficiency()
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    if (!skeleton->events[v1].topology_modified) continue;
+    if (!skeleton->events[v1].get_topology_modified()) continue;
     j = skeleton->vertex_dimension(v1);
     alpha = 0.5*double(j - 1) + compute_temporal_vorticity(i);
     skeleton->compute_graph(&G,v1);
     alpha += G.completeness();
     if (G.order() > 1) alpha += G.entwinement()/double(G.order() - 1); 
     skeleton->events[v1].set_entwinement(alpha);
-    skeleton->events[v1].topological_dimension = j;
-    skeleton->events[v1].topology_modified = false;
+    skeleton->events[v1].set_topological_dimension(j);
+    skeleton->events[v1].set_topology_modified(false);
   }
 
   for(i=0; i<nv; ++i) {
@@ -426,8 +422,8 @@ void Spacetime::structural_deficiency()
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].get_obliquity() + length_deviation[v1] - Spacetime::Lambda*rho[v1];
-    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].get_obliquity() + length_deviation[v1];
+    skeleton->events[v1].set_deficiency(R[v1] + skeleton->events[v1].get_obliquity() + length_deviation[v1] - Spacetime::Lambda*rho[v1]);
+    skeleton->events[v1].set_geometric_deficiency(skeleton->events[v1].get_obliquity() + length_deviation[v1]);
   }
 
   // Now the chromatic energy sum...
@@ -490,13 +486,13 @@ bool Spacetime::global_operations()
   for(i=0; i<=Complex::ND; ++i) {
     n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
-      if (skeleton->simplices[i][j].incept == -1) skeleton->simplices[i][j].incept = iterations;
+      if (skeleton->simplices[i][j].get_incept() == -1) skeleton->simplices[i][j].set_incept(iterations);
     }
   }
 
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    if (skeleton->events[i].topology_modified) skeleton->events[i].topological_dimension = skeleton->vertex_dimension(i);
+    if (skeleton->events[i].get_topology_modified()) skeleton->events[i].set_topological_dimension(skeleton->vertex_dimension(i));
   }
 
   // First perform the geometry and energy diffusion...
@@ -574,13 +570,13 @@ bool Spacetime::global_operations()
     // First calculate the average edge length and its variance...
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
-      delta += std::abs(skeleton->simplices[1][i].volume);
+      delta += std::abs(skeleton->simplices[1][i].get_volume());
       k++;
     }
     mu = delta/double(k);
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
-      delta = std::abs(skeleton->simplices[1][i].volume) - mu;
+      delta = std::abs(skeleton->simplices[1][i].get_volume()) - mu;
       sigma += delta*delta;
     }
     sigma = std::sqrt(sigma/double(k));

@@ -601,15 +601,35 @@ void Complex::simplex_deletion(int d,int n)
   }
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices)
+bool Complex::simplex_addition(int u,int v,int n)
+{
+  std::set<int> S;
+  SYNARMOSMA::hash_map::const_iterator qt;
+
+  S.insert(u); S.insert(v);
+  qt = index_table[1].find(S);
+  if (qt == index_table[1].end()) {
+    simplices[1].push_back(Simplex(S,n));
+    index_table[1][S] = simplices[1].size() - 1;
+    events[v].neighbours.insert(u);
+    events[u].neighbours.insert(v);
+  }
+  else {
+    if (simplices[1][qt->second].active) return false;
+    simplices[1][qt->second].active = true;
+  }
+  return true;
+}
+
+bool Complex::simplex_addition(const std::set<int>& S,int n)
 {
   int i,j;
   std::set<int> fc;
-  std::set<int>::const_iterator it;
   std::vector<int> vec,vx;
+  std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int d = (signed) S.size() - 1;
-  Simplex s(S);
+  Simplex s(S,n);
 
   qt = index_table[d].find(S);
   if (qt == index_table[d].end()) {
@@ -628,10 +648,6 @@ bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_ve
 #ifdef VERBOSE
   std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
 #endif
-
-  for(it=S.begin(); it!=S.end(); ++it) {
-    modified_vertices.insert(*it);
-  }
 
   if (d == 1) {
     int vn[2];
@@ -652,7 +668,7 @@ bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_ve
     // Add this simplex...
     qt = index_table[i].find(fc);
     if (qt == index_table[i].end()) {
-      simplices[i].push_back(Simplex(fc));
+      simplices[i].push_back(Simplex(fc,n));
       index_table[i][fc] = simplices[i].size() - 1;
     }
     else {
@@ -665,7 +681,7 @@ bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_ve
       }
       qt = index_table[i].find(fc);
       if (qt == index_table[i].end()) {
-        simplices[i].push_back(Simplex(fc));
+        simplices[i].push_back(Simplex(fc,n));
         index_table[i][fc] = simplices[i].size() - 1;
       }
       else {
@@ -677,6 +693,16 @@ bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_ve
   }
   simplicial_implication();
   return true;
+}
+
+bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices)
+{
+  std::set<int>::const_iterator it;
+
+  for(it=S.begin(); it!=S.end(); ++it) {
+    modified_vertices.insert(*it);
+  }
+  return simplex_addition(S);
 }
 
 void Complex::simplicial_implication()

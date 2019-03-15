@@ -30,6 +30,8 @@ namespace DIAPLEXIS {
     void inversion();
     void compute_neighbours();
     void compute_entourages();
+    bool simplex_addition(int,int,int);
+    bool simplex_addition(const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,std::set<int>&);
     void simplex_deletion(int,int);
     void compute_geometric_dependency(const std::set<int>&);

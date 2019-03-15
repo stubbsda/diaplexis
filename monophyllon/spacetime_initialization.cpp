@@ -8,15 +8,13 @@ void Spacetime::build_initial_state()
   unsigned int m;
   std::string geometry_type;
   Event vt;
-  Simplex S;
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
   for(m=0; m<geometry->dimension(); ++m) {
     svalue.push_back(0.0);
   }
-  vt.incept = 0;
-  S.incept = 0;
+  vt.set_incept(0);
 
   if (initial_state == Initial_Topology::cartesian) {
     std::vector<std::pair<long,int> > factors;
@@ -31,7 +29,7 @@ void Spacetime::build_initial_state()
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*skeleton->RND->irandom(initial_size));
     const double dx = 1.0;
-    int k,l,d,rvalue;
+    int k,l,rvalue;
     unsigned int r;
     SYNARMOSMA::hash_map::const_iterator qt;
     std::vector<int> entourage,v;
@@ -60,10 +58,10 @@ void Spacetime::build_initial_state()
         vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
       }
       for(m=0; m<geometry->dimension(); ++m) {
-        if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
+        if (entourage[m] == 0 || entourage[m] == nm1) vt.set_boundary(true);
       }
       skeleton->events.push_back(vt);
-      vt.boundary = false;
+      vt.set_boundary(false);
       arrangement[l] = entourage;
     }
 
@@ -84,12 +82,7 @@ void Spacetime::build_initial_state()
           k /= n;
           in1 += v[m+1]*k;
         }
-        if (in1 > i) {
-          S.initialize(i,in1);
-          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-          skeleton->simplices[1].push_back(S);
-          S.vertices.clear();
-        }
+        if (in1 > i) skeleton->simplex_addition(i,in1,0);
       }
       if (v[0] < nm1) {
         in1 = (v[0]+1)*nd;
@@ -98,12 +91,7 @@ void Spacetime::build_initial_state()
           k /= n;
           in1 += v[m+1]*k;
         }
-        if (in1 > i) {
-          S.initialize(i,in1);
-          skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-          skeleton->simplices[1].push_back(S);
-          S.vertices.clear();
-        }
+        if (in1 > i) skeleton->simplex_addition(i,in1,0);
       }
       for(m=1; m<geometry->dimension(); ++m) {
         if (v[m] > 0) {
@@ -114,12 +102,7 @@ void Spacetime::build_initial_state()
             k /= n;
             in1 += v[r+1]*k;
           }
-          if (in1 > i) {
-            S.initialize(i,in1);
-            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-            skeleton->simplices[1].push_back(S);
-            S.vertices.clear();
-          }
+          if (in1 > i) skeleton->simplex_addition(i,in1,0);
           v[m] += 1;
         }
         if (v[m] < nm1) {
@@ -130,12 +113,7 @@ void Spacetime::build_initial_state()
             k /= n;
             in1 += v[r+1]*k;
           }
-          if (in1 > i) {
-            S.initialize(i,in1);
-            skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-            skeleton->simplices[1].push_back(S);
-            S.vertices.clear();
-          }
+          if (in1 > i) skeleton->simplex_addition(i,in1,0);
           v[m] -= 1;
         }
       }
@@ -161,10 +139,7 @@ void Spacetime::build_initial_state()
           geometry->vertex_addition(v[i]);
           skeleton->events.push_back(vt);
         }
-        d = N.size() - 1;
-        S.initialize(N);
-        skeleton->simplices[d].push_back(S);
-        skeleton->index_table[d][S.vertices] = (signed) skeleton->simplices[d].size() - 1;
+        skeleton->simplex_addition(N,0);
         N.clear();
       }
     }
@@ -242,9 +217,7 @@ void Spacetime::build_initial_state()
 
     if (relational) geometry->create(initial_dim,geometry_type);
 
-    S.initialize(vx);
-    skeleton->simplices[initial_dim].push_back(S);
-    skeleton->index_table[initial_dim][S.vertices] = 0;
+    skeleton->simplex_addition(vx,0);
   }
   else if (initial_state == Initial_Topology::random) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
@@ -252,11 +225,9 @@ void Spacetime::build_initial_state()
     int level = 2,k = 0,ulimit;
     double percent = 0.0;
     bool found;
-    std::set<int>* N;
-    std::vector<Simplex> svector;
-    std::vector<Simplex>::const_iterator vit;
+    std::vector<std::set<int> > N,svector;
     SYNARMOSMA::hash_map::const_iterator qt;
-    std::set<int> v,vx,current;
+    std::set<int> S,v,vx,current;
     std::set<int>::const_iterator it,chk;
     const double nv = double(initial_size);
 
@@ -295,26 +266,19 @@ void Spacetime::build_initial_state()
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (skeleton->RND->bernoulli_variate() == false) continue;
-        S.initialize(i,j);
-        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size();
-        skeleton->simplices[1].push_back(S);
-        skeleton->events[i].neighbours.insert(j);
-        skeleton->events[j].neighbours.insert(i);
-        S.vertices.clear();
+        skeleton->simplex_addition(i,j,0);
       }
     }
 
     // Finally we have to compute all the n-skeleton->simplices (n > 1) that are implied
     // by this random graph
     do {
-      N = new std::set<int>[level];
       ulimit = (signed) skeleton->simplices[level-1].size();
       for(j=0; j<ulimit; ++j) {
-        v = skeleton->simplices[level-1][j].vertices;
-        i = 0;
+        skeleton->simplices[level-1][j].get_vertices(v);
         for(it=v.begin(); it!=v.end(); ++it) {
-          N[i] = skeleton->events[*it].neighbours;
-          i++;
+          skeleton->events[*it].get_neighbours(S);
+          N.push_back(S);
         }
         for(it=N[0].begin(); it!=N[0].end(); ++it) {
           found = true;
@@ -331,19 +295,15 @@ void Spacetime::build_initial_state()
           in1 = *it;
           current = v;
           current.insert(in1);
-          svector.push_back(Simplex(current));
+          svector.push_back(current);
         }
         vx.clear();
         v.clear();
       }
-      delete[] N;
+      N.clear();
       if (svector.empty()) break;
-      for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = skeleton->index_table[level].find(vit->vertices);
-        if (qt == skeleton->index_table[level].end()) {
-          skeleton->simplices[level].push_back(*vit);
-          skeleton->index_table[level][vit->vertices] = (signed) skeleton->simplices[level].size() - 1;
-        }
+      for(j=0; j<(signed) svector.size(); ++j) {
+        skeleton->simplex_addition(svector[j],0);
       }
       svector.clear();
 #ifdef VERBOSE
