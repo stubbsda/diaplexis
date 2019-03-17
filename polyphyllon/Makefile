@@ -53,13 +53,13 @@ spacetime_disk.o: spacetime_disk.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_disk.cpp
 
 spacetime_optimization.o: spacetime_optimization.cpp $(HEADERS)
-        $(CXX) $(CXX_FLAGS) -c spacetime_optimization.cpp
+	$(CXX) $(CXX_FLAGS) -c spacetime_optimization.cpp
 
 spacetime_explication.o: spacetime_explication.cpp $(HEADERS)
-        $(CXX) $(CXX_FLAGS) -c spacetime_explication.cpp
+	$(CXX) $(CXX_FLAGS) -c spacetime_explication.cpp
 
 spacetime_implication.o: spacetime_implication.cpp $(HEADERS)
-        $(CXX) $(CXX_FLAGS) -c spacetime_implication.cpp
+	$(CXX) $(CXX_FLAGS) -c spacetime_implication.cpp
 
 spacetime_hyphansis.o: spacetime_hyphansis.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_hyphansis.cpp
@@ -77,13 +77,13 @@ spacetime_initialization.o: spacetime_initialization.cpp $(HEADERS)
 	$(CXX) $(CXX_FLAGS) -c spacetime_initialization.cpp
 
 complex.o: complex.cpp event.h simplex.h complex.h
-        $(CXX) $(CXX_FLAGS) -c complex.cpp
+	$(CXX) $(CXX_FLAGS) -c complex.cpp
 
 complex_dynamics.o: complex_dynamics.cpp event.h simplex.h complex.h
-        $(CXX) $(CXX_FLAGS) -c complex_dynamics.cpp
+	$(CXX) $(CXX_FLAGS) -c complex_dynamics.cpp
 
 complex_topology.o: complex_topology.cpp event.h simplex.h complex.h
-        $(CXX) $(CXX_FLAGS) -c complex_topology.cpp
+	$(CXX) $(CXX_FLAGS) -c complex_topology.cpp
 
 sheet.o: sheet.cpp sheet.h 
 	$(CXX) $(CXX_FLAGS) -c sheet.cpp

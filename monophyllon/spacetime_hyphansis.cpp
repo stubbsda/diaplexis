@@ -274,10 +274,10 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
   if (vcandidates.empty()) return -1;
   if (vcandidates.size() == 1) return vcandidates[0];
   n = (signed) vcandidates.size();
-  tdeficit = std::abs(skeleton->events[vcandidates[0]].deficiency - skeleton->events[vcandidates[n-1]].deficiency);
+  tdeficit = std::abs(skeleton->events[vcandidates[0]].get_deficiency() - skeleton->events[vcandidates[n-1]].get_deficiency());
   for(i=0; i<n; ++i) {
     output = vcandidates[i];
-    cdeficit = std::abs(skeleton->events[output].deficiency - skeleton->events[vcandidates[0]].deficiency);
+    cdeficit = std::abs(skeleton->events[output].get_deficiency() - skeleton->events[vcandidates[0]].get_deficiency());
     if (intensity <= cdeficit/tdeficit) break;
   }
   return output;
@@ -365,10 +365,10 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
     v = candidates[i].first;
     if (!skeleton->active_event(v)) continue;
     neutral_vertices.push_back(v);
-    if (skeleton->events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+    if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
       m_vertices.push_back(v);
     }
-    else if (skeleton->events[v].deficiency > std::numeric_limits<double>::epsilon()) {
+    else if (skeleton->events[v].get_deficiency() > std::numeric_limits<double>::epsilon()) {
       x_vertices.push_back(v);
     }
   }
@@ -498,7 +498,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     // An earlier hyphantic operation may have rendered this
     // vertex inactive...
     if (!skeleton->active_event(v)) continue;
-    alpha = skeleton->events[v].deficiency;
+    alpha = skeleton->events[v].get_deficiency();
     if (alpha < -std::numeric_limits<double>::epsilon()) {
       implication(op);
       opstring << op << "," << v;
@@ -635,13 +635,14 @@ void Spacetime::hyphansis()
 #endif
   for(int i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
+    alpha = skeleton->events[i].get_deficiency();
 #ifdef VERBOSE
     if (!skeleton->events[i].zero_energy()) nze++;
-    if (skeleton->events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
-    if (skeleton->events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
+    if (alpha > std::numeric_limits<double>::epsilon()) npos++;
+    if (alpha < -std::numeric_limits<double>::epsilon()) nneg++;
 #endif
     // Eliminate vertices whose structural deficiency is close to zero...
-    alpha = std::abs(skeleton->events[i].deficiency);
+    alpha = std::abs(alpha);
     if (alpha < std::numeric_limits<double>::epsilon()) continue;
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
@@ -656,7 +657,7 @@ void Spacetime::hyphansis()
 
   if (candidates.size() == 1) {
     v = candidates[0].first;
-    if (skeleton->events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+    if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
       assert(expansion(v));
       hyphantic_ops += 'E';
       regularization(false);
@@ -679,7 +680,7 @@ void Spacetime::hyphansis()
 void Spacetime::vertex_fusion(int n1,int n2)
 {
   int i,j,l,k,m,n,im1,in1;
-  std::set<int> vx,duplicate;
+  std::set<int> S,vx,duplicate;
   std::set<int>::reverse_iterator it;
   std::vector<int> mindex;
   const int ulimit = skeleton->dimension();
@@ -752,12 +753,13 @@ void Spacetime::vertex_fusion(int n1,int n2)
 #ifdef DEBUG
       assert(in1 < n);
 #endif
-      vx = skeleton->simplices[i][in1].vertices;
+      skeleton->simplices[i][in1].get_vertices(vx);
       for(l=0; l<n; ++l) {
         if (l == in1) continue;
-        if (skeleton->simplices[i][l].vertices == vx) {
+        skeleton->simplices[i][l].get_vertices(S);
+        if (S == vx) {
           duplicate.insert(in1);
-          skeleton->simplices[i][l].active = true;
+          skeleton->simplices[i][l].activate();
         }
       }
     }
@@ -767,8 +769,8 @@ void Spacetime::vertex_fusion(int n1,int n2)
     }
     duplicate.clear();
   }
-  skeleton->events[n1].active = true;
-  skeleton->events[n2].active = false;
+  skeleton->events[n1].activate();
+  skeleton->events[n2].deactivate();
   delete[] mutation;
 
   if (!skeleton->active_event(n2)) {
@@ -783,12 +785,13 @@ void Spacetime::vertex_fusion(int n1,int n2)
     skeleton->index_table[i].clear();
     m = (signed) skeleton->simplices[i].size();
     for(j=0; j<m; ++j) {
-      skeleton->simplices[i][j].entourage.clear();
-      skeleton->index_table[i][skeleton->simplices[i][j].vertices] = j;
+      skeleton->simplices[i][j].clear_entourage();
+      skeleton->simplices[i][j].get_vertices(S);
+      skeleton->index_table[i][S] = j;
     }
   }
   for(i=0; i<(signed) skeleton->events.size(); ++i) {
-    skeleton->events[i].entourage.clear();
+    skeleton->events[i].clear_entourage();
   }
 
   // Then recalculate the entourages...
@@ -846,7 +849,7 @@ bool Spacetime::vertex_twist()
 #ifdef VERBOSE
   std::cout << "Twist is " << n1 << " => " << n2 << std::endl;
 #endif
-  skeleton->events[n2].active = false;
+  skeleton->events[n2].deactivate();
   modified_vertices.insert(n2);
   if (!skeleton->active_event(n2)) {
     if (!skeleton->events[n2].zero_energy()) {
@@ -863,7 +866,7 @@ bool Spacetime::vertex_deletion(int n)
 {
   if (!skeleton->active_event(n)) return false;
   int i,vx[2],ne = (signed) skeleton->simplices[1].size();
-  skeleton->events[n].active = false;
+  skeleton->events[n].deactivate();
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);

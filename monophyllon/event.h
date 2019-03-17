@@ -27,15 +27,21 @@ namespace DIAPLEXIS {
     ~Event() override;
     int serialize(std::ofstream&) const override; 
     int deserialize(std::ifstream&) override;
-    int valence(int) const;
     inline void activate() {active = true;};
     inline void deactivate() {active = false;};
+    inline void clear_posterior() {posterior.clear();};
+    inline void get_posterior(std::set<int>& N) const {N = posterior;};
+    inline bool add_posterior(int);
+    inline void clear_anterior() {anterior.clear();};
+    inline void get_anterior(std::set<int>& N) const {N = anterior;};
+    inline bool add_anterior(int);
     inline void clear_entourage() {entourage.clear();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
     inline void get_entourage(std::set<int> N) const {N = entourage;};
     inline bool drop_entourage(int);
     inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
     inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
+    inline bool is_neighbour(int n) const {return (neighbours.count(n) > 0);};
     inline bool add_neighbour(int);
     inline bool drop_neighbour(int);
     inline double get_deficiency() const {return deficiency;};
@@ -59,6 +65,24 @@ namespace DIAPLEXIS {
     friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;
   };
+
+  bool Event::add_posterior(int n)
+  {
+    if (posterior.count(n) == 0) {
+      posterior.insert(n);
+      return true;
+    }
+    return false;
+  }
+
+  bool Event::add_anterior(int n)
+  {
+    if (anterior.count(n) == 0) {
+      anterior.insert(n);
+      return true;
+    }
+    return false;
+  }
 
   bool Event::add_neighbour(int n) 
   {
