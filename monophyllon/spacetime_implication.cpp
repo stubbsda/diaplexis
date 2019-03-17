@@ -8,10 +8,11 @@ bool Spacetime::stellar_deletion(int base)
   // this operation is pointless...
   if (skeleton->vertex_dimension(base) >= 2) return false;
   int m,vx[2];
-  std::set<int> nset;
+  std::set<int> S,nset;
   std::set<int>::const_iterator it;
 
-  for(it=skeleton->events[base].entourage.begin(); it!=skeleton->events[base].entourage.end(); ++it) {
+  skeleton->events[base].get_entourage(S);
+  for(it=S.begin(); it!=S.end(); ++it) {
     if (skeleton->active_simplex(1,*it)) {
       skeleton->simplices[1][*it].get_vertices(vx);
       m = (vx[0] == base) ? vx[1] : vx[0];
@@ -37,7 +38,7 @@ bool Spacetime::foliation_m(int base)
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
-    if (std::abs(skeleton->events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[p].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
@@ -53,21 +54,12 @@ bool Spacetime::foliation_m(int base)
   leaf.insert(base);
   leaf.insert(n1);
   leaf.insert(n2);
-  Simplex S(leaf);
-  qt = skeleton->index_table[2].find(S.vertices);
-  if (qt == skeleton->index_table[2].end()) {
-    skeleton->simplices[2].push_back(S);
-    skeleton->index_table[2][S.vertices] = (signed) skeleton->simplices[2].size() - 1;
+  if (skeleton->simplex_addition(leaf,-1)) {
+    modified_vertices.insert(n1);
+    modified_vertices.insert(n2);
     return true;
-  }
-  if (skeleton->active_simplex(2,qt->second)) return false;
-  skeleton->simplices[2][qt->second].active = true;
-  s1.insert(n1); s1.insert(n2);
-  qt = skeleton->index_table[1].find(s1);
-  skeleton->simplices[1][qt->second].active = true;
-  modified_vertices.insert(n1);
-  modified_vertices.insert(n2);
-  return true;
+  } 
+  return false;
 }
 
 bool Spacetime::fusion_m(int base)
@@ -109,15 +101,11 @@ bool Spacetime::fission(int base,double density)
       if (vx[0] != base && vx[1] != base) continue;
       q = (vx[0] == base) ? vx[1] : vx[0];
       if (skeleton->RND->drandom() < density) {
-        S.initialize(q,p);
-        skeleton->simplices[1].push_back(S);
-        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
+        skeleton->simplex_addition(q,p,-1);
         n++;
       }
     }
-    S.initialize(base,p);
-    skeleton->simplices[1].push_back(S);
-    skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
+    skeleton->simplex_addition(base,p,-1);
 #ifdef VERBOSE
     std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
 #endif
@@ -162,12 +150,10 @@ bool Spacetime::fission(int base,double density)
         } while((signed) s1.size() < (1+d));
         nsimplex = s1;
       }
-      S.initialize(nsimplex);
 #ifdef VERBOSE
       std::cout << "Vertex fission on " << p << " with new vertex " << q << " and simplex dimension " << d << std::endl;
 #endif
-      skeleton->simplices[d].push_back(S);
-      skeleton->index_table[d][S.vertices] = skeleton->simplices[d].size() - 1;
+      skeleton->simplex_addition(nsimplex,-1);
     }
     else {
       // The plot thickens: we must create a new 1-simplex out of an existing one, perhaps by forming
@@ -188,17 +174,13 @@ bool Spacetime::fission(int base,double density)
       nsimplex.insert(vx[0]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      S.initialize(nsimplex);
-      skeleton->simplices[2].push_back(S);
-      skeleton->index_table[2][S.vertices] = (signed) skeleton->simplices[2].size() - 1;
+      skeleton->simplex_addition(nsimplex,-1);
       nsimplex.clear();
 
       nsimplex.insert(vx[1]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      S.initialize(nsimplex);
-      skeleton->simplices[2].push_back(S);
-      skeleton->index_table[2][S.vertices] = (signed) skeleton->simplices[2].size() - 1;
+      skeleton->simplex_addition(nsimplex,-1);
     }
     return true;
   }
@@ -209,17 +191,20 @@ bool Spacetime::circumvolution()
   // This method attempts a circumvolution using boundary edges, it is
   // normally only called when the global energy reaches a critical threshold.
   int i,j,k,l,u[2],w[2];
-  std::set<int> edge_set,S;
+  std::set<int> edge_set,S,N;
   std::set<int>::const_iterator it,jt;
+  std::vector<std::set<int> > F;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int D = skeleton->dimension();
   int vx[D];
 
   for(i=0; i<(signed) skeleton->simplices[D].size(); ++i) {
     if (!skeleton->active_simplex(D,i)) continue;
+    skeleton->simplices[D][i].get_faces(F);
     for(j=0; j<=D; ++j) {
-      qt = skeleton->index_table[D-1].find(skeleton->simplices[D][i].faces[j]);
-      if (skeleton->simplices[D-1][qt->second].entourage.size() == 1) {
+      qt = skeleton->index_table[D-1].find(F[j]);
+      skeleton->simplices[D-1][qt->second].get_entourage(N);
+      if (N.size() == 1) {
         skeleton->simplices[D-1][qt->second].get_vertices(vx);
         for(k=0; k<D; ++k) {
           for(l=k+1; l<D; ++l) {
@@ -353,7 +338,10 @@ bool Spacetime::circumvolution(int base)
     } while(true);
   }
 #ifdef VERBOSE
-  std::cout << "Circumvolving the " << d << "-simplices: " << SYNARMOSMA::make_key(skeleton->simplices[d][s2].vertices) << " => " << SYNARMOSMA::make_key(skeleton->simplices[d][s1].vertices) << std::endl;
+  std::set<int> S1,S2;
+  skeleton->simplices[d][s2].get_vertices(S2);
+  skeleton->simplices[d][s1].get_vertices(S1);
+  std::cout << "Circumvolving the " << d << "-simplices: " << SYNARMOSMA::make_key(S2) << " => " << SYNARMOSMA::make_key(S1) << std::endl;
 #endif
   int v1[d+1],v2[d+1];
   for(i=0; i<=d; ++i) {
@@ -381,7 +369,7 @@ bool Spacetime::expansion(int base,double creativity)
     if (n1 == Complex::ND) return false;
     int u,vtx[2],its = 0;
     std::set<int> M;
-    double tau = std::abs(skeleton->events[base].deficiency) + 25.0;
+    double tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
     const int ne = (signed) skeleton->simplices[1].size();
 
     d = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
@@ -391,7 +379,7 @@ bool Spacetime::expansion(int base,double creativity)
       skeleton->simplices[1][i].get_vertices(vtx);
       if (vtx[0] != base && vtx[1] != base) continue;
       u = (vtx[0] == base) ? vtx[1] : vtx[0];
-      if (skeleton->events[u].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(u);
+      if (skeleton->events[u].get_deficiency() < -std::numeric_limits<double>::epsilon()) M.insert(u);
     }
     if (M.empty()) creativity = 1.0;
     vx.insert(base);
@@ -432,7 +420,7 @@ bool Spacetime::expansion(int base,double creativity)
           k = skeleton->RND->irandom(nv);
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
-            skeleton->events[k].active = true;
+            skeleton->events[k].activate();
             modified_vertices.insert(k);
             success = true;
             break;
@@ -464,7 +452,7 @@ bool Spacetime::expansion(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   const int ne = (signed) skeleton->simplices[1].size();
-  double tau = std::abs(skeleton->events[base].deficiency) + 25.0;
+  double tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
 
   d = int(double(Complex::ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
 
@@ -483,7 +471,7 @@ bool Spacetime::expansion(int base)
     skeleton->simplices[1][i].get_vertices(vtx);
     if (vtx[0] != base && vtx[1] != base) continue;
     u = (vtx[0] == base) ? vtx[1] : vtx[0];
-    if (skeleton->events[u].deficiency < -std::numeric_limits<double>::epsilon()) N.insert(u);
+    if (skeleton->events[u].get_deficiency() < -std::numeric_limits<double>::epsilon()) N.insert(u);
   }
 
   for(it=N.begin(); it!=N.end(); ++it) {
@@ -493,16 +481,8 @@ bool Spacetime::expansion(int base)
     s.insert(base);
     s.insert(n);
     qt = skeleton->index_table[1].find(s);
-    skeleton->simplices[1][qt->second].active = false;
-    S.initialize(m,n);
-    qt = skeleton->index_table[1].find(S.vertices);
-    if (qt == skeleton->index_table[1].end()) {
-      skeleton->simplices[1].push_back(S);
-      skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
-    }
-    else {
-      skeleton->simplices[1][qt->second].active = true;
-    }
+    skeleton->simplices[1][qt->second].deactivate();
+    skeleton->simplex_addition(m,n,-1);
   }
   return true;
 }
@@ -512,6 +492,7 @@ bool Spacetime::perforation(int base,int d)
   int i,j,k,n,nd;
   bool good,found;
   std::set<int> vx,candidates;
+  std::vector<std::set<int> > S;
 
   if (base >= 0) {
     // This call of the perforation operator is localized
@@ -525,9 +506,10 @@ bool Spacetime::perforation(int base,int d)
       // We need to check now if each of this simplex's 1+d faces is
       // also the face of another d-simplex
       good = true;
+      skeleton->simplices[d][i].get_faces(S);
       for(j=0; j<1+d; ++j) {
         found = false;
-        vx = skeleton->simplices[d][i].faces[j];
+        vx = S[j];
         for(k=0; k<nd; ++k) {
           if (k == i || !skeleton->active_simplex(d,k)) continue;
           if (skeleton->simplices[d][k].face(vx)) {
@@ -552,9 +534,10 @@ bool Spacetime::perforation(int base,int d)
       // We need to check now if each of this simplex's 1+d faces is
       // also the face of another d-simplex
       good = true;
+      skeleton->simplices[d][i].get_faces(S);
       for(j=0; j<1+d; ++j) {
         found = false;
-        vx = skeleton->simplices[d][i].faces[j];
+        vx = S[j];
         for(k=0; k<nd; ++k) {
           if (k == i || !skeleton->active_simplex(d,k)) continue;
           if (skeleton->simplices[d][k].face(vx)) {
@@ -601,7 +584,7 @@ bool Spacetime::inflation(int base,double creativity)
     // We want to inflate this to a d-simplex, where d is between
     // 1+n1 and ND - the greater the magnitude of v's deficiency,
     // the higher the dimension d should be...
-    tau = std::abs(skeleton->events[base].deficiency) + 25.0;
+    tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
     delta = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<(signed) skeleton->simplices[n1].size(); ++i) {
@@ -617,11 +600,11 @@ bool Spacetime::inflation(int base,double creativity)
       j = (vtx[0] == base) ? vtx[1] : vtx[0];
       N.insert(j);
     }
-    vx = skeleton->simplices[n1][skeleton->RND->irandom(candidates)].vertices;
+    skeleton->simplices[n1][skeleton->RND->irandom(candidates)].get_vertices(vx);
     for(it=N.begin(); it!=N.end(); ++it) {
       jt = std::find(vx.begin(),vx.end(),*it);
       if (jt == vx.end()) {
-        if (skeleton->events[*it].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(*it);
+        if (skeleton->events[*it].get_deficiency() < -std::numeric_limits<double>::epsilon()) M.insert(*it);
       }
     }
     if (M.empty()) creativity = 1.0;
@@ -665,7 +648,7 @@ bool Spacetime::inflation(int base,double creativity)
         if (skeleton->active_simplex(n1,i)) candidates.insert(i);
       }
       if (candidates.empty()) return false;
-      vx = skeleton->simplices[n1][skeleton->RND->irandom(candidates)].vertices;
+      skeleton->simplices[n1][skeleton->RND->irandom(candidates)].get_vertices(vx);
       delta = n1 + skeleton->RND->irandom(1,geometry->dimension());
     }
     if (double(delta)/double(na) > 0.25) creativity = 1.0;

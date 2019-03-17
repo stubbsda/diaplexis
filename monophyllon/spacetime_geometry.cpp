@@ -33,7 +33,7 @@ void Spacetime::arclength_statistics(double* output) const
 
   for(i=0; i<Ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
-    wm = skeleton->simplices[1][i].volume;
+    wm = skeleton->simplices[1][i].get_volume();
     avg_length += wm;
     if (wm > max_length) max_length = wm;
     if (wm < min_length) min_length = wm;
@@ -63,7 +63,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = skeleton->events[i].topological_dimension;
+      n = skeleton->events[i].get_topological_dimension();
       system_size += D;
       vdimension.push_back(n);
     }
@@ -74,7 +74,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = skeleton->events[i].topological_dimension;
+      n = skeleton->events[i].get_topological_dimension();
       system_size += (n <= D) ? D : n;
       vdimension.push_back(n);
     }
@@ -86,7 +86,7 @@ bool Spacetime::adjust_dimension()
 void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) const
 {
   int i,j,v;
-  std::set<int> S;
+  std::set<int> S,N;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
@@ -103,7 +103,8 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) con
   do {
     for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
       v = *v_it;
-      for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+      skeleton->events[v].get_neighbours(N);
+      for(it=N.begin(); it!=N.end(); ++it) {
         j = *it;
         S.clear();
         S.insert(v);
@@ -129,7 +130,7 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   // This method assumes that the compute_lightcones method has already been called to fill 
   // the anterior and posterior properties of the events!
   int i,j;
-  std::set<int> current,next;
+  std::set<int> S,current,next;
   std::set<int>::const_iterator it,jt;
 
   // First the past cone...
@@ -138,7 +139,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      for(jt=skeleton->events[i].anterior.begin(); jt!=skeleton->events[i].anterior.end(); ++jt) {
+      skeleton->events[i].get_anterior(S);
+      for(jt=S.begin(); jt!=S.end(); ++jt) {
         j = *jt;
         if (past_cone.count(j) > 0) continue;
         next.insert(j);
@@ -159,7 +161,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      for(jt=skeleton->events[i].posterior.begin(); jt!=skeleton->events[i].posterior.end(); ++jt) {
+      skeleton->events[i].get_posterior(S);
+      for(jt=S.begin(); jt!=S.end(); ++jt) {
         j = *jt;
         if (future_cone.count(j) > 0) continue;
         next.insert(j);
@@ -215,20 +218,20 @@ void Spacetime::compute_lightcones()
   const int m = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<n; ++i) {
-    skeleton->events[i].anterior.clear();
-    skeleton->events[i].posterior.clear();
+    skeleton->events[i].clear_anterior();
+    skeleton->events[i].clear_posterior();
   }
   for(i=0; i<m; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     if (!skeleton->simplices[1][i].timelike()) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
-      skeleton->events[vx[0]].posterior.insert(vx[1]);
-      skeleton->events[vx[1]].anterior.insert(vx[0]);
+      skeleton->events[vx[0]].add_posterior(vx[1]);
+      skeleton->events[vx[1]].add_anterior(vx[0]);
     }
     else {
-      skeleton->events[vx[1]].posterior.insert(vx[0]);
-      skeleton->events[vx[0]].anterior.insert(vx[1]);
+      skeleton->events[vx[1]].add_posterior(vx[0]);
+      skeleton->events[vx[0]].add_anterior(vx[1]);
     }
   }
 }
@@ -291,9 +294,9 @@ void Spacetime::chorogenesis(int nsteps)
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
       skeleton->simplices[1][i].get_vertices(vx);
-      d = skeleton->events[vx[0]].neighbours.size();
+      d = skeleton->vertex_valence(vx[0]);
       if (d <= 2*geometry->dimension()) continue;
-      d = skeleton->events[vx[1]].neighbours.size();
+      d = skeleton->vertex_valence(vx[1]);
       if (d <= 2*geometry->dimension()) continue;
       candidates.push_back(i);
     }
@@ -317,7 +320,7 @@ void Spacetime::chorogenesis(int nsteps)
       j = candidates[reorder[i]];
       skeleton->simplex_deletion(1,j);
       if (!skeleton->connected()) {
-        skeleton->simplices[1][j].active = true;
+        skeleton->simplices[1][j].activate();
         continue;
       }
       d++;
@@ -450,7 +453,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
   else {
     int j,k,na = 0;
     double l,ell;
-    std::set<int> S;
+    std::set<int> S,N;
     std::vector<double> x1,x2;
     SYNARMOSMA::hash_map::const_iterator qt;
     const int nv = (signed) skeleton->events.size();
@@ -467,7 +470,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
     assert(system_size == D*na);
 #endif
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,l,S,x1,x2,ell,alpha,it,qt)
+#pragma omp parallel for default(shared) private(i,j,k,l,S,N,x1,x2,ell,alpha,it,qt)
 #endif
     for(i=0; i<nv; ++i) {
       if (!skeleton->active_event(i)) continue;
@@ -475,7 +478,8 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
       for(j=0; j<D; ++j) {
         alpha[j] = 0.0;
       }
-      for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+      skeleton->events[i].get_neighbours(N);
+      for(it=N.begin(); it!=N.end(); ++it) {
         k = *it;
         geometry->get_coordinates(k,x2);
         l = geometry->get_squared_distance(i,k,false);
@@ -542,7 +546,7 @@ double Spacetime::compute_temporal_vorticity(int v) const
   // initial state.
   int u,w,tcount;
   double l,tipsy,vorticity;
-  std::set<int> S;
+  std::set<int> S,N;
   std::vector<int> jset;
   std::set<int>::const_iterator it,jt;
   std::vector<int>::const_iterator vit;
@@ -554,19 +558,20 @@ double Spacetime::compute_temporal_vorticity(int v) const
   vorticity = G.cyclicity();
 
   tipsy = 0.0;
-  for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+  skeleton->events[v].get_neighbours(N);
+  for(it=N.begin(); it!=N.end(); ++it) {
     u = *it;
     S.clear();
     S.insert(v);
     S.insert(u);
     qt = skeleton->index_table[1].find(S);
-    l = skeleton->simplices[1][qt->second].volume;
+    l = skeleton->simplices[1][qt->second].get_volume();
     if (!skeleton->simplices[1][qt->second].spacelike()) continue;
     // This edge is spacelike, so it will contribute to the temporal vorticity
     jset.clear();
-    for(jt=skeleton->events[v].neighbours.begin(); jt!=skeleton->events[v].neighbours.end(); ++jt) {
+    for(jt=N.begin(); jt!=N.end(); ++jt) {
       w = *jt;
-      if (skeleton->events[u].neighbours.count(w) > 0) jset.push_back(w);
+      if (skeleton->events[u].is_neighbour(w)) jset.push_back(w);
     }
     if (jset.empty()) continue;
     tcount = 0;
@@ -589,7 +594,7 @@ void Spacetime::compute_obliquity()
   const int nv = (signed) skeleton->events.size();
   if (geometry->get_relational()) {
     for(int i=0; i<nv; ++i) {
-      skeleton->events[i].obliquity = 0.0;
+      skeleton->events[i].set_obliquity(0.0);
     }
     return;
   }
@@ -597,20 +602,23 @@ void Spacetime::compute_obliquity()
   double rho,theta,alpha;
   bool first;
   std::vector<double> vx,vy;
+  std::set<int> N;
   std::set<int>::const_iterator it;
 
   const double A = 2.5;
 
   for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i) || skeleton->events[i].neighbours.size() < 2 || !skeleton->events[i].geometry_modified) continue;
+    if (!skeleton->active_event(i)) continue;
+    skeleton->events[i].get_neighbours(N);
+    if (N.size() < 2 || !skeleton->events[i].get_geometry_modified()) continue;
 
-    j = *(skeleton->events[i].neighbours.begin());
+    j = *(N.begin());
 
     geometry->vertex_difference(i,j,vx);
 
     rho = 0.0;
     first = true;
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    for(it=N.begin(); it!=N.end(); ++it) {
       if (first) {
         first = false;
         continue;
@@ -621,9 +629,9 @@ void Spacetime::compute_obliquity()
       theta = std::acos(alpha);
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);
     }
-    rho = rho/double(skeleton->events[i].neighbours.size() - 1);
+    rho = rho/double(N.size() - 1);
     if (rho < std::numeric_limits<double>::epsilon()) rho = 0.0;
-    skeleton->events[i].obliquity = rho;
+    skeleton->events[i].set_obliquity(rho);
   }
 }
 
@@ -665,7 +673,7 @@ double Spacetime::representational_energy(bool weighted) const
   
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
-      w = 2.0/std::abs(skeleton->simplices[1][i].volume);
+      w = 2.0/std::abs(skeleton->simplices[1][i].get_volume());
       skeleton->simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       k = offset[vx[1]];
@@ -735,7 +743,7 @@ bool Spacetime::realizable(int d,int n) const
       S.insert(vx[i]);
       S.insert(vx[0]);
       qt = skeleton->index_table[1].find(S);
-      alpha = skeleton->simplices[1][qt->second].volume;
+      alpha = skeleton->simplices[1][qt->second].get_volume();
     }
     for(j=0; j<dp1; ++j) {
       if (j != 0) {
@@ -743,13 +751,13 @@ bool Spacetime::realizable(int d,int n) const
         S.insert(vx[j]);
         S.insert(vx[0]);
         qt = skeleton->index_table[1].find(S);
-        alpha += skeleton->simplices[1][qt->second].volume;
+        alpha += skeleton->simplices[1][qt->second].get_volume();
       }
       S.clear();
       S.insert(vx[i]);
       S.insert(vx[j]);
       qt = skeleton->index_table[1].find(S);
-      alpha -= skeleton->simplices[1][qt->second].volume;
+      alpha -= skeleton->simplices[1][qt->second].get_volume();
       A[dp1*i+j] = alpha;
     }
   }
@@ -774,6 +782,7 @@ void Spacetime::compute_volume()
   int i,j,k,l,n,m,vx[Complex::ND+3];
   double prefactor,V,l1,l2,l3;
   std::set<int> S;
+  std::vector<std::set<int> > F;
   SYNARMOSMA::UINT64 q,p = 8;
   SYNARMOSMA::Matrix<double> A;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -783,17 +792,18 @@ void Spacetime::compute_volume()
   for(i=0; i<(signed) skeleton->simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
     // without LAPACK
-    if (!skeleton->active_simplex(2,i) || !skeleton->simplices[2][i].modified) continue;
-    qt = skeleton->index_table[1].find(skeleton->simplices[2][i].faces[0]);
-    l1 = skeleton->simplices[1][qt->second].sq_volume;
-    qt = skeleton->index_table[1].find(skeleton->simplices[2][i].faces[1]);
-    l2 = skeleton->simplices[1][qt->second].sq_volume;
-    qt = skeleton->index_table[1].find(skeleton->simplices[2][i].faces[2]);
-    l3 = skeleton->simplices[1][qt->second].sq_volume;
+    if (!skeleton->active_simplex(2,i) || !skeleton->simplices[2][i].get_modified()) continue;
+    skeleton->simplices[2][i].get_faces(F);
+    qt = skeleton->index_table[1].find(F[0]);
+    l1 = skeleton->simplices[1][qt->second].get_squared_volume();
+    qt = skeleton->index_table[1].find(F[1]);
+    l2 = skeleton->simplices[1][qt->second].get_squared_volume();
+    qt = skeleton->index_table[1].find(F[2]);
+    l3 = skeleton->simplices[1][qt->second].get_squared_volume();
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
-    skeleton->simplices[2][i].volume = std::sqrt(std::abs(V));
-    skeleton->simplices[2][i].sq_volume = V;
-    skeleton->simplices[2][i].modified = false;
+    skeleton->simplices[2][i].set_squared_volume(V);
+    skeleton->simplices[2][i].set_volume(std::sqrt(std::abs(V)));
+    skeleton->simplices[2][i].set_modified(false);
   }
 
   for(i=3; i<=Complex::ND; ++i) {
@@ -810,7 +820,7 @@ void Spacetime::compute_volume()
       A.set(j,0,1.0);
     }
     for(j=0; j<n; ++j) {
-      if (!skeleton->active_simplex(i,j) || !skeleton->simplices[i][j].modified) continue;
+      if (!skeleton->active_simplex(i,j) || !skeleton->simplices[i][j].get_modified()) continue;
       skeleton->simplices[i][j].get_vertices(vx);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
@@ -818,15 +828,15 @@ void Spacetime::compute_volume()
           S.insert(vx[k]);
           S.insert(vx[l]);
           qt = skeleton->index_table[1].find(S);
-          V = skeleton->simplices[1][qt->second].sq_volume;
+          V = skeleton->simplices[1][qt->second].get_squared_volume();
           A.set(1+k,1+l,V);
           A.set(1+l,1+k,V);
         }
       }
       V = prefactor*A.determinant();
-      skeleton->simplices[i][j].volume = std::sqrt(std::abs(V));
-      skeleton->simplices[i][j].sq_volume = V;
-      skeleton->simplices[i][j].modified = false;
+      skeleton->simplices[i][j].set_squared_volume(V);
+      skeleton->simplices[i][j].set_volume(std::sqrt(std::abs(V)));
+      skeleton->simplices[i][j].set_modified(false);
     }
     p *= 2;
   }
@@ -839,12 +849,12 @@ void Spacetime::compute_lengths()
   const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i) || !skeleton->simplices[1][i].modified) continue;
+    if (!skeleton->active_simplex(1,i) || !skeleton->simplices[1][i].get_modified()) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     delta = geometry->get_squared_distance(vx[0],vx[1],false);
-    skeleton->simplices[1][i].sq_volume = delta;
-    skeleton->simplices[1][i].volume = std::sqrt(std::abs(delta));
-    skeleton->simplices[1][i].modified = false;
+    skeleton->simplices[1][i].set_squared_volume(delta);
+    skeleton->simplices[1][i].set_volume(std::sqrt(std::abs(delta)));
+    skeleton->simplices[1][i].set_modified(false);
   }
 }
 
