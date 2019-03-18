@@ -51,15 +51,10 @@ void Spacetime::allocate()
   skeleton = new Complex;
 }
 
-void Spacetime::set_checkpoint_frequency(int a)
-{
-  checkpoint_frequency = a;
-}
-
 void Spacetime::restart(const std::string& filename,bool save_seed)
 {
   if (save_seed) {
-    unsigned int n = skeleton->RND->get_seed();
+    unsigned long n = skeleton->RND->get_seed();
     clear();
     read_parameters(filename);
     skeleton->RND->set_seed(n);

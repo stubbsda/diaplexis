@@ -248,13 +248,13 @@ namespace DIAPLEXIS {
     Spacetime(const std::string&,bool);
     ~Spacetime();
     void read_state(const std::string&);
-    bool step_forwards();
+    void fallback();
+    bool advance();
     void evolve();
     void chorogenesis(int);
     void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*,int) const;
-    void set_checkpoint_frequency(int);
     bool active_element(int,int) const;
     void get_ubiquity(int,int,std::string&) const;
     void get_edge_topology(std::vector<std::set<int> >&) const;
@@ -263,12 +263,13 @@ namespace DIAPLEXIS {
     void get_deficiency_values(std::vector<double>&,int) const;
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
-    double get_geometric_distance(int,int) const;
     bool is_pseudomanifold(bool*,int) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;
     void write_vertex_data(int) const;
 
+    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
+    inline double get_geometric_distance(int,int) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
     inline int get_cardinality(int d,int sheet) const {return cardinality_safe(d,sheet);};
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};

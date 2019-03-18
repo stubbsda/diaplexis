@@ -10,11 +10,6 @@ Complex::Complex()
   allocate();
 }
 
-Complex::Complex(const Complex& source)
-{
-
-}
-
 Complex::~Complex()
 {
   delete[] simplices;

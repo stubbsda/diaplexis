@@ -2,7 +2,7 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::compute_simplicial_dimension()
+void Complex::compute_simplicial_dimension()
 {
   int i;
   const int nv = (signed) events.size();
@@ -13,7 +13,7 @@ void Spacetime::compute_simplicial_dimension()
   }
 }
 
-void Spacetime::get_edge_topology(std::vector<std::set<int> >& vx) const
+void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 {
   int i;
   const int nv = cardinality(0,-1);
@@ -25,46 +25,7 @@ void Spacetime::get_edge_topology(std::vector<std::set<int> >& vx) const
   }
 }
 
-void Spacetime::get_ubiquity(int d,int n,std::string& output) const
-{
-  const int nt = (signed) codex.size();
-
-  if (d == 0) {
-    output = "{";
-    for(int i=0; i<nt-1; ++i) {
-      if (events[n].active(i)) {
-        output += "1,";
-      }
-      else {
-        output += "0,";
-      }
-    }
-    if (events[n].active(nt-1)) {
-      output += "1}";
-    }
-    else {
-      output += "0}";
-    }
-  }
-  else {
-    for(int i=0; i<nt-1; ++i) {
-      if (simplices[d][n].active(i)) {
-        output += "1,";
-      }
-      else {
-        output += "0,";
-      }
-    }
-    if (simplices[d][n].active(nt-1)) {
-      output += "1}";
-    }
-    else {
-      output += "0}";
-    }
-  }
-}
-
-void Spacetime::compute_degree_distribution(bool logarithmic,int sheet) const
+void Complex::compute_degree_distribution(bool logarithmic,int sheet) const
 {
   std::vector<double> histogram;
   SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
@@ -80,7 +41,7 @@ void Spacetime::compute_degree_distribution(bool logarithmic,int sheet) const
   delete G;
 }
 
-void Spacetime::compute_connectivity_distribution(int sheet) const
+void Complex::compute_connectivity_distribution(int sheet) const
 {
   int i,j,m = 0,l = cardinality(0,sheet);
   std::vector<int> pcount;
@@ -176,7 +137,7 @@ void Spacetime::compute_connectivity_distribution(int sheet) const
   }
 }
 
-bool Spacetime::active_element(int d,int n) const
+bool Complex::active_element(int d,int n) const
 {
   bool output = true;
 
@@ -189,7 +150,7 @@ bool Spacetime::active_element(int d,int n) const
   return output;
 }
 
-std::pair<double,double> Spacetime::random_walk(int sheet) const
+std::pair<double,double> Complex::random_walk(int sheet) const
 {
   std::pair<double,double> output;
   SYNARMOSMA::Graph G;
@@ -203,7 +164,87 @@ std::pair<double,double> Spacetime::random_walk(int sheet) const
   return output;
 }
 
-double Spacetime::dimensional_stress(int d,int n,int sheet) const
+void Complex::compute_geometric_dependency(const std::set<int>& vx)
+{
+  // A method that takes a set of vertices whose coordinates have
+  // been modified and determines which simplices will have their
+  // modified property set to true...
+  if (vx.empty()) return;
+  int i,m,n;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it,jt,kt;
+
+#ifdef VERBOSE
+  std::cout << "There are " << vx.size() << " vertices directly implicated." << std::endl;
+#endif
+  // We assume that the cardinality of vmodified is small relative
+  // to the total number of vertices in the spacetime complex
+  for(it=vx.begin(); it!=vx.end(); ++it) {
+    n = *it;
+    current = events[n].entourage;
+    for(i=1; i<=Complex::ND; ++i) {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        simplices[i][m].modified = true;
+        for(kt=simplices[i][m].entourage.begin(); kt!=simplices[i][m].entourage.end(); ++kt) {
+          next.insert(*kt);
+        }
+      }
+      if (next.empty()) break;
+      current = next;
+      next.clear();
+    }
+  }
+}
+
+void Complex::compute_topological_dependency(const std::set<int>& vx)
+{
+  int i,n,m,l,nhop;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it,jt,kt;
+  const int nv = (signed) events.size();
+  int done[nv];
+
+  for(i=0; i<nv; ++i) {
+    done[i] = 0;
+  }
+  for(it=vx.begin(); it!=vx.end(); ++it) {
+    n = *it;
+    nhop = 0;
+    // Every vertex within topological_radius hops of n is labelled as
+    // modified
+    current.insert(n);
+    done[n] = 1;
+    do {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
+          l = *kt;
+          if (done[l] == 0) next.insert(l);
+        }
+      }
+      if (next.empty()) break;
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
+        done[*jt] = 1;
+      }
+      current = next;
+      nhop++;
+      next.clear();
+    } while(nhop < Complex::topological_radius);
+    current.clear();
+    next.clear();
+    for(i=0; i<nv; ++i) {
+      if (done[i] == 1) events[i].topology_modified = true;
+      done[i] = 0;
+    }
+  }
+  int nmod = 0;
+  for(i=0; i<nv; ++i) {
+    if (events[i].topology_modified) nmod++;
+  }
+}
+
+double Complex::dimensional_stress(int d,int n,int sheet) const
 {
   // This method measures the standard deviation of the
   // simplicial dimensions of the vertices of a given
@@ -226,7 +267,7 @@ double Spacetime::dimensional_stress(int d,int n,int sheet) const
   return sigma;
 }
 
-void Spacetime::recompute_parity(int n) 
+void Complex::recompute_parity(int n) 
 {
   // The edge n has had its parity changed, so now we need to recompute 
   // the parity of the higher-dimensional simplices that depend on it.
@@ -236,7 +277,7 @@ void Spacetime::recompute_parity(int n)
   recompute_parity(temp);
 }
 
-void Spacetime::recompute_parity(const std::set<int>& edges) 
+void Complex::recompute_parity(const std::set<int>& edges) 
 {
   // The 1-simplices in the argument have had their parity changed, so now 
   // we need to recompute the parity of the higher-dimensional simplices that 
@@ -263,7 +304,7 @@ void Spacetime::recompute_parity(const std::set<int>& edges)
   } while(true);
 }
 
-void Spacetime::compute_parity() 
+void Complex::compute_parity() 
 {
   int i,j;
   const int d = dimension(-1);
@@ -276,7 +317,7 @@ void Spacetime::compute_parity()
   }
 }
 
-void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const
+void Complex::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const
 {
   int i,j,s = 0;
   const int D = dimension(sheet);
@@ -304,7 +345,7 @@ void Spacetime::compute_fvector(std::vector<int>& f,std::vector<int>& fstar,int 
   fstar.push_back(f[D]);
 }
 
-void Spacetime::compute_hvector(std::vector<int>& h,int sheet) const
+void Complex::compute_hvector(std::vector<int>& h,int sheet) const
 {
   int i,j,sum;
   std::vector<int> f,fstar;
@@ -320,7 +361,7 @@ void Spacetime::compute_hvector(std::vector<int>& h,int sheet) const
   }
 }
 
-void Spacetime::vertex_degree_statistics(double* output,int sheet) const
+void Complex::vertex_degree_statistics(double* output,int sheet) const
 {
   SYNARMOSMA::Graph G;  
   compute_graph(&G,sheet);
@@ -329,7 +370,7 @@ void Spacetime::vertex_degree_statistics(double* output,int sheet) const
   output[2] = G.average_degree();
 }
 
-int Spacetime::cyclicity(int sheet) const
+int Complex::cyclicity(int sheet) const
 {
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
@@ -340,87 +381,7 @@ int Spacetime::cyclicity(int sheet) const
   return (G.size() - G.bridge_count());
 }
 
-void Spacetime::set_logical_atoms(int n)
-{ 
-#ifdef DEBUG
-  assert(n > 0);
-#endif
-  int i,j,natoms;
-  double sigma;
-  std::set<int> cset;
-  const int nvertex = (signed) events.size();
-
-  for(int i=0; i<nvertex; ++i) {
-    events[i].theorem.clear();
-  }
- 
-  // Set the logical atoms in a purely random manner, the argument 
-  // "n" represents the total number of propositional atoms in the 
-  // entire spacetime
-  for(i=0; i<nvertex; ++i) {
-    if (!events[i].active()) continue;
-    cset.clear();
-    // The more energetic and the higher the topological dimension of a 
-    // vertex, the greater the number of atomic propositions in its theorem 
-    // property.
-    sigma = (1.0 + events[i].energy)*double(4 + events[i].topological_dimension);
-    sigma *= RND->drandom(1.0,1.5);
-    natoms = int(sigma);
-    if (natoms >= n) {
-      for(j=0; j<n; ++j) {
-        cset.insert(j); 
-      }
-    }
-    else {
-      do {
-        cset.insert(RND->irandom(n));
-        if ((signed) cset.size() == natoms) break;
-      } while(true);
-    }
-    events[i].theorem.set_atoms(cset);   
-  }
-}
-
-double Spacetime::logical_energy(int v) const
-{
-  if (events[v].neighbours.empty()) return 0.0;
-  double sum = 0.0;
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::Proposition q,p = events[v].theorem;
-
-  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-    q = p & events[*it].theorem;
-    sum += double(q.satisfiable());
-  }
-  sum = sum/double(events[v].neighbours.size());
-  return sum;
-}
-
-bool Spacetime::logical_conformity(int v) const
-{
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::Proposition Q = events[v].theorem;
-
-  for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-    Q = Q & events[*it].theorem;
-  }
-  return Q.satisfiable();
-}
-
-void Spacetime::compute_simplex_energy(int d,int n)
-{
-  int i,vx[1+d];
-  double alpha = 0.0;
-
-  simplices[d][n].get_vertices(vx);
-
-  for(i=0; i<1+d; ++i) {
-    alpha += events[vx[i]].get_energy();
-  }
-  simplices[d][n].energy = alpha/double(1+d);
-}
-
-void Spacetime::compute_simplex_parity(int d,int n)
+void Complex::compute_simplex_parity(int d,int n)
 {
   if (d < 2) return;
   int i,j,vx[1+d];
@@ -441,7 +402,7 @@ void Spacetime::compute_simplex_parity(int d,int n)
   }
 }
 
-double Spacetime::dimensional_stress(int v,int sheet) const
+double Complex::dimensional_stress(int v,int sheet) const
 {
   // This method should sum the dimensional stress associated with
   // each d-simplex (d > 0) that contains the vertex v and exists on
@@ -460,12 +421,12 @@ double Spacetime::dimensional_stress(int v,int sheet) const
   return sum;
 }
 
-void Spacetime::simplex_membership(int v,std::vector<int>& output) const
+void Complex::simplex_membership(int v,std::vector<int>& output) const
 {
   int i,j,m,k = 0;
 
   output.clear();
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
       if (!simplices[i][j].active()) continue;
@@ -476,14 +437,14 @@ void Spacetime::simplex_membership(int v,std::vector<int>& output) const
   }
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
 {
   int offset[events.size()];
 
   compute_graph(G,offset,sheet);
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
 {
   int i,vx[2];
   const int nv = (signed) events.size();
@@ -517,7 +478,7 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
   }
 }
 
-void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet) const
+void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet) const
 {
   int i,v,w,hop = 1;
   const int nv = (signed) events.size();
@@ -558,75 +519,7 @@ void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet)
   } while(true);
 }
 
-void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
-{
-  int i,j,l,v;
-  std::set<int> S;
-  std::set<int>::const_iterator it;
-  std::vector<int> offset,current,next;
-  std::vector<int>::const_iterator v_it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
-
-  G->clear();
-  current.push_back(base);
-  for(i=0; i<nv; ++i) {
-    offset.push_back(-1);
-  }
-  offset[base] = G->add_vertex();
-
-  if (sheet == -1) {
-    do {
-      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
-        v = *v_it;
-        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-          j = *it;
-          S.clear();
-          S.insert(v);
-          S.insert(j);
-          qt = index_table[1].find(S);
-          if (!simplices[1][qt->second].active()) continue;
-          if (!simplices[1][qt->second].timelike()) continue;
-          if (offset[j] == -1) {
-            offset[j] = G->add_vertex();
-            next.push_back(j);
-          }
-          G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
-        }
-      }
-      if (next.empty()) break;
-      current = next;
-      next.clear();
-    } while(true);
-  }
-  else {
-    do {
-      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
-        v = *v_it;
-        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-          j = *it;
-          S.clear();
-          S.insert(v);
-          S.insert(j);
-          qt = index_table[1].find(S);
-          l = qt->second;
-          if (!simplices[1][l].active(sheet)) continue;
-          if (!simplices[1][qt->second].timelike()) continue;
-          if (offset[j] == -1) {
-            offset[j] = G->add_vertex();
-            next.push_back(j);
-          }
-          G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
-        }
-      }
-      if (next.empty()) break;
-      current = next;
-      next.clear();
-    } while(true);
-  }
-}
-
-void Spacetime::compute_global_nexus(SYNARMOSMA::Nexus* NX,int sheet) const
+void Complex::compute_global_nexus(SYNARMOSMA::Nexus* NX,int sheet) const
 {
   int i,j;
   std::vector<int> offset;
@@ -674,7 +567,7 @@ void Spacetime::compute_global_nexus(SYNARMOSMA::Nexus* NX,int sheet) const
   NX->regularization();
 }
 
-void Spacetime::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base,int sheet) const
+void Complex::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base,int sheet) const
 {
   int i,j;
   std::vector<int> offset;
@@ -721,118 +614,7 @@ void Spacetime::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base,int sheet) co
   NX->regularization();
 }
 
-void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
-{
-  // This method assumes that the compute_lightcones method has already been called to fill 
-  // the anterior and posterior properties of the events!
-  int i,j;
-  std::set<int> current,next;
-  std::set<int>::const_iterator it,jt;
-
-  // First the past cone...
-  current.insert(v);
-  past_cone.clear();
-  do {
-    for(it=current.begin(); it!=current.end(); ++it) {
-      i = *it;
-      for(jt=events[i].anterior.begin(); jt!=events[i].anterior.end(); ++jt) {
-        j = *jt;
-        if (past_cone.count(j) > 0) continue;
-        next.insert(j);
-      }
-    }
-    if (next.empty()) break;
-    for(it=next.begin(); it!=next.end(); ++it) {
-      past_cone.insert(*it);
-    }
-    current = next;
-    next.clear();
-  } while(true);
-
-  // Now the future cone...
-  current.clear();
-  current.insert(v);
-  future_cone.clear();
-  do {
-    for(it=current.begin(); it!=current.end(); ++it) {
-      i = *it;
-      for(jt=events[i].posterior.begin(); jt!=events[i].posterior.end(); ++jt) {
-        j = *jt;
-        if (future_cone.count(j) > 0) continue;
-        next.insert(j);
-      }
-    }
-    if (next.empty()) break;
-    for(it=next.begin(); it!=next.end(); ++it) {
-      future_cone.insert(*it);
-    }
-    current = next;
-    next.clear();
-  } while(true);
-}
-
-void Spacetime::compute_lightcones()
-{
-  // This method only makes sense for the entire polycosmic spacetime complex, i.e. 
-  // sheet = -1
-  int i,vx[2];
-  const int n = (signed) events.size();
-  const int m = (signed) simplices[1].size();
-
-  for(i=0; i<n; ++i) {
-    events[i].anterior.clear();
-    events[i].posterior.clear();
-  }
-  for(i=0; i<m; ++i) {
-    if (!simplices[1][i].active()) continue;
-    if (!simplices[1][i].timelike()) continue;
-    simplices[1][i].get_vertices(vx);
-    if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
-      events[vx[0]].posterior.insert(vx[1]);
-      events[vx[1]].anterior.insert(vx[0]);
-    }
-    else {
-      events[vx[1]].posterior.insert(vx[0]);
-      events[vx[0]].anterior.insert(vx[1]);
-    }
-  }
-}
-
-double Spacetime::compute_temporal_nonlinearity() const
-{
-  int i,nsink = 0,nsource = 0,causal_loop = 0;
-  double output,nlinearity = 0.0;
-  std::set<int> past,future;
-  SYNARMOSMA::Directed_Graph G;
-  const int nv = (signed) events.size();
-  const double na = double(cardinality(0,-1));
-
-#ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
-#endif
-  for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    // Now calculate the future and past lightcones for this vertex on this sheet...
-    compute_total_lightcone(i,past,future);
-    if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
-    // If it's a sink, that means all of its edges have orientation equal to -1;
-    // for a source, the edges must all have an orientation equal to +1.
-    if (past.empty() && !future.empty()) {
-      compute_causal_graph(&G,i,-1);
-      nlinearity += G.cyclicity();
-      nsource++;
-    }
-    else if (!past.empty() && future.empty()) {
-      compute_causal_graph(&G,i,-1);
-      nlinearity += G.cyclicity();
-      nsink++;
-    }
-  }
-  output = nlinearity/double(nsink + nsource) + double(causal_loop)/na;
-  return output;
-}
-
-int Spacetime::chromatic_number(int sheet) const
+int Complex::chromatic_number(int sheet) const
 {
   // Computes the chromatic number chi of the graph associated with the
   // colour "p"; we already know that 1 <= chi <= max_degree+1.  
@@ -845,13 +627,452 @@ int Spacetime::chromatic_number(int sheet) const
   return G.chromatic_number();
 }
 
-int Spacetime::entourage(int base,int sheet) const
+bool Complex::edge_parity_mutation(int base,int sheet)
+{
+  int n;
+  std::set<int> candidates;
+  std::set<int>::const_iterator it;
+
+  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
+    if (simplices[1][*it].active(sheet)) {
+      candidates.insert(*it);
+    }
+  }
+  if (candidates.empty()) return false;      
+  n = RND->irandom(candidates);
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
+  }
+  else {
+    simplices[1][n].parity *= -1;
+  }
+  recompute_parity(n);
+  return true;
+}
+
+bool Complex::edge_parity_mutation(int u,int v,int sheet)
+{
+  // This is the method used for dynamic hyphansis where there is a single call 
+  // to recompute the orientation of all the higher-dimensional simplices, so no 
+  // need to include one at the method's end. 
+  int n;
+  std::set<int> S;
+  SYNARMOSMA::hash_map::const_iterator qt;
+
+  S.insert(u); S.insert(v);
+  qt = index_table[1].find(S);
+  if (qt == index_table[1].end()) return false;
+  if (!simplices[1][qt->second].active(sheet)) return false;
+  n = qt->second;
+  if (simplices[1][n].parity == 0) {
+    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
+  }
+  else {
+    simplices[1][n].parity *= -1;
+  }
+  return true;
+}
+
+void Complex::simplex_deletion(int d,int n,int sheet)
+{
+  std::set<int>::const_iterator it;
+  std::set<int> parents;
+  int i,dp1 = d + 1;
+
+  if (sheet == -1) {
+    for(i=0; i<(signed) codex.size(); ++i) {
+      simplices[d][n].set_inactive(i);
+    }    
+  } 
+  else {
+    if (!simplices[d][n].active(sheet)) return;
+    simplices[d][n].set_inactive(sheet);
+    for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); ++it) {
+      codex[sheet].vx_delta.insert(*it);
+    }
+  }
+  parents = simplices[d][n].entourage;
+  for(it=parents.begin(); it!=parents.end(); ++it) {
+    i = *it;
+    simplex_deletion(dp1,i,sheet);
+  }
+}
+
+bool Complex::simplex_addition(int u,int v,int n,int sheet)
+{
+  std::set<int> S,locus;
+  SYNARMOSMA::hash_map::const_iterator qt;
+
+  locus.insert(sheet);
+
+  S.insert(u); S.insert(v);
+  qt = index_table[1].find(S);
+  if (qt == index_table[1].end()) {
+    simplices[1].push_back(Simplex(S,locus,n));
+    index_table[1][S] = simplices[1].size() - 1;
+    events[v].neighbours.insert(u);
+    events[u].neighbours.insert(v);
+  }
+  else {
+    if (simplices[1][qt->second].active) return false;
+    simplices[1][qt->second].active = true;
+  }
+  return true;
+}
+
+bool Complex::simplex_addition(const std::set<int>& S,int sheet)
+{
+  int i,j;
+  std::set<int> locus,fc;
+  std::set<int>::const_iterator it;
+  std::vector<int> vec,vx;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  const int d = (signed) S.size() - 1;
+
+  locus.insert(sheet);
+
+  Simplex s(S,locus);
+  if (d == 1) {
+    s.parity = 0;
+    if (RND->drandom() < 0.2) {
+      s.parity = (RND->irandom(2) == 0) ? 1 : -1;
+    }
+  }
+
+  qt = index_table[d].find(S);
+  if (qt == index_table[d].end()) {
+    simplices[d].push_back(s);
+    index_table[d][S] = simplices[d].size() - 1;
+  }
+  else {
+    if (simplices[d][qt->second].active(sheet)) {
+      return false;
+    }
+    else {
+      simplices[d][qt->second].set_active(sheet);
+    }
+  }
+
+#ifdef VERBOSE
+  std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
+#endif
+
+  for(it=S.begin(); it!=S.end(); ++it) {
+    codex[sheet].vx_delta.insert(*it);
+  }
+
+  if (d == 1) {
+    int vn[2];
+    s.get_vertices(vn);
+    events[vn[0]].neighbours.insert(vn[1]);
+    events[vn[1]].neighbours.insert(vn[0]);
+    return true;
+  }
+  for(it=S.begin(); it!=S.end(); ++it) {
+    vx.push_back(*it);
+  }
+
+  for(i=d-1; i>=1; i--) {
+    for(j=0; j<=i; ++j) {
+      vec.push_back(j);
+      fc.insert(vx[j]);
+    }
+    // Add this simplex...
+    qt = index_table[i].find(fc);
+    if (qt == index_table[i].end()) {
+      simplices[i].push_back(Simplex(fc,locus));
+      index_table[i][fc] = simplices[i].size() - 1;
+    }
+    else {
+      simplices[i][qt->second].set_active(sheet);
+    }
+    fc.clear();
+    while(SYNARMOSMA::next_combination(vec,1+d)) {
+      for(j=0; j<=i; ++j) {
+        fc.insert(vx[vec[j]]);
+      }
+      qt = index_table[i].find(fc);
+      if (qt == index_table[i].end()) {
+        simplices[i].push_back(Simplex(fc,locus));
+        index_table[i][fc] = simplices[i].size() - 1;
+      }
+      else {
+        simplices[i][qt->second].set_active(sheet);
+      }
+      fc.clear();
+    }
+    vec.clear();
+  }
+  simplicial_implication(sheet);
+  return true;
+}
+
+bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices,int sheet)
+{
+  std::set<int>::const_iterator it;
+
+  for(it=S.begin(); it!=S.end(); ++it) {
+    modified_vertices.insert(*it);
+  }
+  return simplex_addition(S,sheet);
+}
+
+void Complex::simplicial_implication(int sheet)
+{
+  int i,j,k,n,m,vx[2];
+  Simplex S;
+  std::string sx;
+  std::set<int> colours;
+  std::set<int>::const_iterator it;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  const int ulimit = dimension(sheet);
+
+  if (sheet == -1) {
+    std::set<int> ubiquity;
+
+    for(i=0; i<(signed) codex.size(); ++i) {
+      if (dimension(i) < 0) continue;
+      colours.insert(i);
+    }
+    for(i=ulimit; i>=2; i--) {
+      n = (signed) simplices[i].size();
+      m = (signed) simplices[i-1].size();
+      for(j=0; j<n; ++j) {
+        if (!simplices[i][j].active()) continue;
+        simplices[i][j].get_ubiquity(ubiquity);
+        for(k=0; k<1+i; ++k) {
+          qt = index_table[i-1].find(simplices[i][j].faces[k]);
+          if (qt == index_table[i-1].end()) {
+            S.initialize(simplices[i][j].faces[k],ubiquity);
+            simplices[i-1].push_back(S);
+            index_table[i-1][S.vertices] = m;
+            m++;
+          }
+          else {
+            for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
+              simplices[i-1][qt->second].set_active(*it);
+            }
+          }
+        }
+      }
+    }
+    n = (signed) simplices[1].size();
+    for(i=0; i<n; ++i) {
+      if (!simplices[1][i].active()) continue;
+      simplices[1][i].get_ubiquity(ubiquity);
+      simplices[1][i].get_vertices(vx);
+      for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
+        events[vx[0]].set_active(*it);
+        events[vx[1]].set_active(*it);
+      }
+    }
+  }
+  else {
+    std::set<int> locus;
+
+    locus.insert(sheet);
+    for(i=ulimit; i>=2; i--) {
+      n = (signed) simplices[i].size();
+      m = (signed) simplices[i-1].size();
+      for(j=0; j<n; ++j) {
+        if (!simplices[i][j].active(sheet)) continue;
+        for(k=0; k<1+i; ++k) {
+          qt = index_table[i-1].find(simplices[i][j].faces[k]);
+          if (qt == index_table[i-1].end()) {
+#ifdef VERBOSE
+            std::cout << "Adding simplex with key " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << " to regularize the complex" << std::endl;
+#endif
+            S.initialize(simplices[i][j].faces[k],locus);
+            simplices[i-1].push_back(S);
+            index_table[i-1][S.vertices] = m;
+            m++;
+          }
+          else {
+            if (!simplices[i-1][qt->second].active(sheet)) {
+#ifdef VERBOSE
+              std::cout << "Restoring simplex with key " << SYNARMOSMA::make_key(simplices[i-1][qt->second].vertices) << " to regularize the complex" << std::endl;
+#endif
+              simplices[i-1][qt->second].set_active(sheet);
+            }
+          }
+        }
+      }
+    }
+    n = (signed) simplices[1].size();
+    for(i=0; i<n; ++i) {
+      if (!simplices[1][i].active(sheet)) continue;
+      simplices[1][i].get_vertices(vx);
+      if (!events[vx[0]].active(sheet)) {
+#ifdef VERBOSE
+        std::cout << "Restoring vertex " << vx[0] << " to regularize the complex" << std::endl;
+#endif
+        events[vx[0]].set_active(sheet);
+      }
+      if (!events[vx[1]].active(sheet)) {
+#ifdef VERBOSE
+        std::cout << "Restoring vertex " << vx[1] << " to regularize the complex" << std::endl;
+#endif
+        events[vx[1]].set_active(sheet);
+      }
+    }
+  }
+}
+
+void Complex::simplicial_implication(int base,int sheet) const
+{
+  // This method will calculate all of the n-simplices (n > 1) that are "implied" by
+  // the vertex base and its neighbours (via their mutual edges) and list them, as well
+  // as checking to see if they already exist in the spacetime complex.
+  // One wrinkle with this method is that it can only be used when the "entourage" and
+  // "neighbours" properties of the events are well-defined... so after the calls to
+  // "regularize".
+  int i,j,k,n,l,d,M,nsimp,nfound,w1,w2;
+  std::vector<int> C,vx;
+  std::vector<std::set<int> >* implied_simplex;
+  std::vector<std::set<int> >::const_iterator it;
+  bool failure;
+  SYNARMOSMA::hash_map::const_iterator qt;
+  std::set<int> S,sv;
+
+  if (sheet == -1) {
+    d = (signed) events[base].entourage.size();
+    M = 1 + d;
+    implied_simplex = new std::vector<std::set<int> >[M+1];
+
+    S = events[base].neighbours;
+    S.insert(base);
+
+    for(i=M; i>2; --i) {
+      // See how many i-dimensional simplices exist among the relations between v and its
+      // neighbours, so there should be (M choose i) such possible i-simplices
+      n = SYNARMOSMA::combinations(S,i,C);
+      for(l=0; l<n; ++l) {
+        // Grab the i elements from S and put them into the vector vx...
+        for(j=0; j<i; ++j) {
+          vx.push_back(C[l*i+j]);
+        }
+        failure = false;
+        for(j=0; j<i; ++j) {
+          for(k=1+j; k<i; ++k) {
+            w1 = vx[j];
+            w2 = vx[k];
+            sv.clear();
+            sv.insert(w1);
+            sv.insert(w2);
+            qt = index_table[1].find(sv);
+            if (qt == index_table[1].end()) {
+              failure = true;
+              break;
+            }
+            else {
+              if (!simplices[1][qt->second].active()) {
+                failure = true;
+                break;
+              }
+            }
+          }
+          if (failure) break;
+        }
+        if (!failure) {
+          sv.clear();
+          for(j=0; j<i; ++j) {
+            sv.insert(vx[j]);
+          }
+          implied_simplex[i].push_back(sv);
+        }
+        vx.clear();
+      }
+    }
+  }
+  else {
+#ifdef DEBUG
+    assert(events[base].active(sheet));
+#endif
+    std::set<int>::const_iterator jt;
+
+    d = 0;
+    for(jt=events[base].entourage.begin(); jt!=events[base].entourage.end(); ++jt) {
+      if (!simplices[1][*jt].active(sheet)) continue;
+      d++;
+    }
+    M = 1 + d;
+    implied_simplex = new std::vector<std::set<int> >[M+1];
+
+    for(jt=events[base].neighbours.begin(); jt!=events[base].neighbours.end(); ++jt) {
+      if (!events[*jt].active(sheet)) continue;
+      S.insert(*jt);
+    }
+    S.insert(base);
+
+    for(i=M; i>2; --i) {
+      // See how many i-dimensional simplices exist among the relations between v and its
+      // neighbours, so there should be (M choose i) such possible i-simplices
+      n = SYNARMOSMA::combinations(S,i,C);
+      for(l=0; l<n; ++l) {
+        // Grab the i elements from S and put them into the vector vx...
+        for(j=0; j<i; ++j) {
+          vx.push_back(C[l*i+j]);
+        }
+        failure = false;
+        for(j=0; j<i; ++j) {
+          for(k=1+j; k<i; ++k) {
+            w1 = vx[j];
+            w2 = vx[k];
+            sv.clear();
+            sv.insert(w1);
+            sv.insert(w2);
+            qt = index_table[1].find(sv);
+            if (qt == index_table[1].end()) {
+              failure = true;
+              break;
+            }
+            else {
+              if (!simplices[1][qt->second].active(sheet)) {
+                failure = true;
+                break;
+              }
+            }
+          }
+          if (failure) break;
+        }
+        if (!failure) {
+          sv.clear();
+          for(j=0; j<i; ++j) {
+            sv.insert(vx[j]);
+          }
+          implied_simplex[i].push_back(sv);
+        }
+        vx.clear();
+      }
+    }
+  }
+  // So how many of these implied simplices actually exist? And having found one or more which officially don't
+  // exist, what to do with them? If deleting a single edge can eliminate an entire tower of dependent n-simplices
+  // (n > 1) then shouldn't recreating this same edge cause the tower of n-simplices to be restored?
+  for(i=M; i>2; --i) {
+    nsimp = 0;
+    nfound = 0;
+    for(it=implied_simplex[i].begin(); it!=implied_simplex[i].end(); ++it) {
+      qt = index_table[i-1].find(*it);
+      if (qt != index_table[i-1].end()) {
+        if (simplices[i-1][qt->second].active()) nfound++;
+      }
+      nsimp++;
+    }
+#ifdef VERBOSE
+    std::cout << "There are " << nsimp << " implied " << i-1 << "-simplices of which " << nfound << " already exist in the spacetime complex." << std::endl;
+#endif
+  }
+  delete[] implied_simplex;
+}
+
+int Complex::entourage(int base,int sheet) const
 {
   // Calculates a measure of this event's integration/implication in its
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
 
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     n = 0;
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
@@ -863,7 +1084,7 @@ int Spacetime::entourage(int base,int sheet) const
   return output;
 }
 
-int Spacetime::max_degree() const
+int Complex::max_degree() const
 {
   int i,n,output = 0;
   for(i=0; i<(signed) events.size(); ++i) {
@@ -874,7 +1095,7 @@ int Spacetime::max_degree() const
   return output;
 }
 
-double Spacetime::entwinement(int sheet) const
+double Complex::entwinement(int sheet) const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
@@ -883,14 +1104,14 @@ double Spacetime::entwinement(int sheet) const
   return G.entwinement();
 }
 
-double Spacetime::cyclic_resistance(int sheet) const
+double Complex::cyclic_resistance(int sheet) const
 {
   SYNARMOSMA::Graph G;
   compute_graph(&G,sheet);
   return G.cyclic_resistance();
 }
 
-int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
+int Complex::combinatorial_distance(int v1,int v2,int sheet) const
 {
   // A method to calculate the topological distance
   // between the two vertices v1 and v2
@@ -913,7 +1134,7 @@ int Spacetime::combinatorial_distance(int v1,int v2,int sheet) const
   return d;
 }
 
-int Spacetime::cardinality_safe(int d,int sheet) const
+int Complex::cardinality_safe(int d,int sheet) const
 {
   int i,n = 0;
   if (sheet == -1) {
@@ -951,121 +1172,13 @@ int Spacetime::cardinality_safe(int d,int sheet) const
   return n;
 }
 
-int Spacetime::circuit_rank(int sheet) const
-{
-  int output = cardinality(1,sheet) - cardinality(0,sheet);
-  if (connected(sheet)) {
-    return 1 + output;
-  }
-  std::vector<int> components;
-  int n = component_analysis(components,sheet);
-  return n + output;
-}
-
-int Spacetime::euler_characteristic(int sheet) const
-{
-  int i,pf = 1,chi = 0;
-  const int D = dimension(sheet);
-  for(i=0; i<=D; ++i) {
-    chi += pf*cardinality(i,sheet);
-    pf *= -1;
-  }
-  return chi;
-}
-
-bool Spacetime::active_simplex(int d,int i,int sheet) const
-{
-  bool output = (simplices[d][i].active(sheet)) ? true : false;
-  return output;
-}
-
-int Spacetime::dimension(int sheet) const
-{
-  int i,j;
-
-  if (sheet == -1) {
-    for(i=Spacetime::ND; i>0; i--) {
-      for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (simplices[i][j].active()) return i;
-      }
-    }
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active()) return 0;
-    }
-  }
-  else {
-    for(i=Spacetime::ND; i>0; i--) {
-      for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (simplices[i][j].active(sheet)) return i;
-      }
-    }
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) return 0;
-    }
-  }
-  return -1;
-}
-
-int Spacetime::total_dimension(int sheet) const
-{
-  int i,sum = 0;
-
-  if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
-      sum += dimension(i);
-    }
-  }
-  else {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) sum += vertex_dimension(i,sheet);
-    }
-  }
-  return sum;
-}
-
-int Spacetime::structural_index(int sheet) const
-{
-  int i,j,l,n,sum = 0,d = dimension(sheet);
-
-  if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
-      sum++;
-    }
-    for(i=1; i<d; ++i) {
-      l = 0;
-      n = (signed) simplices[i].size();
-      for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
-        l++;
-      }
-      sum += (1+i)*l;
-    }
-  }
-  else {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) sum++;
-    }
-    for(i=1; i<d; ++i) {
-      l = 0;
-      n = (signed) simplices[i].size();
-      for(j=0; j<n; ++j) {
-        if (simplices[i][j].active(sheet)) l++;
-      }
-      sum += (1+i)*l;
-    }
-  }
-  return sum;
-}
-
-int Spacetime::weighted_entourage(int n1,int n2) const
+int Complex::weighted_entourage(int n1,int n2) const
 {
   int i,j,nfound,output = 0;
   bool f1,f2;
   std::set<int>::const_iterator it;
 
-  for(i=2; i<=Spacetime::ND; ++i) {
+  for(i=2; i<=Complex::ND; ++i) {
     nfound = 0;
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n1);
@@ -1081,7 +1194,7 @@ int Spacetime::weighted_entourage(int n1,int n2) const
   return output;
 }
 
-int Spacetime::vertex_valence(int v,int sheet) const
+int Complex::vertex_valence(int v,int sheet) const
 {
   int nd = 0;
   std::set<int>::const_iterator it;
@@ -1091,12 +1204,12 @@ int Spacetime::vertex_valence(int v,int sheet) const
   return nd;
 }
 
-int Spacetime::vertex_dimension(int v,int sheet) const
+int Complex::vertex_dimension(int v,int sheet) const
 {
   int i,j,n;
   if (v < 0 || v >= (signed) events.size()) return -1;
   if (sheet == -1) {
-    for(i=Spacetime::ND; i>=1; i--) {
+    for(i=Complex::ND; i>=1; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active()) continue;
@@ -1107,7 +1220,7 @@ int Spacetime::vertex_dimension(int v,int sheet) const
     return 0;
   }
   else {
-    for(i=Spacetime::ND; i>=1; i--) {
+    for(i=Complex::ND; i>=1; i--) {
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active(sheet)) continue;
@@ -1119,7 +1232,7 @@ int Spacetime::vertex_dimension(int v,int sheet) const
   return -1;
 }
 
-double Spacetime::dimensional_frontier(int D,int sheet) const
+double Complex::dimensional_frontier(int D,int sheet) const
 {
   int i,d[2],s = 0;
   for(i=0; i<(signed) simplices[1].size(); ++i) {
@@ -1132,7 +1245,7 @@ double Spacetime::dimensional_frontier(int D,int sheet) const
   return double(s)/double(simplices[1].size());
 }
 
-double Spacetime::dimensional_uniformity(int sheet) const
+double Complex::dimensional_uniformity(int sheet) const
 {
   int i,n,nv,sdimension = dimension(sheet),sum = 0;
   const int D = geometry->dimension();
@@ -1160,219 +1273,7 @@ double Spacetime::dimensional_uniformity(int sheet) const
   return double(sum)/double(nv);
 }
 
-bool Spacetime::consistent(int sheet) const
-{
-  int i,j,k,l,n,m,vx[2];
-  bool found;
-  std::set<int> S;
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
-  const int ulimit = dimension(sheet);
-
-#ifdef DEBUG
-  assert(simplices[0].empty());
-  assert(index_table[0].empty());
-#endif
-
-  if (sheet == -1) {
-    for(i=Spacetime::ND; i>=2; i--) {
-      n = (signed) simplices[i].size();
-      for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
-        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
-          if (!simplices[i+1][*it].active()) {
-            std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
-            return false;
-          }
-        }
-        if (simplices[i][j].dimension() != i) {
-          std::cout << i << "-simplex  " << j << " has dimension " << simplices[i][j].dimension() << std::endl;
-          return false;
-        }
-        for(k=0; k<1+i; ++k) {
-          S = simplices[i][j].faces[k];
-          found = false;
-          m = (signed) simplices[i-1].size();
-          for(l=0; l<m; ++l) {
-            if (!simplices[i-1][l].active()) continue;
-            if (S == simplices[i-1][l].vertices) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            std::cout << "Can't find face " << SYNARMOSMA::make_key(S) << " of simplex " << SYNARMOSMA::make_key(simplices[i][j].vertices) << std::endl;
-            for(l=0; l<(signed) simplices[i-1].size(); ++l) {
-              if (!simplices[i-1][l].active()) continue;
-              std::cout << SYNARMOSMA::make_key(simplices[i-1][l].vertices) << std::endl;
-            }
-            return false;
-          }
-          qt = index_table[i-1].find(S);
-          if (qt == index_table[i-1].end()) {
-            std::cout << "Problem with the index tables for " << SYNARMOSMA::make_key(simplices[i][j].vertices) << " and " << SYNARMOSMA::make_key(S) << std::endl;
-            return false;
-          }
-        }
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
-          l = *it;
-          if (l < 0 || l >= nv) {
-            std::cout << "Nonexistent vertex: " << l << std::endl;
-            return false;
-          }
-          if (!events[l].active()) {
-            std::cout << "Inactive vertex: " << l << std::endl;
-            return false;
-          }
-        }
-      }
-    }
-    for(i=0; i<(signed) simplices[1].size(); ++i) {
-      if (!simplices[1][i].active()) continue;
-      simplices[1][i].get_vertices(vx);
-      if (vx[0] < 0 || vx[0] >= nv) return false;
-      if (vx[1] < 0 || vx[0] >= nv) return false;
-      if (!events[vx[0]].active()) {
-        std::cout << "Inactive vertex: " << vx[0] << std::endl;
-        return false;
-      }
-      if (!events[vx[1]].active()) {
-        std::cout << "Inactive vertex: " << vx[1] << std::endl;
-        return false;
-      }
-    }
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
-        if (!simplices[1][*it].active()) {
-          std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
-          return false;
-        }
-      }
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        n = *it;
-        if (n == i) {
-          std::cout << "Illegal link: " << i << "  " << i << std::endl;
-          return false;
-        }
-        else if (n < 0) {
-          std::cout << "Illegal link: " << i << "  " << n << std::endl;
-          return false;
-        }
-        else if (n >= nv) {
-          std::cout << "Illegal link: " << i << "  " << n << std::endl;
-          return false;
-        }
-        S.clear();
-        S.insert(i); S.insert(n);
-        qt = index_table[1].find(S);
-        if (qt == index_table[1].end()) {
-          std::cout << "Missing edge " << i << ":" << n << std::endl;
-          return false;
-        }
-      }
-    }
-  }
-  else {
-    for(i=Spacetime::ND; i>=2; i--) {
-      n = (signed) simplices[i].size();
-      for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active(sheet)) continue;
-        if (simplices[i][j].dimension() != i) {
-          std::cout << i << "-simplex  " << j << " has dimension " << simplices[i][j].dimension() << std::endl;
-          return false;
-        }
-        for(k=0; k<1+i; ++k) {
-          S = simplices[i][j].faces[k];
-          found = false;
-          for(l=0; l<(signed) simplices[i-1].size(); ++l) {
-            if (!simplices[i-1][l].active(sheet)) continue;
-            if (S == simplices[i-1][l].vertices) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            std::cout << "For sheet " << sheet << ", can't find face " << SYNARMOSMA::make_key(S) << " of simplex " << SYNARMOSMA::make_key(simplices[i][j].vertices) << std::endl;
-            for(l=0; l<(signed) simplices[i-1].size(); ++l) {
-              if (!simplices[i-1][l].active(sheet)) continue;
-              std::cout << SYNARMOSMA::make_key(simplices[i-1][l].vertices) << std::endl;
-            }
-            return false;
-          }
-        }
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
-          l = *it;
-          if (l < 0 || l >= nv) {
-            std::cout << "Nonexistent vertex: " << l << std::endl;
-            return false;
-          }
-          if (!events[l].active(sheet)) {
-            std::cout << "Inactive vertex: " << l << std::endl;
-            return false;
-          }
-        }
-      }
-    }
-    for(i=0; i<(signed) simplices[1].size(); ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      simplices[1][i].get_vertices(vx);
-      if (vx[0] < 0 || vx[0] >= nv) return false;
-      if (vx[1] < 0 || vx[0] >= nv) return false;
-      if (!events[vx[0]].active(sheet)) {
-        std::cout << "Inactive vertex: " << vx[0] << std::endl;
-        return false;
-      }
-      if (!events[vx[1]].active(sheet)) {
-        std::cout << "Inactive vertex: " << vx[1] << std::endl;
-        return false;
-      }
-    }
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active(sheet)) continue;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        n = *it;
-        if (n == i) {
-          std::cout << "Illegal link: " << i << "  " << i << std::endl;
-          return false;
-        }
-        else if (n < 0) {
-          std::cout << "Illegal link: " << i << "  " << n << std::endl;
-          return false;
-        }
-        else if (n >= nv) {
-          std::cout << "Illegal link: " << i << "  " << n << std::endl;
-          return false;
-        }
-        S.clear();
-        S.insert(i); S.insert(n);
-        qt = index_table[1].find(S);
-        if (qt == index_table[1].end()) {
-          std::cout << "Missing edge " << i << ":" << n << std::endl;
-          return false;
-        }
-      }
-    }
-  }
-  // Make sure that each n-simplex only exists once...
-  for(i=1; i<=Spacetime::ND; ++i) {
-    n = (signed) simplices[i].size();
-    for(j=0; j<n; ++j) {
-      S = simplices[i][j].vertices;
-      for(k=0; k<n; ++k) {
-        if (k == j) continue;
-        if (S == simplices[i][k].vertices) {
-          std::cout << "Illegal " << i << "-simplex duplication with " << SYNARMOSMA::make_key(S) << std::endl;
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-bool Spacetime::connected(int sheet) const
+bool Complex::connected(int sheet) const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.
@@ -1381,38 +1282,5 @@ bool Spacetime::connected(int sheet) const
   compute_graph(&G,sheet);
 
   return G.connected();
-}
-
-int Spacetime::component_analysis(std::vector<int>& component,int sheet) const
-{
-  int i,n,ct = 0;
-  std::vector<int> cvalue;
-  SYNARMOSMA::Graph G;
-
-  compute_graph(&G,sheet);
-  n = G.component_analysis(cvalue);
-  // We now need to include the unused vertices in the output component vector
-  component.clear();
-  if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) {
-        component.push_back(-1);
-        continue;
-      }
-      component.push_back(cvalue[ct]);
-      ct++;
-    }
-  }
-  else {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active(sheet)) {
-        component.push_back(-1);
-        continue;
-      }
-      component.push_back(cvalue[ct]);
-      ct++;
-    }
-  }
-  return n;
 }
 

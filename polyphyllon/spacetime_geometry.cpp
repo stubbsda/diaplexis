@@ -24,9 +24,36 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
   }
 }
 
-double Spacetime::get_geometric_distance(int n,int m) const
+void Spacetime::arclength_statistics(double* output,int sheet) const
 {
-  return geometry->get_squared_distance(n,m,false);
+  int i;
+  double wm,avg_length = 0.0,max_length = 0.0,min_length = 1000.0;
+  const int Ne = (signed) simplices[1].size();
+  const double ne = double(cardinality(1,sheet));
+
+  if (sheet == -1) {
+    for(i=0; i<Ne; ++i) {
+      if (!simplices[1][i].active()) continue;
+      wm = simplices[1][i].volume;
+      avg_length += wm;
+      if (wm > max_length) max_length = wm;
+      if (wm < min_length) min_length = wm;
+    }
+    if (ne > 0) avg_length /= ne;
+  }
+  else {
+    for(i=0; i<Ne; ++i) {
+      if (!simplices[1][i].active(sheet)) continue;
+      wm = simplices[1][i].volume;
+      avg_length += wm;
+      if (wm > max_length) max_length = wm;
+      if (wm < min_length) min_length = wm;
+    }
+    if (ne > 0) avg_length /= ne;
+  }
+  output[0] = max_length;
+  output[1] = min_length;
+  output[2] = avg_length;
 }
 
 bool Spacetime::adjust_dimension()
@@ -68,54 +95,183 @@ bool Spacetime::adjust_dimension()
   return modified;
 }
 
-double Spacetime::total_energy(int sheet) const
+void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
 {
+  int i,j,l,v;
+  std::set<int> S;
+  std::set<int>::const_iterator it;
+  std::vector<int> offset,current,next;
+  std::vector<int>::const_iterator v_it;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) events.size();
-  double sum = 0.0;
+
+  G->clear();
+  current.push_back(base);
+  for(i=0; i<nv; ++i) {
+    offset.push_back(-1);
+  }
+  offset[base] = G->add_vertex();
 
   if (sheet == -1) {
-    for(int i=0; i<nv; ++i) {
-      if (events[i].active()) sum += events[i].get_energy();
-    }
+    do {
+      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
+        v = *v_it;
+        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+          j = *it;
+          S.clear();
+          S.insert(v);
+          S.insert(j);
+          qt = index_table[1].find(S);
+          if (!simplices[1][qt->second].active()) continue;
+          if (!simplices[1][qt->second].timelike()) continue;
+          if (offset[j] == -1) {
+            offset[j] = G->add_vertex();
+            next.push_back(j);
+          }
+          G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
+        }
+      }
+      if (next.empty()) break;
+      current = next;
+      next.clear();
+    } while(true);
   }
   else {
-    for(int i=0; i<nv; ++i) {
-      if (events[i].active(sheet)) sum += events[i].get_energy();
-    }
+    do {
+      for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
+        v = *v_it;
+        for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+          j = *it;
+          S.clear();
+          S.insert(v);
+          S.insert(j);
+          qt = index_table[1].find(S);
+          l = qt->second;
+          if (!simplices[1][l].active(sheet)) continue;
+          if (!simplices[1][qt->second].timelike()) continue;
+          if (offset[j] == -1) {
+            offset[j] = G->add_vertex();
+            next.push_back(j);
+          }
+          G->add_edge(offset[v],offset[j],geometry->get_temporal_order(v,j));
+        }
+      }
+      if (next.empty()) break;
+      current = next;
+      next.clear();
+    } while(true);
   }
-  return sum;
 }
 
-void Spacetime::arclength_statistics(double* output,int sheet) const
+void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
 {
-  int i;
-  double wm,avg_length = 0.0,max_length = 0.0,min_length = 1000.0;
-  const int Ne = (signed) simplices[1].size();
-  const double ne = double(cardinality(1,sheet));
+  // This method assumes that the compute_lightcones method has already been called to fill 
+  // the anterior and posterior properties of the events!
+  int i,j;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it,jt;
 
-  if (sheet == -1) {
-    for(i=0; i<Ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      wm = simplices[1][i].volume;
-      avg_length += wm;
-      if (wm > max_length) max_length = wm;
-      if (wm < min_length) min_length = wm;
+  // First the past cone...
+  current.insert(v);
+  past_cone.clear();
+  do {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
+      for(jt=events[i].anterior.begin(); jt!=events[i].anterior.end(); ++jt) {
+        j = *jt;
+        if (past_cone.count(j) > 0) continue;
+        next.insert(j);
+      }
     }
-    if (ne > 0) avg_length /= ne;
-  }
-  else {
-    for(i=0; i<Ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      wm = simplices[1][i].volume;
-      avg_length += wm;
-      if (wm > max_length) max_length = wm;
-      if (wm < min_length) min_length = wm;
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      past_cone.insert(*it);
     }
-    if (ne > 0) avg_length /= ne;
+    current = next;
+    next.clear();
+  } while(true);
+
+  // Now the future cone...
+  current.clear();
+  current.insert(v);
+  future_cone.clear();
+  do {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
+      for(jt=events[i].posterior.begin(); jt!=events[i].posterior.end(); ++jt) {
+        j = *jt;
+        if (future_cone.count(j) > 0) continue;
+        next.insert(j);
+      }
+    }
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      future_cone.insert(*it);
+    }
+    current = next;
+    next.clear();
+  } while(true);
+}
+
+double Spacetime::compute_temporal_nonlinearity() const
+{
+  int i,nsink = 0,nsource = 0,causal_loop = 0;
+  double output,nlinearity = 0.0;
+  std::set<int> past,future;
+  SYNARMOSMA::Directed_Graph G;
+  const int nv = (signed) events.size();
+  const double na = double(cardinality(0,-1));
+
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
+#endif
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active()) continue;
+    // Now calculate the future and past lightcones for this vertex on this sheet...
+    compute_total_lightcone(i,past,future);
+    if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
+    // If it's a sink, that means all of its edges have orientation equal to -1;
+    // for a source, the edges must all have an orientation equal to +1.
+    if (past.empty() && !future.empty()) {
+      compute_causal_graph(&G,i,-1);
+      nlinearity += G.cyclicity();
+      nsource++;
+    }
+    else if (!past.empty() && future.empty()) {
+      compute_causal_graph(&G,i,-1);
+      nlinearity += G.cyclicity();
+      nsink++;
+    }
   }
-  output[0] = max_length;
-  output[1] = min_length;
-  output[2] = avg_length;
+  output = nlinearity/double(nsink + nsource) + double(causal_loop)/na;
+  return output;
+}
+
+void Spacetime::compute_lightcones()
+{
+  // This method only makes sense for the entire polycosmic spacetime complex, i.e. 
+  // sheet = -1
+  int i,vx[2];
+  const int n = (signed) events.size();
+  const int m = (signed) simplices[1].size();
+
+  for(i=0; i<n; ++i) {
+    events[i].anterior.clear();
+    events[i].posterior.clear();
+  }
+  for(i=0; i<m; ++i) {
+    if (!simplices[1][i].active()) continue;
+    if (!simplices[1][i].timelike()) continue;
+    simplices[1][i].get_vertices(vx);
+    if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
+      events[vx[0]].posterior.insert(vx[1]);
+      events[vx[1]].anterior.insert(vx[0]);
+    }
+    else {
+      events[vx[1]].posterior.insert(vx[0]);
+      events[vx[0]].anterior.insert(vx[1]);
+    }
+  }
 }
 
 void Spacetime::chorogenesis(int nsteps)
@@ -244,41 +400,7 @@ void Spacetime::chorogenesis(int nsteps)
   delete G;
 }
 
-void Spacetime::determine_flexible_edges()
-{
-  int i,n,vx[2];
-  bool e_neighbour;
-  std::set<int>::const_iterator it;
-  const int ne = (signed) simplices[1].size();
-
-  flexible_edge.clear();
-  for(i=0; i<ne; ++i) {
-    flexible_edge.push_back(0);
-  }
-
-  for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) continue;
-    simplices[1][i].get_vertices(vx);
-    if (!events[vx[0]].zero_energy() || !events[vx[1]].zero_energy()) continue;
-    // Now check to see if one of these vertices has a neighbour with energy > 0
-    e_neighbour = false;
-    n = vx[0];
-    for(it=events[n].neighbours.begin(); it!=events[n].neighbours.end(); ++it) {
-      if (!events[*it].zero_energy()) e_neighbour = true;
-    }
-    if (e_neighbour) {
-      flexible_edge[i] = 1;
-      continue;
-    }
-    n = vx[1];
-    for(it=events[n].neighbours.begin(); it!=events[n].neighbours.end(); ++it) {
-      if (!events[*it].zero_energy()) e_neighbour = true;
-    }
-    if (e_neighbour) flexible_edge[i] = 1;
-  }
-}
-
-double Spacetime::compute_abnormality() const
+double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -304,7 +426,7 @@ double Spacetime::compute_abnormality() const
   return output;
 }
 
-double Spacetime::compute_abnormality(const std::vector<double>& x) const
+double Spacetime::compute_abnormality(const std::vector<double>& x,const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -335,7 +457,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x) const
   return output;
 }
 
-void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate)
+void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,const std::vector<int>& flexible_edge)
 {
   int i;
   std::set<int>::const_iterator it;
@@ -455,14 +577,6 @@ double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<
   return mdelta;
 }
 
-bool Spacetime::delaunay() const
-{
-  // A method that checks if the spacetime, viewed as a simplicial complex,
-  // satisfies the Delaunay property, that is the circumsphere of each d-simplex
-  // contains no vertices, where d is the dimension of the complex.
-  return false;
-}
-
 double Spacetime::compute_temporal_vorticity(int v,int sheet) const
 {
   // A value near zero means that the current topology is in accord with the chronogeometry
@@ -558,79 +672,6 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   return vorticity;
 }
 
-int Spacetime::simplex_embedding(int d,int n) const
-{
-  int i,j,in1,vx[1+d],ns = 0,nt = 0,p = 0,nwork = 3*n - 1;
-  double delta,sum,s1,s2,c,dmatrix[n*n],A[n*n],a[n],b[n],w[n],work[nwork];
-  char jtype = 'V',uplo = 'U';
-  std::set<int> S;
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-
-  simplices[d][n].get_vertices(vx);
-
-  for(i=0; i<(1+d)*(1+d); ++i) {
-    dmatrix[i] = 0.0;
-  }
-
-  // First we need to check if all the edges of this simplex are
-  // of the same type
-  for(i=0; i<1+d; ++i) {
-    for(j=i+1; j<1+d; ++j) {
-      S.clear();
-      S.insert(vx[i]);
-      S.insert(vx[j]);
-      qt = index_table[1].find(S);
-      delta = simplices[1][qt->second].volume;
-      dmatrix[n*i+j] = delta;
-      dmatrix[n*j+i] = delta;
-      if (simplices[1][qt->second].spacelike()) {
-        ns++;
-      }
-      else if (simplices[1][qt->second].timelike()) {
-        nt++;
-      }
-    }
-  }
-  if (nt > 0 && ns > 0) return -1;
-  if (ns == 0) {
-    // If the simplex's edges are all timelike, we should change the
-    // sign from negative to positive before proceeding with the
-    // calculation
-    for(i=0; i<n*n; ++i) {
-      dmatrix[i] = -dmatrix[i];
-    }
-  }
-
-  for(i=0; i<n*n; ++i) {
-    dmatrix[i] = -0.5*dmatrix[i]*dmatrix[i];
-  }
-
-  sum = 0.0;
-  for(i=0; i<n; ++i) {
-    s1 = 0.0;
-    s2 = 0.0;
-    for(j=0; j<n; ++j) {
-      sum += dmatrix[n*i+j];
-      s1 += dmatrix[n*i+j];
-      s2 += dmatrix[n*j+i];
-    }
-    a[i] = s1/double(n);
-    b[i] = s2/double(n);
-  }
-  c = sum/double(n*n);
-  for(i=0; i<n; ++i) {
-    for(j=0; j<n; ++j) {
-      A[n*i+j] = dmatrix[n*i+j] - a[i] - b[j] + c;
-    }
-  }
-  dsyev_(&jtype,&uplo,&n,A,&n,w,work,&nwork,&in1);
-  for(i=0; i<n; ++i) {
-    if (std::abs(w[i]) > 0.0) p++;
-  }
-  return p;
-}
-
 void Spacetime::compute_obliquity()
 {
   const int nv = (signed) events.size();
@@ -674,57 +715,46 @@ void Spacetime::compute_obliquity()
   }
 }
 
-void Spacetime::compute_curvature()
-{
-  int i;
-  double alpha;
-  const int nv = (signed) events.size();
-
-  for(i=0; i<nv; ++i) {
-    events[i].curvature = 0.0;
-  }
-  for(i=0; i<nv; ++i) {
-    // To calculate the curvature of v, we need to find the greatest
-    // simplicial dimension of v subject to the requirement that its
-    // entourage at this dimensionality be greater than one.
-    if (!events[i].active()) continue;
-    alpha = 0.0;
-    events[i].curvature = alpha;
-  }
-}
-
 double Spacetime::representational_energy(bool weighted) const
 {
   // A routine that follows the algorithm outlined in C. Godsil and G. Royle, "Algebraic
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
-  if (dimension(-1) < 1) return 0.0;
-  int i,n = 0;
+  if (skeleton->dimension(-1) < 1) return 0.0;
+  int i,j,k,l,nelements,n = 0;
+  double w,E = 0.0;
+  std::vector<double> xc,Lx;
+  std::vector<unsigned int> Lc;
   std::vector<int> offset;
   SYNARMOSMA::Graph G;
-  const int nv = (signed) events.size();
-  
-  compute_graph(&G,-1);
+  const int nv = (signed) skeleton->events.size();
+  const int N = skeleton->cardinality(0);
+  const int D = geometry->dimension();
+  double coordinates[N][D],result[N][D],sum[D];
+  SYNARMOSMA::Matrix<double> L(N);
 
-  SYNARMOSMA::Matrix<double> L(G.order());
-  
+  skeleton->compute_graph(&G,-1);
+
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) {
+    if (!skeleton->events[i].active()) {
       offset.push_back(-1);
       continue;
     }
     offset.push_back(n);
+    geometry->get_coordinates(i,xc);
+    for(j=0; j<D; ++j) {
+      coordinates[n][j] = xc[j];
+    }
     n++;
   }
 
   if (weighted) {
-    int j,k,vx[2];
-    double w;
-    const int ne = (signed) simplices[1].size();
-  
+    int vx[2];
+    const int ne = (signed) skeleton->simplices[1].size();
+
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      w = 2.0/std::abs(simplices[1][i].volume);
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active()) continue;
+      w = 2.0/std::abs(skeleton->simplices[1][i].get_volume());
+      skeleton->simplices[1][i].get_vertices(vx);
       j = offset[vx[0]];
       k = offset[vx[1]];
       // The diagonal elements need to be incremented...
@@ -739,7 +769,30 @@ double Spacetime::representational_energy(bool weighted) const
     G.compute_laplacian(&L);
   }
 
-  return geometry->inner_product(L,offset);
+  for(i=0; i<N; ++i) {
+    for(j=0; j<D; ++j) {
+      sum[j] = 0.0;
+    }
+    L.get_row(Lx,Lc,i);
+    nelements = (signed) Lx.size();
+    for(j=0; j<nelements; ++j) {
+      for(k=0; k<D; ++k) {
+        sum[k] += coordinates[Lc[j]][k]*Lx[j];
+      }
+    }
+    for(j=0; j<D; ++j) {
+      result[i][j] = sum[j];
+    }
+  }
+
+  for(i=0; i<D; ++i) {
+    w = 0.0;
+    for(l=0; l<N; ++l) {
+      w += result[l][i]*coordinates[l][i];
+    }
+    E += w;
+  }
+  return E;
 }
 
 bool Spacetime::realizable(int d,int n) const
@@ -806,7 +859,7 @@ bool Spacetime::realizable(int d,int n) const
 
 void Spacetime::compute_volume()
 {
-  int i,j,k,l,n,m,vx[Spacetime::ND+3];
+  int i,j,k,l,n,m,vx[Complex::ND+3];
   double prefactor,V,l1,l2,l3;
   std::set<int> S;
   SYNARMOSMA::UINT64 q,p = 8;
@@ -831,7 +884,7 @@ void Spacetime::compute_volume()
     simplices[2][i].modified = false;
   }
 
-  for(i=3; i<=Spacetime::ND; ++i) {
+  for(i=3; i<=Complex::ND; ++i) {
     if (simplices[i].empty()) continue;
     m = i + 2;
     n = (signed) simplices[i].size();

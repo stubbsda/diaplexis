@@ -232,7 +232,7 @@ namespace DIAPLEXIS {
     void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*) const;
-    void set_checkpoint_frequency(int);
+    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
     void get_energy_extrema(double*) const;
