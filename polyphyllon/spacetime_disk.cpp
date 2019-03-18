@@ -92,10 +92,6 @@ void Spacetime::read_parameters(const std::string& filename)
       boost::to_upper(value);
       high_memory = (value == "HIGH") ? true : false;
     }
-    else if (name == "InstrumentConvergence") {
-      boost::to_upper(value);
-      instrument_convergence = (value == "YES") ? true : false;
-    }
     else if (name == "Hyphansis") {
       boost::to_upper(value);
       if (value == "MUSICAL") {
@@ -278,7 +274,6 @@ void Spacetime::read_parameters(const std::string& filename)
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);
-  if (instrument_convergence) anterior.geometry.initialize(euclidean,relational,uniform,high_memory,D);
 
   if (initial_state == Initial_Topology::random) {
     assert(edge_probability > std::numeric_limits<double>::epsilon() && (edge_probability - 1.0) < -std::numeric_limits<double>::epsilon());
@@ -293,7 +288,7 @@ void Spacetime::read_parameters(const std::string& filename)
     }
   }
   else if (initial_state == Initial_Topology::monoplex) {
-    assert(initial_dim <= Spacetime::ND);
+    assert(initial_dim <= Complex::ND);
   }
   else if (initial_state == Initial_Topology::singleton) {
     assert(initial_size == 1);
@@ -373,9 +368,9 @@ void Spacetime::write_log() const
     s << "<StartDate>" << start_time.date() << "</StartDate>" << std::endl;
     s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
-    s << "<MaximumDimension>" << Spacetime::ND << "</MaximumDimension>" << std::endl;
+    s << "<MaximumDimension>" << Complex::ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
-    s << "<TopologicalRadius>" << Spacetime::topological_radius << "</TopologicalRadius>" << std::endl;
+    s << "<TopologicalRadius>" << Complex::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<PolycosmicRamosity>" << Spacetime::ramosity << "</PolycosmicRamosity>" << std::endl;
     s << "<ConvergenceThreshold>" << Spacetime::convergence_threshold << "</ConvergenceThreshold>" << std::endl;
     s << "<InitialAnnealingTemperature>" << Spacetime::T_zero << "</InitialAnnealingTemperature>" << std::endl;
@@ -556,20 +551,6 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(error);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  if (instrument_convergence) {
-    atom = rstep.append_child("TopologyDelta");
-    nvalue = boost::lexical_cast<std::string>(topology_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-
-    atom = rstep.append_child("GeometryDelta");
-    nvalue = boost::lexical_cast<std::string>(geometry_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-
-    atom = rstep.append_child("EnergyDelta");
-    nvalue = boost::lexical_cast<std::string>(energy_delta);
-    atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-  }
-
   atom = rstep.append_child("Pseudomanifold");
   nvalue = (pseudomanifold) ? "True" : "False";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -704,7 +685,7 @@ void Spacetime::write_log() const
   for(i=0; i<Nt; ++i) {
     sum = 0;
     mx = 0;
-    mn = Spacetime::ND;
+    mn = Complex::ND;
     for(j=0; j<Nv; ++j) {
       v = vdimension[Nt*j+i];
       if (v == -1) continue;
@@ -965,55 +946,36 @@ void Spacetime::write_log() const
   logfile.save_file(log_file.c_str());
 }
 
-void Spacetime::read_complex(std::ifstream& s)
+void Spacetime::read(const Spacetime& source)
 {
-  int i,j,n;
-  Event v;
-  Simplex S;
-  Sheet t;
-
-  s.read((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    v.deserialize(s);
-    events.push_back(v);
+  system_size = source.system_size;
+  error = source.error;
+  global_deficiency = source.global_deficiency;
+  events = source.events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    simplices[i] = source.simplices[i];
+    index_table[i] = source.index_table[i];
   }
+}
 
-  for(i=1; i<=Spacetime::ND; ++i) {
-    s.read((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      S.deserialize(s);
-      simplices[i].push_back(S);
-    }
+void Spacetime::write(Spacetime& state) const
+{
+  state.system_size = system_size;
+  state.error = error;
+  state.global_deficiency = global_deficiency;
+  state.events = events;
+  for(int i=0; i<=Complex::ND; ++i) {
+    state.simplices[i] = simplices[i];
+    state.index_table[i] = index_table[i];
   }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      index_table[i][simplices[i][j].vertices] = j;
-    }
-  }
-
-  // Now the algebraic properties...
-  H->deserialize(s);
-  pi->deserialize(s);
-
-  s.read((char*)(&j),sizeof(int));
-  for(i=0; i<j; ++i) {
-    codex.push_back(t);
-  }
-  nactive = 0;
-  for(i=0; i<j; ++i) {
-    codex[i].deserialize(s);
-    if (codex[i].active) nactive++;
-  }
-  compute_entourages(-1);
 }
 
 void Spacetime::read_state(const std::string& filename)
 {
   int i,j,n;
-  std::string cmodel,fmodel;
-  unsigned int q;
   double x;
+  std::string cmodel,fmodel;
+  Sheet t;
 
   std::ifstream s(filename,std::ios::in | std::ios::binary);
   if (!s.is_open()) {
@@ -1036,9 +998,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Spacetime::ND) {
+  if (n != Complex::ND) {
     s.close();
-    std::cerr << "The compiled binary's maximum simplicial dimension " << Spacetime::ND << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's maximum simplicial dimension " << Complex::ND << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -1052,9 +1014,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Spacetime::topological_radius) {
+  if (n != Complex::topological_radius) {
     s.close();
-    std::cerr << "The compiled binary's topological radius " << Spacetime::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
+    std::cerr << "The compiled binary's topological radius " << Complex::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
     std::cerr << "Exiting..." << std::endl;
     std::exit(1);
   }
@@ -1103,12 +1065,10 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&nt_initial),sizeof(int));
   s.read((char*)(&initial_dim),sizeof(int));
   s.read((char*)(&max_iter),sizeof(int));
-  s.read((char*)(&q),sizeof(int));
   s.read((char*)(&checkpoint_frequency),sizeof(int));
   // Skip changing the initial_state as it should remain DISKFILE...
   s.read((char*)(&original_state),sizeof(Initial_Topology));
   s.read((char*)(&foliodynamics),sizeof(bool));
-  s.read((char*)(&instrument_convergence),sizeof(bool));
   s.read((char*)(&high_memory),sizeof(bool));
   s.read((char*)(&superposable),sizeof(bool));
   s.read((char*)(&compressible),sizeof(bool));
@@ -1154,132 +1114,27 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&global_deficiency),sizeof(double));
   s.read((char*)(&error),sizeof(double));
   s.read((char*)(&converged),sizeof(bool));
-  s.read((char*)(&pseudomanifold),sizeof(bool));
-  s.read((char*)(&boundary),sizeof(bool));
-  s.read((char*)(&orientable),sizeof(bool));
+
+  s.read((char*)(&n),sizeof(int));
+  for(i=0; i<n; ++i) {
+    s.read((char*)(&c),sizeof(char));
+    hyphantic_ops += c;
+  }
 
   geometry->deserialize(s);
-
-  read_complex(s);
-  // Now read the anterior spacetime state and calculate the deltas...
-  if (instrument_convergence) {
-    Event v;
-    Simplex S;
-
-    s.read((char*)(&topology_delta),sizeof(double));
-    s.read((char*)(&geometry_delta),sizeof(double));
-    s.read((char*)(&energy_delta),sizeof(double));
-
-    s.read((char*)(&n),sizeof(int));
-    for(i=0; i<n; ++i) {
-      v.deserialize(s);
-      anterior.events.push_back(v);
-    }
-
-    for(i=1; i<=Spacetime::ND; ++i) {
-      s.read((char*)(&n),sizeof(int));
-      for(j=0; j<n; ++j) {
-        S.deserialize(s);
-        anterior.simplices[i].push_back(S);
-      }
-    }
-
-    // Regenerate the anterior index table...
-    for(i=1; i<=Spacetime::ND; ++i) {
-      for(j=0; j<(signed) anterior.simplices[i].size(); ++j) {
-        anterior.index_table[i][anterior.simplices[i][j].vertices] = j;
-      }
-    }
-  }
-  s.close();
-  RND->set_seed(q);
-}
-
-void Spacetime::write_graph(const std::string& filename,int sheet) const
-{
-  int i,j,vx[2],N1 = 0;
-  double E;
-  std::vector<int> offset;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
-
-  for(i=0; i<nv; ++i) {
-    offset.push_back(-1);
-  }
-
-  std::ofstream s(filename,std::ios::out | std::ios::trunc | std::ios::binary);
-  i = cardinality(0,sheet);
-  s.write((char*)(&i),sizeof(int));
-  i = cardinality(1,sheet);
-  s.write((char*)(&i),sizeof(int));
-  if (sheet == -1) {
-    // First calculate the appropriate vertex offset and write out the energy...
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      offset[i] = N1;
-      N1++;
-      E = events[i].get_energy();
-      s.write((char*)(&E),sizeof(double));
-    }
-    // Finally the edges...
-    for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      simplices[1][i].get_vertices(vx);
-      j = offset[vx[0]];
-      s.write((char*)(&j),sizeof(int));
-      j = offset[vx[1]];
-      s.write((char*)(&j),sizeof(int));
-    }
-  }
-  else {
-    // First calculate the appropriate vertex offset and write out the energy...
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active(sheet)) continue;
-      offset[i] = N1;
-      N1++;
-      E = events[i].get_energy();
-      s.write((char*)(&E),sizeof(double));
-    }
-    // Finally the edges...
-    for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      simplices[1][i].get_vertices(vx);
-      j = offset[vx[0]];
-      s.write((char*)(&j),sizeof(int));
-      j = offset[vx[1]];
-      s.write((char*)(&j),sizeof(int));
-    }
-  }
-  s.close();
-}
-
-void Spacetime::write_complex(std::ofstream& s) const
-{
-  int i,j,n;
-
-  n = (signed) events.size();
-  s.write((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    events[i].serialize(s);
-  }
-
-  for(i=1; i<=Spacetime::ND; ++i) {
-    n = (signed) simplices[i].size();
-    s.write((char*)(&n),sizeof(int));
-    for(j=0; j<n; ++j) {
-      simplices[i][j].serialize(s);
-    }
-  }
-  // Now the algebraic properties...
-  H->serialize(s);
-  pi->serialize(s);
-
-  // Finally the data for each Sheet instance...
-  j = (signed) codex.size();
-  s.write((char*)(&j),sizeof(int));
+  skeleton->deserialize(s); 
+  // Now the sheets...
+  s.read((char*)(&j),sizeof(int));
   for(i=0; i<j; ++i) {
-    codex[i].serialize(s);
+    codex.push_back(t);
   }
+  nactive = 0;
+  for(i=0; i<j; ++i) {
+    codex[i].deserialize(s);
+    if (codex[i].active) nactive++;
+  }
+
+  s.close();
 }
 
 void Spacetime::write_state() const
@@ -1296,9 +1151,9 @@ void Spacetime::write_state() const
 
   // First the global parameters...
   s.write((char*)(&ftype),sizeof(int));
-  s.write((char*)(&Spacetime::ND),sizeof(int));
+  s.write((char*)(&Complex::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
-  s.write((char*)(&Spacetime::topological_radius),sizeof(int));
+  s.write((char*)(&Complex::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::ramosity),sizeof(double));
   s.write((char*)(&Spacetime::convergence_threshold),sizeof(double));
   s.write((char*)(&Spacetime::T_zero),sizeof(double));
@@ -1311,13 +1166,9 @@ void Spacetime::write_state() const
   s.write((char*)(&nt_initial),sizeof(int));
   s.write((char*)(&initial_dim),sizeof(int));
   s.write((char*)(&max_iter),sizeof(int));
-  // Write the initial random number seed to disk...
-  unsigned int q = RND->get_seed();
-  s.write((char*)(&q),sizeof(int));
   s.write((char*)(&checkpoint_frequency),sizeof(int));
   s.write((char*)(&initial_state),sizeof(Initial_Topology));
   s.write((char*)(&foliodynamics),sizeof(bool));
-  s.write((char*)(&instrument_convergence),sizeof(bool));
   s.write((char*)(&high_memory),sizeof(bool));
   s.write((char*)(&superposable),sizeof(bool));
   s.write((char*)(&compressible),sizeof(bool));
@@ -1366,35 +1217,25 @@ void Spacetime::write_state() const
   s.write((char*)(&global_deficiency),sizeof(double));
   s.write((char*)(&error),sizeof(double));
   s.write((char*)(&converged),sizeof(bool));
-  s.write((char*)(&pseudomanifold),sizeof(bool));
-  s.write((char*)(&boundary),sizeof(bool));
-  s.write((char*)(&orientable),sizeof(bool));
+
+  // Now write out the hyphantic operations that have been performed...
+  n = hyphantic_ops.length();
+  s.write((char*)(&n),sizeof(int));
+  for(i=0; i<n; ++i) {
+    c = hyphantic_ops[i];
+    s.write((char*)(&c),sizeof(char));
+  }
 
   // The principal body of the file...
   geometry->serialize(s);
-
-  write_complex(s);
-
-  // Now write the deltas and the anterior spacetime state...
-  if (instrument_convergence) {
-    s.write((char*)(&topology_delta),sizeof(double));
-    s.write((char*)(&geometry_delta),sizeof(double));
-    s.write((char*)(&energy_delta),sizeof(double));
-
-    n = (signed) anterior.events.size();
-    s.write((char*)(&n),sizeof(int));
-    for(i=0; i<n; ++i) {
-      anterior.events[i].serialize(s);
-    }
-
-    for(i=1; i<=Spacetime::ND; ++i) {
-      n = (signed) anterior.simplices[i].size();
-      s.write((char*)(&n),sizeof(int));
-      for(j=0; j<n; ++j) {
-        anterior.simplices[i][j].serialize(s);
-      }
-    }
+  skeleton->serialize(s);
+  // Finally the data for each Sheet instance...
+  j = (signed) codex.size();
+  s.write((char*)(&j),sizeof(int));
+  for(i=0; i<j; ++i) {
+    codex[i].serialize(s);
   }
+
   // Close the file and return...
   s.close();
 }

@@ -98,14 +98,12 @@ namespace DIAPLEXIS {
     int simplex_embedding(int,int) const;
     double dimensional_stress(int) const;
     void compute_delta(std::set<int>&);
-
     double parity_hamiltonian(double,bool) const;
     void write_graph(const std::string&) const;
     inline double distribution_fitness(int*,const std::vector<int>&,int) const;
 
    public:
     Complex();
-    Complex(const Complex&);
     ~Complex();
     void distribute(int) const; 
     int serialize(std::ofstream&) const;
