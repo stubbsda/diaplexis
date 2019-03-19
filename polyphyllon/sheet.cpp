@@ -39,7 +39,7 @@ Sheet::Sheet(const Sheet& source)
   nstep = source.nstep;
   active = source.active;
   ops = source.ops;
-  vx_delta = source.vx_delta;
+  modified_vertices = source.modified_vertices;
   *H = *source.H;
   *pi = *source.pi;
   pseudomanifold = source.pseudomanifold;
@@ -56,7 +56,7 @@ Sheet& Sheet::operator =(const Sheet& source)
   active = source.active;
   nstep = source.nstep;
   ops = source.ops;
-  vx_delta = source.vx_delta;
+  modified_vertices = source.modified_vertices;
   *H = *source.H;
   *pi = *source.pi;
   pseudomanifold = source.pseudomanifold;
@@ -74,12 +74,12 @@ Sheet::~Sheet()
 
 void Sheet::clear()
 {
-  ops = "";
+  hyphantic_ops = "";
   active = false;
   nstep = 0;
   parent = -1;
   index = -1;
-  vx_delta.clear();
+  modified_vertices.clear();
   H->clear();
   pi->clear();
   pseudomanifold = false;
@@ -108,7 +108,7 @@ int Sheet::serialize(std::ofstream& s) const
   s.write((char*)(&active),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
-    s.write((char*)(&ops[i]),sizeof(char)); count += sizeof(char);
+    s.write((char*)(&hyphantic_ops[i]),sizeof(char)); count += sizeof(char);
   }
   // Now the algebraic properties...
   count += H->serialize(s);
@@ -134,7 +134,7 @@ int Sheet::deserialize(std::ifstream& s)
   s.read((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
     s.read((char*)(&c),sizeof(char)); count += sizeof(char);
-    ops += c;
+    hyphantic_ops += c;
   }
   // Now the algebraic properties...
   count += H->deserialize(s);

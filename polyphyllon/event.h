@@ -29,9 +29,10 @@ namespace DIAPLEXIS {
     int deserialize(std::ifstream&) override;
     inline bool active() const {return !ubiquity.empty();}; 
     inline bool active(int n) const {return (ubiquity.count(n) > 0);};
-    inline void set_active(int n) {ubiquity.insert(n);};
-    inline void set_inactive(int n) {ubiquity.erase(n);};
-    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S;};
+    inline void deactivate() {ubiquity.clear(); topology_modified = true;};
+    inline void set_active(int n) {ubiquity.insert(n); topology_modified = true;};
+    inline void set_inactive(int n) {ubiquity.erase(n); topology_modified = true;};
+    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S; topology_modified = true;};
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
     inline void clear_entourage() {entourage.clear();};
@@ -39,13 +40,13 @@ namespace DIAPLEXIS {
     inline void get_entourage(std::set<int> N) const {N = entourage;};
     inline bool drop_entourage(int);
     inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
-    inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
+    inline void set_neighbours(const std::set<int>& N) {neighbours = N; topology_modified = true;};
     inline bool add_neighbour(int);
     inline bool drop_neighbour(int);
     inline double get_deficiency() const {return deficiency;};
     inline void set_deficiency(double x) {deficiency = x;};
-    inline double get_entwinement() const {return entwinement;};
-    inline void set_entwinement(double x) {entwinement = x;};
+    inline void get_entwinement(std::vector<double>& x) const {x = entwinement;};
+    inline void set_entwinement(const std::vector<double>& x) {entwinement = x;};
     inline double get_obliquity() const {return obliquity;};
     inline void set_obliquity(double x) {obliquity = x;};
     inline int get_incept() const {return incept;};
@@ -68,6 +69,7 @@ namespace DIAPLEXIS {
   {
     if (neighbours.count(n) == 0) {
       neighbours.insert(n);
+      topology_modified = true;
       return true;
     }
     return false;
@@ -78,6 +80,7 @@ namespace DIAPLEXIS {
     std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
     if (it != neighbours.end()) {
       neighbours.erase(it);
+      topology_modified = true;
       return true;
     }
     return false;

@@ -2,16 +2,13 @@
 
 using namespace DIAPLEXIS;
 
-
-
-void Complex::inversion()
+void Complex::inversion(int nsheet)
 {
   int i,j,p;
   std::set<int> locus,hold;
   std::set<int>::const_iterator it;
   Simplex S;
   const int nv = (signed) events.size();
-  const int nt = (signed) codex.size();
 
   for(i=0; i<nv; ++i) {
     // hold = V / events[i].neighbours
@@ -30,12 +27,12 @@ void Complex::inversion()
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       if (i < j) {
-        p = RND->irandom(nt);
+        p = RND->irandom(nsheet);
         locus.insert(p);
         S.initialize(i,j,locus);
         simplices[1].push_back(S);
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
-        locus.erase(p);
+        locus.clear();
       }
     }
   }

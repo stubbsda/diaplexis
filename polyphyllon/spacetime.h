@@ -53,7 +53,6 @@ namespace DIAPLEXIS {
     bool reversible = false;
     double error = 0.0;
     double global_deficiency = 0.0;
-    std::string hyphantic_ops = "";
     std::set<int> modified_vertices;
     Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;

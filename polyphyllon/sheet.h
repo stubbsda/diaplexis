@@ -14,8 +14,8 @@ namespace DIAPLEXIS {
     bool pseudomanifold = false;
     bool boundary = false;
     bool orientable = false;
-    std::string ops = "";
-    std::set<int> vx_delta;
+    std::string hyphantic_ops = "";
+    std::set<int> modified_vertices;
     SYNARMOSMA::Homology* H;
     SYNARMOSMA::Homotopy* pi;
 

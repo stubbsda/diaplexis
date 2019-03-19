@@ -55,7 +55,8 @@ bool Spacetime::stellar_addition(int base)
     S.clear();
     S.insert(m);
     S.insert(sx[i]);
-    skeleton->simplex_addition(S,modified_vertices);
+    skeleton->events[sx[i]].set_topology_modified(true);
+    skeleton->simplex_addition(S,-1);
   }
   regularization(true);
   return true;    
@@ -252,8 +253,8 @@ bool Spacetime::compensation_g(int base)
       return false;
     }
     j = skeleton->RND->irandom(candidates);
-    modified_vertices.insert(base);
-    modified_vertices.insert(j);
+    skeleton->events[base].set_topology_modified(true);
+    skeleton->events[j].set_topology_modified(true);
     skeleton->simplex_addition(base,j,-1);
   }
   else {
@@ -391,7 +392,7 @@ bool Spacetime::amputation(int base,double tolerance)
 #endif
   // Delete this vertex and all its edges...
   skeleton->events[n].deactivate();
-  modified_vertices.insert(n);
+  skeleton->events[n].set_topology_modified(true);
   for(i=ulimit; i>=1; --i) {
     p = (signed) skeleton->simplices[i].size();
     for(j=0; j<p; ++j) {

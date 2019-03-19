@@ -680,9 +680,7 @@ void Complex::simplex_deletion(int d,int n,int sheet)
   int i,dp1 = d + 1;
 
   if (sheet == -1) {
-    for(i=0; i<(signed) codex.size(); ++i) {
-      simplices[d][n].set_inactive(i);
-    }    
+    simplices[d][n].deactivate();
   } 
   else {
     if (!simplices[d][n].active(sheet)) return;

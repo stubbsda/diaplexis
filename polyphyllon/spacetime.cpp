@@ -72,7 +72,6 @@ void Spacetime::clear()
 {
   codex.clear();
   skeleton->clear();
-  hyphantic_ops = "";
   iterations = 0;
 }
 
@@ -81,12 +80,12 @@ void Spacetime::condense()
   // First check how many ghost vertices and edges there are in this spacetime....
   int i,n = 0,m = 0;
   const int nv = (signed) skeleton->events.size();
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].active()) n++;
   }
   for(i=0; i<ne; ++i) {
-    if (simplices[1][i].active()) m++;
+    if (skeleton->simplices[1][i].active()) m++;
   }
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
@@ -97,48 +96,49 @@ void Spacetime::condense()
   // So we need to condense this spacetime to reduce memory pressure...
   int j,offset[nv];
   Simplex S;
-  std::set<int> vx;
+  std::set<int> N,vx;
   std::set<int>::const_iterator it;
-  std::vector<Event> nskeleton->events;
+  std::vector<Event> nevents;
   std::vector<Simplex> nsimplices;
 
   n = 0;
   for(i=0; i<nv; ++i) {
     offset[i] = -1;
     if (!skeleton->events[i].active()) continue;
-    nskeleton->events.push_back(skeleton->events[i]);
+    nevents.push_back(skeleton->events[i]);
     offset[i] = n;
     n++;
   }
-  skeleton->events = nskeleton->events;
+  skeleton->events = nevents;
   for(i=0; i<n; ++i) {
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    skeleton->events[i].get_neighbours(N);
+    for(it=N.begin(); it!=N.end(); ++it) {
       vx.insert(offset[*it]);
     }
-    skeleton->events[i].neighbours = vx;
+    skeleton->events[i].set_neighbours(vx);
     skeleton->events[i].entourage.clear();
     vx.clear();
   }
   for(i=1; i<=Complex::ND; ++i) {
-    m = (signed) simplices[i].size();
-    index_table[i].clear();
+    m = (signed) skeleton->simplices[i].size();
+    skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
-      if (!simplices[i][j].active()) continue;
-      S = simplices[i][j];
+      if (!skeleton->simplices[i][j].active()) continue;
+      S = skeleton->simplices[i][j];
       for(it=S.vertices.begin(); it!=S.vertices.end(); ++it) {
         vx.insert(offset[*it]);
       }
       S.vertices = vx;
       S.entourage.clear();
       S.calculate_faces();
-      index_table[i][S.vertices] = (signed) nsimplices.size();
+      skeleton->index_table[i][vx] = (signed) nsimplices.size();
       nsimplices.push_back(S);
       vx.clear();
     }
-    simplices[i] = nsimplices;
+    skeleton->simplices[i] = nsimplices;
     nsimplices.clear();
   }
-  compute_entourages(-1);  
+  skeleton->compute_entourages(-1);  
 }
 
 void Spacetime::clean() const
@@ -148,8 +148,8 @@ void Spacetime::clean() const
     assert(!skeleton->events[i].topology_modified);
   }
   for(i=1; i<=Complex::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      assert(!simplices[i][j].modified);
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      assert(!skeleton->simplices[i][j].modified);
     }
   }
 }
@@ -265,8 +265,8 @@ bool Spacetime::correctness()
     skeleton->events[i].geometry_modified = true;
   }
   for(i=1; i<=Complex::ND; ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      simplices[i][j].modified = true;
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+      skeleton->simplices[i][j].modified = true;
     }
   }
 
@@ -309,8 +309,8 @@ void Spacetime::structural_deficiency()
       avertices[c] = i;
       c++;
     }
-    skeleton->events[i].deficiency = 0.0;
-    skeleton->events[i].geometric_deficiency = 0.0;
+    skeleton->events[i].set_deficiency(0.0);
+    skeleton->events[i].set_geometric_deficiency(0.0);
     length_deviation[i] = 0.0;
     gvalue[i] = 0.0;
     R[i] = 0.0;
@@ -333,10 +333,10 @@ void Spacetime::structural_deficiency()
       tangle[j] = 0.0;
     }
     if (!skeleton->events[i].active()) {
-      skeleton->events[i].entwinement = tangle;
+      skeleton->events[i].set_entwinement(tangle);
       continue;
     }
-    if (!skeleton->events[i].topology_modified) continue;
+    if (!skeleton->events[i].get_topology_modified()) continue;
     for(j=0; j<nt; ++j) {
       if (!skeleton->events[i].active(j)) continue;
       tangle[j] = 0.5*double(vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
@@ -345,9 +345,9 @@ void Spacetime::structural_deficiency()
       tangle[j] += G.completeness();
       tangle[j] += G.entwinement()/double(G.order() - 1);
     }
-    skeleton->events[i].entwinement = tangle;
-    skeleton->events[i].topological_dimension = vertex_dimension(i,-1);
-    skeleton->events[i].topology_modified = false;
+    skeleton->events[i].set_entwinement(tangle);
+    skeleton->events[i].set_topological_dimension(vertex_dimension(i,-1));
+    skeleton->events[i].set_topology_modified(false);
   }
 #ifdef _OPENMP
   }
@@ -368,14 +368,14 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     for(j=1+i; j<na; ++j) {
       v2 = avertices[j];
-      l = geometry->get_squared_distance(v1,v2,false);
+      l = std::abs(geometry->get_squared_distance(v1,v2,false));
       if (l < 3.8025 || l > 4.2025) continue;
       // See if there is a third vertex that lies between these two...
       found = false;
       for(k=0; k<i; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -384,8 +384,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+i; k<j; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -394,8 +394,8 @@ void Spacetime::structural_deficiency()
       if (found) continue;
       for(k=1+j; k<na; ++k) {
         v3 = avertices[k];
-        d1 = geometry->get_squared_distance(v1,v3,false);
-        d2 = geometry->get_squared_distance(v2,v3,false);
+        d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
+        d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
         if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
           found = true;
           break;
@@ -415,17 +415,18 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,v1,l,l_inv,it,sum1,sum2)
+#pragma omp parallel for default(shared) private(i,j,k,S,v1,l,l_inv,it,sum1,sum2)
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
     sum1 = 0.0;
     sum2 = 0.0;
-    k = (skeleton->events[v1].neighbours.empty()) ? 1 : (signed) skeleton->events[v1].neighbours.size();
+    skeleton->events[v1].get_neighbours(S);
+    k = (S.empty()) ? 1 : (signed) S.size();
     length_deviation[v1] = 0.0;
-    for(it=skeleton->events[v1].neighbours.begin(); it!=skeleton->events[v1].neighbours.end(); ++it) {
+    for(it=S.begin(); it!=S.end(); ++it) {
       j = *it;
-      l = geometry->get_squared_distance(v1,j,false);
+      l = std::abs(geometry->get_squared_distance(v1,j,false));
       l_inv = 1.0/(1.0 + l);
       sum1 += gvalue[j]*l_inv;
       sum2 += skeleton->events[j].get_energy()*l_inv;
@@ -436,15 +437,10 @@ void Spacetime::structural_deficiency()
       else {
         length_deviation[v1] += std::log(l)*std::log(l);
       }
-      //if (!simplices[1][n].timelike()) continue;
-      //u = simplices[1][n].presence(nt);
-      // How to determine if j lies in the chronological future of i?
-      //sigma = ???
-      //sum2 += double(sigma)*skeleton->events[j].get_energy()*l_inv;
     }
     length_deviation[v1] = length_deviation[v1]/double(k);
-    R[v1] = gvalue[v1]; // - sum1/double(k);
-    rho[v1] = skeleton->events[v1].get_energy(); // + sum2/double(k);
+    R[v1] = gvalue[v1]; 
+    rho[v1] = skeleton->events[v1].get_energy(); 
     // Sanity checks...
 #ifdef DEBUG
     assert(!std::isnan(R[v1])); 
@@ -456,8 +452,9 @@ void Spacetime::structural_deficiency()
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    skeleton->events[v1].deficiency = R[v1] + skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature - Spacetime::Lambda*rho[v1];
-    skeleton->events[v1].geometric_deficiency = skeleton->events[v1].obliquity + length_deviation[v1] + skeleton->events[v1].curvature;
+    alpha = skeleton->events[v1].get_obliquity() + length_deviation[v1];
+    skeleton->events[v1].set_geometric_deficiency(alpha);
+    skeleton->events[v1].set_deficiency(R[v1] + alpha - Spacetime::Lambda*rho[v1]);
   }
 
   // Now the chromatic energy sum...
@@ -476,14 +473,14 @@ void Spacetime::structural_deficiency()
 
   error = 0.0;
   for(i=0; i<na; ++i) {
-    delta = skeleton->events[avertices[i]].deficiency;
+    delta = skeleton->events[avertices[i]].get_deficiency();
     error += delta*delta;
   }
   error = std::sqrt(error)/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
   for(i=0; i<na; ++i) {
-    total_error += std::abs(skeleton->events[avertices[i]].deficiency);
+    total_error += std::abs(skeleton->events[avertices[i]].get_deficiency());
   }
   std::cout << "The total error is " << total_error << std::endl;
 #endif
@@ -492,12 +489,12 @@ void Spacetime::structural_deficiency()
 #ifdef DEBUG
   int nv_test = 0;
   for(i=0; i<na; ++i) {
-    if (std::abs(skeleton->events[avertices[i]].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[avertices[i]].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     nv_test++;
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
 #endif
-  //error += std::abs(global_deficiency)/double(na);
+  error += std::abs(global_deficiency)/double(na);
 }
 
 bool Spacetime::global_operations()
@@ -506,32 +503,30 @@ bool Spacetime::global_operations()
   bool output = false;
   double mu,sigma = 0.0,delta = 0.0;
   std::string filename;
-  std::set<int> vmodified;
-  std::vector<int> fusion;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int nd = dimension(-1);
   const int nv = (signed) skeleton->events.size();
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 #ifdef VERBOSE
   std::cout << "Main thread in global operations method with " << nv << " vertices." << std::endl;
 #endif
   iterations++;
 
-  compute_delta();
+  skeleton->compute_modified_vertices();
 
   for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].incept == -1) skeleton->events[i].incept = iterations;
+    if (skeleton->events[i].incept == -1) skeleton->events[i].set_incept(iterations);
   }
   for(i=0; i<=Complex::ND; ++i) {
-    n = (signed) simplices[i].size();
+    n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
-      if (simplices[i][j].incept == -1) simplices[i][j].incept = iterations;
+      if (skeleton->simplices[i][j].incept == -1) skeleton->simplices[i][j].set_incept(iterations);
     }
   }
 
   for(i=0; i<nv; ++i) {
     if (!skeleton->events[i].active()) continue;
-    if (skeleton->events[i].topology_modified) skeleton->events[i].topological_dimension = vertex_dimension(i,-1);
+    if (skeleton->events[i].topology_modified) skeleton->events[i].set_topological_dimension(vertex_dimension(i,-1));
   }
 
   // First perform the geometry and energy diffusion...
@@ -549,7 +544,7 @@ bool Spacetime::global_operations()
 
   skeleton->energy_diffusion(Spacetime::Lambda);
   for(i=1; i<dimension(-1); ++i) {
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
+    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
       compute_simplex_energy(i,j);
     }
   }
@@ -603,53 +598,57 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping vertices
   if (superposable) {
-    superposition_fusion(vmodified);
-    superposition_fission(vmodified);
+    superposition_fusion(0.1); assert(skeleton->consistent());
+    superposition_fission(int(0.02*nv)); assert(skeleton->consistent());
   }
 
   if (compressible) {
     // Eliminate excessively long edges...
     // First calculate the average edge length and its variance...
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      delta += std::abs(simplices[1][i].volume);
+      if (!skeleton->simplices[1][i].active()) continue;
+      delta += std::abs(skeleton->simplices[1][i].get_volume());
       k++;
     }
     mu = delta/double(k);
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      delta = (std::abs(simplices[1][i].volume) - mu);
+      if (!skeleton->simplices[1][i].active()) continue;
+      delta = (std::abs(skeleton->simplices[1][i].get_volume()) - mu);
       sigma += delta*delta;
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    i = compression(mu+sigma,vmodified);
+    i = compression(mu + sigma); assert(skeleton->consistent());
   }
 
   if (permutable) {
     // Take care of any inter-cosmic jumping...
     for(i=1; i<nd; ++i) {
-      n = (signed) simplices[i].size();
+      n = (signed) skeleton->simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
+        if (!skeleton->simplices[i][j].active()) continue;
         compute_simplex_energy(i,j);
       }
     }
     delta = Spacetime::T_zero/std::sqrt(Spacetime::kappa*double(1+iterations));
-    n = ubiquity_permutation(delta,vmodified);
+    n = ubiquity_permutation(delta); assert(skeleton->consistent());
 #ifdef VERBOSE
     std::cout << "The inter-cosmic jump for this iteration is " << n << std::endl;
 #endif
   }
 
   if (superposable || compressible || permutable) {
-    compute_entourages(-1);
-    compute_topological_dependency(vmodified);
-    compute_geometric_dependency(vmodified);
+    skeleton->compute_entourages(-1);
+    skeleton->compute_neighbours();
+    skeleton->compute_modified_vertices();
+    nv = (signed) skeleton->events.size();
+    std::set<int> S;
+    for(i=0; i<nv; ++i) {
+      if (!skeleton->active_event(i)) continue;
+      if (skeleton->events[i].get_topology_modified()) S.insert(i);
+    }
+    geometry->compute_squared_distances(S); 
   }
-
-  // Calculate the local and global errors
-  geometry->compute_squared_distances(vmodified);
   compute_volume();
   compute_obliquity();
 #ifdef DEBUG
@@ -724,13 +723,13 @@ int Spacetime::sheet_fission(int parent)
     for(i=0; i<nv; ++i) {
       if (skeleton->events[i].active(parent)) {
         skeleton->events[i].set_active(nt+l); 
-        skeleton->events[i].topology_modified = true;
+        skeleton->events[i].set_topology_modified(true);
       }
     }
     for(i=1; i<=Complex::ND; ++i) {
-      n = (signed) simplices[i].size();
+      n = (signed) skeleton->simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (simplices[i][j].active(parent)) simplices[i][j].set_active(nt+l);
+        if (skeleton->simplices[i][j].active(parent)) skeleton->simplices[i][j].set_active(nt+l);
       }
     }
   }
@@ -762,6 +761,30 @@ int Spacetime::sheet_dynamics()
   return nspawn;
 }
 
+void Spacetime::compute_global_topology(int sheet)
+{
+  // To calculate the global deficiency, we need to compute the Betti numbers and
+  // the fundamental group, for the total spacetime, operations that are serial...
+  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
+
+  skeleton->compute_global_nexus(NX,sheet);
+
+  if (sheet == -1) {
+    // The global case...
+    skeleton->compute_global_topology(NX,high_memory);
+  }
+  else {
+    bool bdry;
+    codex[sheet].H->compute(NX);
+    if (high_memory) codex[sheet].pi1->compute(NX);
+    codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
+    codex[sheet].boundary = bdry;
+    if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
+  }
+
+  delete NX;
+}
+
 void Spacetime::get_ubiquity(int d,int n,std::string& output) const
 {
   const int nt = (signed) codex.size();
@@ -785,14 +808,14 @@ void Spacetime::get_ubiquity(int d,int n,std::string& output) const
   }
   else {
     for(int i=0; i<nt-1; ++i) {
-      if (skeleton->simplices[d][n].active(i)) {
+      if (skeleton->skeleton->simplices[d][n].active(i)) {
         output += "1,";
       }
       else {
         output += "0,";
       }
     }
-    if (skeleton->simplices[d][n].active(nt-1)) {
+    if (skeleton->skeleton->simplices[d][n].active(nt-1)) {
       output += "1}";
     }
     else {
@@ -805,7 +828,7 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
 {
   int i,j,n;
   const int nv = (signed) skeleton->events.size();
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const int nt = (signed) codex.size();
 
   output.clear();
@@ -818,9 +841,9 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
     }
   }
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) continue;
+    if (!skeleton->simplices[1][i].active()) continue;
     for(j=0; j<nt; ++j) {
-      n = simplices[1][i].active(j) ? 1 : 0;
+      n = skeleton->simplices[1][i].active(j) ? 1 : 0;
       output.push_back(n);
     }
   }
@@ -842,11 +865,11 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
 
   for(i=0; i<2*nv; ++i) {
     n = RND->irandom(1,d+1);
-    m = RND->irandom(0,simplices[d].size());
-    if (!simplices[n][m].active()) continue;
-    E = simplices[n][m].energy;
+    m = RND->irandom(0,skeleton->simplices[d].size());
+    if (!skeleton->simplices[n][m].active()) continue;
+    E = skeleton->simplices[n][m].energy;
     if (E < std::numeric_limits<double>::epsilon()) continue;
-    simplices[n][m].get_ubiquity(ubiquity);
+    skeleton->simplices[n][m].get_ubiquity(ubiquity);
     mutated = ubiquity;
     alpha = std::exp(-temperature*E);
     hdistance = 0;
@@ -863,10 +886,10 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
     }
     delta = n*hdistance;
     if (delta > 0) {
-      for(it=simplices[n][m].vertices.begin(); it!=simplices[n][m].vertices.end(); ++it) {
+      for(it=skeleton->simplices[n][m].vertices.begin(); it!=skeleton->simplices[n][m].vertices.end(); ++it) {
         vmodified.insert(*it);
       }
-      simplices[n][m].set_ubiquity(mutated);
+      skeleton->simplices[n][m].set_ubiquity(mutated);
     }
     jz += delta;
     if (jz >= jlimit) break;
@@ -874,24 +897,24 @@ int Spacetime::ubiquity_permutation(double temperature,std::set<int>& vmodified)
   if (jz == 0) return 0;
   // Now regularize...
   for(i=Complex::ND; i>1; i--) {
-    if (simplices[i].empty()) continue;
-    nd = (signed) simplices[i].size();
+    if (skeleton->simplices[i].empty()) continue;
+    nd = (signed) skeleton->simplices[i].size();
     for(j=0; j<nd; ++j) {
-      if (!simplices[i][j].active()) continue;
-      simplices[i][j].get_ubiquity(ubiquity);
+      if (!skeleton->simplices[i][j].active()) continue;
+      skeleton->simplices[i][j].get_ubiquity(ubiquity);
       for(k=0; k<1+i; ++k) {
-        qt = index_table[i-1].find(simplices[i][j].faces[k]);
+        qt = index_table[i-1].find(skeleton->simplices[i][j].faces[k]);
         for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
-          simplices[i-1][qt->second].set_active(*it);
+          skeleton->simplices[i-1][qt->second].set_active(*it);
         }
       }
     }
   }
-  n = (signed) simplices[1].size();
+  n = (signed) skeleton->simplices[1].size();
   for(i=0; i<n; ++i) {
-    if (!simplices[1][i].active()) continue;
-    simplices[1][i].get_ubiquity(ubiquity);
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active()) continue;
+    skeleton->simplices[1][i].get_ubiquity(ubiquity);
+    skeleton->simplices[1][i].get_vertices(vx);
     for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
       skeleton->events[vx[0]].set_active(*it);
       skeleton->events[vx[1]].set_active(*it);

@@ -27,7 +27,7 @@ namespace DIAPLEXIS {
     static const int topological_radius = 4;
 
     void allocate();
-    void inversion();
+    void inversion(int);
     void compute_neighbours();
     void compute_entourages(int);
     bool simplex_addition(int,int,int,int);
@@ -70,6 +70,7 @@ namespace DIAPLEXIS {
     void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
+    void compute_global_topology(const SYNARMOSMA::Nexus*,bool);
     void simplex_membership(int,std::vector<int>&) const;
     int chromatic_number(int) const;
     double dimensional_stress(int,int) const;

@@ -124,22 +124,29 @@ std::pair<double,double> Complex::random_walk() const
   return output;
 }
 
-void Complex::compute_geometric_dependency(const std::set<int>& vx)
+void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices)
 {
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
   // modified property set to true...
-  if (vx.empty()) return;
-  int i,m,n;
+  if (modified_vertices.empty()) return;
+  int i,j,m,n;
   std::set<int> current,next;
   std::set<int>::const_iterator it,jt,kt;
 
 #ifdef VERBOSE
-  std::cout << "There are " << vx.size() << " vertices directly implicated." << std::endl;
+  std::cout << "There are " << modified_vertices.size() << " vertices directly implicated." << std::endl;
 #endif
-  // We assume that the cardinality of vmodified is small relative
-  // to the total number of vertices in the spacetime complex
-  for(it=vx.begin(); it!=vx.end(); ++it) {
+
+  for(i=1; i<=Complex::ND; ++i) {
+    n = (signed) simplices[i].size();
+    for(j=0; j<n; ++j) {
+      simplices[i][j].modified = false;
+    }
+  }
+  // We assume that the number of modified vertices is small relative
+  // to the total number of vertices in the complex...
+  for(it=modified_vertices.begin(); it!=modified_vertices.end(); ++it) {
     n = *it;
     current = events[n].entourage;
     for(i=1; i<=Complex::ND; ++i) {
@@ -155,54 +162,6 @@ void Complex::compute_geometric_dependency(const std::set<int>& vx)
       next.clear();
     }
   }
-}
-
-void Complex::compute_topological_dependency(const std::set<int>& vx)
-{
-  int i,n,m,l,nhop,nmod = 0;
-  std::set<int> next,current;
-  std::set<int>::const_iterator it,jt,kt;
-  const int nv = (signed) events.size();
-  int done[nv];
-  for(i=0; i<nv; ++i) {
-    done[i] = 0;
-  }
-  for(it=vx.begin(); it!=vx.end(); ++it) {
-    n = *it;
-    nhop = 0;
-    // Every vertex within topological_radius hops of n is labelled as
-    // modified
-    current.insert(n);
-    done[n] = 1;
-    do {
-      for(jt=current.begin(); jt!=current.end(); ++jt) {
-        m = *jt;
-        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
-          l = *kt;
-          if (done[l] == 0) next.insert(l);
-        }
-      }
-      if (next.empty()) break;
-      for(jt=next.begin(); jt!=next.end(); ++jt) {
-        done[*jt] = 1;
-      }
-      current = next;
-      nhop++;
-      next.clear();
-    } while(nhop < Complex::topological_radius);
-    current.clear();
-    next.clear();
-    for(i=0; i<nv; ++i) {
-      if (done[i] == 1) events[i].topology_modified = true;
-      done[i] = 0;
-    }
-  }
-  for(i=0; i<nv; ++i) {
-    if (events[i].topology_modified) nmod++;
-  }
-#ifdef VERBOSE
-  std::cout << "There are " << nmod << " modified vertices out of " << nv << std::endl;
-#endif
 }
 
 double Complex::dimensional_stress(int d,int n) const
@@ -594,6 +553,7 @@ void Complex::simplex_deletion(int d,int n)
   int i,dp1 = d + 1;
   
   simplices[d][n].active = false;
+  simplices[d][n].modified = true;
   parents = simplices[d][n].entourage;
   for(it=parents.begin(); it!=parents.end(); ++it) {
     i = *it;
@@ -613,10 +573,14 @@ bool Complex::simplex_addition(int u,int v,int n)
     index_table[1][S] = simplices[1].size() - 1;
     events[v].neighbours.insert(u);
     events[u].neighbours.insert(v);
+    events[v].topology_modified = true;
+    events[v].topology_modified = true;
   }
   else {
     if (simplices[1][qt->second].active) return false;
     simplices[1][qt->second].active = true;
+    events[v].topology_modified = true;
+    events[v].topology_modified = true;
   }
   return true;
 }
@@ -654,6 +618,8 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
     s.get_vertices(vn);
     events[vn[0]].neighbours.insert(vn[1]);
     events[vn[1]].neighbours.insert(vn[0]);
+    events[vn[0]].topology_modified = true;
+    events[vn[1]].topology_modified = true;
     return true;
   }
   for(it=S.begin(); it!=S.end(); ++it) {
@@ -673,6 +639,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
     }
     else {
       simplices[i][qt->second].active = true;
+      simplices[i][qt->second].modified = true;
     }
     fc.clear();
     while(SYNARMOSMA::next_combination(vec,1+d)) {
@@ -686,6 +653,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
       }
       else {
         simplices[i][qt->second].active = true;
+        simplices[i][qt->second].modified = true;
       }
       fc.clear();
     }
@@ -695,14 +663,73 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
   return true;
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices)
+void Complex::compute_modified_vertices()
 {
-  std::set<int>::const_iterator it;
+  int i,j,n,m,l,nhop;
+  std::set<int> S,vx,current,next;
+  std::set<int>::const_iterator it,jt,kt;
+  const int nv = (signed) events.size();
+  bool done[nv];
 
-  for(it=S.begin(); it!=S.end(); ++it) {
-    modified_vertices.insert(*it);
+  for(i=0; i<nv; ++i) {
+    done[i] = false;
+    if (!events[i].active) continue;
+    if (events[i].topology_modified) S.insert(i);
   }
-  return simplex_addition(S);
+
+  for(i=1; i<=Complex::ND; ++i) {
+    n = (signed) simplices[i].size();
+    for(j=0; j<n; ++j) {
+      if (!simplices[i][j].modified) continue;
+      simplices[i][j].get_vertices(vx);
+      for(it=vx.begin(); it!=vx.end(); ++it) {
+        events[*it].topology_modified = true;
+        S.insert(*it);
+      }
+    }
+  }
+
+  // Now with this know we can calculate which events need to have their
+  // entwinement and/or dimensional stress recalculated
+#ifdef VERBOSE
+  std::cout << "There are " << S.size() << " vertices directly modified in this relaxation step." << std::endl;
+#endif
+  for(it=S.begin(); it!=S.end(); ++it) {
+    // Every vertex within topological_radius hops of n is labelled as
+    // modified
+    current.insert(*it);
+    done[*it] = true;
+    nhop = 0;
+    do {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
+          l = *kt;
+          if (!done[l]) next.insert(l);
+        }
+      }
+      if (next.empty()) break;
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
+        done[*jt] = true;
+      }
+      current = next;
+      nhop++;
+      next.clear();
+    } while(nhop < Complex::topological_radius);
+    current.clear();
+    next.clear();
+    for(i=0; i<nv; ++i) {
+      if (done[i]) events[i].topology_modified = true;
+      done[i] = false;
+    }
+  }
+  int nmod = 0;
+  for(i=0; i<nv; ++i) {
+    if (events[i].topology_modified) nmod++;
+  }
+#ifdef VERBOSE
+  std::cout << "There are " << nmod << " modified vertices out of " << nv << " in this relaxation step." << std::endl;
+#endif
 }
 
 void Complex::simplicial_implication()
