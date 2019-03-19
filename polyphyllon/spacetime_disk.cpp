@@ -346,7 +346,7 @@ void Spacetime::write_log() const
   std::set<int> S;
   std::set<int>::const_iterator it;
   std::string group_string,bvalue[] = {"False","True"};
-  const int Nv = (signed) events.size();
+  const int Nv = (signed) skeleton->events.size();
   const int Ne = (signed) simplices[1].size();
   const int Nt = (signed) codex.size();
   double vd_avg[Nt];
@@ -482,8 +482,8 @@ void Spacetime::write_log() const
   max_ven = 0.0;
   min_ven = 10000.0;
   for(i=0; i<Nv; ++i) {
-    if (!events[i].active()) continue;
-    w = events[i].get_energy();
+    if (!skeleton->events[i].active()) continue;
+    w = skeleton->events[i].get_energy();
     if (w > max_ven) max_ven = w;
     if (w < min_ven) min_ven = w;
     avg_ven += w;
@@ -497,11 +497,11 @@ void Spacetime::write_log() const
   for(i=0; i<Nv; ++i) {
     // Is this vertex atemporal (no timelike edges) or chiral
     // (number of FUTURE edges != number of PAST edges)?
-    if (!events[i].active()) continue;
+    if (!skeleton->events[i].active()) continue;
     nf = 0;
     np = 0;
     atemporal = true;
-    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
       in1 = *it;
       S.clear();
       S.insert(i); S.insert(in1);
@@ -678,7 +678,7 @@ void Spacetime::write_log() const
 #endif
   for(i=0; i<Nv; ++i) {
     for(j=0; j<Nt; ++j) {
-      vdimension[Nt*i+j] = (!events[i].active(j)) ? -1 : vertex_dimension(i,j);
+      vdimension[Nt*i+j] = (!skeleton->events[i].active(j)) ? -1 : vertex_dimension(i,j);
     }
   }
 
@@ -721,14 +721,14 @@ void Spacetime::write_log() const
     min_ven = 10000.0;
     min_val = 1000;
     for(j=0; j<Nv; ++j) {
-      if (!events[j].active(i)) continue;
-      min_ven = events[j].get_energy();
+      if (!skeleton->events[j].active(i)) continue;
+      min_ven = skeleton->events[j].get_energy();
       min_val = vertex_valence(j,i);
       break;
     }
     for(j=0; j<Nv; ++j) {
-      if (!events[j].active(i)) continue;
-      w = events[j].get_energy();
+      if (!skeleton->events[j].active(i)) continue;
+      w = skeleton->events[j].get_energy();
       if (w > max_ven) max_ven = w;
       if (w < min_ven) min_ven = w;
       avg_ven += w;
@@ -747,11 +747,11 @@ void Spacetime::write_log() const
     for(j=0; j<Nv; ++j) {
       // Is this vertex atemporal (no timelike edges) or chiral
       // (number of FUTURE edges != number of PAST edges)?
-      if (!events[j].active(i)) continue;
+      if (!skeleton->events[j].active(i)) continue;
       nf = 0;
       np = 0;
       atemporal = true;
-      for(it=events[j].neighbours.begin(); it!=events[j].neighbours.end(); ++it) {
+      for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
         in1 = *it;
         S.clear();
         S.insert(j); S.insert(in1);
@@ -951,7 +951,7 @@ void Spacetime::read(const Spacetime& source)
   system_size = source.system_size;
   error = source.error;
   global_deficiency = source.global_deficiency;
-  events = source.events;
+  skeleton->events = source.skeleton->events;
   for(int i=0; i<=Complex::ND; ++i) {
     simplices[i] = source.simplices[i];
     index_table[i] = source.index_table[i];
@@ -963,7 +963,7 @@ void Spacetime::write(Spacetime& state) const
   state.system_size = system_size;
   state.error = error;
   state.global_deficiency = global_deficiency;
-  state.events = events;
+  state.skeleton->events = skeleton->events;
   for(int i=0; i<=Complex::ND; ++i) {
     state.simplices[i] = simplices[i];
     state.index_table[i] = index_table[i];

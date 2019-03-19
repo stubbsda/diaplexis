@@ -268,16 +268,16 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
   std::vector<int> vcandidates;
 
   for(i=0; i<n; ++i) {
-    if (!events[candidates[i]].active(sheet)) continue;
+    if (!skeleton->events[candidates[i]].active(sheet)) continue;
     vcandidates.push_back(candidates[i]);
   }
   if (vcandidates.empty()) return -1;
   if (vcandidates.size() == 1) return vcandidates[0];
   n = (signed) vcandidates.size();
-  tdeficit = std::abs(events[vcandidates[0]].deficiency - events[vcandidates[n-1]].deficiency);
+  tdeficit = std::abs(skeleton->events[vcandidates[0]].deficiency - skeleton->events[vcandidates[n-1]].deficiency);
   for(i=0; i<n; ++i) {
     output = vcandidates[i];
-    cdeficit = std::abs(events[output].deficiency - events[vcandidates[0]].deficiency);
+    cdeficit = std::abs(skeleton->events[output].deficiency - skeleton->events[vcandidates[0]].deficiency);
     if (intensity <= cdeficit/tdeficit) break;
   }
   return output;
@@ -367,12 +367,12 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
 
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
-    if (!events[v].active(sheet)) continue;
+    if (!skeleton->events[v].active(sheet)) continue;
     neutral_vertices.push_back(v);
-    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+    if (skeleton->events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
       m_vertices.push_back(v);
     }
-    else if (events[v].deficiency > std::numeric_limits<double>::epsilon()) {
+    else if (skeleton->events[v].deficiency > std::numeric_limits<double>::epsilon()) {
       x_vertices.push_back(v);
     }
   }
@@ -501,8 +501,8 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     v = candidates[i].first;
     // An earlier hyphantic operation may have rendered this
     // vertex inactive...
-    if (!events[v].active(sheet)) continue;
-    alpha = events[v].deficiency;
+    if (!skeleton->events[v].active(sheet)) continue;
+    alpha = skeleton->events[v].deficiency;
     if (alpha < -std::numeric_limits<double>::epsilon()) {
       implication(op);
       opstring << op << "," << v;
@@ -607,11 +607,11 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     }
     if (double(nsuccess)/nactive > 0.1) break;
   }
-  n = (signed) simplices[1].size();
+  n = (signed) skeleton->simplices[1].size();
   for(i=0; i<n; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     if (RND->drandom() < parity_mutation) {
-      simplices[1][i].get_vertices(vx);
+      skeleton->simplices[1][i].get_vertices(vx);
       if (edge_parity_mutation(vx[0],vx[1],sheet)) {
         s << "    <Operation>T," << vx[0] << "</Operation>" << std::endl;
         r_edges.insert(i);
@@ -628,7 +628,7 @@ void Spacetime::hyphansis(int sheet)
   int i,v;
   double alpha;
   std::vector<std::pair<int,double> > candidates;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   codex[sheet].ops = "";
 
@@ -640,14 +640,14 @@ void Spacetime::hyphansis(int sheet)
   int npos = 0,nneg = 0,nze = 0;
 #endif
   for(i=0; i<nv; ++i) {
-    if (!events[i].active(sheet)) continue;
+    if (!skeleton->events[i].active(sheet)) continue;
 #ifdef VERBOSE
-    if (!events[i].zero_energy()) nze++;
-    if (events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
-    if (events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
+    if (!skeleton->events[i].zero_energy()) nze++;
+    if (skeleton->events[i].deficiency > std::numeric_limits<double>::epsilon()) npos++;
+    if (skeleton->events[i].deficiency < -std::numeric_limits<double>::epsilon()) nneg++;
 #endif
     // Eliminate vertices whose structural deficiency is close to zero...
-    alpha = std::abs(events[i].deficiency);
+    alpha = std::abs(skeleton->events[i].deficiency);
     if (alpha < std::numeric_limits<double>::epsilon()) continue;
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
@@ -663,7 +663,7 @@ void Spacetime::hyphansis(int sheet)
 
   if (candidates.size() == 1) {
     v = candidates[0].first;
-    if (events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
+    if (skeleton->events[v].deficiency < -std::numeric_limits<double>::epsilon()) {
       assert(expansion(v,sheet));
       codex[sheet].ops += 'E';
       regularization(false,sheet);
@@ -702,26 +702,26 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
 
     // Do the actual vertex swap...
     for(i=1; i<=ulimit; ++i) {
-      m = (signed) simplices[i].size();
+      m = (signed) skeleton->simplices[i].size();
       for(j=0; j<m; ++j) {
-        if (simplices[i][j].exchange(n1,n2)) mutation[i].push_back(j);
+        if (skeleton->simplices[i][j].exchange(n1,n2)) mutation[i].push_back(j);
       }
     }
 
-    // Place simplices in the right dimension...
+    // Place skeleton->simplices in the right dimension...
     for(i=ulimit; i>1; i--) {
       im1 = i - 1;
-      n = (signed) simplices[i-1].size();
+      n = (signed) skeleton->simplices[i-1].size();
       for(j=0; j<(signed) mutation[i].size(); ++j) {
         in1 = mutation[i][j];
-        if (simplices[i][in1].dimension() == im1) duplicate.insert(in1);
+        if (skeleton->simplices[i][in1].dimension() == im1) duplicate.insert(in1);
       }
       for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
         in1 = *it;
-        simplices[im1].push_back(simplices[i][in1]);
+        skeleton->simplices[im1].push_back(skeleton->simplices[i][in1]);
         mutation[im1].push_back(n);
         n++;
-        simplices[i].erase(simplices[i].begin() + in1);
+        skeleton->simplices[i].erase(skeleton->simplices[i].begin() + in1);
         for(j=0; j<(signed) mutation[i].size(); ++j) {
           k = mutation[i][j];
           if (k == in1) continue;
@@ -740,11 +740,11 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
     m = (signed) mutation[1].size();
     for(i=0; i<m; ++i) {
       in1 = mutation[1][i];
-      if (simplices[1][in1].dimension() == 0) duplicate.insert(in1);
+      if (skeleton->simplices[1][in1].dimension() == 0) duplicate.insert(in1);
     }
     for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
       in1 = *it;
-      simplices[1].erase(simplices[1].begin() + in1);
+      skeleton->simplices[1].erase(skeleton->simplices[1].begin() + in1);
       for(j=0; j<m; ++j) {
         k = mutation[1][j];
         if (k == in1) continue;
@@ -761,48 +761,48 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
 
     // Now, check for duplicates at each dimension and delete them...
     for(i=1; i<=ulimit; ++i) {
-      n = (signed) simplices[i].size();
+      n = (signed) skeleton->simplices[i].size();
       for(j=0; j<(signed) mutation[i].size(); ++j) {
         in1 = mutation[i][j];
 #ifdef DEBUG
         assert(in1 < n);
 #endif
-        vx = simplices[i][in1].vertices;
+        vx = skeleton->simplices[i][in1].vertices;
         for(l=0; l<n; ++l) {
           if (l == in1) continue;
-          if (simplices[i][l].vertices == vx) {
+          if (skeleton->simplices[i][l].vertices == vx) {
             duplicate.insert(in1);
-            simplices[i][in1].get_ubiquity(locus);
+            skeleton->simplices[i][in1].get_ubiquity(locus);
             for(jt=locus.begin(); jt!=locus.end(); ++jt) {
-              simplices[i][l].set_active(*jt);
+              skeleton->simplices[i][l].set_active(*jt);
             }
           }
         }
       }
       for(it=duplicate.rbegin(); it!=duplicate.rend(); ++it) {
         in1 = *it;
-        simplices[i].erase(simplices[i].begin() + in1);
+        skeleton->simplices[i].erase(skeleton->simplices[i].begin() + in1);
       }
       duplicate.clear();
     }
-    events[n2].get_ubiquity(locus);
+    skeleton->events[n2].get_ubiquity(locus);
     for(jt=locus.begin(); jt!=locus.end(); ++jt) {
-      events[n1].set_active(*jt);
+      skeleton->events[n1].set_active(*jt);
     }
-    events[n2].ubiquity.clear();
+    skeleton->events[n2].ubiquity.clear();
     delete[] mutation;
 
     // Then recalculate the index_table hash map..
     for(i=1; i<=ulimit; ++i) {
       index_table[i].clear();
-      m = (signed) simplices[i].size();
+      m = (signed) skeleton->simplices[i].size();
       for(j=0; j<m; ++j) {
-        simplices[i][j].entourage.clear();
-        index_table[i][simplices[i][j].vertices] = j;
+        skeleton->simplices[i][j].entourage.clear();
+        index_table[i][skeleton->simplices[i][j].vertices] = j;
       }
     }
-    for(i=0; i<(signed) events.size(); ++i) {
-      events[i].entourage.clear();
+    for(i=0; i<(signed) skeleton->events.size(); ++i) {
+      skeleton->events[i].entourage.clear();
     }
 
     // Then recalculate the entourages...
@@ -820,13 +820,13 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
     codex[sheet].vx_delta.insert(n1);
     codex[sheet].vx_delta.insert(n2);
     for(i=1; i<=Complex::ND; ++i) {
-      for(j=0; j<(signed) simplices[i].size(); ++j) {
-        if (!simplices[i][j].active(sheet)) continue;
+      for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+        if (!skeleton->simplices[i][j].active(sheet)) continue;
         // Check of this simplex contains the vertex "n2", if so
         // divide its colour by sheet and create a new simplex with the
         // right vertices. Check to see if it already exists, if so
         // multiply its colour by sheet otherwise add the new simplex.
-        simplices[i][j].get_vertices(v);
+        skeleton->simplices[i][j].get_vertices(v);
         found = false;
         for(it=v.begin(); it!=v.end(); ++it) {
           if (*it == n2) {
@@ -840,44 +840,44 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
           vx.clear();
           continue;
         }
-        simplices[i][j].set_inactive(sheet);
-        for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
+        skeleton->simplices[i][j].set_inactive(sheet);
+        for(it=skeleton->simplices[i][j].vertices.begin(); it!=skeleton->simplices[i][j].vertices.end(); ++it) {
           codex[sheet].vx_delta.insert(*it);
         }
         l = (signed) vx.size() - 1;
         if (l >= 1) {
           qt = index_table[l].find(vx);
           if (qt != index_table[l].end()) {
-            simplices[l][qt->second].set_active(sheet); 
+            skeleton->simplices[l][qt->second].set_active(sheet); 
           }
           else {
-            simplices[l].push_back(Simplex(vx,locus));
-            index_table[l][vx] = (signed) simplices[l].size() - 1;
+            skeleton->simplices[l].push_back(Simplex(vx,locus));
+            index_table[l][vx] = (signed) skeleton->simplices[l].size() - 1;
           }
         }
         else {
           l = SYNARMOSMA::element(vx);
-          events[l].set_active(sheet); 
+          skeleton->events[l].set_active(sheet); 
         }
         vx.clear();
       }
     }
-    events[n2].set_inactive(sheet); 
+    skeleton->events[n2].set_inactive(sheet); 
   }
-  if (!events[n2].active()) {
-    if (!events[n2].zero_energy()) {
-      events[n1].increment_energy(events[n2].get_energy());
-      events[n2].nullify_energy();
+  if (!skeleton->events[n2].active()) {
+    if (!skeleton->events[n2].zero_energy()) {
+      skeleton->events[n1].increment_energy(skeleton->events[n2].get_energy());
+      skeleton->events[n2].nullify_energy();
     }
   }
 }
 
 bool Spacetime::vertex_twist(int sheet)
 {
-  // This method will fuse two 0-simplices with each other, so as to twist the
+  // This method will fuse two 0-skeleton->simplices with each other, so as to twist the
   // complex's topology, creating non-orientability and torsion groups in the
   // simplicial homology.
-  int i,j,n1,n2,nc,delta,tolerance,n = (signed) events.size();
+  int i,j,n1,n2,nc,delta,tolerance,n = (signed) skeleton->events.size();
   std::vector<std::string> ekeys;
   SYNARMOSMA::hash_map::const_iterator qt;
   std::set<int> parents;
@@ -894,7 +894,7 @@ bool Spacetime::vertex_twist(int sheet)
   tolerance = (first == 1) ? 2 : 1;
 
   for(i=0; i<n; ++i) {
-    if (events[i].active(sheet)) candidates.push_back(i);
+    if (skeleton->events[i].active(sheet)) candidates.push_back(i);
   }
   nc = (signed) candidates.size();
   if (nc < 3) return false;
@@ -905,7 +905,7 @@ bool Spacetime::vertex_twist(int sheet)
     used.push_back(0);
   }
   // Grab a random pair (v1,v2) of elements from the vector candidates, set v1
-  // to be inactive and then go through all d-simplices, d > 0, setting every
+  // to be inactive and then go through all d-skeleton->simplices, d > 0, setting every
   // occurrence of v1 to v2.
   for(i=0; i<nc; ++i) {
     for(j=1+i; j<nc; ++j) {
@@ -922,12 +922,12 @@ bool Spacetime::vertex_twist(int sheet)
 #ifdef VERBOSE
   std::cout << "Twist is " << n1 << " => " << n2 << std::endl;
 #endif
-  events[n2].set_inactive(sheet);
+  skeleton->events[n2].set_inactive(sheet);
   codex[sheet].vx_delta.insert(n2);
-  if (!events[n2].active()) {
-    if (!events[n2].zero_energy()) {
-      events[n1].increment_energy(events[n2].get_energy());
-      events[n2].nullify_energy();
+  if (!skeleton->events[n2].active()) {
+    if (!skeleton->events[n2].zero_energy()) {
+      skeleton->events[n1].increment_energy(skeleton->events[n2].get_energy());
+      skeleton->events[n2].nullify_energy();
     }
   }
   vertex_fusion(n1,n2,sheet);
@@ -937,12 +937,12 @@ bool Spacetime::vertex_twist(int sheet)
 
 bool Spacetime::vertex_deletion(int n,int sheet)
 {
-  if (!events[n].active(sheet)) return false;
-  int i,vx[2],ne = (signed) simplices[1].size();
-  events[n].set_inactive(sheet);
+  if (!skeleton->events[n].active(sheet)) return false;
+  int i,vx[2],ne = (signed) skeleton->simplices[1].size();
+  skeleton->events[n].set_inactive(sheet);
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] == n || vx[1] == n) simplex_deletion(1,i,sheet);
   }
   return true;  
@@ -950,36 +950,36 @@ bool Spacetime::vertex_deletion(int n,int sheet)
 
 int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
 {
-  int n = (signed) events.size();
+  int n = (signed) skeleton->events.size();
   Event vt;
 
   geometry->vertex_addition(xc);
   vt.set_active(sheet); 
-  events.push_back(vt);
+  skeleton->events.push_back(vt);
 
   return n;
 }
 
 int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
 {
-  int n = (signed) events.size();
+  int n = (signed) skeleton->events.size();
   Event vt;
 
   geometry->vertex_addition(antecedents);
   vt.set_active(sheet);
-  events.push_back(vt);
+  skeleton->events.push_back(vt);
 
   return n;
 }
 
 int Spacetime::vertex_addition(int base,int sheet)
 {
-  int n = (signed) events.size();
+  int n = (signed) skeleton->events.size();
   Event vt;
 
   geometry->vertex_addition(base);
   vt.set_active(sheet);
-  events.push_back(vt);
+  skeleton->events.push_back(vt);
 
   return n;
 }

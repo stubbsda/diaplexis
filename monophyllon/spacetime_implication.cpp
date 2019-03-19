@@ -338,10 +338,7 @@ bool Spacetime::circumvolution(int base)
     } while(true);
   }
 #ifdef VERBOSE
-  std::set<int> S1,S2;
-  skeleton->simplices[d][s2].get_vertices(S2);
-  skeleton->simplices[d][s1].get_vertices(S1);
-  std::cout << "Circumvolving the " << d << "-simplices: " << SYNARMOSMA::make_key(S2) << " => " << SYNARMOSMA::make_key(S1) << std::endl;
+  std::cout << "Circumvolving the " << d << "-simplices: " << skeleton->get_simplex_key(d,s2) << " => " << skeleton->get_simplex_key(d,s1) << std::endl;
 #endif
   int v1[d+1],v2[d+1];
   for(i=0; i<=d; ++i) {
