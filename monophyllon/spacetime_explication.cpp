@@ -203,8 +203,7 @@ bool Spacetime::compensation_m(int base)
   }
   j = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-  skeleton->simplices[1][j].get_vertices(S);
-  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(S) << " to reduce the complex's dimensionality" << std::endl;
+  std::cout << "Deleting edge with key " << skeleton->get_simplex_key(1,j) << " to reduce the complex's dimensionality" << std::endl;
 #endif
   skeleton->simplex_deletion(1,j);
   return true;
@@ -281,8 +280,7 @@ bool Spacetime::compensation_g(int base)
     }
     i = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-    skeleton->simplices[1][i].get_vertices(S);
-    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(S) << " in negative compensation" << std::endl;
+    std::cout << "Deleting edge with key " << skeleton->get_simplex_key(1,i) << " in negative compensation" << std::endl;
 #endif
     skeleton->simplex_deletion(1,i);
   }

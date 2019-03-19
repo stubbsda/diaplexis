@@ -6,17 +6,17 @@ void Spacetime::get_energy_extrema(double* output) const
 {
   int i;
   double alpha,u_ex = 0.0,l_ex = 0.0;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    u_ex = events[i].get_energy();
+    if (!skeleton->events[i].active()) continue;
+    u_ex = skeleton->events[i].get_energy();
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    alpha = events[i].get_energy();
+    if (!skeleton->events[i].active()) continue;
+    alpha = skeleton->events[i].get_energy();
     if (u_ex < alpha) u_ex = alpha;
     if (l_ex > alpha) l_ex = alpha;
   }
@@ -28,18 +28,18 @@ void Spacetime::get_deficiency_extrema(double* output) const
 {
   int i;
   double u_ex = 0.0,l_ex = 0.0;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    u_ex = events[i].deficiency;
+    if (!skeleton->events[i].active()) continue;
+    u_ex = skeleton->events[i].deficiency;
     break;
   }
   l_ex = u_ex;
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    if (u_ex < events[i].deficiency) u_ex = events[i].deficiency;
-    if (l_ex > events[i].deficiency) l_ex = events[i].deficiency;
+    if (!skeleton->events[i].active()) continue;
+    if (u_ex < skeleton->events[i].deficiency) u_ex = skeleton->events[i].deficiency;
+    if (l_ex > skeleton->events[i].deficiency) l_ex = skeleton->events[i].deficiency;
   }
   output[0] = u_ex;
   output[1] = l_ex;
@@ -48,14 +48,14 @@ void Spacetime::get_deficiency_extrema(double* output) const
 void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,bool use_energy) const
 {
   int i,j;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   if (use_sheets) {
     if (codex.size() == 1) {
       // A monocosmos, so everything is black...
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) {
+        if (!skeleton->events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -66,7 +66,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         chi.push_back(0);
       }
       for(i=0; i<ne; ++i) {
-        if (!simplices[1][i].active()) {
+        if (!skeleton->simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -81,7 +81,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       // Very special case: 2^2 - 1 = 3, the number of elements of
       // an RGB colour vector
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) {
+        if (!skeleton->events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -93,19 +93,19 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       }
 
       for(i=0; i<ne; ++i) {
-        if (!simplices[1][i].active()) {
+        if (!skeleton->simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
           continue;
         }
-        if (simplices[1][i].active(0) && simplices[1][i].active(1)) {
+        if (skeleton->simplices[1][i].active(0) && skeleton->simplices[1][i].active(1)) {
           chi.push_back(0);
           chi.push_back(0);
           chi.push_back(255);
         }
         else {
-          if (simplices[1][i].active(0)) {
+          if (skeleton->simplices[1][i].active(0)) {
             chi.push_back(255);
             chi.push_back(0);
             chi.push_back(0);
@@ -125,7 +125,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
       float cbasis[3*nt],cvalues[3];
 
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) {
+        if (!skeleton->events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -159,7 +159,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         }
       }
       for(i=0; i<ne; ++i) {
-        if (!simplices[1][i].active()) {
+        if (!skeleton->simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -172,7 +172,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         divisors[1] = 0;
         divisors[2] = 0;
         for(j=0; j<nt; ++j) {
-          if (simplices[1][i].active(j)) {
+          if (skeleton->simplices[1][i].active(j)) {
             cvalues[0] += cbasis[3*j];
             cvalues[1] += cbasis[3*j+1];
             cvalues[2] += cbasis[3*j+2];
@@ -195,16 +195,16 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     double x,x_max = 0.0,x_min = 0.0,delta,theta,xvalue[nv];
 
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      x_min = (use_energy) ? events[i].get_energy() : events[i].deficiency;
+      if (!skeleton->events[i].active()) continue;
+      x_min = (use_energy) ? skeleton->events[i].get_energy() : skeleton->events[i].deficiency;
       x_max = x_min;
       break;
     }
 
     if (use_energy) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) continue;
-        x = events[i].get_energy();
+        if (!skeleton->events[i].active()) continue;
+        x = skeleton->events[i].get_energy();
         xvalue[i] = x;
         if (x > x_max) x_max = x;
         if (x < x_min) x_min = x;
@@ -212,8 +212,8 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
     else {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) continue;
-        x = events[i].deficiency;
+        if (!skeleton->events[i].active()) continue;
+        x = skeleton->events[i].deficiency;
         xvalue[i] = x;
         if (x > x_max) x_max = x;
         if (x < x_min) x_min = x;
@@ -223,7 +223,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     if (delta < 0.05) {
       // In this case just paint everything black...
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) {
+        if (!skeleton->events[i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -234,7 +234,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
         chi.push_back(0);
       }
       for(i=0; i<ne; ++i) {
-        if (!simplices[1][i].active()) {
+        if (!skeleton->simplices[1][i].active()) {
           chi.push_back(255);
           chi.push_back(255);
           chi.push_back(255);
@@ -248,7 +248,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
 
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) {
+      if (!skeleton->events[i].active()) {
         chi.push_back(255);
         chi.push_back(255);
         chi.push_back(255);
@@ -263,13 +263,13 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
     }
 
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) {
+      if (!skeleton->simplices[1][i].active()) {
         chi.push_back(255);
         chi.push_back(255);
         chi.push_back(255);
         continue;
       }
-      simplices[1][i].get_vertices(vx);
+      skeleton->simplices[1][i].get_vertices(vx);
       theta = 0.5*(xvalue[vx[0]] + xvalue[vx[1]]);
       SYNARMOSMA::RGB_intensity(theta,out);
       chi.push_back(out[0]);
@@ -283,8 +283,8 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
 {
   int i,j = 0,D,vx[2];
   std::vector<double> x;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
   int offset[nv];
 
   D = geometry->compute_coordinates(x);
@@ -294,13 +294,13 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
-      if (!events[i].active()) continue;
+      if (!skeleton->events[i].active()) continue;
       offset[i] = j; j++;
     }
     vdata[0] = j;
     if (D == 1) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) continue;
+        if (!skeleton->events[i].active()) continue;
         vcoords.push_back(float(x[i]));
         vcoords.push_back(0.0);
         vcoords.push_back(0.0);
@@ -308,7 +308,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D == 2) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) continue;
+        if (!skeleton->events[i].active()) continue;
         vcoords.push_back(float(x[2*i]));
         vcoords.push_back(float(x[2*i+1]));
         vcoords.push_back(0.0);
@@ -316,7 +316,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D >= 3) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active()) continue;
+        if (!skeleton->events[i].active()) continue;
         vcoords.push_back(float(x[D*i]));
         vcoords.push_back(float(x[D*i+1]));
         vcoords.push_back(float(x[D*i+2]));
@@ -325,8 +325,8 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     // Now the neighbour table...
     j = 0;
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active()) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       evertex.push_back(offset[vx[0]]);
       evertex.push_back(offset[vx[1]]);
       ++j;
@@ -336,13 +336,13 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   else {
     for(i=0; i<nv; ++i) {
       offset[i] = -1;
-      if (!events[i].active(sheet)) continue;
+      if (!skeleton->events[i].active(sheet)) continue;
       offset[i] = j; j++;
     }
     vdata[0] = j;
     if (D == 1) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active(sheet)) continue;
+        if (!skeleton->events[i].active(sheet)) continue;
         vcoords.push_back(float(x[i]));
         vcoords.push_back(0.0);
         vcoords.push_back(0.0);
@@ -350,7 +350,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D == 2) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active(sheet)) continue;
+        if (!skeleton->events[i].active(sheet)) continue;
         vcoords.push_back(float(x[2*i]));
         vcoords.push_back(float(x[2*i+1]));
         vcoords.push_back(0.0);
@@ -358,7 +358,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     }
     else if (D >= 3) {
       for(i=0; i<nv; ++i) {
-        if (!events[i].active(sheet)) continue;
+        if (!skeleton->events[i].active(sheet)) continue;
         vcoords.push_back(float(x[D*i]));
         vcoords.push_back(float(x[D*i+1]));
         vcoords.push_back(float(x[D*i+2]));
@@ -367,8 +367,8 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     // Now the neighbour table...
     j = 0;
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       evertex.push_back(offset[vx[0]]);
       evertex.push_back(offset[vx[1]]);
       ++j;
@@ -383,8 +383,8 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
   std::vector<double> x;
   std::vector<unsigned char> chi;
 
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   compute_colours(chi,false,use_energy);
   D = geometry->compute_coordinates(x);
@@ -421,12 +421,12 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
     }
   }
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) {
+    if (!skeleton->simplices[1][i].active()) {
       vx[0] = 0;
       vx[1] = 0;
     }
     else {
-      simplices[1][i].get_vertices(vx);
+      skeleton->simplices[1][i].get_vertices(vx);
     }
     evertex.push_back(vx[0]);
     evertex.push_back(vx[1]);

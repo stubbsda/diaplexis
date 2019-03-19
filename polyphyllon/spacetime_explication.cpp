@@ -5,9 +5,9 @@ using namespace DIAPLEXIS;
 bool Spacetime::stellar_addition(int base,int sheet)
 {
   if (vertex_dimension(base,sheet) < 2) return false;
-  // Take one of these 2-simplices and eliminate it in favour of a 
+  // Take one of these 2-skeleton->simplices and eliminate it in favour of a 
   // new vertex
-  int i,m = (signed) simplices[2].size();
+  int i,m = (signed) skeleton->simplices[2].size();
   unsigned int l;
   std::vector<int> sx;
   std::vector<double> xc,xtemp;
@@ -15,13 +15,13 @@ bool Spacetime::stellar_addition(int base,int sheet)
   SYNARMOSMA::hash_map::const_iterator qt;
 
   for(i=0; i<m; ++i) {
-    if (!simplices[2][i].active(sheet)) continue;
-    if (simplices[2][i].contains(base)) candidates.insert(i);
+    if (!skeleton->simplices[2][i].active(sheet)) continue;
+    if (skeleton->simplices[2][i].contains(base)) candidates.insert(i);
   }
   // Choose a 2-simplex at random, get its three vertices and then 
   // eliminate each of the three edges in succession...
   m = RND->irandom(candidates);
-  simplices[2][m].get_vertices(sx);
+  skeleton->simplices[2][m].get_vertices(sx);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[1]);
@@ -73,14 +73,14 @@ bool Spacetime::correction(int base,int sheet)
   std::set<int> locus,candidates;
   Simplex s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   locus.insert(sheet);
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    if (!events[i].active(sheet)) continue;
-    if (std::abs(events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (!skeleton->events[i].active(sheet)) continue;
+    if (std::abs(skeleton->events[i].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,i,true);
     if (l < 3.8025 || l > 4.2025) continue;
     // See if there is a third vertex that lies between these two...
@@ -97,18 +97,18 @@ bool Spacetime::correction(int base,int sheet)
           dbest = l;
           in1 = j;
         }
-        if (events[j].active()) {
+        if (skeleton->events[j].active()) {
           active = true;
           break;
         }
       }
       if (active) continue;
       if (in1 >= 0) {
-        if (!events[in1].active(sheet)) {
+        if (!skeleton->events[in1].active(sheet)) {
 #ifdef VERBOSE
           std::cout << "Restoring vertex " << in1 << " in correction between " << base << "  " << i << std::endl;
 #endif
-          events[in1].set_active(sheet);
+          skeleton->events[in1].set_active(sheet);
           modified = true;
         }
         // Connect this vertex to i and j if necessary
@@ -118,16 +118,16 @@ bool Spacetime::correction(int base,int sheet)
 #ifdef VERBOSE
           std::cout << "Adding edge connecting " << base << " and " << in1 << " in correction" << std::endl;
 #endif
-          simplices[1].push_back(s1);
-          index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+          skeleton->simplices[1].push_back(s1);
+          index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
           modified = true;
         }
         else {
-          if (!simplices[1][qt->second].active(sheet)) {
+          if (!skeleton->simplices[1][qt->second].active(sheet)) {
 #ifdef VERBOSE
-            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
+            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " in correction" << std::endl;
 #endif
-            simplices[1][qt->second].set_active(sheet);
+            skeleton->simplices[1][qt->second].set_active(sheet);
             modified = true;
           }
         }
@@ -137,16 +137,16 @@ bool Spacetime::correction(int base,int sheet)
 #ifdef VERBOSE
           std::cout << "Adding edge connecting " << i << " and " << in1 << " in correction" << std::endl;
 #endif
-          simplices[1].push_back(s1);
-          index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+          skeleton->simplices[1].push_back(s1);
+          index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
           modified = true;
         }
         else {
-          if (!simplices[1][qt->second].active(sheet)) {
+          if (!skeleton->simplices[1][qt->second].active(sheet)) {
 #ifdef VERBOSE
-            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in correction" << std::endl;
+            std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " in correction" << std::endl;
 #endif
-            simplices[1][qt->second].set_active(sheet);
+            skeleton->simplices[1][qt->second].set_active(sheet);
             modified = true;
           }
         }
@@ -168,7 +168,7 @@ bool Spacetime::correction(int base,int sheet)
   }
   // Add something to check here if this new vertex is within 0.5 of an existing vertex...
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (!skeleton->events[i].active()) continue;
     if (geometry->get_squared_distance(i,xc) <= 0.5) return false;
   }
 #ifdef VERBOSE
@@ -176,11 +176,11 @@ bool Spacetime::correction(int base,int sheet)
 #endif
   m = vertex_addition(xc,sheet);
   s1.initialize(base,m,locus);
-  simplices[1].push_back(s1);
-  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+  skeleton->simplices[1].push_back(s1);
+  index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
   s1.initialize(n,m,locus);
-  simplices[1].push_back(s1);
-  index_table[1][s1.vertices] = (signed) simplices[1].size() - 1;
+  skeleton->simplices[1].push_back(s1);
+  index_table[1][s1.vertices] = (signed) skeleton->simplices[1].size() - 1;
 
   return true;
 }
@@ -190,28 +190,28 @@ bool Spacetime::contraction(int base,double l,int sheet)
   int i,vx[2];
   std::set<int> pool;
   const double L2 = l*l;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   if (sheet == -1) {
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active()) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
-      if (simplices[1][i].sq_volume > L2) pool.insert(i);
+      if (skeleton->simplices[1][i].sq_volume > L2) pool.insert(i);
     }
   }
   else {
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
-      if (simplices[1][i].sq_volume >= L2) pool.insert(i);
+      if (skeleton->simplices[1][i].sq_volume >= L2) pool.insert(i);
     }
   }
   if (pool.empty()) return false;
   i = RND->irandom(pool);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in contraction" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][i].vertices) << " in contraction" << std::endl;
 #endif
   simplex_deletion(1,i,sheet);
   return true;
@@ -223,7 +223,7 @@ bool Spacetime::compensation_m(int base,int sheet)
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   if (vertex_dimension(base,sheet) < 2) return false;
 #ifdef VERBOSE
@@ -233,12 +233,12 @@ bool Spacetime::compensation_m(int base,int sheet)
   // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
   // is also excessive *and* which is relatively far away (edge length >> 1)
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
     if (vertex_dimension(j,sheet) < 2) continue;
-    if (events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
+    if (skeleton->events[j].deficiency < -std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,j,true);
     if (l >= 0.81 && l <= 1.21) continue;
     s1.clear();
@@ -256,7 +256,7 @@ bool Spacetime::compensation_m(int base,int sheet)
   }
   j = RND->irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
+  std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][j].vertices) << " to reduce the complex's dimensionality" << std::endl;
 #endif
   simplex_deletion(1,j,sheet);
   return true;
@@ -268,12 +268,12 @@ bool Spacetime::compensation_g(int base,int sheet)
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   unsigned int sdegree = 0;
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     sdegree++;
   }
@@ -281,7 +281,7 @@ bool Spacetime::compensation_g(int base,int sheet)
   bool up;
   std::set<int> locus;
   const unsigned int idegree = 2*geometry->dimension();
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   locus.insert(sheet);
 
@@ -295,7 +295,7 @@ bool Spacetime::compensation_g(int base,int sheet)
     // then do nothing and return false!
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      if (!events[i].active(sheet)) continue;
+      if (!skeleton->events[i].active(sheet)) continue;
       if (edge_exists(base,i,sheet)) continue;
       l = geometry->get_squared_distance(base,i,true);
       if (l >= 0.81 && l <= 1.21) candidates.insert(i);
@@ -316,12 +316,12 @@ bool Spacetime::compensation_g(int base,int sheet)
     qt = index_table[1].find(s1);
     if (qt != index_table[1].end()) {
 #ifdef DEBUG
-      assert(!simplices[1][qt->second].active(sheet));
+      assert(!skeleton->simplices[1][qt->second].active(sheet));
 #endif
 #ifdef VERBOSE
-      std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
+      std::cout << "Restoring edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " in positive compensation" << std::endl;
 #endif
-      simplices[1][qt->second].set_active(sheet);
+      skeleton->simplices[1][qt->second].set_active(sheet);
     }
     else {
 #ifdef VERBOSE
@@ -329,16 +329,16 @@ bool Spacetime::compensation_g(int base,int sheet)
 #endif
       Simplex S(base,j,locus);
       // Now add this simplex to the spacetime complex...
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
   }
   else {
     // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
     // is also excessive *and* which is relatively far away (edge length >> 1)
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      simplices[1][i].get_vertices(vx);
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = geometry->get_squared_distance(base,j,true);
@@ -358,7 +358,7 @@ bool Spacetime::compensation_g(int base,int sheet)
     }
     i = RND->irandom(candidates);
 #ifdef VERBOSE
-    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(simplices[1][i].vertices) << " in negative compensation" << std::endl;
+    std::cout << "Deleting edge with key " << SYNARMOSMA::make_key(skeleton->simplices[1][i].vertices) << " in negative compensation" << std::endl;
 #endif
     simplex_deletion(1,i,sheet);
   }
@@ -370,14 +370,14 @@ bool Spacetime::foliation_x(int base,int sheet)
   int i,p,n1,n2,vx[2];
   std::set<int> candidates,S;
   SYNARMOSMA::hash_map::iterator qt;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
-    if (std::abs(events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
@@ -389,7 +389,7 @@ bool Spacetime::foliation_x(int base,int sheet)
   S.insert(n1); S.insert(n2);
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) return false;
-  if (!simplices[1][qt->second].active(sheet)) return false;
+  if (!skeleton->simplices[1][qt->second].active(sheet)) return false;
   simplex_deletion(1,qt->second,sheet);
   return true;
 }
@@ -401,10 +401,10 @@ bool Spacetime::deflation(int base,int sheet)
   int i,n,dw = 1;
   std::set<int> candidates;
   if (d > 2) dw = RND->irandom(1,d);
-  const int m = (signed) simplices[dw].size();
+  const int m = (signed) skeleton->simplices[dw].size();
   for(i=0; i<m; ++i) {
-    if (!simplices[dw][i].active(sheet)) continue;
-    if (simplices[dw][i].contains(base)) candidates.insert(i);
+    if (!skeleton->simplices[dw][i].active(sheet)) continue;
+    if (skeleton->simplices[dw][i].contains(base)) candidates.insert(i);
   }
   n = RND->irandom(candidates);
 #ifdef VERBOSE
@@ -421,16 +421,16 @@ bool Spacetime::reduction(int base,int sheet)
   int i,n,m,vx[1+d];
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int N = (signed) simplices[d].size();
+  const int N = (signed) skeleton->simplices[d].size();
 
-  // Find which edges this vertex possesses are used in n-simplices (n > 1) and
+  // Find which edges this vertex possesses are used in n-skeleton->simplices (n > 1) and
   // eliminate one of them...
   for(i=0; i<N; ++i) {
-    if (!simplices[d][i].active(sheet)) continue;
-    if (simplices[d][i].contains(base)) candidates.insert(i);
+    if (!skeleton->simplices[d][i].active(sheet)) continue;
+    if (skeleton->simplices[d][i].contains(base)) candidates.insert(i);
   }
   m = RND->irandom(candidates);
-  simplices[d][m].get_vertices(vx);
+  skeleton->simplices[d][m].get_vertices(vx);
   do {
     n = RND->irandom(1+d);
     if (vx[n] != base) break;
@@ -449,38 +449,38 @@ bool Spacetime::amputation(int base,double tolerance,int sheet)
 {
   int i,j,n,p,vx[2];
   std::set<int> candidates;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const int ulimit = dimension(sheet);
 
-  if (events[base].deficiency > tolerance) candidates.insert(base);
+  if (skeleton->events[base].deficiency > tolerance) candidates.insert(base);
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     n = (vx[0] == base) ? vx[1] : vx[0];
-    if (events[n].deficiency > tolerance) candidates.insert(n);
+    if (skeleton->events[n].deficiency > tolerance) candidates.insert(n);
   }
   
   if (candidates.empty()) return false;
   n = RND->irandom(candidates);
 
 #ifdef VERBOSE
-  std::cout << "Amputating vertex " << n << " and all its dependent simplices" << std::endl;
+  std::cout << "Amputating vertex " << n << " and all its dependent skeleton->simplices" << std::endl;
 #endif
   // Delete this vertex and all its edges...
-  events[n].set_inactive(sheet);
+  skeleton->events[n].set_inactive(sheet);
   codex[sheet].vx_delta.insert(n);
   for(i=ulimit; i>=1; --i) {
-    p = (signed) simplices[i].size();
+    p = (signed) skeleton->simplices[i].size();
     for(j=0; j<p; ++j) {
-      if (!simplices[i][j].active(sheet)) continue;
-      if (simplices[i][j].contains(n)) simplex_deletion(i,j,sheet);
+      if (!skeleton->simplices[i][j].active(sheet)) continue;
+      if (skeleton->simplices[i][j].contains(n)) simplex_deletion(i,j,sheet);
     }
   }
-  if (!events[n].active()) {
-    if (!events[n].zero_energy()) {
-      events[base].increment_energy(events[n].get_energy());
-      events[n].nullify_energy();
+  if (!skeleton->events[n].active()) {
+    if (!skeleton->events[n].zero_energy()) {
+      skeleton->events[base].increment_energy(skeleton->events[n].get_energy());
+      skeleton->events[n].nullify_energy();
     }
   }
   return true;
@@ -490,12 +490,12 @@ bool Spacetime::fusion_x(int base,double tolerance,int sheet)
 {
   int i,j;
   std::vector<std::pair<int,int> > candidates;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    if (!events[i].active(sheet)) continue;
-    if (events[i].deficiency < std::numeric_limits<double>::epsilon()) continue;
+    if (!skeleton->events[i].active(sheet)) continue;
+    if (skeleton->events[i].deficiency < std::numeric_limits<double>::epsilon()) continue;
     if (geometry->get_squared_distance(base,i,true) > tolerance) continue;
     candidates.push_back(std::pair<int,int>(base,i));
   }
@@ -513,7 +513,7 @@ bool Spacetime::germination(int base,int sheet)
 {
   // This method constructs new neighbour vertices w_i for the vertex base which are
   // unit distance from v and orthogonal to v's existing edges, if possible.
-  if (events[base].boundary) return false;
+  if (skeleton->events[base].boundary) return false;
 
   bool good,modified = false;
   double a,b,d_min,delta;
@@ -523,22 +523,22 @@ bool Spacetime::germination(int base,int sheet)
   SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   int i,j,vx[2],D1 = -1,D2 = -1,m,in1,n = -1,mi = 0;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const int D = (signed) geometry->dimension();
 
   locus.insert(sheet);
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
     N.insert(j);
   }
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
-    if (events[n].active()) break;
+    if (skeleton->events[n].active()) break;
   }
 #ifdef VERBOSE
   std::cout << "Germination with " << base << "  " << n << std::endl;
@@ -584,21 +584,21 @@ bool Spacetime::germination(int base,int sheet)
     }
   }
   if (in1 >= 0) {
-    if (!events[in1].active(sheet)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      events[in1].set_active(sheet);
+      skeleton->events[in1].set_active(sheet);
     }
     S.initialize(base,in1,locus);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
     else {
-      if (!simplices[1][qt->second].active(sheet)) {
+      if (!skeleton->simplices[1][qt->second].active(sheet)) {
         modified = true;
-        simplices[1][qt->second].set_active(sheet);
+        skeleton->simplices[1][qt->second].set_active(sheet);
       }
     }
   }
@@ -608,8 +608,8 @@ bool Spacetime::germination(int base,int sheet)
     Dm1.insert(m);
     geometry->set_coordinates(m,xc);
     S.initialize(base,m,locus);
-    simplices[1].push_back(S);
-    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+    skeleton->simplices[1].push_back(S);
+    index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
   }
 
   // Second, a 180 degree rotation...
@@ -627,21 +627,21 @@ bool Spacetime::germination(int base,int sheet)
     }
   }
   if (in1 >= 0) {
-    if (!events[in1].active(sheet)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      events[in1].set_active(sheet);
+      skeleton->events[in1].set_active(sheet);
     }
     S.initialize(base,in1,locus);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
     else {
-      if (!simplices[1][qt->second].active(sheet)) {
+      if (!skeleton->simplices[1][qt->second].active(sheet)) {
         modified = true;
-        simplices[1][qt->second].set_active(sheet);
+        skeleton->simplices[1][qt->second].set_active(sheet);
       }
     }
   }
@@ -650,8 +650,8 @@ bool Spacetime::germination(int base,int sheet)
     m = vertex_addition(base,sheet);
     geometry->set_coordinates(m,xc);
     S.initialize(base,m,locus);
-    simplices[1].push_back(S);
-    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+    skeleton->simplices[1].push_back(S);
+    index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
   }
 
   // And finally the 270 degree rotation...
@@ -669,20 +669,20 @@ bool Spacetime::germination(int base,int sheet)
     }
   }
   if (in1 >= 0) {
-    if (!events[in1].active(sheet)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      events[in1].set_active(sheet);
+      skeleton->events[in1].set_active(sheet);
     }
     S.initialize(base,in1,locus);
     qt = index_table[1].find(S.vertices);
     if (qt == index_table[1].end()) {
       modified = true;
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
     else {
-      if (!simplices[1][qt->second].active(sheet)) {
-        simplices[1][qt->second].set_active(sheet);
+      if (!skeleton->simplices[1][qt->second].active(sheet)) {
+        skeleton->simplices[1][qt->second].set_active(sheet);
       }
     }
   }
@@ -692,8 +692,8 @@ bool Spacetime::germination(int base,int sheet)
     Dm1.insert(m);
     geometry->set_coordinates(m,xc);
     S.initialize(base,m,locus);
-    simplices[1].push_back(S);
-    index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+    skeleton->simplices[1].push_back(S);
+    index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
   }
 
   if (modified) {
@@ -786,20 +786,20 @@ bool Spacetime::germination(int base,int sheet)
       }
     }
     if (in1 >= 0) {
-      if (!events[in1].active(sheet)) {
+      if (!skeleton->events[in1].active(sheet)) {
         modified = true;
-        events[in1].set_active(sheet);
+        skeleton->events[in1].set_active(sheet);
       }
       S.initialize(base,in1,locus);
       qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+        skeleton->simplices[1].push_back(S);
+        index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       }
       else {
-        if (!simplices[1][qt->second].active(sheet)) {
-          simplices[1][qt->second].set_active(sheet);
+        if (!skeleton->simplices[1][qt->second].active(sheet)) {
+          skeleton->simplices[1][qt->second].set_active(sheet);
         }
       }
     }
@@ -809,8 +809,8 @@ bool Spacetime::germination(int base,int sheet)
       current.insert(m);
       geometry->set_coordinates(m,xc);
       S.initialize(base,m,locus);
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
 
     // Now the mirror image in a three-dimensional subspace...
@@ -829,20 +829,20 @@ bool Spacetime::germination(int base,int sheet)
       }
     }
     if (in1 >= 0) {
-      if (!events[in1].active(sheet)) {
+      if (!skeleton->events[in1].active(sheet)) {
         modified = true;
-        events[in1].set_active(sheet);
+        skeleton->events[in1].set_active(sheet);
       }
       S.initialize(base,in1,locus);
       qt = index_table[1].find(S.vertices);
       if (qt == index_table[1].end()) {
         modified = true;
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+        skeleton->simplices[1].push_back(S);
+        index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       }
       else {
-        if (!simplices[1][qt->second].active(sheet)) {
-          simplices[1][qt->second].set_active(sheet);
+        if (!skeleton->simplices[1][qt->second].active(sheet)) {
+          skeleton->simplices[1][qt->second].set_active(sheet);
         }
       }
     }
@@ -852,8 +852,8 @@ bool Spacetime::germination(int base,int sheet)
       current.insert(m);
       geometry->set_coordinates(m,xc);
       S.initialize(base,m,locus);
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      skeleton->simplices[1].push_back(S);
+      index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
     }
 
     for(it=free_dims.begin(); it!=free_dims.end(); ++it) {

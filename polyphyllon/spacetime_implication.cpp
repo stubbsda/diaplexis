@@ -11,7 +11,7 @@ bool Spacetime::stellar_deletion(int base,int sheet)
   std::set<int> nset;
   std::set<int>::const_iterator it;
 
-  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
+  for(it=skeleton->events[base].entourage.begin(); it!=skeleton->events[base].entourage.end(); ++it) {
     if (simplices[1][*it].active(sheet)) {
       simplices[1][*it].get_vertices(vx);
       m = (vx[0] == base) ? vx[1] : vx[0];
@@ -39,7 +39,7 @@ bool Spacetime::foliation_m(int base,int sheet)
     simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
-    if (std::abs(events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
+    if (std::abs(skeleton->events[p].deficiency) < std::numeric_limits<double>::epsilon()) continue;
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
@@ -144,8 +144,8 @@ bool Spacetime::fission(int base,double density,int sheet)
       int d;
 
       do {
-        p = RND->irandom(events.size());
-        if (events[p].active(sheet)) break;
+        p = RND->irandom(skeleton->events.size());
+        if (skeleton->events[p].active(sheet)) break;
       } while(true);
       q = vertex_addition(p,sheet);
       nsimplex.insert(p);
@@ -389,7 +389,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     if (n1 == Spacetime::ND) return false;
     int u,vtx[2],its = 0;
     std::set<int> M;
-    double tau = std::abs(events[base].deficiency) + 25.0;
+    double tau = std::abs(skeleton->events[base].deficiency) + 25.0;
     const int ne = (signed) simplices[1].size();
 
     d = int(double(Spacetime::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
@@ -399,7 +399,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
       simplices[1][i].get_vertices(vtx);
       if (vtx[0] != base && vtx[1] != base) continue;
       u = (vtx[0] == base) ? vtx[1] : vtx[0];
-      if (events[u].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(u);
+      if (skeleton->events[u].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(u);
     }
     if (M.empty()) creativity = 1.0;
     vx.insert(base);
@@ -421,7 +421,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
   else {
     i = dimension(sheet);
     d = (i <= 2) ? 3 : RND->irandom(2,i);
-    if (double(d+1)/double(events.size()) > 0.8) creativity = 1.0;
+    if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
       if (RND->drandom() < creativity) {
         // Create a new vertex...
@@ -431,13 +431,13 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
       else {
         // Grab an existing vertex...
         j = 0;
-        nv = (signed) events.size();
+        nv = (signed) skeleton->events.size();
         success = false;
         do {
           k = RND->irandom(nv);
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
-            events[k].set_active(sheet);
+            skeleton->events[k].set_active(sheet);
             codex[sheet].vx_delta.insert(k);
             success = true;
             break;
@@ -468,7 +468,7 @@ bool Spacetime::expansion(int base,int sheet)
   SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   const int ne = (signed) simplices[1].size();
-  double tau = std::abs(events[base].deficiency) + 25.0;
+  double tau = std::abs(skeleton->events[base].deficiency) + 25.0;
 
   locus.insert(sheet);
 
@@ -489,7 +489,7 @@ bool Spacetime::expansion(int base,int sheet)
     simplices[1][i].get_vertices(vtx);
     if (vtx[0] != base && vtx[1] != base) continue;
     u = (vtx[0] == base) ? vtx[1] : vtx[0];
-    if (events[u].deficiency < -std::numeric_limits<double>::epsilon()) N.insert(u);
+    if (skeleton->events[u].deficiency < -std::numeric_limits<double>::epsilon()) N.insert(u);
   }
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
@@ -608,7 +608,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     // We want to inflate this to a d-simplex, where d is between
     // 1+n1 and ND - the greater the magnitude of v's deficiency,
     // the higher the dimension d should be...
-    tau = std::abs(events[base].deficiency) + 25.0;
+    tau = std::abs(skeleton->events[base].deficiency) + 25.0;
     delta = int(double(Spacetime::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<(signed) simplices[n1].size(); ++i) {
@@ -628,7 +628,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     for(it=N.begin(); it!=N.end(); ++it) {
       jt = std::find(vx.begin(),vx.end(),*it);
       if (jt == vx.end()) {
-        if (events[*it].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(*it);
+        if (skeleton->events[*it].deficiency < -std::numeric_limits<double>::epsilon()) M.insert(*it);
       }
     }
     if (M.empty()) creativity = 1.0;
@@ -658,8 +658,8 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     else {
       n1 = 1 + RND->irandom(dimension(sheet));
     }
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) candidates.insert(i);
+    for(i=0; i<(signed) skeleton->events.size(); ++i) {
+      if (skeleton->events[i].active(sheet)) candidates.insert(i);
     }
     na = (signed) candidates.size();
     if (n1 == 0) {
@@ -689,18 +689,18 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
         do {
           // We should perhaps alter this to favour vertices that are
           // few hops away
-          k = RND->irandom(events.size());
-          if (!events[k].active(sheet)) continue;
+          k = RND->irandom(skeleton->events.size());
+          if (!skeleton->events[k].active(sheet)) continue;
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
             success = true;
             break;
           }
           its++;
-        } while(its < (signed) events.size());
+        } while(its < (signed) skeleton->events.size());
         if (success == false) {
-          k = (signed) events.size();
-          events.push_back(vt);
+          k = (signed) skeleton->events.size();
+          skeleton->events.push_back(vt);
         }
       }
       vx.insert(k);
