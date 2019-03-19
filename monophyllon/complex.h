@@ -34,8 +34,8 @@ namespace DIAPLEXIS {
     bool simplex_addition(const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,std::set<int>&);
     void simplex_deletion(int,int);
-    void compute_geometric_dependency(const std::set<int>&);
-    void compute_topological_dependency(const std::set<int>&);
+    void compute_modified_vertices();
+    void compute_dependent_simplices(const std::set<int>&);
     void simplicial_implication();
     void simplicial_implication(int);
     void compute_simplicial_dimension();
@@ -97,7 +97,6 @@ namespace DIAPLEXIS {
     void simplicial_implication(int) const;
     int simplex_embedding(int,int) const;
     double dimensional_stress(int) const;
-    void compute_delta(std::set<int>&);
     double parity_hamiltonian(double,bool) const;
     void write_graph(const std::string&) const;
     inline double distribution_fitness(int*,const std::vector<int>&,int) const;

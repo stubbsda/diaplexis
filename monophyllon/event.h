@@ -27,8 +27,8 @@ namespace DIAPLEXIS {
     ~Event() override;
     int serialize(std::ofstream&) const override; 
     int deserialize(std::ifstream&) override;
-    inline void activate() {active = true;};
-    inline void deactivate() {active = false;};
+    inline void activate() {active = true; topology_modified = true;};
+    inline void deactivate() {active = false; topology_modified = true;};
     inline void clear_posterior() {posterior.clear();};
     inline void get_posterior(std::set<int>& N) const {N = posterior;};
     inline bool add_posterior(int);
@@ -40,7 +40,7 @@ namespace DIAPLEXIS {
     inline void get_entourage(std::set<int> N) const {N = entourage;};
     inline bool drop_entourage(int);
     inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
-    inline void set_neighbours(const std::set<int>& N) {neighbours = N;};
+    inline void set_neighbours(const std::set<int>& N) {neighbours = N; topology_modified = true;};
     inline bool is_neighbour(int n) const {return (neighbours.count(n) > 0);};
     inline bool add_neighbour(int);
     inline bool drop_neighbour(int);
@@ -88,6 +88,7 @@ namespace DIAPLEXIS {
   {
     if (neighbours.count(n) == 0) {
       neighbours.insert(n);
+      topology_modified = true;
       return true;
     }
     return false;
@@ -98,6 +99,7 @@ namespace DIAPLEXIS {
     std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
     if (it != neighbours.end()) {
       neighbours.erase(it);
+      topology_modified = true;
       return true;
     }
     return false;

@@ -496,32 +496,13 @@ int Complex::component_analysis(std::vector<int>& component,int sheet) const
   return n;
 }
 
-void Complex::compute_global_topology(int sheet)
+void Complex::compute_global_topology(const SYNARMOSMA::Nexus* NX,bool high_memory)
 {
-  // To calculate the global deficiency, we need to compute the Betti numbers and
-  // the fundamental group, for the total spacetime, operations that are serial...
-  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
-
-  compute_global_nexus(NX,sheet);
-
-  if (sheet == -1) {
-    // The global case...
-    H->compute(NX);
-    if (high_memory) pi1->compute(NX);
-    // Finally, the pseudomanifold and orientability properties
-    pseudomanifold = NX->pseudomanifold(&boundary);
-    if (pseudomanifold) orientable = NX->orientable();
-  }
-  else {
-    bool bdry;
-    codex[sheet].H->compute(NX);
-    if (high_memory) codex[sheet].pi1->compute(NX);
-    codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
-    codex[sheet].boundary = bdry;
-    if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
-  }
-
-  delete NX;
+  H->compute(NX);
+  if (high_memory) pi1->compute(NX);
+  // Finally, the pseudomanifold and orientability properties
+  pseudomanifold = NX->pseudomanifold(&boundary);
+  if (pseudomanifold) orientable = NX->orientable();
 }
 
 void Complex::write_topology(int sheet) const

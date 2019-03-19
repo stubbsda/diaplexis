@@ -38,9 +38,10 @@ namespace DIAPLEXIS {
     ~Simplex() override;
     inline bool active() const {return !ubiquity.empty();};
     inline bool active(int n) const {return (ubiquity.count(n) > 0);};
-    inline void set_inactive(int n) {ubiquity.erase(n);};
-    inline void set_active(int n) {ubiquity.insert(n);};
-    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S;};
+    inline void deactivate() {ubiquity.clear(); modified = true;};
+    inline void set_inactive(int n) {ubiquity.erase(n); modified = true;};
+    inline void set_active(int n) {ubiquity.insert(n); modified = true;};
+    inline void set_ubiquity(const std::set<int>& S) {ubiquity = S; modified = true;};
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};

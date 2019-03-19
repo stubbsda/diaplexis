@@ -2,10 +2,10 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::superposition_fusion(std::set<int>& vmodified)
+void Spacetime::superposition_fusion(double threshold)
 {
   int i,j,m,nf,v1,v2,nfail = 0,nfused = 0;
-  double delta,pfusion = 0.0,alpha = 0.1;
+  double delta,pfusion = 0.0;
   std::vector<int> modified;
   std::set<int> vx;
   std::vector<std::pair<int,int> > candidates;
@@ -23,7 +23,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
       if (!skeleton->active_event(j)) continue;
       if (!skeleton->events[j].zero_energy()) continue;
       delta = geometry->get_squared_distance(i,j,false);
-      if (delta < alpha) candidates.push_back(std::pair<int,int>(i,j));
+      if (delta < threshold) candidates.push_back(std::pair<int,int>(i,j));
     }
   }
   if (candidates.empty()) return;
@@ -44,7 +44,6 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     std::cout << "Fusing vertices " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
     vertex_fusion(v1,v2);
-    vmodified.insert(v1);
     nfused++;
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
@@ -68,43 +67,21 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   skeleton->compute_neighbours();
 }
 
-void Spacetime::superposition_fission(std::set<int>& vmodified)
+void Spacetime::superposition_fission(int ulimit)
 {
-  int i,n,nc,ne;
-  std::set<int> S,N;
-  std::set<int>::const_iterator it;
-  Event E;
-  const int nv = (signed) skeleton->events.size();
-  const int fmax = int(1.05*double(nv));
+  int i,n,nc = 0;
 
   // Finally, the opposite possibility - that a given vertex might undergo
   // spontaneous fission, creating a new vertex in its immediate vicinity...
-  nc = nv;
   do {
-    n = skeleton->RND->irandom(nc);
+    n = skeleton->RND->irandom(skeleton->events.size());
     if (!skeleton->active_event(n)) continue;
     if (skeleton->RND->drandom() > 0.01) continue;
-    E = skeleton->events[n];
-    ne = 0;
-    geometry->vertex_addition(n);
-    skeleton->events.push_back(E);
-    E.get_neighbours(N);
-    for(it=N.begin(); it!=N.end(); ++it) {
-      i = *it;
-      vmodified.insert(i);
-      S.insert(nc); S.insert(i);
-      if (skeleton->simplex_addition(S,vmodified)) ne++;
-      S.clear();
-    }
-    vmodified.insert(nc);
-    nc++;
-#ifdef VERBOSE
-    std::cout << "Created vertex " << nc - 1 << " from " << n << " with " << ne << " edges." << std::endl;
-#endif
-  } while(nc < fmax);
+    if (fission(n,1.0)) nc++;
+  } while(nc < ulimit);
 }
 
-int Spacetime::compression(double threshold,std::set<int>& vmodified)
+int Spacetime::compression(double threshold)
 {
   int i,n,nc,vx[2];
   std::set<int>::const_iterator it;
@@ -125,16 +102,6 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   for(i=0; i<nc; ++i) {
     n = candidates[i];
     skeleton->simplex_deletion(1,n);
-    // Remove the references in events[v/w].neighbours and
-    // events[v/w].entourage
-    skeleton->simplices[1][n].get_vertices(vx);
-    skeleton->events[vx[0]].drop_neighbour(vx[1]);
-    skeleton->events[vx[1]].drop_neighbour(vx[0]);
-    skeleton->events[vx[0]].drop_entourage(n);
-    skeleton->events[vx[1]].drop_entourage(n);
-    
-    vmodified.insert(vx[0]);
-    vmodified.insert(vx[1]);
   }
   if (!skeleton->connected()) {
     // We need to add enough (short!) edges to keep the spacetime connected...
@@ -144,7 +111,6 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     std::set<int> linked,S;
     std::vector<int> component,sedge;
     std::vector<std::tuple<int,int,double> > connect;
-    //Simplex S;
 
     ncomp = skeleton->component_analysis(component);
 #ifdef VERBOSE
@@ -209,16 +175,8 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
       j = sedge[2*i];
       k = sedge[2*i+1];
       S.insert(j); S.insert(k);
-      skeleton->simplex_addition(S,vmodified);
+      skeleton->simplex_addition(S,iterations);
       S.clear();
-      /*
-      skeleton->simplices[1].push_back(S);
-      skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
-      skeleton->events[j].neighbours.insert(k);
-      skeleton->events[k].neighbours.insert(j);
-      vmodified.insert(k);
-      vmodified.insert(j);
-      */
     }
     nc -= nsedge;
 #ifdef DEBUG
@@ -288,7 +246,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     S.insert(vertex_addition(xc));
     xc.clear();
   }
-  skeleton->simplex_addition(S,modified_vertices);
+  skeleton->simplex_addition(S,-1);
 
   // Now add a set of lower-dimensional simplices to this knot and also tie it 
   // in to the existing spacetime complex...
@@ -358,7 +316,7 @@ bool Spacetime::interplication(int centre,double size,int D)
 #ifdef VERBOSE
       std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
 #endif
-      skeleton->simplex_addition(S,modified_vertices);
+      skeleton->simplex_addition(S,-1);
       S.clear();
       nc++;
     } while(nc < m);
@@ -407,7 +365,7 @@ bool Spacetime::interplication(int centre,double size,int D)
     else {
       S.insert(ambient[1].first);
     }
-    if (skeleton->simplex_addition(S,modified_vertices)) d++;
+    if (skeleton->simplex_addition(S,-1)) d++;
     S.clear();
   } while(d < nbridge);
 
@@ -496,8 +454,8 @@ void Spacetime::regularization(bool minimal)
     assert(v2 > -1);
 #endif
     skeleton->simplex_addition(v1,v2,-1);
-    modified_vertices.insert(v1);
-    modified_vertices.insert(v2);
+    skeleton->events[v1].set_topology_modified(true);
+    skeleton->events[v2].set_topology_modified(true);
   }
   skeleton->compute_neighbours();
 #ifdef DEBUG

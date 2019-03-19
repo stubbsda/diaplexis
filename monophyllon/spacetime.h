@@ -53,7 +53,6 @@ namespace DIAPLEXIS {
     double error = 0.0;
     double global_deficiency = 0.0;
     std::string hyphantic_ops = "";
-    std::set<int> modified_vertices;
     Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
 
@@ -172,9 +171,9 @@ namespace DIAPLEXIS {
     bool stellar_deletion(int);
 
     bool interplication(int,double,int);
-    int compression(double,std::set<int>&);
-    void superposition_fusion(std::set<int>&);
-    void superposition_fission(std::set<int>&);
+    int compression(double);
+    void superposition_fusion(double);
+    void superposition_fission(int);
     void regularization(bool);
     void entourage(std::vector<int>&) const;
 

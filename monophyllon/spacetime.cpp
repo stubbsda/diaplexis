@@ -412,13 +412,20 @@ void Spacetime::structural_deficiency()
     length_deviation[v1] = length_deviation[v1]/double(k);
     R[v1] = gvalue[v1]; 
     rho[v1] = skeleton->events[v1].get_energy(); 
+    // Sanity checks...
+#ifdef DEBUG
+    assert(!std::isnan(R[v1])); 
+    assert(!std::isnan(rho[v1])); 
+    assert(!std::isnan(length_deviation[v1]));
+#endif
   }
   
   // The local part of the structure equations
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
-    skeleton->events[v1].set_deficiency(R[v1] + skeleton->events[v1].get_obliquity() + length_deviation[v1] - Spacetime::Lambda*rho[v1]);
-    skeleton->events[v1].set_geometric_deficiency(skeleton->events[v1].get_obliquity() + length_deviation[v1]);
+    alpha = skeleton->events[v1].get_obliquity() + length_deviation[v1];
+    skeleton->events[v1].set_geometric_deficiency(alpha);
+    skeleton->events[v1].set_deficiency(R[v1] + alpha - Spacetime::Lambda*rho[v1]);
   }
 
   // Now the chromatic energy sum...
@@ -462,9 +469,7 @@ bool Spacetime::global_operations()
   int i,j,n,k = 0;
   bool output = false;
   std::string filename;
-  std::set<int> vmodified;
   SYNARMOSMA::hash_map::const_iterator qt;
-  std::vector<int> fusion;
   double mu,sigma = 0.0,delta = 0.0;
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
@@ -473,12 +478,12 @@ bool Spacetime::global_operations()
 #endif
   iterations++;
 
-  skeleton->compute_delta(modified_vertices);
+  skeleton->compute_modified_vertices();
 
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].get_incept() == -1) skeleton->events[i].set_incept(iterations);
   }
-  for(i=0; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
       if (skeleton->simplices[i][j].get_incept() == -1) skeleton->simplices[i][j].set_incept(iterations);
@@ -493,12 +498,11 @@ bool Spacetime::global_operations()
   // First perform the geometry and energy diffusion...
   skeleton->compute_parity();
   compute_lightcones();
-  if (adjust_dimension()) {
-    compute_volume();
-    compute_obliquity();
-    skeleton->compute_global_topology(geometry->get_memory_type());
-    structural_deficiency();
-  }
+  adjust_dimension();
+  compute_volume();
+  compute_obliquity();
+  skeleton->compute_global_topology(geometry->get_memory_type());
+  structural_deficiency();
 
   skeleton->energy_diffusion(Spacetime::Lambda);
   for(i=1; i<=skeleton->dimension(); ++i) {
@@ -548,7 +552,7 @@ bool Spacetime::global_operations()
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].get_incept() == 0) {
       ninitial++;
-      if (std::abs(skeleton->events[i].get_deficiency()) > 0.0) ntouch++;
+      if (std::abs(skeleton->events[i].get_deficiency()) > std::numeric_limits<double>::epsilon()) ntouch++;
     }
   }
   std::cout << "Percentage of perturbed initial vertices " << 100.0*double(ntouch)/double(ninitial) << std::endl;
@@ -556,8 +560,8 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping vertices
   if (superposable) {
-    superposition_fusion(vmodified); assert(skeleton->consistent());
-    superposition_fission(vmodified); assert(skeleton->consistent());
+    superposition_fusion(0.1); assert(skeleton->consistent());
+    superposition_fission(int(0.02*nv)); assert(skeleton->consistent());
   }
 
   if (compressible) {
@@ -576,17 +580,21 @@ bool Spacetime::global_operations()
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    i = compression(mu + sigma,vmodified); assert(skeleton->consistent());
+    compression(mu + sigma); assert(skeleton->consistent());
   }
 
   if (superposable || compressible) {
     skeleton->compute_entourages();
-    skeleton->compute_topological_dependency(vmodified);
-    skeleton->compute_geometric_dependency(vmodified);
+    skeleton->compute_neighbours();
+    skeleton->compute_modified_vertices();
+    nv = (signed) skeleton->events.size();
+    std::set<int> S;
+    for(i=0; i<nv; ++i) {
+      if (!skeleton->active_event(i)) continue;
+      if (skeleton->events[i].get_topology_modified()) S.insert(i);
+    }
+    geometry->compute_squared_distances(S);
   }
-
-  // Calculate the local and global errors
-  geometry->compute_squared_distances(vmodified);
   compute_volume();
   compute_obliquity();
 #ifdef DEBUG

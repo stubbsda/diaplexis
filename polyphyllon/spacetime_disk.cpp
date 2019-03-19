@@ -1115,12 +1115,6 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&error),sizeof(double));
   s.read((char*)(&converged),sizeof(bool));
 
-  s.read((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    s.read((char*)(&c),sizeof(char));
-    hyphantic_ops += c;
-  }
-
   geometry->deserialize(s);
   skeleton->deserialize(s); 
   // Now the sheets...
@@ -1217,14 +1211,6 @@ void Spacetime::write_state() const
   s.write((char*)(&global_deficiency),sizeof(double));
   s.write((char*)(&error),sizeof(double));
   s.write((char*)(&converged),sizeof(bool));
-
-  // Now write out the hyphantic operations that have been performed...
-  n = hyphantic_ops.length();
-  s.write((char*)(&n),sizeof(int));
-  for(i=0; i<n; ++i) {
-    c = hyphantic_ops[i];
-    s.write((char*)(&c),sizeof(char));
-  }
 
   // The principal body of the file...
   geometry->serialize(s);

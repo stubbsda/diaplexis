@@ -850,7 +850,6 @@ bool Spacetime::vertex_twist()
   std::cout << "Twist is " << n1 << " => " << n2 << std::endl;
 #endif
   skeleton->events[n2].deactivate();
-  modified_vertices.insert(n2);
   if (!skeleton->active_event(n2)) {
     if (!skeleton->events[n2].zero_energy()) {
       skeleton->events[n1].increment_energy(skeleton->events[n2].get_energy());

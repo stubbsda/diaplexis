@@ -49,7 +49,6 @@ bool Spacetime::adjust_dimension()
   // This method handles the geometry and energy changes to
   // minimize the structural deficiency...
   int i,n;
-  bool modified;
   std::vector<int> vdimension;
   const int nv = (signed) skeleton->events.size();
   const int D = (signed) geometry->dimension();
@@ -79,8 +78,7 @@ bool Spacetime::adjust_dimension()
       vdimension.push_back(n);
     }
   }
-  modified = geometry->adjust_dimension(vdimension);
-  return modified;
+  return geometry->adjust_dimension(vdimension);
 }
 
 void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base) const
@@ -427,19 +425,19 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
     df.push_back(0.0);
   }
   if (geometry->get_relational()) {
-    std::set<int> vmodified,last,current;
+    std::set<int> modified_vertices,last,current;
     double E,alpha;
     const double B = compute_abnormality(flexible_edge);
 
     for(i=0; i<system_size; ++i) {
       geometry->add(i,geometry_tolerance);
       geometry->get_implied_vertices(i,current);
-      skeleton->compute_geometric_dependency(current);
-      vmodified = last;
+      skeleton->compute_dependent_simplices(current);
+      modified_vertices = last;
       for(it=current.begin(); it!=current.end(); ++it) {
-        vmodified.insert(*it);
+        modified_vertices.insert(*it);
       }
-      geometry->compute_squared_distances(vmodified);
+      geometry->compute_squared_distances(modified_vertices);
       compute_volume();
       E = compute_abnormality(flexible_edge);
       alpha = (E - B)/geometry_tolerance;
