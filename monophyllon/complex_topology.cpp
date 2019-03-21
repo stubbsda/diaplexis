@@ -573,13 +573,13 @@ bool Complex::simplex_addition(int u,int v,int n)
     index_table[1][S] = simplices[1].size() - 1;
     events[v].neighbours.insert(u);
     events[u].neighbours.insert(v);
-    events[v].topology_modified = true;
+    events[u].topology_modified = true;
     events[v].topology_modified = true;
   }
   else {
     if (simplices[1][qt->second].active) return false;
     simplices[1][qt->second].active = true;
-    events[v].topology_modified = true;
+    events[u].topology_modified = true;
     events[v].topology_modified = true;
   }
   return true;

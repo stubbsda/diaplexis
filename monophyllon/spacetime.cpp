@@ -560,8 +560,8 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping vertices
   if (superposable) {
-    superposition_fusion(0.1); assert(skeleton->consistent());
-    superposition_fission(int(0.02*nv)); assert(skeleton->consistent());
+    superposition_fusion(0.1); 
+    superposition_fission(int(0.02*nv)); 
   }
 
   if (compressible) {
@@ -580,16 +580,16 @@ bool Spacetime::global_operations()
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    compression(mu + sigma); assert(skeleton->consistent());
+    compression(mu + sigma); 
   }
 
   if (superposable || compressible) {
     skeleton->compute_entourages();
     skeleton->compute_neighbours();
     skeleton->compute_modified_vertices();
-    nv = (signed) skeleton->events.size();
+    n = (signed) skeleton->events.size();
     std::set<int> S;
-    for(i=0; i<nv; ++i) {
+    for(i=0; i<n; ++i) {
       if (!skeleton->active_event(i)) continue;
       if (skeleton->events[i].get_topology_modified()) S.insert(i);
     }

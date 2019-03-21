@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Parameters>
 	<Global>
-		<InitialEvents>81</InitialEvents>
+		<InitialEvents>1</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
-		<InitialDimension>1</InitialDimension>
+		<InitialDimension>4</InitialDimension>
 		<EuclideanGeometry>Yes</EuclideanGeometry>
 		<RelationalGeometry>No</RelationalGeometry>
 		<DimensionalUniformity>Yes</DimensionalUniformity>
@@ -13,16 +13,16 @@
 		<MaximumIterations>10</MaximumIterations>
 		<SheetDynamics>Yes</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
-		<MemoryFootprint>Low</MemoryFootprint>
+		<MemoryFootprint>High</MemoryFootprint>
 		<Superposable>Yes</Superposable>
 		<Compressible>Yes</Compressible>
 		<Permutable>Yes</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
-		<!--InitialState>MONOPLEX</InitialState-->
-		<InitialState>CARTESIAN</InitialState>
+		<InitialState>MONOPLEX</InitialState>
+		<!--InitialState>CARTESIAN</InitialState-->
 		<!--InitialState>SINGLETON</InitialState-->
 		<!--InitialState>DISKFILE</InitialState-->
-		<EdgeProbability>0.45</EdgeProbability>
+		<EdgeProbability>0.15</EdgeProbability>
 		<CheckpointFrequency>5</CheckpointFrequency>
 		<InputFile>spacetime_2012-12-30_07973.dat</InputFile>
 		<!--HomologyMethod>GAP</HomologyMethod-->
@@ -30,7 +30,7 @@
 		<!--HomologyBase>NTL::ZZ</HomologyBase-->
 		<!--HomologyBase>INT</HomologyBase-->
 		<HomologyBase>GF2</HomologyBase>
-		<PerturbTopology>No</PerturbTopology>
+		<PerturbTopology>Yes</PerturbTopology>
 		<PerturbGeometry>No</PerturbGeometry>
 		<PerturbEnergy>Yes</PerturbEnergy>
 		<Hyphansis>DYNAMIC</Hyphansis>
@@ -39,10 +39,10 @@
 		<ParityMutation>0.05</ParityMutation>
 	</Global>
 	<GeometrySolver>
-		<!--SolverType>MINIMAL</SolverType-->
+		<SolverType>MINIMAL</SolverType>
 		<!--SolverType>EVOLUTIONARY</SolverType-->
 		<!--SolverType>ANNEALING</SolverType-->
-		<SolverType>MECHANICAL</SolverType>
+		<!--SolverType>MECHANICAL</SolverType-->
 		<!--SolverType>SIMPLEX</SolverType-->
 		<SolverIterations>100</SolverIterations>
 		<GeometryTolerance>0.00005</GeometryTolerance>

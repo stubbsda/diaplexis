@@ -62,7 +62,7 @@ namespace DIAPLEXIS {
     Hyphansis weaving = Hyphansis::dynamic;
     int initial_size = 10;
     int max_iter = 50;
-    unsigned int initial_dim = 4;
+    int initial_dim = 4;
     boost::posix_time::ptime start_time;
     std::string date_string = "";
     std::string pid_string = "";

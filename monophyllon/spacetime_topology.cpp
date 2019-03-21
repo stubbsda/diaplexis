@@ -69,7 +69,7 @@ void Spacetime::superposition_fusion(double threshold)
 
 void Spacetime::superposition_fission(int ulimit)
 {
-  int i,n,nc = 0;
+  int n,nc = 0;
 
   // Finally, the opposite possibility - that a given vertex might undergo
   // spontaneous fission, creating a new vertex in its immediate vicinity...
