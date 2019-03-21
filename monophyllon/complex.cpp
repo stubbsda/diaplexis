@@ -350,6 +350,8 @@ void Complex::compute_global_topology(bool high_memory)
 {
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
+  if (cardinality(0) == 1) return;
+
   SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
 
   compute_global_nexus(NX);

@@ -4,14 +4,14 @@ using namespace DIAPLEXIS;
 
 void Spacetime::build_initial_state()
 {
-  int i,j,in1;
-  unsigned int m;
+  int i,j,m,in1;
   std::string geometry_type;
   Event vt;
+  const int D = (signed) geometry->dimension();
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
-  for(m=0; m<geometry->dimension(); ++m) {
+  for(m=0; m<D; ++m) {
     svalue.push_back(0.0);
   }
   vt.set_incept(0);
@@ -21,16 +21,15 @@ void Spacetime::build_initial_state()
     geometry_type = "CARTESIAN";
     SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
-    for(m=0; m<factors.size(); ++m) {
-      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/geometry->dimension());
+    for(m=0; m<(signed) factors.size(); ++m) {
+      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/D);
     }
     const int n = j;
-    const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
+    const int nd = SYNARMOSMA::ipow(n,D-1);
     const int nm1 = n - 1;
     const int nperturbed = 10 + int(0.01*skeleton->RND->irandom(initial_size));
     const double dx = 1.0;
-    int k,l,rvalue;
-    unsigned int r;
+    int k,l,r,rvalue;
     SYNARMOSMA::hash_map::const_iterator qt;
     std::vector<int> entourage,v;
     std::vector<int>* arrangement = new std::vector<int>[initial_size];
@@ -38,7 +37,7 @@ void Spacetime::build_initial_state()
     std::set<int>::const_iterator it,jt;
     std::vector<double> vpoints;
 
-    for(m=0; m<geometry->dimension(); ++m) {
+    for(m=0; m<D; ++m) {
       entourage.push_back(0);
     }
     
@@ -50,14 +49,14 @@ void Spacetime::build_initial_state()
       entourage[0] = in1;
       rvalue = l - in1*nd;
       vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
-      for(m=1; m<geometry->dimension(); ++m) {
+      for(m=1; m<D; ++m) {
         k /= n;
         in1 = rvalue/k;
         entourage[m] = in1;
         rvalue -= k*in1;
         vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
       }
-      for(m=0; m<geometry->dimension(); ++m) {
+      for(m=0; m<D; ++m) {
         if (entourage[m] == 0 || entourage[m] == nm1) vt.set_boundary(true);
       }
       skeleton->events.push_back(vt);
@@ -78,7 +77,7 @@ void Spacetime::build_initial_state()
       if (v[0] > 0) {
         in1 = (v[0]-1)*nd;
         k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
+        for(m=0; m<D-1; ++m) {
           k /= n;
           in1 += v[m+1]*k;
         }
@@ -87,18 +86,18 @@ void Spacetime::build_initial_state()
       if (v[0] < nm1) {
         in1 = (v[0]+1)*nd;
         k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
+        for(m=0; m<D-1; ++m) {
           k /= n;
           in1 += v[m+1]*k;
         }
         if (in1 > i) skeleton->simplex_addition(i,in1,0);
       }
-      for(m=1; m<geometry->dimension(); ++m) {
+      for(m=1; m<D; ++m) {
         if (v[m] > 0) {
           v[m] -= 1;
           in1 = v[0]*nd;
           k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
+          for(r=0; r<D-1; ++r) {
             k /= n;
             in1 += v[r+1]*k;
           }
@@ -109,7 +108,7 @@ void Spacetime::build_initial_state()
           v[m] += 1;
           in1 = v[0]*nd;
           k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
+          for(r=0; r<D-1; ++r) {
             k /= n;
             in1 += v[r+1]*k;
           }
@@ -121,12 +120,17 @@ void Spacetime::build_initial_state()
     delete[] arrangement;
     v.clear();
     // We need to see about introducing an initial perturbation...
-    if (perturb_topology) {
+    if (perturb_topology) {  
       k = int(double(n)/2.0);
       for(i=0; i<nperturbed; ++i) {
-        j = 0;
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*skeleton->RND->irandom(k-2,k+2);
+        if (k > 2) {        
+          j = 0;
+          for(m=0; m<D; ++m) {
+            j += SYNARMOSMA::ipow(n,D-1-m)*(skeleton->RND->irandom(k-2,k+2));
+          }
+        }
+        else {
+          j = skeleton->RND->irandom(initial_size);
         }
         v.push_back(j);
         // Now add some edges among the neighbours of this
@@ -152,7 +156,7 @@ void Spacetime::build_initial_state()
           v.push_back(j);
         }
       }
-      for(m=0; m<v.size(); ++m) {
+      for(m=0; m<(signed) v.size(); ++m) {
         geometry->mutation(v[m],true,false,0.5);
       }
     }
@@ -160,15 +164,20 @@ void Spacetime::build_initial_state()
       if (v.empty()) {
         // In this particular case I will simply alter the energy value of a single vertex
         // near the centre of the Cartesian network...
-        j = 0;
         k = int(double(n)/2.0);
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*skeleton->RND->irandom(k-2,k+2);
+        if (k > 2) {
+          j = 0;
+          for(m=0; m<D; ++m) {
+            j += SYNARMOSMA::ipow(n,D-1-m)*skeleton->RND->irandom(k-2,k+2);
+          }
+        }
+        else {
+          j = skeleton->RND->irandom(initial_size);
         }
         skeleton->events[j].set_energy(1000.0*(0.5 + skeleton->RND->drandom()/2.0));
       }
       else {
-        for(m=0; m<v.size(); ++m) {
+        for(m=0; m<(signed) v.size(); ++m) {
           skeleton->events[v[m]].set_energy(5.0*skeleton->RND->drandom());
         }
       }
@@ -191,8 +200,8 @@ void Spacetime::build_initial_state()
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
     geometry_type = "MONOPLEX";
-    int ulimit = geometry->dimension();
-    if (initial_dim > geometry->dimension()) ulimit = initial_dim;
+    int ulimit = D;
+    if (initial_dim > D) ulimit = initial_dim;
     if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*skeleton->RND->drandom());
 
     if (!relational) {
@@ -222,7 +231,7 @@ void Spacetime::build_initial_state()
   else if (initial_state == Initial_Topology::random) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
     // assemble a random graph, with n = initial_size
-    int level = 2,k = 0,ulimit;
+    int n = 0,level = 2,k = 0,ulimit;
     double percent = 0.0;
     bool found;
     std::vector<std::set<int> > N,svector;
@@ -253,7 +262,7 @@ void Spacetime::build_initial_state()
     }
     else {
       std::vector<double> climits;
-      for(m=0; m<geometry->dimension(); ++m) {
+      for(m=0; m<D; ++m) {
         climits.push_back(-10.0);
         climits.push_back(10.0);
       }
@@ -266,10 +275,12 @@ void Spacetime::build_initial_state()
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
         if (skeleton->RND->bernoulli_variate() == false) continue;
-        skeleton->simplex_addition(i,j,0);
+        skeleton->simplex_addition(i,j,0); n++;
       }
     }
-
+#ifdef VERBOSE
+    std::cout << "Added " << n << " edges among the " << initial_size << " events..." << std::endl;
+#endif
     // Finally we have to compute all the n-skeleton->simplices (n > 1) that are implied
     // by this random graph
     do {
@@ -370,6 +381,7 @@ void Spacetime::initialize()
     geometry->compute_squared_distances();
     skeleton->compute_simplicial_dimension();
     adjust_dimension();
+    assert(skeleton->consistent());
     skeleton->compute_parity();
     compute_lightcones();
     compute_volume();

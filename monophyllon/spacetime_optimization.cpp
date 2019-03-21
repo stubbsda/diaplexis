@@ -184,17 +184,16 @@ void Spacetime::mechanical_solver()
   compute_volume();
   if (!cgradient_refinement || geometry->get_euclidean() == false) return;
   double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
-  SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
+  SYNARMOSMA::Geometry initial_state; 
   std::vector<int> flexible_edge;
   std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
   skeleton->determine_flexible_edges(flexible_edge);
   E_initial = compute_abnormality(flexible_edge);
-  if (std::isnan(E_initial)) std::exit(1);
 #ifdef VERBOSE
   std::cout << "Initial error is " << E_initial << std::endl;
 #endif
-  geometry->store(initial_state);
+  geometry->store(&initial_state);
   for(i=0; i<system_size; ++i) {
     x.push_back(geometry->get_element(i));
     snew.push_back(0.0);
@@ -297,7 +296,7 @@ void Spacetime::mechanical_solver()
 #ifdef VERBOSE
     std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
 #endif
-    geometry->load(initial_state);
+    geometry->load(&initial_state);
     geometry->compute_squared_distances();
     for(i=0; i<nv; ++i) {
       if (!skeleton->active_event(i)) continue;
@@ -305,7 +304,6 @@ void Spacetime::mechanical_solver()
     }
     compute_volume();
   }
-  delete initial_state;
 }
 
 void Spacetime::evolutionary_solver()
@@ -471,10 +469,10 @@ void Spacetime::annealing_solver()
   std::set<int> modified_vertices;
   std::set<int>::const_iterator it;
   std::vector<double> E,lengths,base,output,output1,output2;
-  SYNARMOSMA::Geometry* optimal = new SYNARMOSMA::Geometry(*geometry); 
+  SYNARMOSMA::Geometry optimal; 
   const double initial_error = error;
 
-  geometry->store(optimal);
+  geometry->store(&optimal);
 
   // The goal here should be to find the temperature at which some 80% of
   // random changes are accepted - this will be the melting point of the
@@ -525,7 +523,7 @@ void Spacetime::annealing_solver()
 #ifdef VERBOSE
     std::cout << "At temperature " << temperature << ", the acceptance percentage is " << 100.0*paccept << std::endl;
 #endif
-    geometry->load(optimal);
+    geometry->load(&optimal);
     if (paccept > 0.85) {
       temperature *= 0.9;
     }
@@ -582,7 +580,7 @@ void Spacetime::annealing_solver()
           E.push_back(q);
           if (q < E_best) {
             E_best = q;
-            geometry->store(optimal);
+            geometry->store(&optimal);
           }
           nim++;
         }
@@ -635,12 +633,11 @@ void Spacetime::annealing_solver()
     std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
   }
 #endif
-  geometry->load(optimal);
+  geometry->load(&optimal);
   geometry->compute_squared_distances();
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  delete optimal;
 }
 
 void Spacetime::simplex_solver()
@@ -648,7 +645,7 @@ void Spacetime::simplex_solver()
   int i,j,k = 0,in1,bindex,windex,ntrans = 0;
   double f,q,centroid[system_size];
   SYNARMOSMA::Geometry SR(*geometry),SE(*geometry); 
-  SYNARMOSMA::Geometry* initial_state = new SYNARMOSMA::Geometry(*geometry); 
+  SYNARMOSMA::Geometry initial_state; 
   std::vector<std::pair<int,double> > fitness;
   std::set<int> modified_vertices;
   std::vector<SYNARMOSMA::Geometry> S;
@@ -658,7 +655,7 @@ void Spacetime::simplex_solver()
 #ifdef VERBOSE
   std::cout << "Using Nelder-Mead method with dimension " << system_size << std::endl;
 #endif
-  geometry->store(initial_state);
+  geometry->store(&initial_state);
 
   // We begin by creating a simplex of size system_size....
   geometry->store(&SR);
@@ -843,13 +840,12 @@ void Spacetime::simplex_solver()
 #ifdef VERBOSE
     std::cout << "Geometry optimization failed, reverting to original geometry." << std::endl;
 #endif
-    geometry->load(initial_state);
+    geometry->load(&initial_state);
   }
   geometry->compute_squared_distances();
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  delete initial_state;
 }
 
 void Spacetime::optimize()
