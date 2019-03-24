@@ -193,7 +193,7 @@ void Spacetime::build_initial_state()
     else {
       geometry->vertex_addition(svalue);
     }
-    vt.set_energy(5000.0*(0.5 + skeleton->RND->drandom()/2.0));
+    if (perturb_energy) vt.set_energy(5000.0*(0.5 + skeleton->RND->drandom()/2.0));
     skeleton->events.push_back(vt);
   }
   else if (initial_state == Initial_Topology::monoplex) {
@@ -325,6 +325,14 @@ void Spacetime::build_initial_state()
   }
  
   regularization(false);
+#ifdef DEBUG
+  if (initial_state == Initial_Topology::singleton) {
+    assert(skeleton->dimension() == 0);
+  }
+  else if (initial_state == Initial_Topology::monoplex) {
+    assert(skeleton->dimension() == initial_dim);
+  }
+#endif
 }
 
 void Spacetime::initialize()
