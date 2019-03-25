@@ -20,7 +20,6 @@ namespace DIAPLEXIS {
     void clear() override;
     void initialize(int,int,const std::set<int>&,int = 0);
     void initialize(const std::set<int>&,const std::set<int>&);
-    inline int get_parity(int,int) const;
     inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
     inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
     inline bool lightlike() const {return (!timelike() && !spacelike());};

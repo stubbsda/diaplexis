@@ -151,13 +151,18 @@ namespace DIAPLEXIS {
     friend class Spacetime;
   };
 
-  inline bool Complex::edge_exists(int u,int v) const
+  inline bool Complex::edge_exists(int u,int v,int sheet) const
   {
     std::set<int> vx;
     vx.insert(u); vx.insert(v);
-    SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);
+    SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);  
     if (qt == index_table[1].end()) return false;
-    if (!simplices[1][qt->second].active) return false;
+    if (sheet == -1) {
+      if (!simplices[1][qt->second].active()) return false;
+    }
+    else {
+      if (!simplices[1][qt->second].active(sheet)) return false;
+    }
     return true;
   }
 
@@ -167,26 +172,44 @@ namespace DIAPLEXIS {
     return pseudomanifold;
   }
 
-  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base) const
+  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
-    compute_graph(G,base,Complex::topological_radius);
+    compute_graph(G,base,Complex::topological_radius,sheet);
   }
 
-  inline int Complex::cardinality(int d) const
+  inline int Complex::cardinality(int d,int sheet) const
   {
     int i,n = 0;
-    if (d == 0) {
-      const int M = (signed) events.size();
-      for(i=0; i<M; ++i) {
-        if (!events[i].active) continue;
-        n++;
+    if (sheet == -1) {
+      if (d == 0) {
+        const int M = (signed) events.size();
+        for(i=0; i<M; ++i) {
+          if (!events[i].active()) continue;
+          n++;
+        }
+      }
+      else {
+        const int M = (signed) simplices[d].size();
+        for(i=0; i<M; ++i) {
+          if (!simplices[d][i].active()) continue;
+          n++;
+        }
       }
     }
     else {
-      const int M = (signed) simplices[d].size();
-      for(i=0; i<M; ++i) {
-        if (!simplices[d][i].active) continue;
-        n++;
+      if (d == 0) {
+        const int M = (signed) events.size();
+        for(i=0; i<M; ++i) {
+          if (!events[i].active(sheet)) continue;
+          n++;
+        }
+      }
+      else {
+        const int M = (signed) simplices[d].size();
+        for(i=0; i<M; ++i) {
+          if (!simplices[d][i].active(sheet)) continue;
+          n++;
+        }
       }
     }
     return n;
@@ -208,7 +231,7 @@ namespace DIAPLEXIS {
     }
     sigma = std::sqrt(sigma/double(nprocs));
     for(i=0; i<nv; ++i) {
-      if (!events[i].active) continue;
+      if (!events[i].active()) continue;
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         if (*it < i) continue;
         if (affinity[*it] != affinity[i]) bcount++;

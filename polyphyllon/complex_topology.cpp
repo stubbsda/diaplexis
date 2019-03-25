@@ -686,7 +686,7 @@ void Complex::simplex_deletion(int d,int n,int sheet)
     if (!simplices[d][n].active(sheet)) return;
     simplices[d][n].set_inactive(sheet);
     for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); ++it) {
-      codex[sheet].vx_delta.insert(*it);
+      events[*it].topology_modified = true;
     }
   }
   parents = simplices[d][n].entourage;
@@ -756,7 +756,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int sheet)
 #endif
 
   for(it=S.begin(); it!=S.end(); ++it) {
-    codex[sheet].vx_delta.insert(*it);
+    events[*it].topology_modified = true;
   }
 
   if (d == 1) {
@@ -820,7 +820,6 @@ void Complex::simplicial_implication(int sheet)
   int i,j,k,n,m,vx[2];
   Simplex S;
   std::string sx;
-  std::set<int> colours;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int ulimit = dimension(sheet);
@@ -828,10 +827,6 @@ void Complex::simplicial_implication(int sheet)
   if (sheet == -1) {
     std::set<int> ubiquity;
 
-    for(i=0; i<(signed) codex.size(); ++i) {
-      if (dimension(i) < 0) continue;
-      colours.insert(i);
-    }
     for(i=ulimit; i>=2; i--) {
       n = (signed) simplices[i].size();
       m = (signed) simplices[i-1].size();

@@ -200,6 +200,9 @@ void Spacetime::mechanical_solver()
   }
 
   compute_geometric_gradient(dx,true,flexible_edge);
+#ifdef DEBUG
+  assert((signed) dx.size() == system_size);
+#endif
   for(i=0; i<system_size; ++i) {
     fx.push_back(-dx[i]);
     c.push_back(dx[i]*fx[i]);

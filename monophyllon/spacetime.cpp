@@ -88,7 +88,7 @@ void Spacetime::condense()
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
 #ifdef VERBOSE
-  std::cout << "Topological density is for vertices " << rho_v << " and for edges " << rho_e << std::endl;
+  std::cout << "Topological density is " << rho_v << " for vertices and " << rho_e << " for edges." << std::endl;
 #endif
   if (rho_v > 0.5 || rho_e > 0.5) return;
   // So we need to condense this spacetime to reduce memory pressure...
@@ -273,17 +273,6 @@ bool Spacetime::correctness()
 
 void Spacetime::structural_deficiency()
 {
-  /*
-  \begin{equation}
-  \Lamba_G(v) = \frac {1}{NT} \sum_{i=1}^NT \lamba_i(v)
-  \end{equation}
-  where $\lambda_i(v)$ is the entwinement of the graph centred on the vertex v
-  for the sheet $i$ and $NT$ is the total number of sheets.
-
-  The topological quantities must be calculated over the whole ensemble
-  of sheets, to be used in conjunction with the global quantities: the
-  geometry (vertex coordinates) and energy.
-  */
   int i,j,v1,v2,v3,k = 0;
   double sum1,sum2,l,l_inv,alpha,d1,d2,delta,E_G,E_total = 0.0;
   bool found;
@@ -319,7 +308,7 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     if (!skeleton->events[v1].get_topology_modified()) continue;
     j = skeleton->vertex_dimension(v1);
-    alpha = 0.5*double(j - 1) + compute_temporal_vorticity(i);
+    alpha = 0.5*double(j - 1) + compute_temporal_vorticity(v1);
     skeleton->compute_graph(&G,v1);
     alpha += G.completeness();
     if (G.order() > 1) alpha += G.entwinement()/double(G.order() - 1); 
