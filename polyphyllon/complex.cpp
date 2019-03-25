@@ -776,7 +776,7 @@ int Complex::deserialize(std::ifstream& s)
     events.push_back(v);
   }
 
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     s.read((char*)(&n),sizeof(int));
     for(j=0; j<n; ++j) {
       output += S.deserialize(s);
@@ -784,7 +784,7 @@ int Complex::deserialize(std::ifstream& s)
     }
   }
 
-  for(i=1; i<=Spacetime::ND; ++i) {
+  for(i=1; i<=Complex::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       index_table[i][simplices[i][j].vertices] = j;
     }

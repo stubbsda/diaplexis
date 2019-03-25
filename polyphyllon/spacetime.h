@@ -292,30 +292,15 @@ namespace DIAPLEXIS {
     inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
     inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
     inline double get_error() const {return error;};
-    inline double get_total_energy(int sheet) const {return total_energy(sheet);}; 
+    inline double get_total_energy(int sheet) const {return total_energy(sheet);};
     inline int get_maximum_iterations() const {return max_iter;};
-    inline bool is_converged() const {return converged;};    
+    inline bool is_converged() const {return converged;};
     inline bool is_orientable(int sheet) const {bool output = (sheet == -1) ? orientable : codex[sheet].orientable; return output;};
     inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
     inline int get_events() const {return (signed) events.size();};
     inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
     inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
   };
-
-  inline bool Spacetime::edge_exists(int u,int v,int sheet) const
-  {
-    std::set<int> vx;
-    vx.insert(u); vx.insert(v);
-    SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);  
-    if (qt == index_table[1].end()) return false;
-    if (sheet == -1) {
-      if (!simplices[1][qt->second].active()) return false;
-    }
-    else {
-      if (!simplices[1][qt->second].active(sheet)) return false;
-    }
-    return true;
-  }
 
   inline std::string Spacetime::sheet_activity() const
   {
@@ -331,81 +316,12 @@ namespace DIAPLEXIS {
   inline bool Spacetime::is_pseudomanifold(bool* bdry,int sheet) const 
   {
     if (sheet == -1) {
-      *bdry = boundary;
-      return pseudomanifold;
+      return skeleton->is_pseudomanifold(bdry);
     }
     else {
       *bdry = codex[sheet].boundary;
       return codex[sheet].pseudomanifold;
     }
-  }
-
-  inline double Spacetime::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
-  {
-    int i,sum = 0,bcount = 0;
-    double mu,sigma = 0.0;
-    std::set<int>::const_iterator it;
-    const int nv = (signed) events.size();
-
-    for(i=0; i<nprocs; ++i) {
-      sum += volume[i];
-    }
-    mu = double(sum)/double(nprocs);
-    for(i=0; i<nprocs; ++i) {
-      sigma += (volume[i] - mu)*(volume[i] - mu);
-    }
-    sigma = std::sqrt(sigma/double(nprocs));
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        if (*it < i) continue;
-        if (affinity[*it] != affinity[i]) bcount++;
-      }
-    }
-    return sigma + double(bcount);
-  }
-
-  inline void Spacetime::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
-  {
-    compute_graph(G,base,Spacetime::topological_radius,sheet);
-  }
-
-  inline int Spacetime::cardinality(int d,int sheet) const
-  {
-    int i,n = 0;
-    if (sheet == -1) {
-      if (d == 0) {
-        const int M = (signed) events.size();
-        for(i=0; i<M; ++i) {
-          if (!events[i].active()) continue;
-          n++;
-        }
-      }
-      else {
-        const int M = (signed) simplices[d].size();
-        for(i=0; i<M; ++i) {
-          if (!simplices[d][i].active()) continue;
-          n++;
-        }
-      }
-    }
-    else {
-      if (d == 0) {
-        const int M = (signed) events.size();
-        for(i=0; i<M; ++i) {
-          if (!events[i].active(sheet)) continue;
-          n++;
-        }
-      }
-      else {
-        const int M = (signed) simplices[d].size();
-        for(i=0; i<M; ++i) {
-          if (!simplices[d][i].active(sheet)) continue;
-          n++;
-        }
-      }
-    }
-    return n;
   }
 }
 #endif

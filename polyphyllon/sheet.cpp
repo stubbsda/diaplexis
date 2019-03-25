@@ -38,8 +38,7 @@ Sheet::Sheet(const Sheet& source)
   parent = source.parent;
   nstep = source.nstep;
   active = source.active;
-  ops = source.ops;
-  modified_vertices = source.modified_vertices;
+  hyphantic_ops = source.hyphantic_ops;
   *H = *source.H;
   *pi = *source.pi;
   pseudomanifold = source.pseudomanifold;
@@ -55,8 +54,7 @@ Sheet& Sheet::operator =(const Sheet& source)
   parent = source.parent;
   active = source.active;
   nstep = source.nstep;
-  ops = source.ops;
-  modified_vertices = source.modified_vertices;
+  hyphantic_ops = source.hyphantic_ops;
   *H = *source.H;
   *pi = *source.pi;
   pseudomanifold = source.pseudomanifold;
@@ -79,7 +77,6 @@ void Sheet::clear()
   nstep = 0;
   parent = -1;
   index = -1;
-  modified_vertices.clear();
   H->clear();
   pi->clear();
   pseudomanifold = false;
@@ -100,7 +97,7 @@ void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotop
 
 int Sheet::serialize(std::ofstream& s) const
 {
-  int i,count = 0,n = (signed) ops.size();
+  int i,count = 0,n = (signed) hyphantic_ops.size();
 
   s.write((char*)(&index),sizeof(int)); count += sizeof(int);
   s.write((char*)(&nstep),sizeof(int)); count += sizeof(int);
