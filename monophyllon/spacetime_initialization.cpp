@@ -122,16 +122,12 @@ void Spacetime::build_initial_state()
     // We need to see about introducing an initial perturbation...
     if (perturb_topology) {  
       k = int(double(n)/2.0);
-      for(i=0; i<nperturbed; ++i) {
-        if (k > 2) {        
-          j = 0;
-          for(m=0; m<D; ++m) {
-            j += SYNARMOSMA::ipow(n,D-1-m)*(skeleton->RND->irandom(k-2,k+2));
-          }
+      for(i=0; i<nperturbed; ++i) {  
+        j = 0;
+        for(m=0; m<D; ++m) {
+          j += SYNARMOSMA::ipow(n,D-1-m)*(skeleton->RND->irandom(k-2,k+2));
         }
-        else {
-          j = skeleton->RND->irandom(initial_size);
-        }
+        if (j < 0) j = skeleton->RND->irandom(initial_size,v);
         v.push_back(j);
         // Now add some edges among the neighbours of this
         // vertex
