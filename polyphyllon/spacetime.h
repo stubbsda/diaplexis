@@ -195,6 +195,7 @@ namespace DIAPLEXIS {
 
     void inversion();
     bool realizable(int,int) const;
+    void arclength_statistics(double*,int) const;
     void compute_simplicial_dimension();
     void compute_volume();
     void compute_lengths();
@@ -209,7 +210,7 @@ namespace DIAPLEXIS {
     double compute_temporal_vorticity(int,int) const;
     double compute_temporal_nonlinearity() const;
     double representational_energy(bool) const;
-
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
     void implication(std::string&) const;
     void explication(std::string&) const;
     void compute_delta();
@@ -262,44 +263,23 @@ namespace DIAPLEXIS {
     void get_deficiency_values(std::vector<double>&,int) const;
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
-    bool is_pseudomanifold(bool*,int) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;
     void write_vertex_data(int) const;
-
+    inline bool is_pseudomanifold(bool*,int) const;
     inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
-    inline double get_geometric_distance(int,int) const {return geometry->get_squared_distance(n,m,false);};
+    inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
-    inline int get_cardinality(int d,int sheet) const {return cardinality_safe(d,sheet);};
-    inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
-    inline double get_event_obliquity(int n) const {return events[n].obliquity;};
-    inline double get_event_energy(int n) const {return events[n].get_energy();};
-    inline double get_event_deficiency(int n) const {return events[n].deficiency;};
-    inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
     inline std::string get_state_file() const {return state_file;};
-    inline std::string get_simplex_key(int d,int n) const {return SYNARMOSMA::make_key(simplices[d][n].vertices);};
-    inline std::string get_sheet_ops(int n) const {return codex[n].ops;};
+    inline std::string get_sheet_ops(int n) const {return codex[n].hyphantic_ops;};
     inline std::string get_sheet_activity() const {return sheet_activity();};
-    inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};
     inline void get_arclength_statistics(double* output,int sheet) const {arclength_statistics(output,sheet);};
-    inline void get_vertex_degree_statistics(double* output,int sheet) const {vertex_degree_statistics(output,sheet);};
-    inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const {compute_fvector(f,fstar,sheet);};
-    inline void get_delta(double* output) const {output[0] = topology_delta; output[1] = geometry_delta; output[2] = energy_delta;};
     inline int get_codex_size() const {return (signed) codex.size();};
-    inline int get_edge_index(const std::set<int>& vx) const {SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); return qt->second;};
     inline int get_iterations() const {return iterations;};
-    inline int get_dimension(int sheet) const {return dimension(sheet);};
-    inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
-    inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
     inline double get_error() const {return error;};
-    inline double get_total_energy(int sheet) const {return total_energy(sheet);};
     inline int get_maximum_iterations() const {return max_iter;};
     inline bool is_converged() const {return converged;};
-    inline bool is_orientable(int sheet) const {bool output = (sheet == -1) ? orientable : codex[sheet].orientable; return output;};
-    inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
-    inline int get_events() const {return (signed) events.size();};
-    inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
-    inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
+    inline bool is_orientable(int sheet) const {bool output = (sheet == -1) ? skeleton->orientable : codex[sheet].orientable; return output;};
   };
 
   inline std::string Spacetime::sheet_activity() const

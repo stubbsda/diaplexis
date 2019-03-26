@@ -18,9 +18,9 @@
 		<Compressible>Yes</Compressible>
 		<Permutable>Yes</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
-		<InitialState>MONOPLEX</InitialState>
+		<!--InitialState>MONOPLEX</InitialState-->
 		<!--InitialState>CARTESIAN</InitialState-->
-		<!--InitialState>SINGLETON</InitialState-->
+		<InitialState>SINGLETON</InitialState>
 		<!--InitialState>DISKFILE</InitialState-->
 		<EdgeProbability>0.15</EdgeProbability>
 		<CheckpointFrequency>5</CheckpointFrequency>

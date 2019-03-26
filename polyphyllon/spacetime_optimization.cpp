@@ -37,7 +37,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
     // This means two edges, so four vertices would have their force 
     // modified 
     // Spring-like attraction between connected vertices...
-    skeleton->events[offset[i]].get_neighbours(S);
+    skeleton->skeleton->events[offset[i]].get_neighbours(S);
     for(it=S.begin(); it!=S.end(); ++it) {
       j = vx_map[*it];
       for(k=0; k<D; ++k) {
@@ -73,7 +73,7 @@ void mechanical_solver()
 #endif
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
+    if (!skeleton->events[i].active()) continue;
     offset.push_back(m);
     m++;
   }
@@ -262,8 +262,8 @@ void mechanical_solver()
     geometry->load(initial_state);
     geometry->compute_squared_distances();
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      events[i].geometry_modified = true;
+      if (!skeleton->events[i].active()) continue;
+      skeleton->events[i].geometry_modified = true;
     }
     compute_volume();
   }
@@ -281,7 +281,7 @@ void Spacetime::evolutionary_solver()
   std::vector<SYNARMOSMA::Geometry> pool,ptemp;
   SYNARMOSMA::Geometry optimal; 
   SYNARMOSMA::Geometry initial_state; 
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
   const int pmagnitude = int(0.15*system_size);
   const double initial_error = error;
 
@@ -310,7 +310,7 @@ void Spacetime::evolutionary_solver()
       pool[i].get_implied_vertices(n,vx);
       viable = false;
       for(it=vx.begin(); it!=vx.end(); ++it) {
-        if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+        if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
       }
       if (!viable) continue;
       pool[i].mutation(n,false,false,0.05);
@@ -357,7 +357,7 @@ void Spacetime::evolutionary_solver()
         pool[i].get_implied_vertices(j,vx);
         viable = false;
         for(it=vx.begin(); it!=vx.end(); ++it) {
-          if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+          if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (!viable) continue;
         pool[i].mutation(j,false,false,severity);
@@ -451,7 +451,7 @@ void annealing_solver()
         geometry->get_implied_vertices(m,vmodified);
         viable = false;
         for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-          if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+          if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
         }
         if (viable) break;
         vmodified.clear();
@@ -525,7 +525,7 @@ void annealing_solver()
           geometry->get_implied_vertices(n,vmodified);
           viable = false;
           for(it=vmodified.begin(); it!=vmodified.end(); ++it) {
-            if (std::abs(events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
+            if (std::abs(skeleton->events[*it].geometric_deficiency) > std::numeric_limits<double>::epsilon()) viable = true;
           }
           if (viable) break;
           vmodified.clear();
@@ -636,11 +636,11 @@ void simplex_solver()
     geometry->rollback(true);
     vmodified.clear();
     for(j=0; j<nv; ++j) {
-      events[j].geometry_modified = false;
+      skeleton->events[j].geometry_modified = false;
     }
     for(j=1; j<=Spacetime::ND; ++j) {
-      for(k=0; k<(signed) simplices[j].size(); ++k) {
-        simplices[j][k].modified = false;
+      for(k=0; k<(signed) skeleton->simplices[j].size(); ++k) {
+        skeleton->simplices[j][k].modified = false;
       }
     }
   }
@@ -679,7 +679,7 @@ void simplex_solver()
     geometry->load(&SR);
     geometry->compute_squared_distances();
     for(i=0; i<nv; ++i) {
-      if (events[i].active()) events[i].geometry_modified = true;
+      if (skeleton->events[i].active()) skeleton->events[i].geometry_modified = true;
     }
     compute_volume();
     compute_obliquity();
@@ -695,7 +695,7 @@ void simplex_solver()
       geometry->load(&SE);
       geometry->compute_squared_distances();
       for(i=0; i<nv; ++i) {
-        if (events[i].active()) events[i].geometry_modified = true;
+        if (skeleton->events[i].active()) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
       compute_obliquity();
@@ -723,7 +723,7 @@ void simplex_solver()
       geometry->load(&SE);
       geometry->compute_squared_distances();
       for(i=0; i<nv; ++i) {
-        if (events[i].active()) events[i].geometry_modified = true;
+        if (skeleton->events[i].active()) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
       compute_obliquity();
@@ -742,7 +742,7 @@ void simplex_solver()
           geometry->load(&S[in1]);
           geometry->compute_squared_distances();
           for(j=0; j<nv; ++j) {
-            if (events[j].active()) events[j].geometry_modified = true;
+            if (skeleton->events[j].active()) skeleton->events[j].geometry_modified = true;
           }
           compute_volume();
           compute_obliquity();
@@ -761,7 +761,7 @@ void simplex_solver()
       geometry->load(&SE);
       geometry->compute_squared_distances();
       for(i=0; i<nv; ++i) {
-        if (events[i].active()) events[i].geometry_modified = true;
+        if (skeleton->events[i].active()) skeleton->events[i].geometry_modified = true;
       }
       compute_volume();
       compute_obliquity();
@@ -780,7 +780,7 @@ void simplex_solver()
           geometry->load(&S[in1]);
           geometry->compute_squared_distances();
           for(j=0; j<nv; ++j) {
-            if (events[j].active()) events[j].geometry_modified = true;
+            if (skeleton->events[j].active()) skeleton->events[j].geometry_modified = true;
           }
           compute_volume();
           compute_obliquity();
@@ -819,11 +819,11 @@ void Spacetime::optimize()
   int i,n;
   bool deficient = false;
   std::vector<double> v1;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active()) continue;
-    if (std::abs(events[i].deficiency) > std::numeric_limits<double>::epsilon()) {
+    if (!skeleton->events[i].active()) continue;
+    if (std::abs(skeleton->events[i].deficiency) > std::numeric_limits<double>::epsilon()) {
       deficient = true;
       break;
     }
@@ -842,13 +842,13 @@ void Spacetime::optimize()
     structural_deficiency();
 
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      if (std::abs(events[i].geometric_deficiency) < std::numeric_limits<double>::epsilon()) continue;
+      if (!skeleton->events[i].active()) continue;
+      if (std::abs(skeleton->events[i].geometric_deficiency) < std::numeric_limits<double>::epsilon()) continue;
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
       found = false;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        if (std::abs(events[*it].geometric_deficiency) < std::numeric_limits<double>::epsilon()) {
+      for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+        if (std::abs(skeleton->events[*it].geometric_deficiency) < std::numeric_limits<double>::epsilon()) {
           found = true;
           break;
         }
@@ -871,7 +871,7 @@ void Spacetime::optimize()
       n = RND->irandom(candidates);
       // In fact the variance we use should grow smaller as the geometric deficiency of the
       // vertex diminishes with 0.05 the maximum
-      sigma = 0.1*events[n].geometric_deficiency;
+      sigma = 0.1*skeleton->events[n].geometric_deficiency;
       if (sigma > 0.05) sigma = 0.05;
       geometry->mutation(n,true,true,sigma);
       vmodified.insert(n);
