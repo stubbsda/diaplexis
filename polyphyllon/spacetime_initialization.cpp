@@ -4,37 +4,33 @@ using namespace DIAPLEXIS;
 
 void Spacetime::build_initial_state(const std::set<int>& locus)
 {
-  int i,j,in1;
-  unsigned int m;
+  int i,j,m,in1;
   std::string geometry_type;
   Event vt;
-  Simplex S;
+  const int D = geometry->dimension();
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
 
-  for(m=0; m<geometry->dimension(); ++m) {
+  for(m=0; m<D; ++m) {
     svalue.push_back(0.0);
   }
-  vt.incept = 0;
+  vt.set_incept(0);
   vt.set_ubiquity(locus);
-  S.set_ubiquity(locus);
-  S.incept = 0;
 
   if (initial_state == Initial_Topology::cartesian) {
     std::vector<std::pair<long,int> > factors;
     geometry_type = "CARTESIAN";
     SYNARMOSMA::factorize(initial_size,factors);
     j = 1;
-    for(m=0; m<factors.size(); ++m) {
-      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/geometry->dimension());
+    for(m=0; m<(signed) factors.size(); ++m) {
+      j *= SYNARMOSMA::ipow(factors[m].first,factors[m].second/D);
     }
     const int n = j;
-    const int nd = SYNARMOSMA::ipow(n,geometry->dimension()-1);
+    const int nd = SYNARMOSMA::ipow(n,D-1);
     const int nm1 = n - 1;
-    const int nperturbed = 10 + int(0.01*RND->irandom(initial_size));
+    const int nperturbed = 10 + int(0.01*skeleton->RND->irandom(initial_size));
     const double dx = 1.0;
-    int k,l,d,rvalue;
-    unsigned int r;
+    int k,l,r,rvalue;
     SYNARMOSMA::hash_map::const_iterator qt;
     std::vector<int> entourage,v;
     std::vector<int>* arrangement = new std::vector<int>[initial_size];
@@ -42,7 +38,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     std::set<int>::const_iterator it,jt;
     std::vector<double> vpoints;
 
-    for(m=0; m<geometry->dimension(); ++m) {
+    for(m=0; m<D; ++m) {
       entourage.push_back(0);
     }
     
@@ -54,18 +50,18 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       entourage[0] = in1;
       rvalue = l - in1*nd;
       vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
-      for(m=1; m<geometry->dimension(); ++m) {
+      for(m=1; m<D; ++m) {
         k /= n;
         in1 = rvalue/k;
         entourage[m] = in1;
         rvalue -= k*in1;
         vpoints.push_back(dx*(double(in1) - 0.5*double(nm1)));
       }
-      for(m=0; m<geometry->dimension(); ++m) {
-        if (entourage[m] == 0 || entourage[m] == nm1) vt.boundary = true;
+      for(m=0; m<D; ++m) {
+        if (entourage[m] == 0 || entourage[m] == nm1) vt.set_boundary(true);
       }
-      events.push_back(vt);
-      vt.boundary = false;
+      skeleton->events.push_back(vt);
+      vt.set_boundary(false);
       arrangement[l] = entourage;
     }
 
@@ -82,62 +78,42 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       if (v[0] > 0) {
         in1 = (v[0]-1)*nd;
         k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
+        for(m=0; m<D-1; ++m) {
           k /= n;
           in1 += v[m+1]*k;
         }
-        if (in1 > i) {
-          S.initialize(i,in1,locus);
-          index_table[1][S.vertices] = (signed) simplices[1].size();
-          simplices[1].push_back(S);
-          S.vertices.clear();
-        }
+        if (in1 > i) skeleton->simplex_addition(i,in1,locus,0);
       }
       if (v[0] < nm1) {
         in1 = (v[0]+1)*nd;
         k = nd;
-        for(m=0; m<geometry->dimension()-1; ++m) {
+        for(m=0; m<D-1; ++m) {
           k /= n;
           in1 += v[m+1]*k;
         }
-        if (in1 > i) {
-          S.initialize(i,in1,locus);
-          index_table[1][S.vertices] = (signed) simplices[1].size();
-          simplices[1].push_back(S);
-          S.vertices.clear();
-        }
+        if (in1 > i) skeleton->simplex_addition(i,in1,locus,0);
       }
-      for(m=1; m<geometry->dimension(); ++m) {
+      for(m=1; m<D; ++m) {
         if (v[m] > 0) {
           v[m] -= 1;
           in1 = v[0]*nd;
           k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
+          for(r=0; r<D-1; ++r) {
             k /= n;
             in1 += v[r+1]*k;
           }
-          if (in1 > i) {
-            S.initialize(i,in1,locus);
-            index_table[1][S.vertices] = (signed) simplices[1].size();
-            simplices[1].push_back(S);
-            S.vertices.clear();
-          }
+          if (in1 > i) skeleton->simplex_addition(i,in1,locus,0);
           v[m] += 1;
         }
         if (v[m] < nm1) {
           v[m] += 1;
           in1 = v[0]*nd;
           k = nd;
-          for(r=0; r<geometry->dimension()-1; ++r) {
+          for(r=0; r<D-1; ++r) {
             k /= n;
             in1 += v[r+1]*k;
           }
-          if (in1 > i) {
-            S.initialize(i,in1,locus);
-            index_table[1][S.vertices] = (signed) simplices[1].size();
-            simplices[1].push_back(S);
-            S.vertices.clear();
-          }
+          if (in1 > i) skeleton->simplex_addition(i,in1,locus,0);
           v[m] -= 1;
         }
       }
@@ -149,25 +125,22 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       k = int(double(n)/2.0);
       for(i=0; i<nperturbed; ++i) {
         j = 0;
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
+        for(m=0; m<D; ++m) {
+          j += SYNARMOSMA::ipow(n,D-1-m)*(skeleton->RND->irandom(k-2,k+2));
         }
-        if (j < 0) j = RND->irandom(initial_size,v);
+        if (j < 0) j = skeleton->RND->irandom(initial_size,v);
         v.push_back(j);
         // Now add some edges among the neighbours of this
         // vertex
         N.insert(v[i]);
-        j = RND->irandom(2,5);
+        j = skeleton->RND->irandom(2,5);
         for(l=0; l<j; ++l) {
-          N.insert(events.size());
-          v.push_back(events.size());
+          N.insert(skeleton->events.size());
+          v.push_back(skeleton->events.size());
           geometry->vertex_addition(v[i]);
-          events.push_back(vt);
+          skeleton->events.push_back(vt);
         }
-        d = N.size() - 1;
-        S.initialize(N,locus);
-        simplices[d].push_back(S);
-        index_table[d][S.vertices] = (signed) simplices[d].size() - 1;
+        skeleton->simplex_addition(N,locus,0);
         N.clear();
       }
     }
@@ -176,11 +149,11 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       // existing vertices are altered...
       if (v.empty()) {  
         for(i=0; i<nperturbed; ++i) {
-          j = RND->irandom(initial_size,v);
+          j = skeleton->RND->irandom(initial_size,v);
           v.push_back(j);
         }
       }
-      for(m=0; m<v.size(); ++m) {
+      for(m=0; m<(signed) v.size(); ++m) {
         geometry->mutation(v[m],true,false,0.5);
       }
     }
@@ -190,15 +163,15 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         // near the centre of the Cartesian network...
         j = 0;
         k = int(double(n)/2.0);
-        for(m=0; m<geometry->dimension(); ++m) {
-          j += SYNARMOSMA::ipow(n,geometry->dimension()-1-m)*RND->irandom(k-2,k+2);
+        for(m=0; m<D; ++m) {
+          j += SYNARMOSMA::ipow(n,D-1-m)*skeleton->RND->irandom(k-2,k+2);
         }
-        if (j < 0) j = RND->irandom(initial_size);
-        events[j].set_energy(1000.0*(0.5 + RND->drandom()/2.0));
+        if (j < 0) j = skeleton->RND->irandom(initial_size);
+        skeleton->events[j].set_energy(1000.0*(0.5 + skeleton->RND->drandom()/2.0));
       }
       else {
-        for(m=0; m<v.size(); ++m) {
-          events[v[m]].set_energy(5.0*RND->drandom());
+        for(m=0; m<(signed) v.size(); ++m) {
+          skeleton->events[v[m]].set_energy(5.0*skeleton->RND->drandom());
         }
       }
     }
@@ -213,16 +186,16 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     else {
       geometry->vertex_addition(svalue);
     }
-    vt.set_energy(5000.0*(0.5 + RND->drandom()/2.0));
-    events.push_back(vt);
+    vt.set_energy(5000.0*(0.5 + skeleton->RND->drandom()/2.0));
+    skeleton->events.push_back(vt);
   }
   else if (initial_state == Initial_Topology::monoplex) {
     // The initial spacetime is a single simplex of dimension initial_dim
     std::set<int> vx;
     geometry_type = "MONOPLEX";
-    unsigned int ulimit = geometry->dimension();
-    if (initial_dim > geometry->dimension()) ulimit = initial_dim;
-    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*RND->drandom());
+    int ulimit = D;
+    if (initial_dim > D) ulimit = initial_dim;
+    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*skeleton->RND->drandom());
 
     if (!relational) {
       svalue.clear();
@@ -231,7 +204,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       }
       geometry->vertex_addition(svalue);
     }
-    events.push_back(vt);
+    skeleton->events.push_back(vt);
     vx.insert(0);
 
     for(m=1; m<=initial_dim; ++m) {
@@ -240,20 +213,18 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         geometry->vertex_addition(svalue);
         svalue[m-1] = 0.0;
       }
-      events.push_back(vt);
+      skeleton->events.push_back(vt);
       vx.insert(m);
     }
 
     if (relational) geometry->create(initial_dim,geometry_type);
 
-    S.initialize(vx,locus);
-    simplices[initial_dim].push_back(S);
-    index_table[initial_dim][S.vertices] = 0;
+    skeleton->simplex_addition(vx,locus,0);
   }
   else if (initial_state == Initial_Topology::random) {
     // We will use the Erdős–Rényi random graph model (the G(n,p) variant) to
     // assemble a random graph, with n = initial_size
-    int level = 2,k = 0,ulimit;
+    int n = 0,level = 2,k = 0,ulimit;
     double percent = 0.0;
     bool found;
     std::set<int>* N;
@@ -267,15 +238,15 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     geometry_type = "RANDOM";
     // Add the vertices
     for(i=0; i<initial_size; ++i) {
-      events.push_back(vt);
+      skeleton->events.push_back(vt);
     }
 
     // Next distribute energy among the vertices, ensuring at least one vertex
     // has non-zero energy
     do {
-      i = RND->irandom(initial_size);
-      if (!events[i].zero_energy()) continue;
-      events[i].set_energy(0.01 + 10.0*RND->drandom());
+      i = skeleton->RND->irandom(initial_size);
+      if (!skeleton->events[i].zero_energy()) continue;
+      skeleton->events[i].set_energy(0.01 + 10.0*skeleton->RND->drandom());
       k += 1;
       percent = double(k)/nv;
     } while(percent < 0.1);
@@ -286,7 +257,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     }
     else {
       std::vector<double> climits;
-      for(m=0; m<geometry->dimension(); ++m) {
+      for(m=0; m<D; ++m) {
         climits.push_back(-10.0);
         climits.push_back(10.0);
       }
@@ -294,30 +265,27 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     }
 
     // Now initialize the probability distribution for creating edges...
-    RND->initialize_bernoulli(edge_probability);
+    skeleton->RND->initialize_bernoulli(edge_probability);
     // and create the edges
     for(i=0; i<initial_size; ++i) {
       for(j=1+i; j<initial_size; ++j) {
-        if (RND->bernoulli_variate() == false) continue;
-        S.initialize(i,j,locus);
-        index_table[1][S.vertices] = (signed) simplices[1].size();
-        simplices[1].push_back(S);
-        events[i].neighbours.insert(j);
-        events[j].neighbours.insert(i);
-        S.vertices.clear();
+        if (skeleton->RND->bernoulli_variate() == false) continue;
+        skeleton->simplex_addition(i,j,locus,0); n++;
       }
     }
-
+#ifdef VERBOSE
+    std::cout << "Added " << n << " edges among the " << initial_size << " events..." << std::endl;
+#endif
     // Finally we have to compute all the n-simplices (n > 1) that are implied
     // by this random graph...
     do {
       N = new std::set<int>[level];
-      ulimit = (signed) simplices[level-1].size();
+      ulimit = (signed) skeleton->simplices[level-1].size();
       for(j=0; j<ulimit; ++j) {
-        v = simplices[level-1][j].vertices;
+        skeleton->simplices[level-1][j].get_vertices(v);
         i = 0;
         for(it=v.begin(); it!=v.end(); ++it) {
-          N[i] = events[*it].neighbours;
+          skeleton->events[*it].get_neighbours(N[i]);
           i++;
         }
         for(it=N[0].begin(); it!=N[0].end(); ++it) {
@@ -342,12 +310,8 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       }
       delete[] N;
       if (svector.empty()) break;
-      for(vit=svector.begin(); vit!=svector.end(); ++vit) {
-        qt = index_table[level].find(vit->vertices);
-        if (qt == index_table[level].end()) {
-          simplices[level].push_back(*vit);
-          index_table[level][vit->vertices] = (signed) simplices[level].size() - 1;
-        }
+      for(j=0; j<(signed) svector.size(); ++j) {
+        skeleton->simplex_addition(svector[j],locus,0);
       }
       svector.clear();
 #ifdef VERBOSE
@@ -361,6 +325,14 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     if (locus.count(i) > 0) regularization(false,i);
   }
   regularization(false,-1);
+#ifdef DEBUG
+  if (initial_state == Initial_Topology::singleton) {
+    assert(skeleton->dimension(-1) == 0);
+  }
+  else if (initial_state == Initial_Topology::monoplex) {
+    assert(skeleton->dimension(-1) == initial_dim);
+  }
+#endif
 }
 
 void Spacetime::initialize()
@@ -428,7 +400,6 @@ void Spacetime::initialize()
     compute_parity();
     compute_lightcones();
     compute_volume();
-    compute_curvature();
     compute_obliquity();
     compute_lightcones();
     compute_global_topology(-1);
@@ -437,23 +408,16 @@ void Spacetime::initialize()
     }
     structural_deficiency();
   }
-  RND->initialize_poisson(Spacetime::ramosity);
+  skeleton->RND->initialize_poisson(Spacetime::ramosity);
 #ifdef DEBUG
-  assert(energy_check());
+  assert(skeleton->energy_check());
 #endif
-  if (instrument_convergence) {
-    anterior.events = events;
-    for(i=1; i<=Spacetime::ND; ++i) {
-      anterior.simplices[i] = simplices[i];
-      anterior.index_table[i] = index_table[i];
-    }
-  }
   if (diskless) return;
 
 #ifdef VERBOSE
-  if (pseudomanifold) {
-    if (orientable) {
-      if (boundary) {
+  if (skeleton->pseudomanifold) {
+    if (skeleton->orientable) {
+      if (skeleton->boundary) {
         std::cout << "The spacetime complex is an orientable pseudomanifold with boundary." << std::endl;
       }
       else {
@@ -461,7 +425,7 @@ void Spacetime::initialize()
       }
     }
     else {
-      if (boundary) {
+      if (skeleton->boundary) {
         std::cout << "The spacetime complex is a non-orientable pseudomanifold with boundary." << std::endl;
       }
       else {
@@ -472,7 +436,7 @@ void Spacetime::initialize()
   else {
     std::cout << "The spacetime complex is not a pseudomanifold" << std::endl;
   }
-  write_topology(-1);
+  skeleton->write_topology(-1);
 #endif
   write_state();
   write_log();
