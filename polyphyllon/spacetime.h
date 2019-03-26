@@ -65,7 +65,7 @@ namespace DIAPLEXIS {
     int initial_size = 10;
     int max_iter = 50;
     int nt_initial = 1;
-    unsigned int initial_dim = 4;
+    int initial_dim = 4;
     boost::posix_time::ptime start_time;
     std::string date_string = "";
     std::string pid_string = "";
