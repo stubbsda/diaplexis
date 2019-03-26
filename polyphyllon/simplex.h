@@ -20,9 +20,6 @@ namespace DIAPLEXIS {
     void clear() override;
     void initialize(int,int,const std::set<int>&,int = 0);
     void initialize(const std::set<int>&,const std::set<int>&);
-    inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
-    inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
-    inline bool lightlike() const {return (!timelike() && !spacelike());};
     int absolute_embedding() const;
     void get_faces(std::vector<Simplex>&) const;
     int serialize(std::ofstream&) const override;
@@ -54,6 +51,9 @@ namespace DIAPLEXIS {
     inline double get_volume() const {return volume;};
     inline void set_squared_volume(double V) {sq_volume = V;};
     inline double get_squared_volume() const {return sq_volume;};
+    inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
+    inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
+    inline bool lightlike() const {return (!timelike() && !spacelike());};
     friend Simplex operator ^(const Simplex&,const Simplex&);
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
     friend class Complex;

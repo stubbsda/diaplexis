@@ -9,16 +9,16 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   std::vector<std::pair<int,int> > candidates;
   std::vector<int> modified;
   const double na = double(cardinality(0,-1));
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
   const int ulimit = dimension(-1);
 
   // Vertex fusion - if two vertices are close enough together, they
   // should coalesce.
   for(i=0; i<nv; ++i) {
     modified.push_back(0);
-    if (!events[i].active()) continue;
+    if (!skeleton->events[i].active()) continue;
     for(j=1+i; j<nv; ++j) {
-      if (!events[j].active()) continue;
+      if (!skeleton->events[j].active()) continue;
       delta = geometry->get_squared_distance(i,j,false);
       if (delta < alpha) candidates.push_back(std::pair<int,int>(i,j));
     }
@@ -46,17 +46,17 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
 
-  // Then recalculate the index_table hash map..
+  // Then recalculate the skeleton->index_table hash map..
   for(i=1; i<=ulimit; ++i) {
-    index_table[i].clear();
-    m = (signed) simplices[i].size();
+    skeleton->index_table[i].clear();
+    m = (signed) skeleton->simplices[i].size();
     for(j=0; j<m; ++j) {
-      simplices[i][j].entourage.clear();
-      index_table[i][simplices[i][j].vertices] = j;
+      skeleton->simplices[i][j].entourage.clear();
+      skeleton->index_table[i][skeleton->simplices[i][j].vertices] = j;
     }
   }
   for(i=0; i<nv; ++i) {
-    events[i].entourage.clear();
+    skeleton->events[i].entourage.clear();
   }
 
   // Then recalculate the entourages...
@@ -75,7 +75,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
   std::set<int>::const_iterator it;
   Event vx;
   Simplex S;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
   const int nt = (signed) codex.size();
 
   // Finally, the opposite possibility - that a given vertex might undergo
@@ -84,9 +84,9 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
   do {
     change = false;
     for(i=0; i<nc; ++i) {
-      if (!events[i].active()) continue;
+      if (!skeleton->events[i].active()) continue;
       if (RND->drandom() > 0.01) continue;
-      vx = events[i];      
+      vx = skeleton->events[i];      
       for(j=0; j<nt; ++j) {
         if (RND->drandom() > 0.9) {
           if (vx.active(j)) {
@@ -101,20 +101,20 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
       if (!vx.active()) vx.set_active(RND->irandom(nt));
       for(it=vx.neighbours.begin(); it!=vx.neighbours.end(); ++it) {
         j = *it;
-        events[j].neighbours.insert(nc);
+        skeleton->events[j].neighbours.insert(nc);
         vmodified.insert(j);
         for(k=0; k<nt; ++k) {
           if (RND->drandom() > 0.33) locus.insert(k);
         }
         if (locus.empty()) locus.insert(RND->irandom(nt));
         S.initialize(nc,j,locus);
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+        skeleton->simplices[1].push_back(S);
+        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
         S.clear();
       }
       vmodified.insert(nc);
       geometry->vertex_addition(i);
-      events.push_back(vx);
+      skeleton->events.push_back(vx);
       change = true;
       break;
     }
@@ -132,13 +132,13 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   std::set<int>::const_iterator it;
   double s,alpha;
   std::vector<int> candidates;
-  const int nv = (signed) events.size();
-  const int ne = (signed) simplices[1].size();
+  const int nv = (signed) skeleton->events.size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const int nt = (signed) codex.size();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) continue;
-    alpha = std::abs(simplices[1][i].volume);
+    if (!skeleton->simplices[1][i].active()) continue;
+    alpha = std::abs(skeleton->simplices[1][i].volume);
     if (alpha > threshold) {
       s = std::exp(-(alpha - threshold));
       if (RND->drandom() > s) candidates.push_back(i);
@@ -148,19 +148,19 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
   for(i=0; i<nc; ++i) {
     n = candidates[i];
     simplex_deletion(1,n,-1);
-    // Remove the references in events[v/w].neighbours and
-    // events[v/w].entourage
-    simplices[1][n].get_vertices(v);
+    // Remove the references in skeleton->events[v/w].neighbours and
+    // skeleton->events[v/w].entourage
+    skeleton->simplices[1][n].get_vertices(v);
 
-    it = std::find(events[v[0]].neighbours.begin(),events[v[0]].neighbours.end(),v[1]);
-    if (it != events[v[0]].neighbours.end()) events[v[0]].neighbours.erase(it);
-    it = std::find(events[v[1]].neighbours.begin(),events[v[1]].neighbours.end(),v[0]);
-    if (it != events[v[1]].neighbours.end()) events[v[1]].neighbours.erase(it);
+    it = std::find(skeleton->events[v[0]].neighbours.begin(),skeleton->events[v[0]].neighbours.end(),v[1]);
+    if (it != skeleton->events[v[0]].neighbours.end()) skeleton->events[v[0]].neighbours.erase(it);
+    it = std::find(skeleton->events[v[1]].neighbours.begin(),skeleton->events[v[1]].neighbours.end(),v[0]);
+    if (it != skeleton->events[v[1]].neighbours.end()) skeleton->events[v[1]].neighbours.erase(it);
 
-    it = std::find(events[v[0]].entourage.begin(),events[v[0]].entourage.end(),n);
-    if (it != events[v[0]].entourage.end()) events[v[0]].entourage.erase(it);
-    it = std::find(events[v[1]].entourage.begin(),events[v[1]].entourage.end(),n);
-    if (it != events[v[1]].entourage.end()) events[v[1]].entourage.erase(it);
+    it = std::find(skeleton->events[v[0]].entourage.begin(),skeleton->events[v[0]].entourage.end(),n);
+    if (it != skeleton->events[v[0]].entourage.end()) skeleton->events[v[0]].entourage.erase(it);
+    it = std::find(skeleton->events[v[1]].entourage.begin(),skeleton->events[v[1]].entourage.end(),n);
+    if (it != skeleton->events[v[1]].entourage.end()) skeleton->events[v[1]].entourage.erase(it);
 
     vmodified.insert(v[0]);
     vmodified.insert(v[1]);
@@ -181,7 +181,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
 #endif
     std::vector<int>* cvertex = new std::vector<int>[ncomp];
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (!skeleton->events[i].active()) continue;
       cvertex[component[i]].push_back(i);
     }
 
@@ -240,10 +240,10 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
       l = RND->irandom(nt);
       locus.insert(l);
       S.initialize(j,k,locus);
-      simplices[1].push_back(S);
-      index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
-      events[j].neighbours.insert(k);
-      events[k].neighbours.insert(j);
+      skeleton->simplices[1].push_back(S);
+      skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
+      skeleton->events[j].neighbours.insert(k);
+      skeleton->events[k].neighbours.insert(j);
       vmodified.insert(k);
       vmodified.insert(j);
       locus.erase(l);
@@ -278,8 +278,8 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   // sheet that are within the a sphere of radius "size"
   geometry->get_coordinates(centre,cvertex); 
   assert(vertex_deletion(centre,sheet));
-  for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active(sheet)) continue;
+  for(i=0; i<(signed) skeleton->events.size(); ++i) {
+    if (!skeleton->events[i].active(sheet)) continue;
     l = geometry->get_squared_distance(centre,i,false);
     if (l < size) {
       assert(vertex_deletion(i,sheet));
@@ -318,17 +318,17 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   }
   simplex_addition(S,sheet);
 
-  // Now add a set of lower-dimensional simplices to this knot and also tie it 
+  // Now add a set of lower-dimensional skeleton->simplices to this knot and also tie it 
   // in to the existing spacetime complex...
   base = S;
   kvertex = S;
   S.clear();
   for(i=D-1; i>=3; --i) {
-    // As the dimension shrinks, the number of simplices should grow
+    // As the dimension shrinks, the number of skeleton->simplices should grow
     l = double(i);
     m = int(RND->nrandom(dm - l,2.0));
 #ifdef VERBOSE
-    std::cout << "Adding " << m << " " << i << "-simplices to this complex" << std::endl;
+    std::cout << "Adding " << m << " " << i << "-skeleton->simplices to this complex" << std::endl;
 #endif
     if (m <= 0) continue;
     nc = 0;
@@ -397,7 +397,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   d = bvertex.size()*(bvertex.size() - 1)/2;
   nbridge = int((0.1 + 0.15*RND->drandom())*d);
 #ifdef VERBOSE
-  std::cout << "Adding " << nbridge << " 2-simplices" << std::endl;
+  std::cout << "Adding " << nbridge << " 2-skeleton->simplices" << std::endl;
 #endif
   d = 0;
   do {
@@ -460,7 +460,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   std::set<int> locus,colours;
   std::vector<int> component;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int nv = (signed) events.size();
+  const int nv = (signed) skeleton->events.size();
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
@@ -479,13 +479,13 @@ void Spacetime::regularization(bool minimal,int sheet)
   std::vector<int>* cvertex = new std::vector<int>[nc];
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
+      if (!skeleton->events[i].active()) continue;
       cvertex[component[i]].push_back(i);
     }
   }
   else {
     for(i=0; i<nv; ++i) {
-      if (!events[i].active(sheet)) continue;
+      if (!skeleton->events[i].active(sheet)) continue;
       cvertex[component[i]].push_back(i);
     }
   }
@@ -499,13 +499,13 @@ void Spacetime::regularization(bool minimal,int sheet)
   for(i=0; i<nc; ++i) {
     if (cvertex[i].size() == 1) {
       // Isolated vertex, let's see what its energy is...
-      if (events[cvertex[i][0]].zero_energy()) {
+      if (skeleton->events[cvertex[i][0]].zero_energy()) {
         // Eliminate this vertex altogether...
 #ifdef VERBOSE
         std::cout << "Eliminating isolated vertex " << cvertex[i][0] << std::endl;
 #endif
         for(j=0; j<nt; ++j) {
-          events[cvertex[i][0]].set_inactive(j);
+          skeleton->events[cvertex[i][0]].set_inactive(j);
         }
         cvertex[i].erase(cvertex[i].begin());
       }
@@ -539,26 +539,26 @@ void Spacetime::regularization(bool minimal,int sheet)
       locus.insert(j);
       S = Simplex(v1,v2,locus);
       locus.erase(j);
-      qt = index_table[1].find(S.vertices);
-      if (qt == index_table[1].end()) {
+      qt = skeleton->index_table[1].find(S.vertices);
+      if (qt == skeleton->index_table[1].end()) {
 #ifdef VERBOSE
         std::cout << "Adding edge connecting " << v1 << " and " << v2 << " to maintain the complex's connectedness" << std::endl;
 #endif
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+        skeleton->simplices[1].push_back(S);
+        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       }
       else {
 #ifdef DEBUG
-        assert(!simplices[1][qt->second].active());
+        assert(!skeleton->simplices[1][qt->second].active());
 #endif
 #ifdef VERBOSE
-        std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
+        std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
 #endif
-        simplices[1][qt->second].set_active(j);
+        skeleton->simplices[1][qt->second].set_active(j);
       }
       // Need to ensure that v1 and v2 are also coloured by sheet...
-      if (!events[v1].active(j)) events[v1].set_active(j); 
-      if (!events[v2].active(j)) events[v2].set_active(j); 
+      if (!skeleton->events[v1].active(j)) skeleton->events[v1].set_active(j); 
+      if (!skeleton->events[v2].active(j)) skeleton->events[v2].set_active(j); 
     }
   }
   else {
@@ -588,13 +588,13 @@ void Spacetime::regularization(bool minimal,int sheet)
       assert(v2 > -1);
 #endif
       S = Simplex(v1,v2,locus);
-      qt = index_table[1].find(S.vertices);
-      if (qt == index_table[1].end()) {
-        simplices[1].push_back(S);
-        index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
+      qt = skeleton->index_table[1].find(S.vertices);
+      if (qt == skeleton->index_table[1].end()) {
+        skeleton->simplices[1].push_back(S);
+        skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
       }
       else {
-        if (!simplices[1][qt->second].active(sheet)) simplices[1][qt->second].set_active(sheet);
+        if (!skeleton->simplices[1][qt->second].active(sheet)) skeleton->simplices[1][qt->second].set_active(sheet);
       }
     }
   }

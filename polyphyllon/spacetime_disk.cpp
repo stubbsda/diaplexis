@@ -7,7 +7,7 @@ void Spacetime::read_parameters(const std::string& filename)
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
   std::string name,value;
-  unsigned int rs;
+  unsigned long rs;
   int q,n_is = 0,n_so = 0,D = 0;
   bool euclidean = false,relational = false,uniform = false;
 
@@ -57,9 +57,9 @@ void Spacetime::read_parameters(const std::string& filename)
       uniform = (value == "YES") ? true : false;
     }
     else if (name == "RandomSeed") {
-      rs = boost::lexical_cast<unsigned int>(value);
+      rs = boost::lexical_cast<unsigned long>(value);
       if (rs == 0) rs = (unsigned) std::time(nullptr);
-      RND->set_seed(rs);
+      skeleton->RND->set_seed(rs);
     }
     else if (name == "BackgroundDimension") {
       D = boost::lexical_cast<int>(value);
@@ -110,22 +110,22 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "HomologyMethod") {
       boost::to_upper(value);
       if (value == "GAP") {
-        H->set_method(SYNARMOSMA::Homology::Method::gap); 
+        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::gap); 
       }
       else if (value == "NATIVE") {
-        H->set_method(SYNARMOSMA::Homology::Method::native);
+        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::native);
       }
     }
     else if (name == "HomologyBase") {
       boost::to_upper(value);
       if (value == "INT") {
-        H->set_field(SYNARMOSMA::Homology::Field::int32);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::int32);
       }
       else if (value == "NTL::ZZ") {
-        H->set_field(SYNARMOSMA::Homology::Field::multiprecision);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::multiprecision);
       }
       else if (value == "GF2") {
-        H->set_field(SYNARMOSMA::Homology::Field::mod2);
+        skeleton->set_homology_field(SYNARMOSMA::Homology::Field::mod2);
       }
     }
     else if (name == "Compressible") {
@@ -343,11 +343,11 @@ void Spacetime::write_log() const
   pugi::xml_document logfile;
   pugi::xml_node rstep,sheet,atom;
   SYNARMOSMA::hash_map::const_iterator qt;
-  std::set<int> S;
+  std::set<int> N,S;
   std::set<int>::const_iterator it;
   std::string group_string,bvalue[] = {"False","True"};
   const int Nv = (signed) skeleton->events.size();
-  const int Ne = (signed) simplices[1].size();
+  const int Ne = (signed) skeleton->simplices[1].size();
   const int Nt = (signed) codex.size();
   double vd_avg[Nt];
   int vd_max[Nt],vd_min[Nt];
@@ -387,7 +387,7 @@ void Spacetime::write_log() const
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<SheetDynamics>" << bvalue[foliodynamics] << "</SheetDynamics>" << std::endl;
-    s << "<RandomSeed>" << RND->get_seed() << "</RandomSeed>" << std::endl;
+    s << "<RandomSeed>" << skeleton->RND->get_seed() << "</RandomSeed>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
     s << "<Compressible>" << bvalue[compressible] << "</Compressible>" << std::endl;
     s << "<Permutable>" << bvalue[permutable] << "</Permutable>" << std::endl;
@@ -405,19 +405,19 @@ void Spacetime::write_log() const
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
       s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
-    if (H->get_method() == SYNARMOSMA::Homology::Method::gap) {
+    if (skeleton->get_homology_method() == SYNARMOSMA::Homology::Method::gap) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
-    else if (H->get_method() == SYNARMOSMA::Homology::Method::native) {
+    else if (skeleton->get_homology_method() == SYNARMOSMA::Homology::Method::native) {
       s << "<HomologyMethod>Native</HomologyMethod>" << std::endl;
     }
-    if (H->get_field() == SYNARMOSMA::Homology::Field::int32) {
+    if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::int32) {
       s << "<HomologyBase>INT</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::Field::multiprecision) {
+    else if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::multiprecision) {
       s << "<HomologyBase>NTL::ZZ</HomologyBase>" << std::endl;
     }
-    else if (H->get_field() == SYNARMOSMA::Homology::Field::mod2) {
+    else if (skeleton->get_homology_field() == SYNARMOSMA::Homology::Field::mod2) {
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     if (weaving == Hyphansis::dynamic) {
@@ -477,7 +477,7 @@ void Spacetime::write_log() const
     fcall = false;
   }
 
-  nn = cardinality(0,-1);
+  nn = skeleton->cardinality(0,-1);
   avg_ven = 0.0;
   max_ven = 0.0;
   min_ven = 10000.0;
@@ -501,12 +501,13 @@ void Spacetime::write_log() const
     nf = 0;
     np = 0;
     atemporal = true;
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    skeleton->events[i].get_neighbours(N);
+    for(it=N.begin(); it!=N.end(); ++it) {
       in1 = *it;
       S.clear();
       S.insert(i); S.insert(in1);
-      qt = index_table[1].find(S);
-      if (!simplices[1][qt->second].timelike()) continue;
+      qt = skeleton->index_table[1].find(S);
+      if (!skeleton->simplices[1][qt->second].timelike()) continue;
       atemporal = false;
       if (geometry->get_temporal_order(i,in1) == SYNARMOSMA::Relation::before) {
         nf++;
@@ -528,11 +529,11 @@ void Spacetime::write_log() const
   ntime = 0;
   nnull = 0;
   for(i=0; i<Ne; ++i) {
-    if (!simplices[1][i].active()) continue;
-    if (simplices[1][i].timelike()) {
+    if (!skeleton->simplices[1][i].active()) continue;
+    if (skeleton->simplices[1][i].timelike()) {
       ntime++;
     }
-    else if (simplices[1][i].spacelike()) {
+    else if (skeleton->simplices[1][i].spacelike()) {
       nspace++;
     }
     else {
@@ -552,16 +553,16 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("Pseudomanifold");
-  nvalue = (pseudomanifold) ? "True" : "False";
+  nvalue = (skeleton->pseudomanifold) ? "True" : "False";
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  if (pseudomanifold) {
+  if (skeleton->pseudomanifold) {
     atom = rstep.append_child("Boundary");
-    nvalue = (boundary) ? "True" : "False";
+    nvalue = (skeleton->boundary) ? "True" : "False";
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = rstep.append_child("Orientable");
-    nvalue = (orientable) ? "True" : "False";
+    nvalue = (skeleton->orientable) ? "True" : "False";
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   }
   else {
@@ -573,16 +574,16 @@ void Spacetime::write_log() const
   }
 
   atom = rstep.append_child("Homology");
-  nvalue = H->write();
+  skeleton->get_homology(nvalue);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   if (high_memory) {
     atom = rstep.append_child("Homotopy");
-    nvalue = pi->write();
+    skeleton->get_homotopy(nvalue);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   }
 
-  ne = cardinality(1,-1);
+  ne = skeleton->cardinality(1,-1);
   atom = rstep.append_child("CircuitRank");
   nvalue = boost::lexical_cast<std::string>(ne-nn+1);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -616,7 +617,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("CyclicEdges");
-  nvalue = boost::lexical_cast<std::string>(cyclicity(-1));
+  nvalue = boost::lexical_cast<std::string>(skeleton->cyclicity(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   arclength_statistics(vdata,-1);
@@ -632,7 +633,7 @@ void Spacetime::write_log() const
   nvalue = boost::lexical_cast<std::string>(vdata[0]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-  vertex_degree_statistics(vdata,-1);
+  skeleton->vertex_degree_statistics(vdata,-1);
   atom = rstep.append_child("MinimumEventDegree");
   nvalue = boost::lexical_cast<std::string>(vdata[1]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
@@ -646,7 +647,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("TotalEnergy");
-  nvalue = boost::lexical_cast<std::string>(total_energy(-1));
+  nvalue = boost::lexical_cast<std::string>(skeleton->total_energy(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MinimumEventEnergy");
@@ -670,7 +671,7 @@ void Spacetime::write_log() const
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("EulerCharacteristic");
-  nvalue = boost::lexical_cast<std::string>(euler_characteristic(-1));
+  nvalue = boost::lexical_cast<std::string>(skeleton->euler_characteristic(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
 #ifdef _OPENMP
@@ -678,7 +679,7 @@ void Spacetime::write_log() const
 #endif
   for(i=0; i<Nv; ++i) {
     for(j=0; j<Nt; ++j) {
-      vdimension[Nt*i+j] = (!skeleton->events[i].active(j)) ? -1 : vertex_dimension(i,j);
+      vdimension[Nt*i+j] = (!skeleton->events[i].active(j)) ? -1 : skeleton->vertex_dimension(i,j);
     }
   }
 
@@ -693,7 +694,7 @@ void Spacetime::write_log() const
       if (v > mx) mx = v;
       if (v < mn) mn = v;
     }
-    vd_avg[i] = double(sum)/double(cardinality(0,i));
+    vd_avg[i] = double(sum)/double(skeleton->cardinality(0,i));
     vd_min[i] = mn;
     vd_max[i] = mx;
   }
@@ -708,9 +709,9 @@ void Spacetime::write_log() const
     atom = sheet.append_child("State");
     atom.append_child(pugi::node_pcdata).set_value(bvalue[codex[i].active].c_str());
 
-    nn = cardinality(0,i);
-    ne = cardinality(1,i);
-    ncyclic = cyclicity(i);
+    nn = skeleton->cardinality(0,i);
+    ne = skeleton->cardinality(1,i);
+    ncyclic = skeleton->cyclicity(i);
 
     avg_ven = 0.0;
     avg_val = 0.0;
@@ -723,7 +724,7 @@ void Spacetime::write_log() const
     for(j=0; j<Nv; ++j) {
       if (!skeleton->events[j].active(i)) continue;
       min_ven = skeleton->events[j].get_energy();
-      min_val = vertex_valence(j,i);
+      min_val = skeleton->vertex_valence(j,i);
       break;
     }
     for(j=0; j<Nv; ++j) {
@@ -732,7 +733,7 @@ void Spacetime::write_log() const
       if (w > max_ven) max_ven = w;
       if (w < min_ven) min_ven = w;
       avg_ven += w;
-      l = vertex_valence(j,i);
+      l = skeleton->vertex_valence(j,i);
       if (l > max_val) max_val = l;
       if (l < min_val) min_val = l;
       avg_val += double(l);
@@ -751,12 +752,13 @@ void Spacetime::write_log() const
       nf = 0;
       np = 0;
       atemporal = true;
-      for(it=skeleton->events[j].neighbours.begin(); it!=skeleton->events[j].neighbours.end(); ++it) {
+      skeleton->events[j].get_neighbours(N);
+      for(it=N.begin(); it!=N.end(); ++it) {
         in1 = *it;
         S.clear();
         S.insert(j); S.insert(in1);
-        qt = index_table[1].find(S);
-        if (!simplices[1][qt->second].timelike()) continue;
+        qt = skeleton->index_table[1].find(S);
+        if (!skeleton->simplices[1][qt->second].timelike()) continue;
         atemporal = false;
         if (geometry->get_temporal_order(j,in1) == SYNARMOSMA::Relation::before) {
           nf++;
@@ -782,13 +784,13 @@ void Spacetime::write_log() const
     avg_length = 0.0;
     if (ne > 0) {
       for(j=0; j<Ne; ++j) {
-        if (!simplices[1][j].active(i)) continue;
-        wm = simplices[1][j].volume;
+        if (!skeleton->simplices[1][j].active(i)) continue;
+        wm = skeleton->simplices[1][j].get_volume();
         avg_length += wm;
-        if (simplices[1][j].timelike()) {
+        if (skeleton->simplices[1][j].timelike()) {
           ntime++;
         }
-        else if (simplices[1][j].spacelike()) {
+        else if (skeleton->simplices[1][j].spacelike()) {
           nspace++;
         }
         else {
@@ -797,8 +799,8 @@ void Spacetime::write_log() const
       }
       avg_length /= double(ne);
       for(j=0; j<Ne; ++j) {
-        if (!simplices[1][j].active(i)) continue;
-        wm = simplices[1][j].volume;
+        if (!skeleton->simplices[1][j].active(i)) continue;
+        wm = skeleton->simplices[1][j].get_volume();
         if (wm > max_length) max_length = wm;
         if (wm < min_length) min_length = wm;
       }
@@ -908,7 +910,7 @@ void Spacetime::write_log() const
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("TotalEnergy");
-    nvalue = boost::lexical_cast<std::string>(total_energy(i));
+    nvalue = boost::lexical_cast<std::string>(skeleton->total_energy(i));
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MinimumEventEnergy");
@@ -932,15 +934,15 @@ void Spacetime::write_log() const
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("EulerCharacteristic");
-    nvalue = boost::lexical_cast<std::string>(euler_characteristic(i));
+    nvalue = boost::lexical_cast<std::string>(skeleton->euler_characteristic(i));
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("HyphanticSequence");
-    if (codex[i].ops == "") {
+    if (codex[i].hyphantic_ops == "") {
       atom.append_child(pugi::node_pcdata).set_value("NULL");
     }
     else {
-      atom.append_child(pugi::node_pcdata).set_value(codex[i].ops.c_str());
+      atom.append_child(pugi::node_pcdata).set_value(codex[i].hyphantic_ops.c_str());
     }
   }
   logfile.save_file(log_file.c_str());
@@ -953,8 +955,8 @@ void Spacetime::read(const Spacetime& source)
   global_deficiency = source.global_deficiency;
   skeleton->events = source.skeleton->events;
   for(int i=0; i<=Complex::ND; ++i) {
-    simplices[i] = source.simplices[i];
-    index_table[i] = source.index_table[i];
+    skeleton->simplices[i] = source.skeleton->simplices[i];
+    skeleton->index_table[i] = source.skeleton->index_table[i];
   }
 }
 
@@ -965,8 +967,8 @@ void Spacetime::write(Spacetime& state) const
   state.global_deficiency = global_deficiency;
   state.skeleton->events = skeleton->events;
   for(int i=0; i<=Complex::ND; ++i) {
-    state.simplices[i] = simplices[i];
-    state.index_table[i] = index_table[i];
+    state.skeleton->simplices[i] = skeleton->simplices[i];
+    state.skeleton->index_table[i] = skeleton->index_table[i];
   }
 }
 
