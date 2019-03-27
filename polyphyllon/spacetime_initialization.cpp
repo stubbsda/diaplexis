@@ -394,9 +394,9 @@ void Spacetime::initialize()
     }
     build_initial_state(locus);
     geometry->compute_squared_distances();
-    compute_simplicial_dimension();
+    skeleton->compute_simplicial_dimension();
     adjust_dimension();
-    compute_parity();
+    skeleton->compute_parity();
     compute_lightcones();
     compute_volume();
     compute_obliquity();

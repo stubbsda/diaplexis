@@ -27,7 +27,7 @@ namespace DIAPLEXIS {
     static const int topological_radius = 4;
 
     void allocate();
-    void inversion(int);
+    void inversion();
     void compute_neighbours();
     void compute_entourages(int);
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
@@ -44,8 +44,8 @@ namespace DIAPLEXIS {
     bool logical_conformity(int) const;
     void compute_simplex_energy(int,int);
     void compute_simplex_parity(int,int);
-    bool edge_parity_mutation(int);
     bool edge_parity_mutation(int,int);
+    bool edge_parity_mutation(int,int,int);
     void recompute_parity(int);
     void recompute_parity(const std::set<int>&);
     void compute_parity();

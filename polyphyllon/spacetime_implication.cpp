@@ -43,9 +43,9 @@ bool Spacetime::foliation_m(int base,int sheet)
     candidates.insert(p);
   }
   if (candidates.size() < 2) return false;
-  n1 = RND->irandom(candidates);
+  n1 = skeleton->RND->irandom(candidates);
   do {
-    n2 = RND->irandom(candidates);
+    n2 = skeleton->RND->irandom(candidates);
     if (n2 != n1) break;
   } while(true);
 
@@ -87,7 +87,7 @@ bool Spacetime::fusion_m(int base,int sheet)
     candidates.insert(u);
   }
   if (candidates.empty()) return false;
-  u = RND->irandom(candidates);
+  u = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
   std::cout << "Fusing vertices: " << u << " => " << base << std::endl;
 #endif
@@ -114,7 +114,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       q = (vx[0] == base) ? vx[1] : vx[0];
-      if (RND->drandom() < density) {
+      if (skeleton->RND->drandom() < density) {
         S.initialize(q,p,locus);
         simplices[1].push_back(S);
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
@@ -137,14 +137,14 @@ bool Spacetime::fission(int base,double density,int sheet)
 
     if (dimension(sheet) < 1) return false;
 
-    if (RND->drandom() < 0.5) {
+    if (skeleton->RND->drandom() < 0.5) {
       // The simplest case: we just need to add a new vertex, clone the antecedent
       // vertex's one-dimensional entourage and lastly create a 1-simplex joining
       // the two vertices.
       int d;
 
       do {
-        p = RND->irandom(skeleton->events.size());
+        p = skeleton->RND->irandom(skeleton->events.size());
         if (skeleton->events[p].active(sheet)) break;
       } while(true);
       q = vertex_addition(p,sheet);
@@ -161,9 +161,9 @@ bool Spacetime::fission(int base,double density,int sheet)
       d = (signed) nsimplex.size() - 1;
       if (d >= Spacetime::ND) {
         std::set<int> s1;
-        d = RND->irandom(2,Spacetime::ND);
+        d = skeleton->RND->irandom(2,Spacetime::ND);
         do {
-          n = RND->irandom(nsimplex);
+          n = skeleton->RND->irandom(nsimplex);
           s1.insert(n);
         } while((signed) s1.size() < (1+d));
         nsimplex = s1;
@@ -181,7 +181,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       std::set<int> antecedent;
 
       do {
-        n = RND->irandom(simplices[1].size());
+        n = skeleton->RND->irandom(simplices[1].size());
         if (simplices[1][n].active(sheet)) break;
       } while(true);
       simplices[1][n].get_vertices(vx);
@@ -273,14 +273,14 @@ bool Spacetime::circumvolution(int sheet)
   }
   if (candidates.empty()) return false;
   np = candidates.size()/2;
-  i = RND->irandom(np);
+  i = skeleton->RND->irandom(np);
   n1 = candidates[2*i];
   n2 = candidates[2*i+1];
   simplices[1][n1].get_vertices(w);
   simplices[1][n2].get_vertices(u);
   codex[sheet].vx_delta.insert(u[0]);
   codex[sheet].vx_delta.insert(u[1]);
-  if (RND->drandom() < 0.5) {
+  if (skeleton->RND->drandom() < 0.5) {
     vertex_fusion(w[0],u[0],sheet);
     vertex_fusion(w[1],u[1],sheet);
   }
@@ -304,13 +304,13 @@ bool Spacetime::circumvolution(int base,int sheet)
   if (base >= 0) {
     nd = vertex_dimension(base,sheet);
     if (nd < 1) return false;
-    d = RND->irandom(1,nd);
+    d = skeleton->RND->irandom(1,nd);
     nd = (signed) simplices[d].size();
     for(i=0; i<nd; ++i) {
       if (!simplices[d][i].active(sheet)) continue;
       if (simplices[d][i].contains(base)) candidates.insert(i);
     }
-    s1 = RND->irandom(candidates);
+    s1 = skeleton->RND->irandom(candidates);
     candidates.clear();
     for(i=0; i<nd; ++i) {
       if (!simplices[d][i].active(sheet)) continue;
@@ -337,19 +337,19 @@ bool Spacetime::circumvolution(int base,int sheet)
       if (D1 < 2.5) slist.insert(*it);
     }
     if (slist.empty()) return false;
-    s2 = RND->irandom(slist);
+    s2 = skeleton->RND->irandom(slist);
   }
   else {
     do {
-      d = RND->irandom(1,dimension(sheet));
+      d = skeleton->RND->irandom(1,dimension(sheet));
       for(i=0; i<(signed) simplices[d].size(); ++i) {
         if (simplices[d][i].active(sheet)) candidates.insert(i);
       }
       if (candidates.size() > 3) break;
     } while(true);
     do {
-      s1 = RND->irandom(candidates);
-      s2 = RND->irandom(candidates);
+      s1 = skeleton->RND->irandom(candidates);
+      s2 = skeleton->RND->irandom(candidates);
       if (s1 == s2) continue;
       // Now check to make sure that the intersection of
       // these two d-simplices is null...
@@ -407,23 +407,23 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     do {
       its++;
       if (its == Spacetime::ND) creativity = 1.0;
-      if (RND->drandom() < creativity) {
+      if (skeleton->RND->drandom() < creativity) {
         // Create a new vertex...
         k = vertex_addition(base,sheet);
         novum++;
       }
       else {
-        k = RND->irandom(M);
+        k = skeleton->RND->irandom(M);
       }
       vx.insert(k);
     } while((signed) vx.size() < (1+d));
   }
   else {
     i = dimension(sheet);
-    d = (i <= 2) ? 3 : RND->irandom(2,i);
+    d = (i <= 2) ? 3 : skeleton->RND->irandom(2,i);
     if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
-      if (RND->drandom() < creativity) {
+      if (skeleton->RND->drandom() < creativity) {
         // Create a new vertex...
         k = vertex_addition(vx,sheet);
         novum++;
@@ -434,7 +434,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
         nv = (signed) skeleton->events.size();
         success = false;
         do {
-          k = RND->irandom(nv);
+          k = skeleton->RND->irandom(nv);
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
             skeleton->events[k].set_active(sheet);
@@ -493,7 +493,7 @@ bool Spacetime::expansion(int base,int sheet)
   }
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
-    m = RND->irandom(vx);
+    m = skeleton->RND->irandom(vx);
     s.clear();
     s.insert(base);
     s.insert(n);
@@ -522,7 +522,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
     // This call of the perforation operator is localized
     int n1 = vertex_dimension(base,sheet);
     if (n1 < 2) return false;
-    d = RND->irandom(2,n1);
+    d = skeleton->RND->irandom(2,n1);
     nd = (signed) simplices[d].size();
     for(i=0; i<nd; ++i) {
       if (!simplices[d][i].active(sheet)) continue;
@@ -579,7 +579,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
 #ifdef VERBOSE
   std::cout << "Perforating a " << d << "-simplex." << std::endl;
 #endif
-  n = RND->irandom(candidates);
+  n = skeleton->RND->irandom(candidates);
   simplex_deletion(d,n,sheet);
   return true;
 }
@@ -624,7 +624,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       j = (base == vtx[0]) ? vtx[1] : vtx[0];
       N.insert(j);
     }
-    vx = simplices[n1][RND->irandom(candidates)].vertices;
+    vx = simplices[n1][skeleton->RND->irandom(candidates)].vertices;
     for(it=N.begin(); it!=N.end(); ++it) {
       jt = std::find(vx.begin(),vx.end(),*it);
       if (jt == vx.end()) {
@@ -635,12 +635,12 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     do {
       its++;
       if (its == ND) creativity = 1.0;
-      if (RND->drandom() < creativity) {
+      if (skeleton->RND->drandom() < creativity) {
         // Create a new vertex...
         k = vertex_addition(base,sheet);
       }
       else {
-        k = RND->irandom(M);
+        k = skeleton->RND->irandom(M);
       }
       vx.insert(k);
     } while((signed) vx.size() < (1 + delta));
@@ -656,15 +656,15 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       n1 = 1;
     }
     else {
-      n1 = 1 + RND->irandom(dimension(sheet));
+      n1 = 1 + skeleton->RND->irandom(dimension(sheet));
     }
     for(i=0; i<(signed) skeleton->events.size(); ++i) {
       if (skeleton->events[i].active(sheet)) candidates.insert(i);
     }
     na = (signed) candidates.size();
     if (n1 == 0) {
-      delta = RND->irandom(2,2*geometry->dimension());
-      vx.insert(RND->irandom(candidates));
+      delta = skeleton->RND->irandom(2,2*geometry->dimension());
+      vx.insert(skeleton->RND->irandom(candidates));
     }
     else {
       candidates.clear();
@@ -672,13 +672,13 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
         if (simplices[n1][i].active(sheet)) candidates.insert(i);
       }
       if (candidates.empty()) return false;
-      vx = simplices[n1][RND->irandom(candidates)].vertices;
-      delta = n1 + RND->irandom(1,geometry->dimension());
+      vx = simplices[n1][skeleton->RND->irandom(candidates)].vertices;
+      delta = n1 + skeleton->RND->irandom(1,geometry->dimension());
     }
     if (double(delta)/double(na) > 0.25) creativity = 1.0;
     if (double(vx.size())/double(na) > 0.9) creativity = 1.0;
     do {
-      if (RND->drandom() < creativity) {
+      if (skeleton->RND->drandom() < creativity) {
         // Create a new vertex...
         k = vertex_addition(vx,sheet);
       }
@@ -689,7 +689,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
         do {
           // We should perhaps alter this to favour vertices that are
           // few hops away
-          k = RND->irandom(skeleton->events.size());
+          k = skeleton->RND->irandom(skeleton->events.size());
           if (!skeleton->events[k].active(sheet)) continue;
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
