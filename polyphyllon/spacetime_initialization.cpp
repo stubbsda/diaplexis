@@ -228,8 +228,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     double percent = 0.0;
     bool found;
     std::set<int>* N;
-    std::vector<Simplex> svector;
-    std::vector<Simplex>::const_iterator vit;
+    std::vector<std::set<int> > svector;
     SYNARMOSMA::hash_map::const_iterator qt;
     std::set<int> v,vx,current;
     std::set<int>::const_iterator it,chk;
@@ -303,7 +302,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
           in1 = *it;
           current = v;
           current.insert(in1);
-          svector.push_back(Simplex(current,locus));
+          svector.push_back(current);
         }
         vx.clear();
         v.clear();
@@ -390,7 +389,7 @@ void Spacetime::initialize()
 
     nactive = nt_initial;
     for(i=0; i<nt_initial; ++i) {
-      codex.push_back(Sheet(i,H->get_field(),H->get_method()));
+      codex.push_back(Sheet(i,skeleton->get_homology_field(),skeleton->get_homology_method()));
       locus.insert(i);
     }
     build_initial_state(locus);
@@ -404,7 +403,7 @@ void Spacetime::initialize()
     compute_lightcones();
     compute_global_topology(-1);
     for(i=0; i<nt_initial; ++i) {
-      codex[i].set_topology(H,pi,pseudomanifold,boundary,orientable);  
+      codex[i].set_topology(skeleton->H,skeleton->pi1,skeleton->pseudomanifold,skeleton->boundary,skeleton->orientable);  
     }
     structural_deficiency();
   }

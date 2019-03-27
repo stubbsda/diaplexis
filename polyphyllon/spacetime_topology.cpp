@@ -10,7 +10,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   std::vector<int> modified;
   const double na = double(cardinality(0,-1));
   const int nv = (signed) skeleton->events.size();
-  const int ulimit = dimension(-1);
+  const int ulimit = skeleton->dimension(-1);
 
   // Vertex fusion - if two vertices are close enough together, they
   // should coalesce.
@@ -28,7 +28,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
   // Now we need to carry out the fusions...
   nf = (signed) candidates.size();
   do {
-    i = RND->irandom(nf);
+    i = skeleton->RND->irandom(nf);
     v1 = candidates[i].first;
     v2 = candidates[i].second;
     if (modified[v1] || modified[v2]) {
@@ -46,7 +46,7 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
 
-  // Then recalculate the skeleton->index_table hash map..
+  // Then recalculate the index_table hash map..
   for(i=1; i<=ulimit; ++i) {
     skeleton->index_table[i].clear();
     m = (signed) skeleton->simplices[i].size();
@@ -56,14 +56,14 @@ void Spacetime::superposition_fusion(std::set<int>& vmodified)
     }
   }
   for(i=0; i<nv; ++i) {
-    skeleton->events[i].entourage.clear();
+    skeleton->events[i].clear_entourage();
   }
 
   // Then recalculate the entourages...
-  compute_entourages(-1);
-  compute_neighbours();
+  skeleton->compute_entourages(-1);
+  skeleton->compute_neighbours();
 #ifdef DEBUG
-  assert(consistent(-1));
+  assert(skeleton->consistent(-1));
 #endif
 }
 
@@ -74,7 +74,7 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
   std::set<int> locus;
   std::set<int>::const_iterator it;
   Event vx;
-  Simplex S;
+  //Simplex S;
   const int nv = (signed) skeleton->events.size();
   const int nt = (signed) codex.size();
 
@@ -85,10 +85,10 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
     change = false;
     for(i=0; i<nc; ++i) {
       if (!skeleton->events[i].active()) continue;
-      if (RND->drandom() > 0.01) continue;
+      if (skeleton->RND->drandom() > 0.01) continue;
       vx = skeleton->events[i];      
       for(j=0; j<nt; ++j) {
-        if (RND->drandom() > 0.9) {
+        if (skeleton->RND->drandom() > 0.9) {
           if (vx.active(j)) {
             vx.set_inactive(j);
           }
@@ -98,19 +98,22 @@ void Spacetime::superposition_fission(std::set<int>& vmodified)
         }
       }
       // Check that vx.ubiquity > 1
-      if (!vx.active()) vx.set_active(RND->irandom(nt));
+      if (!vx.active()) vx.set_active(skeleton->RND->irandom(nt));
       for(it=vx.neighbours.begin(); it!=vx.neighbours.end(); ++it) {
         j = *it;
-        skeleton->events[j].neighbours.insert(nc);
+        skeleton->events[j].add_neighbour(nc);
         vmodified.insert(j);
         for(k=0; k<nt; ++k) {
-          if (RND->drandom() > 0.33) locus.insert(k);
+          if (skeleton->RND->drandom() > 0.33) locus.insert(k);
         }
-        if (locus.empty()) locus.insert(RND->irandom(nt));
+        if (locus.empty()) locus.insert(skeleton->RND->irandom(nt));
+        skeleton->simplex_addition(nc,j,locus);
+        /*
         S.initialize(nc,j,locus);
         skeleton->simplices[1].push_back(S);
         skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
         S.clear();
+        */
       }
       vmodified.insert(nc);
       geometry->vertex_addition(i);
@@ -141,13 +144,13 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     alpha = std::abs(skeleton->simplices[1][i].volume);
     if (alpha > threshold) {
       s = std::exp(-(alpha - threshold));
-      if (RND->drandom() > s) candidates.push_back(i);
+      if (skeleton->RND->drandom() > s) candidates.push_back(i);
     }
   }
   nc = (signed) candidates.size();
   for(i=0; i<nc; ++i) {
     n = candidates[i];
-    simplex_deletion(1,n,-1);
+    skeleton->simplex_deletion(1,n,-1);
     // Remove the references in skeleton->events[v/w].neighbours and
     // skeleton->events[v/w].entourage
     skeleton->simplices[1][n].get_vertices(v);
@@ -237,8 +240,10 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
     for(i=0; i<nsedge; ++i) {
       j = sedge[2*i];
       k = sedge[2*i+1];
-      l = RND->irandom(nt);
+      l = skeleton->RND->irandom(nt);
       locus.insert(l);
+      skeleton->simplex_addition(j,k,locus);
+      /*
       S.initialize(j,k,locus);
       skeleton->simplices[1].push_back(S);
       skeleton->index_table[1][S.vertices] = (signed) skeleton->simplices[1].size() - 1;
@@ -246,6 +251,7 @@ int Spacetime::compression(double threshold,std::set<int>& vmodified)
       skeleton->events[k].neighbours.insert(j);
       vmodified.insert(k);
       vmodified.insert(j);
+      */
       locus.erase(l);
     }
     nc -= nsedge;
@@ -270,9 +276,11 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   double l,alpha,width = size/dm;
   std::vector<double> xc,cvertex;
   std::vector<std::pair<int,double> > ambient;
-  std::set<int> S,base,nvertex,bvertex,kvertex;
+  std::set<int> S,locus,base,nvertex,bvertex,kvertex;
   std::set<int>::const_iterator it;
   const int g_dim = (signed) geometry->dimension();
+
+  locus.insert(sheet);
 
   // We begin by eliminating the central vertex along with any vertices on this 
   // sheet that are within the a sphere of radius "size"
@@ -306,29 +314,29 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   // First add the central element of the knot, a D-simplex
   for(i=0; i<1+D; ++i) {
     for(j=0; j<g_dim; ++j) {
-      xc.push_back(cvertex[j] + width*(RND->drandom() - 0.5));
+      xc.push_back(cvertex[j] + width*(skeleton->RND->drandom() - 0.5));
     }
     if (!geometry->get_uniform()) {
       for(j=g_dim; j<D; ++j) {
-        xc.push_back(-dm + dm/2.0*RND->drandom()); 
+        xc.push_back(-dm + dm/2.0*skeleton->RND->drandom()); 
       }
     }
     S.insert(vertex_addition(xc,sheet));
     xc.clear();
   }
-  simplex_addition(S,sheet);
+  skeleton->simplex_addition(S,locus);
 
-  // Now add a set of lower-dimensional skeleton->simplices to this knot and also tie it 
+  // Now add a set of lower-dimensional simplices to this knot and also tie it 
   // in to the existing spacetime complex...
   base = S;
   kvertex = S;
   S.clear();
   for(i=D-1; i>=3; --i) {
-    // As the dimension shrinks, the number of skeleton->simplices should grow
+    // As the dimension shrinks, the number of simplices should grow
     l = double(i);
-    m = int(RND->nrandom(dm - l,2.0));
+    m = int(skeleton->RND->nrandom(dm - l,2.0));
 #ifdef VERBOSE
-    std::cout << "Adding " << m << " " << i << "-skeleton->simplices to this complex" << std::endl;
+    std::cout << "Adding " << m << " " << i << "-simplices to this complex" << std::endl;
 #endif
     if (m <= 0) continue;
     nc = 0;
@@ -337,15 +345,15 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     do {    
       for(j=0; j<1+i; ++j) {
         q = -1;
-        if (RND->drandom() < (0.5*l/dm)) {
+        if (skeleton->RND->drandom() < (0.5*l/dm)) {
           for(k=0; k<g_dim; ++k) {
-            xc.push_back(cvertex[k] + width*(RND->drandom() - 0.5));
+            xc.push_back(cvertex[k] + width*(skeleton->RND->drandom() - 0.5));
           }
           if (!geometry->get_uniform()) {
             for(k=g_dim; k<i; ++k) {
-              alpha = RND->nrandom(-l,dm);
-              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND->drandom();
-              if (alpha > -0.1) alpha = -0.1 - RND->drandom();
+              alpha = skeleton->RND->nrandom(-l,dm);
+              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*skeleton->RND->drandom();
+              if (alpha > -0.1) alpha = -0.1 - skeleton->RND->drandom();
               xc.push_back(alpha); 
             }
           }
@@ -358,7 +366,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
           its = 0;
           do {
             its++;
-            q = RND->irandom(base);
+            q = skeleton->RND->irandom(base);
             // Make sure it isn't already in S,
             if (S.count(q) == 0) break;
           } while(its < 2*((signed) base.size()));
@@ -366,13 +374,13 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
         if (q == -1) {
           // Create a new vertex from scratch
           for(k=0; k<g_dim; ++k) {
-            xc.push_back(cvertex[k] + width*(RND->drandom() - 0.5));
+            xc.push_back(cvertex[k] + width*(skeleton->RND->drandom() - 0.5));
           }
           if (!geometry->get_uniform()) {
             for(k=g_dim; k<i; ++k) {
-              alpha = RND->nrandom(-l,dm);
-              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*RND->drandom();
-              if (alpha > -0.1) alpha = -0.1 - RND->drandom();
+              alpha = skeleton->RND->nrandom(-l,dm);
+              if (alpha < -dm) alpha = -dm + 0.1 + 1.5*skeleton->RND->drandom();
+              if (alpha > -0.1) alpha = -0.1 - skeleton->RND->drandom();
               xc.push_back(alpha); 
             }
           }
@@ -386,7 +394,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
 #ifdef VERBOSE
       std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
 #endif
-      simplex_addition(S,sheet);
+      skeleton->simplex_addition(S,locus);
       S.clear();
       nc++;
     } while(nc < m);
@@ -395,16 +403,16 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   }
   // Finally the 2-simplexes to bridge the knot with the ambient spacetime complex
   d = bvertex.size()*(bvertex.size() - 1)/2;
-  nbridge = int((0.1 + 0.15*RND->drandom())*d);
+  nbridge = int((0.1 + 0.15*skeleton->RND->drandom())*d);
 #ifdef VERBOSE
-  std::cout << "Adding " << nbridge << " 2-skeleton->simplices" << std::endl;
+  std::cout << "Adding " << nbridge << " 2-simplices" << std::endl;
 #endif
   d = 0;
   do {
-    q = RND->irandom(bvertex);
-    if (RND->drandom() < 0.33) {
+    q = skeleton->RND->irandom(bvertex);
+    if (skeleton->RND->drandom() < 0.33) {
       do { 
-        p = RND->irandom(bvertex);
+        p = skeleton->RND->irandom(bvertex);
         if (p != q) break;
       } while(true);
     }
@@ -429,13 +437,13 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
       ambient.push_back(std::pair<int,double>(*it,l + alpha));
     }
     std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
-    if (RND->drandom() < 0.5) {
+    if (skeleton->RND->drandom() < 0.5) {
       S.insert(ambient[0].first);
     }
     else {
       S.insert(ambient[1].first);
     }
-    if (simplex_addition(S,sheet)) d++;
+    if (skeleton->simplex_addition(S,locus)) d++;
     S.clear();
   } while(d < nbridge);
 
@@ -447,9 +455,9 @@ void Spacetime::regularization(bool minimal,int sheet)
 {
   if (!minimal) simplicial_implication(sheet);
 
-  compute_neighbours();
-  if (connected(sheet)) {
-    compute_entourages(sheet);
+  skeleton->compute_neighbours();
+  if (skeleton->connected(sheet)) {
+    skeleton->compute_entourages(sheet);
     return;
   }
 
@@ -535,7 +543,7 @@ void Spacetime::regularization(bool minimal,int sheet)
       assert(v1 > -1);
       assert(v2 > -1);
 #endif
-      j = RND->irandom(colours);
+      j = skeleton->RND->irandom(colours);
       locus.insert(j);
       S = Simplex(v1,v2,locus);
       locus.erase(j);
@@ -552,7 +560,7 @@ void Spacetime::regularization(bool minimal,int sheet)
         assert(!skeleton->simplices[1][qt->second].active());
 #endif
 #ifdef VERBOSE
-        std::cout << "Restoring the simplex with key " << SYNARMOSMA::make_key(skeleton->simplices[1][qt->second].vertices) << " to maintain the complex's connectedness" << std::endl;
+        std::cout << "Restoring the simplex with key " << skeleton->get_simplex_key(1,qt->second) << " to maintain the complex's connectedness" << std::endl;
 #endif
         skeleton->simplices[1][qt->second].set_active(j);
       }
@@ -598,10 +606,10 @@ void Spacetime::regularization(bool minimal,int sheet)
       }
     }
   }
-  compute_neighbours();
+  skeleton->compute_neighbours();
 #ifdef DEBUG
-  assert(connected(sheet));
+  assert(skeleton->connected(sheet));
 #endif
-  compute_entourages(sheet);
+  skeleton->compute_entourages(sheet);
   delete[] cvertex;
 }
