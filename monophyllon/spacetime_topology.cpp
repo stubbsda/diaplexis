@@ -18,10 +18,8 @@ void Spacetime::superposition_fusion(double threshold)
   for(i=0; i<nv; ++i) {
     modified.push_back(0);
     if (!skeleton->active_event(i)) continue;
-    if (!skeleton->events[i].zero_energy()) continue;
     for(j=1+i; j<nv; ++j) {
       if (!skeleton->active_event(j)) continue;
-      if (!skeleton->events[j].zero_energy()) continue;
       delta = geometry->get_squared_distance(i,j,false);
       if (delta < threshold) candidates.push_back(std::pair<int,int>(i,j));
     }
