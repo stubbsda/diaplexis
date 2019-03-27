@@ -152,13 +152,8 @@ namespace DIAPLEXIS {
     int vertex_addition(const std::set<int>&,int);
     int vertex_addition(int,int);
     bool vertex_deletion(int,int);
-    bool simplex_addition(const std::set<int>&,int);
-    void simplex_deletion(int,int,int);
-    bool interplication(int,double,int,int);
     bool circumvolution(int);
     bool circumvolution(int,int);
-    int compression(double,std::set<int>&);
-    bool unravel(int,int);
     bool reduction(int,int);
     bool contraction(int,double,int);
     bool compensation_m(int,int);
@@ -179,24 +174,17 @@ namespace DIAPLEXIS {
     bool vertex_twist(int);
     bool stellar_addition(int,int);
     bool stellar_deletion(int,int);
-    bool edge_parity_mutation(int,int);
-    bool edge_parity_mutation(int,int,int);
     void vertex_fusion(int,int,int);
-    void recompute_parity(int);
-    void recompute_parity(const std::set<int>&);
-    void compute_parity();
-    void compute_neighbours();
-    void compute_entourages(int);
-    void superposition_fusion(std::set<int>&);
-    void superposition_fission(std::set<int>&);
-    void assemble_indices();
+
+    bool interplication(int,double,int,int);
+    int compression(double);
+    void superposition_fusion(double);
+    void superposition_fission(int);
     void regularization(bool,int);
     void entourage(std::vector<int>&) const;
 
-    void inversion();
     bool realizable(int,int) const;
     void arclength_statistics(double*,int) const;
-    void compute_simplicial_dimension();
     void compute_volume();
     void compute_lengths();
     void compute_obliquity();
@@ -221,13 +209,10 @@ namespace DIAPLEXIS {
     void compute_global_topology(int);
     void build_initial_state(const std::set<int>&);
     void write_log() const;
-    void read_complex(std::ifstream&);
     void read_state();
-    void write_complex(std::ofstream&) const;
     void write_state() const;
     void read_parameters(const std::string&);
     int ubiquity_permutation(double,std::set<int>&);
-    void update_viewer();
     void mechanical_solver();
     void evolutionary_solver();
     void annealing_solver();
