@@ -154,32 +154,6 @@ int Simplex::deserialize(std::ifstream& s)
   return count;
 }
 
-void Simplex::get_faces(std::vector<Simplex>& F) const
-{
-  // This method grabs the 1+n faces of this n-simplex...
-  int i,j,n = (signed) vertices.size();
-  std::set<int>::const_iterator it;
-  std::set<int> vx;
-  Simplex S;
-
-  F.clear();
-
-  S.ubiquity = ubiquity;
-
-  for(i=0; i<n; ++i) {
-    j = -1;
-    for(it=vertices.begin(); it!=vertices.end(); ++it) {
-      j++;
-      if (j == i) continue;
-      vx.insert(*it);
-    }
-    S.vertices = vx;
-    S.calculate_faces();
-    F.push_back(S);
-    vx.clear();
-  }
-}
-
 namespace DIAPLEXIS {
   Simplex operator ^(const Simplex& s1,const Simplex& s2)
   {
