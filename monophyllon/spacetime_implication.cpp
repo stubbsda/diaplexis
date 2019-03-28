@@ -174,8 +174,8 @@ bool Spacetime::fission(int base,double density)
       nsimplex.insert(p);
       nsimplex.insert(q);
       skeleton->simplex_addition(nsimplex,-1);
-      nsimplex.clear();
 
+      nsimplex.clear();
       nsimplex.insert(vx[1]);
       nsimplex.insert(p);
       nsimplex.insert(q);
@@ -486,7 +486,7 @@ bool Spacetime::perforation(int base,int d)
 {
   int i,j,k,n,nd;
   bool good,found;
-  std::set<int> vx,candidates;
+  std::set<int> candidates;
   std::vector<std::set<int> > S;
 
   if (base >= 0) {
@@ -504,10 +504,9 @@ bool Spacetime::perforation(int base,int d)
       skeleton->simplices[d][i].get_faces(S);
       for(j=0; j<1+d; ++j) {
         found = false;
-        vx = S[j];
         for(k=0; k<nd; ++k) {
           if (k == i || !skeleton->active_simplex(d,k)) continue;
-          if (skeleton->simplices[d][k].face(vx)) {
+          if (skeleton->simplices[d][k].face(S[j])) {
             found = true;
             break;
           }
@@ -532,10 +531,9 @@ bool Spacetime::perforation(int base,int d)
       skeleton->simplices[d][i].get_faces(S);
       for(j=0; j<1+d; ++j) {
         found = false;
-        vx = S[j];
         for(k=0; k<nd; ++k) {
           if (k == i || !skeleton->active_simplex(d,k)) continue;
-          if (skeleton->simplices[d][k].face(vx)) {
+          if (skeleton->simplices[d][k].face(S[j])) {
             found = true;
             break;
           }
