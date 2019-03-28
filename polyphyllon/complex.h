@@ -27,15 +27,15 @@ namespace DIAPLEXIS {
     static const int topological_radius = 4;
 
     void allocate();
-    void inversion();
+    void inversion(int);
     void compute_neighbours();
     void compute_entourages(int);
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,const std::set<int>&,int = -1);
     //bool simplex_addition(const std::set<int>&,std::set<int>&,int);
     void simplex_deletion(int,int,int);
-    void compute_geometric_dependency(const std::set<int>&);
-    void compute_topological_dependency(const std::set<int>&);
+    void compute_modified_vertices();
+    void compute_dependent_simplices(const std::set<int>&);
     void simplicial_implication(int);
     void simplicial_implication(int,int);
     void compute_simplicial_dimension();

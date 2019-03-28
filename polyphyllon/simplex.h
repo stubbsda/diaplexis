@@ -21,7 +21,6 @@ namespace DIAPLEXIS {
     void initialize(int,int,const std::set<int>&,int = 0);
     void initialize(const std::set<int>&,const std::set<int>&);
     int absolute_embedding() const;
-    void get_faces(std::vector<Simplex>&) const;
     int serialize(std::ofstream&) const override;
     int deserialize(std::ifstream&) override;
    public:

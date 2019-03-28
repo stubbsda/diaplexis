@@ -305,7 +305,7 @@ double Complex::set_logical_atoms(int n)
     events[i].theorem.set_atoms(cset);
     output += double(cset.size());   
   }
-  output = output/double(cardinality(0));
+  output = output/double(cardinality(0,-1));
   return output;
 }
 
@@ -348,13 +348,12 @@ void Complex::compute_simplex_energy(int d,int n)
   simplices[d][n].energy = alpha/double(1+d);
 }
 
-void Complex::compute_delta(std::set<int>& modified_vertices)
+void Complex::compute_modified_vertices()
 {
   int i,j,m,n,l,nhop;
   std::set<int> vx,current,next;
   std::set<int>::const_iterator it,jt,kt;
   const int nv = (signed) events.size();
-  const int nt = (signed) codex.size();
   int done[nv];
 
   for(i=0; i<nv; ++i) {
@@ -377,15 +376,6 @@ void Complex::compute_delta(std::set<int>& modified_vertices)
     }
   }
 
-  for(i=0; i<nt; ++i) {
-    if (!codex[i].active) continue;
-    for(it=codex[i].vx_delta.begin(); it!=codex[i].vx_delta.end(); ++it) {
-      vx.insert(*it);
-    }
-  }
-  for(i=0; i<nt; ++i) {
-    codex[i].vx_delta.clear();
-  }
   // Now with this know we can calculate which events need to have their
   // entwinement and/or dimensional stress recalculated
 #ifdef VERBOSE
