@@ -478,8 +478,8 @@ void Spacetime::regularization(bool minimal,int sheet)
       skeleton->simplex_addition(v1,v2,locus);
       locus.erase(j);
       // Need to ensure that v1 and v2 are also coloured by sheet...
-      if (!skeleton->events[v1].active(j)) skeleton->events[v1].set_active(j); 
-      if (!skeleton->events[v2].active(j)) skeleton->events[v2].set_active(j); 
+      if (!skeleton->events[v1].active(j)) skeleton->events[v1].activate(j); 
+      if (!skeleton->events[v2].active(j)) skeleton->events[v2].activate(j); 
     }
   }
   else {

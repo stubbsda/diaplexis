@@ -413,7 +413,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
           k = skeleton->RND->irandom(nv);
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
-            skeleton->events[k].set_active(sheet);
+            skeleton->events[k].activate(sheet);
             success = true;
             break;
           }
@@ -473,7 +473,7 @@ bool Spacetime::expansion(int base,int sheet)
     s.insert(base);
     s.insert(n);
     qt = skeleton->index_table[1].find(s);
-    skeleton->simplices[1][qt->second].set_inactive(sheet);
+    skeleton->simplices[1][qt->second].deactivate(sheet);
     skeleton->simplex_addition(n,m,locus);
   }
   return true;
@@ -562,7 +562,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
   Event vt;
   SYNARMOSMA::hash_map::const_iterator qt;
 
-  vt.set_active(sheet);
+  vt.activate(sheet);
   locus.insert(sheet);
 
   if (base >= 0) {

@@ -32,7 +32,6 @@ namespace DIAPLEXIS {
     void compute_entourages(int);
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,const std::set<int>&,int = -1);
-    //bool simplex_addition(const std::set<int>&,std::set<int>&,int);
     void simplex_deletion(int,int,int);
     void compute_modified_vertices();
     void compute_dependent_simplices(const std::set<int>&);
@@ -58,7 +57,7 @@ namespace DIAPLEXIS {
     int cardinality_safe(int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     void compute_degree_distribution(bool,int) const;
-    void compute_connectivity_distribution(int) const;
+    void compute_connectivity_distribution(bool,int) const;
     std::pair<double,double> random_walk(int) const;
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
@@ -84,7 +83,7 @@ namespace DIAPLEXIS {
     int weighted_entourage(int,int) const;
     int cyclicity(int) const;
     double dimensional_frontier(int,int) const;
-    double dimensional_uniformity(int) const;
+    double dimensional_uniformity(int,int) const;
     bool active_simplex(int,int,int) const;
     int circuit_rank(int) const;
     int euler_characteristic(int) const;

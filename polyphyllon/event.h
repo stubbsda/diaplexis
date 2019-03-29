@@ -30,8 +30,8 @@ namespace DIAPLEXIS {
     inline bool active() const {return !ubiquity.empty();}; 
     inline bool active(int n) const {return (ubiquity.count(n) > 0);};
     inline void deactivate() {ubiquity.clear(); topology_modified = true;};
-    inline void set_active(int n) {ubiquity.insert(n); topology_modified = true;};
-    inline void set_inactive(int n) {ubiquity.erase(n); topology_modified = true;};
+    inline void activate(int n) {ubiquity.insert(n); topology_modified = true;};
+    inline void deactivate(int n) {ubiquity.erase(n); topology_modified = true;};
     inline void set_ubiquity(const std::set<int>& S) {ubiquity = S; topology_modified = true;};
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
