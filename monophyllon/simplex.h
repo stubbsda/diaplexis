@@ -28,8 +28,8 @@ namespace DIAPLEXIS {
     Simplex(const std::set<int>&,int = -1);
     ~Simplex() override;
     Simplex& operator =(const Simplex&);
-    inline void activate() {active = true;};
-    inline void deactivate() {active = false;};
+    inline void activate() {active = true; modified = true;};
+    inline void deactivate() {active = false; modified = true;};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
     inline void clear_entourage() {entourage.clear();};
     inline int get_parity(int,int) const;

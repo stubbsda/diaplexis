@@ -84,7 +84,7 @@ void Complex::compute_entourages(int sheet)
           qt = index_table[i-1].find(s);
           if (qt == index_table[i-1].end()) throw std::runtime_error("Missing entourage element!");
           for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
-            simplices[i-1][qt->second].set_active(*it);
+            simplices[i-1][qt->second].activate(*it);
           }
           simplices[i-1][qt->second].entourage.insert(j);
         }
@@ -97,8 +97,8 @@ void Complex::compute_entourages(int sheet)
       simplices[1][i].get_ubiquity(ubiquity);
       simplices[1][i].get_vertices(vx);
       for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
-        events[vx[0]].set_active(*it);
-        events[vx[1]].set_active(*it);
+        events[vx[0]].activate(*it);
+        events[vx[1]].activate(*it);
       }
       events[vx[0]].entourage.insert(i);
       events[vx[1]].entourage.insert(i);
@@ -113,7 +113,7 @@ void Complex::compute_entourages(int sheet)
           s = simplices[i][j].faces[k];
           qt = index_table[i-1].find(s);
           if (qt == index_table[i-1].end()) throw std::runtime_error("Missing entourage element!");
-          if (!simplices[i-1][qt->second].active(sheet)) simplices[i-1][qt->second].set_active(sheet);
+          if (!simplices[i-1][qt->second].active(sheet)) simplices[i-1][qt->second].activate(sheet);
           simplices[i-1][qt->second].entourage.insert(j);
         }
       }
@@ -124,10 +124,10 @@ void Complex::compute_entourages(int sheet)
       if (!simplices[1][i].active(sheet)) continue;
       simplices[1][i].get_vertices(vx);
 
-      if (!events[vx[0]].active(sheet)) events[vx[0]].set_active(sheet);
+      if (!events[vx[0]].active(sheet)) events[vx[0]].activate(sheet);
       events[vx[0]].entourage.insert(i);
 
-      if (!events[vx[1]].active(sheet)) events[vx[1]].set_active(sheet);
+      if (!events[vx[1]].active(sheet)) events[vx[1]].activate(sheet);
       events[vx[1]].entourage.insert(i);
     }
   }

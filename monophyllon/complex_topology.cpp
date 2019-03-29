@@ -552,8 +552,9 @@ void Complex::simplex_deletion(int d,int n)
   std::set<int> parents;
   int i,dp1 = d + 1;
   
-  simplices[d][n].active = false;
-  simplices[d][n].modified = true;
+  if (!simplices[d][n].active) return;
+
+  simplices[d][n].deactivate();
   parents = simplices[d][n].entourage;
   for(it=parents.begin(); it!=parents.end(); ++it) {
     i = *it;
@@ -573,15 +574,13 @@ bool Complex::simplex_addition(int u,int v,int n)
     index_table[1][S] = simplices[1].size() - 1;
     events[v].neighbours.insert(u);
     events[u].neighbours.insert(v);
-    events[u].topology_modified = true;
-    events[v].topology_modified = true;
   }
   else {
     if (simplices[1][qt->second].active) return false;
-    simplices[1][qt->second].active = true;
-    events[u].topology_modified = true;
-    events[v].topology_modified = true;
+    simplices[1][qt->second].activate();
   }
+  events[u].topology_modified = true;
+  events[v].topology_modified = true;
   return true;
 }
 
@@ -601,25 +600,23 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
     index_table[d][S] = simplices[d].size() - 1;
   }
   else {
-    if (simplices[d][qt->second].active) {
-      return false;
-    }
-    else {
-      simplices[d][qt->second].active = true;
-    }
+    if (simplices[d][qt->second].active) return false;
+    simplices[d][qt->second].activate();
   }
 
 #ifdef VERBOSE
   std::cout << "Adding a " << d << "-simplex to the spacetime complex..." << std::endl;
 #endif
 
+  for(it=S.begin(); it!=S.end(); ++it) {
+    events[*it].topology_modified = true;
+  }
+
   if (d == 1) {
     int vn[2];
     s.get_vertices(vn);
     events[vn[0]].neighbours.insert(vn[1]);
     events[vn[1]].neighbours.insert(vn[0]);
-    events[vn[0]].topology_modified = true;
-    events[vn[1]].topology_modified = true;
     return true;
   }
   for(it=S.begin(); it!=S.end(); ++it) {
@@ -638,8 +635,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
       index_table[i][fc] = simplices[i].size() - 1;
     }
     else {
-      simplices[i][qt->second].active = true;
-      simplices[i][qt->second].modified = true;
+      if (!simplices[i][qt->second].active) simplices[i][qt->second].activate();
     }
     fc.clear();
     while(SYNARMOSMA::next_combination(vec,1+d)) {
@@ -652,8 +648,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
         index_table[i][fc] = simplices[i].size() - 1;
       }
       else {
-        simplices[i][qt->second].active = true;
-        simplices[i][qt->second].modified = true;
+        if (!simplices[i][qt->second].active) simplices[i][qt->second].activate();
       }
       fc.clear();
     }

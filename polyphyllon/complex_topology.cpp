@@ -41,7 +41,7 @@ void Complex::compute_degree_distribution(bool logarithmic,int sheet) const
   delete G;
 }
 
-void Complex::compute_connectivity_distribution(int sheet) const
+void Complex::compute_connectivity_distribution(bool direct,int sheet) const
 {
   int i,j,m = 0,l = cardinality(0,sheet);
   std::vector<int> pcount;
@@ -54,7 +54,7 @@ void Complex::compute_connectivity_distribution(int sheet) const
 
   // If we know memory is abundant relative to the spacetime 
   // size, we can compute the distances all at once
-  if (geometry->get_memory_type()) {
+  if (direct) {
     int offset[nv];
     SYNARMOSMA::Graph G;
     SYNARMOSMA::pair_index distances;
@@ -164,22 +164,29 @@ std::pair<double,double> Complex::random_walk(int sheet) const
   return output;
 }
 
-void Complex::compute_geometric_dependency(const std::set<int>& vx)
+void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices)
 {
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
   // modified property set to true...
-  if (vx.empty()) return;
-  int i,m,n;
+  if (modified_vertices.empty()) return;
+  int i,j,m,n;
   std::set<int> current,next;
   std::set<int>::const_iterator it,jt,kt;
 
 #ifdef VERBOSE
-  std::cout << "There are " << vx.size() << " vertices directly implicated." << std::endl;
+  std::cout << "There are " << modified_vertices.size() << " vertices directly implicated." << std::endl;
 #endif
-  // We assume that the cardinality of vmodified is small relative
-  // to the total number of vertices in the spacetime complex
-  for(it=vx.begin(); it!=vx.end(); ++it) {
+
+  for(i=1; i<=Complex::ND; ++i) {
+    n = (signed) simplices[i].size();
+    for(j=0; j<n; ++j) {
+      simplices[i][j].modified = false;
+    }
+  }
+  // We assume that the number of modified vertices is small relative
+  // to the total number of vertices in the complex...
+  for(it=modified_vertices.begin(); it!=modified_vertices.end(); ++it) {
     n = *it;
     current = events[n].entourage;
     for(i=1; i<=Complex::ND; ++i) {
@@ -197,52 +204,7 @@ void Complex::compute_geometric_dependency(const std::set<int>& vx)
   }
 }
 
-void Complex::compute_topological_dependency(const std::set<int>& vx)
-{
-  int i,n,m,l,nhop;
-  std::set<int> current,next;
-  std::set<int>::const_iterator it,jt,kt;
-  const int nv = (signed) events.size();
-  int done[nv];
 
-  for(i=0; i<nv; ++i) {
-    done[i] = 0;
-  }
-  for(it=vx.begin(); it!=vx.end(); ++it) {
-    n = *it;
-    nhop = 0;
-    // Every vertex within topological_radius hops of n is labelled as
-    // modified
-    current.insert(n);
-    done[n] = 1;
-    do {
-      for(jt=current.begin(); jt!=current.end(); ++jt) {
-        m = *jt;
-        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
-          l = *kt;
-          if (done[l] == 0) next.insert(l);
-        }
-      }
-      if (next.empty()) break;
-      for(jt=next.begin(); jt!=next.end(); ++jt) {
-        done[*jt] = 1;
-      }
-      current = next;
-      nhop++;
-      next.clear();
-    } while(nhop < Complex::topological_radius);
-    current.clear();
-    next.clear();
-    for(i=0; i<nv; ++i) {
-      if (done[i] == 1) events[i].topology_modified = true;
-      done[i] = 0;
-    }
-  }
-  int nmod = 0;
-  for(i=0; i<nv; ++i) {
-    if (events[i].topology_modified) nmod++;
-  }
-}
 
 double Complex::dimensional_stress(int d,int n,int sheet) const
 {
@@ -680,11 +642,14 @@ void Complex::simplex_deletion(int d,int n,int sheet)
   int i,dp1 = d + 1;
 
   if (sheet == -1) {
+    if (simplices[d][n].active()) return;
     simplices[d][n].deactivate();
+    simplices[d][n].modified = true;
   } 
   else {
     if (!simplices[d][n].active(sheet)) return;
-    simplices[d][n].set_inactive(sheet);
+    simplices[d][n].deactivate(sheet);
+    simplices[d][n].modified = true;
     for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); ++it) {
       events[*it].topology_modified = true;
     }
@@ -696,40 +661,50 @@ void Complex::simplex_deletion(int d,int n,int sheet)
   }
 }
 
-bool Complex::simplex_addition(int u,int v,int n,int sheet)
+bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)
 {
-  std::set<int> S,locus;
+  std::set<int> S;
   SYNARMOSMA::hash_map::const_iterator qt;
-
-  locus.insert(sheet);
 
   S.insert(u); S.insert(v);
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) {
-    simplices[1].push_back(Simplex(S,locus,n));
+    Simplex s(S,locus);
+    s.incept = n;
+    simplices[1].push_back(s);
     index_table[1][S] = simplices[1].size() - 1;
     events[v].neighbours.insert(u);
     events[u].neighbours.insert(v);
   }
   else {
-    if (simplices[1][qt->second].active) return false;
-    simplices[1][qt->second].active = true;
+    std::set<int>::const_iterator it;
+    bool output = false;
+
+    for(it=locus.begin(); it!=locus.end(); ++it) {
+      if (!simplices[1][qt->second].active(*it)) {
+        simplices[1][qt->second].activate(*it);
+        output = true;
+      }
+    }
+    if (!output) return false;
   }
+  events[u].topology_modified = true;
+  events[v].topology_modified = true;
   return true;
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,int sheet)
+bool Complex::simplex_addition(const std::set<int>& S,const std::set<int>& locus,int n)
 {
   int i,j;
-  std::set<int> locus,fc;
+  std::set<int> fc;
   std::set<int>::const_iterator it;
   std::vector<int> vec,vx;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int d = (signed) S.size() - 1;
 
-  locus.insert(sheet);
-
   Simplex s(S,locus);
+  s.incept = n;
+
   if (d == 1) {
     s.parity = 0;
     if (RND->drandom() < 0.2) {
@@ -743,12 +718,15 @@ bool Complex::simplex_addition(const std::set<int>& S,int sheet)
     index_table[d][S] = simplices[d].size() - 1;
   }
   else {
-    if (simplices[d][qt->second].active(sheet)) {
-      return false;
+    bool output = false;
+
+    for(it=locus.begin(); it!=locus.end(); ++it) {
+      if (!simplices[d][qt->second].active(*it)) {
+        simplices[d][qt->second].activate(*it);
+        output = true;
+      }
     }
-    else {
-      simplices[d][qt->second].set_active(sheet);
-    }
+    if (!output) return false;
   }
 
 #ifdef VERBOSE
@@ -778,11 +756,15 @@ bool Complex::simplex_addition(const std::set<int>& S,int sheet)
     // Add this simplex...
     qt = index_table[i].find(fc);
     if (qt == index_table[i].end()) {
-      simplices[i].push_back(Simplex(fc,locus));
+      s.initialize(fc,locus);
+      s.incept = n;
+      simplices[i].push_back(s);
       index_table[i][fc] = simplices[i].size() - 1;
     }
     else {
-      simplices[i][qt->second].set_active(sheet);
+      for(it=locus.begin(); it!=locus.end(); ++it) {
+        if (!simplices[i][qt->second].active(*it)) simplices[i][qt->second].activate(*it);
+      }
     }
     fc.clear();
     while(SYNARMOSMA::next_combination(vec,1+d)) {
@@ -791,28 +773,95 @@ bool Complex::simplex_addition(const std::set<int>& S,int sheet)
       }
       qt = index_table[i].find(fc);
       if (qt == index_table[i].end()) {
-        simplices[i].push_back(Simplex(fc,locus));
+        s.initialize(fc,locus);
+        s.incept = n;
+        simplices[i].push_back(s);
         index_table[i][fc] = simplices[i].size() - 1;
       }
       else {
-        simplices[i][qt->second].set_active(sheet);
+        for(it=locus.begin(); it!=locus.end(); ++it) {
+          if (!simplices[i][qt->second].active(*it)) simplices[i][qt->second].activate(*it);
+        }
       }
       fc.clear();
     }
     vec.clear();
   }
-  simplicial_implication(sheet);
+
+  for(it=locus.begin(); it!=locus.end(); ++it) {
+    simplicial_implication(*it);
+  }
   return true;
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,std::set<int>& modified_vertices,int sheet)
+void Complex::compute_modified_vertices()
 {
-  std::set<int>::const_iterator it;
+  int i,j,n,m,l,nhop;
+  std::set<int> S,vx,current,next;
+  std::set<int>::const_iterator it,jt,kt;
+  const int nv = (signed) events.size();
+  bool done[nv];
 
-  for(it=S.begin(); it!=S.end(); ++it) {
-    modified_vertices.insert(*it);
+  for(i=0; i<nv; ++i) {
+    done[i] = false;
+    if (!events[i].active()) continue;
+    if (events[i].topology_modified) S.insert(i);
   }
-  return simplex_addition(S,sheet);
+
+  for(i=1; i<=Complex::ND; ++i) {
+    n = (signed) simplices[i].size();
+    for(j=0; j<n; ++j) {
+      if (!simplices[i][j].modified) continue;
+      simplices[i][j].get_vertices(vx);
+      for(it=vx.begin(); it!=vx.end(); ++it) {
+        events[*it].topology_modified = true;
+        S.insert(*it);
+      }
+    }
+  }
+
+  // Now with this know we can calculate which events need to have their
+  // entwinement and/or dimensional stress recalculated
+#ifdef VERBOSE
+  std::cout << "There are " << S.size() << " vertices directly modified in this relaxation step." << std::endl;
+#endif
+  for(it=S.begin(); it!=S.end(); ++it) {
+    n = *it;
+    nhop = 0;
+    // Every vertex within topological_radius hops of n is labelled as
+    // modified
+    current.insert(n);
+    done[n] = true;
+    do {
+      for(jt=current.begin(); jt!=current.end(); ++jt) {
+        m = *jt;
+        for(kt=events[m].neighbours.begin(); kt!=events[m].neighbours.end(); ++kt) {
+          l = *kt;
+          if (done[l] == 0) next.insert(l);
+        }
+      }
+      if (next.empty()) break;
+      for(jt=next.begin(); jt!=next.end(); ++jt) {
+        done[*jt] = 1;
+      }
+      current = next;
+      nhop++;
+      next.clear();
+    } while(nhop < Complex::topological_radius);
+    current.clear();
+    next.clear();
+    for(i=0; i<nv; ++i) {
+      if (done[i]) events[i].topology_modified = true;
+      done[i] = false;
+    }
+  }
+  int nmod = 0;
+  for(i=0; i<nv; ++i) {
+    if (events[i].topology_modified) nmod++;
+  }
+#ifdef VERBOSE
+  std::cout << "There are " << nmod << " modified vertices out of " << nv << " in this relaxation step." << std::endl;
+#endif
 }
 
 void Complex::simplicial_implication(int sheet)
@@ -843,7 +892,7 @@ void Complex::simplicial_implication(int sheet)
           }
           else {
             for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
-              simplices[i-1][qt->second].set_active(*it);
+              simplices[i-1][qt->second].activate(*it);
             }
           }
         }
@@ -855,8 +904,8 @@ void Complex::simplicial_implication(int sheet)
       simplices[1][i].get_ubiquity(ubiquity);
       simplices[1][i].get_vertices(vx);
       for(it=ubiquity.begin(); it!=ubiquity.end(); ++it) {
-        events[vx[0]].set_active(*it);
-        events[vx[1]].set_active(*it);
+        events[vx[0]].activate(*it);
+        events[vx[1]].activate(*it);
       }
     }
   }
@@ -885,7 +934,7 @@ void Complex::simplicial_implication(int sheet)
 #ifdef VERBOSE
               std::cout << "Restoring simplex with key " << SYNARMOSMA::make_key(simplices[i-1][qt->second].vertices) << " to regularize the complex" << std::endl;
 #endif
-              simplices[i-1][qt->second].set_active(sheet);
+              simplices[i-1][qt->second].activate(sheet);
             }
           }
         }
@@ -899,13 +948,13 @@ void Complex::simplicial_implication(int sheet)
 #ifdef VERBOSE
         std::cout << "Restoring vertex " << vx[0] << " to regularize the complex" << std::endl;
 #endif
-        events[vx[0]].set_active(sheet);
+        events[vx[0]].activate(sheet);
       }
       if (!events[vx[1]].active(sheet)) {
 #ifdef VERBOSE
         std::cout << "Restoring vertex " << vx[1] << " to regularize the complex" << std::endl;
 #endif
-        events[vx[1]].set_active(sheet);
+        events[vx[1]].activate(sheet);
       }
     }
   }
@@ -1238,18 +1287,17 @@ double Complex::dimensional_frontier(int D,int sheet) const
   return double(s)/double(simplices[1].size());
 }
 
-double Complex::dimensional_uniformity(int sheet) const
+double Complex::dimensional_uniformity(int geometric_dimension,int sheet) const
 {
   int i,n,nv,sdimension = dimension(sheet),sum = 0;
-  const int D = geometry->dimension();
-  if (sdimension < D) sdimension = D;
+  if (sdimension < geometric_dimension) sdimension = geometric_dimension;
 
   nv = 0;
   if (sheet == -1) {
     for(i=0; i<(signed) events.size(); ++i) {
       if (!events[i].active()) continue;
       n = vertex_dimension(i,sheet);
-      n = (n < D) ? D : n;
+      n = (n < geometric_dimension) ? geometric_dimension : n;
       sum += sdimension - n;
       nv++;
     }
@@ -1258,7 +1306,7 @@ double Complex::dimensional_uniformity(int sheet) const
     for(i=0; i<(signed) events.size(); ++i) {
       if (!events[i].active(sheet)) continue;
       n = vertex_dimension(i,sheet);
-      n = (n < D) ? D : n;
+      n = (n < geometric_dimension) ? geometric_dimension : n;
       sum += sdimension - n;
       nv++;
     }
