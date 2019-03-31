@@ -8,15 +8,15 @@ namespace DIAPLEXIS {
   class Event: public SYNARMOSMA::Vertex {
    // For the event structure, the nodes of spacetime...
    protected:
+    SYNARMOSMA::Proposition theorem;
     bool boundary = false;
     bool topology_modified = true;
     bool geometry_modified = true;
     double obliquity = 0.0;
-    double deficiency = 0.0;
     double geometric_deficiency = 0.0;
-    std::set<int> ubiquity;
+    double deficiency = 0.0;
     std::vector<double> entwinement;
-    SYNARMOSMA::Proposition theorem;
+    std::set<int> ubiquity;
 
     void clear() override;
    public:
@@ -35,12 +35,19 @@ namespace DIAPLEXIS {
     inline void set_ubiquity(const std::set<int>& S) {ubiquity = S; topology_modified = true;};
     inline void get_ubiquity(std::set<int>& S) const {S = ubiquity;};
     inline int presence() const {return (signed) ubiquity.size();};
+    inline void clear_posterior() {posterior.clear();};
+    inline void get_posterior(std::set<int>& N) const {N = posterior;};
+    inline bool add_posterior(int);
+    inline void clear_anterior() {anterior.clear();};
+    inline void get_anterior(std::set<int>& N) const {N = anterior;};
+    inline bool add_anterior(int);
     inline void clear_entourage() {entourage.clear();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
     inline void get_entourage(std::set<int> N) const {N = entourage;};
     inline bool drop_entourage(int);
     inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
     inline void set_neighbours(const std::set<int>& N) {neighbours = N; topology_modified = true;};
+    inline bool is_neighbour(int n) const {return (neighbours.count(n) > 0);};
     inline bool add_neighbour(int);
     inline bool drop_neighbour(int);
     inline double get_deficiency() const {return deficiency;};
@@ -64,6 +71,24 @@ namespace DIAPLEXIS {
     friend std::ostream& operator <<(std::ostream&,const Event&);    
     friend class Complex;
   };
+
+  bool Event::add_posterior(int n)
+  {
+    if (posterior.count(n) == 0) {
+      posterior.insert(n);
+      return true;
+    }
+    return false;
+  }
+
+  bool Event::add_anterior(int n)
+  {
+    if (anterior.count(n) == 0) {
+      anterior.insert(n);
+      return true;
+    }
+    return false;
+  }
 
   bool Event::add_neighbour(int n)
   {

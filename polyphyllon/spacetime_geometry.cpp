@@ -12,7 +12,7 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
   int i;
   unsigned int j;
   std::vector<double> vx;
-  const int nv = cardinality(0,-1);
+  const int nv = skeleton->cardinality(0,-1);
 
   x.clear();
   for(i=0; i<nv; ++i) {
@@ -28,13 +28,13 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
 {
   int i;
   double wm,avg_length = 0.0,max_length = 0.0,min_length = 1000.0;
-  const int Ne = (signed) simplices[1].size();
-  const double ne = double(cardinality(1,sheet));
+  const int Ne = (signed) skeleton->simplices[1].size();
+  const double ne = double(skeleton->cardinality(1,sheet));
 
   if (sheet == -1) {
     for(i=0; i<Ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      wm = simplices[1][i].volume;
+      if (!skeleton->simplices[1][i].active()) continue;
+      wm = skeleton->simplices[1][i].get_volume();
       avg_length += wm;
       if (wm > max_length) max_length = wm;
       if (wm < min_length) min_length = wm;
@@ -43,8 +43,8 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
   }
   else {
     for(i=0; i<Ne; ++i) {
-      if (!simplices[1][i].active(sheet)) continue;
-      wm = simplices[1][i].volume;
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      wm = skeleton->simplices[1][i].get_volume();
       avg_length += wm;
       if (wm > max_length) max_length = wm;
       if (wm < min_length) min_length = wm;
@@ -75,7 +75,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = skeleton->events[i].topological_dimension;
+      n = skeleton->events[i].get_topological_dimension();
       system_size += D;
       vdimension.push_back(n);
     }
@@ -86,7 +86,7 @@ bool Spacetime::adjust_dimension()
         vdimension.push_back(-1);
         continue;
       }
-      n = skeleton->events[i].topological_dimension;
+      n = skeleton->events[i].get_topological_dimension();
       system_size += (n <= D) ? D : n;
       vdimension.push_back(n);
     }
@@ -98,7 +98,7 @@ bool Spacetime::adjust_dimension()
 void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
 {
   int i,j,l,v;
-  std::set<int> S;
+  std::set<int> S,N;
   std::set<int>::const_iterator it;
   std::vector<int> offset,current,next;
   std::vector<int>::const_iterator v_it;
@@ -116,14 +116,15 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int 
     do {
       for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
         v = *v_it;
-        for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+        skeleton->events[v].get_neighbours(N);
+        for(it=N.begin(); it!=N.end(); ++it) {
           j = *it;
           S.clear();
           S.insert(v);
           S.insert(j);
-          qt = index_table[1].find(S);
-          if (!simplices[1][qt->second].active()) continue;
-          if (!simplices[1][qt->second].timelike()) continue;
+          qt = skeleton->index_table[1].find(S);
+          if (!skeleton->simplices[1][qt->second].active()) continue;
+          if (!skeleton->simplices[1][qt->second].timelike()) continue;
           if (offset[j] == -1) {
             offset[j] = G->add_vertex();
             next.push_back(j);
@@ -140,15 +141,16 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int 
     do {
       for(v_it=current.begin(); v_it!=current.end(); ++v_it) {
         v = *v_it;
-        for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+        skeleton->events[v].get_neighbours(N);
+        for(it=N.begin(); it!=N.end(); ++it) {
           j = *it;
           S.clear();
           S.insert(v);
           S.insert(j);
-          qt = index_table[1].find(S);
+          qt = skeleton->index_table[1].find(S);
           l = qt->second;
-          if (!simplices[1][l].active(sheet)) continue;
-          if (!simplices[1][qt->second].timelike()) continue;
+          if (!skeleton->simplices[1][l].active(sheet)) continue;
+          if (!skeleton->simplices[1][qt->second].timelike()) continue;
           if (offset[j] == -1) {
             offset[j] = G->add_vertex();
             next.push_back(j);
@@ -168,7 +170,7 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   // This method assumes that the compute_lightcones method has already been called to fill 
   // the anterior and posterior properties of the skeleton->events!
   int i,j;
-  std::set<int> current,next;
+  std::set<int> S,current,next;
   std::set<int>::const_iterator it,jt;
 
   // First the past cone...
@@ -177,7 +179,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      for(jt=skeleton->events[i].anterior.begin(); jt!=skeleton->events[i].anterior.end(); ++jt) {
+      skeleton->events[i].get_anterior(S);
+      for(jt=S.begin(); jt!=S.end(); ++jt) {
         j = *jt;
         if (past_cone.count(j) > 0) continue;
         next.insert(j);
@@ -198,7 +201,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      for(jt=skeleton->events[i].posterior.begin(); jt!=skeleton->events[i].posterior.end(); ++jt) {
+      skeleton->events[i].get_posterior(S);
+      for(jt=S.begin(); jt!=S.end(); ++jt) {
         j = *jt;
         if (future_cone.count(j) > 0) continue;
         next.insert(j);
@@ -220,7 +224,7 @@ double Spacetime::compute_temporal_nonlinearity() const
   std::set<int> past,future;
   SYNARMOSMA::Directed_Graph G;
   const int nv = (signed) skeleton->events.size();
-  const double na = double(cardinality(0,-1));
+  const double na = double(skeleton->cardinality(0,-1));
 
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
@@ -253,34 +257,33 @@ void Spacetime::compute_lightcones()
   // sheet = -1
   int i,vx[2];
   const int n = (signed) skeleton->events.size();
-  const int m = (signed) simplices[1].size();
+  const int m = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<n; ++i) {
-    skeleton->events[i].anterior.clear();
-    skeleton->events[i].posterior.clear();
+    skeleton->events[i].clear_anterior();
+    skeleton->events[i].clear_posterior();
   }
   for(i=0; i<m; ++i) {
-    if (!simplices[1][i].active()) continue;
-    if (!simplices[1][i].timelike()) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active()) continue;
+    if (!skeleton->simplices[1][i].timelike()) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     if (geometry->get_temporal_order(vx[0],vx[1]) == SYNARMOSMA::Relation::before) {
-      skeleton->events[vx[0]].posterior.insert(vx[1]);
-      skeleton->events[vx[1]].anterior.insert(vx[0]);
+      skeleton->events[vx[0]].add_posterior(vx[1]);
+      skeleton->events[vx[1]].add_anterior(vx[0]);
     }
     else {
-      skeleton->events[vx[1]].posterior.insert(vx[0]);
-      skeleton->events[vx[0]].anterior.insert(vx[1]);
+      skeleton->events[vx[1]].add_posterior(vx[0]);
+      skeleton->events[vx[0]].add_anterior(vx[1]);
     }
   }
 }
 
 void Spacetime::chorogenesis(int nsteps)
 {
-  //assert(initial_state == Initial_Topology::random);
   assert(solver == Geometry_Solver::mechanical);
   assert(edge_probability > 0.3);
   assert(geometry->get_euclidean());
-  assert(connected(-1));
+  assert(skeleton->connected(-1));
   int dpopulation[1+geometry->dimension()];
   unsigned int i,j;
   std::vector<std::pair<long,int> > factors;
@@ -312,9 +315,9 @@ void Spacetime::chorogenesis(int nsteps)
     y.clear();
   }
   // We have now verified all the necessary conditions and can begin  
-  compute_degree_distribution(false,-1);
+  skeleton->compute_degree_distribution(false,-1);
   
-  compute_connectivity_distribution(-1);
+  skeleton->compute_connectivity_distribution(!geometry->get_memory_type(),-1);
 
   int vx[2];
   unsigned int d,derror,csize,cfactor;
@@ -322,7 +325,7 @@ void Spacetime::chorogenesis(int nsteps)
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
   SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
-  const unsigned int ne = simplices[1].size();
+  const unsigned int ne = skeleton->simplices[1].size();
 
 #ifdef VERBOSE
   std::cout << "Beginning chorogenesis with " << ne << " edges..." << std::endl;
@@ -331,11 +334,11 @@ void Spacetime::chorogenesis(int nsteps)
   do {
     iterations += 1;
     for(i=0; i<ne; ++i) {
-      if (!simplices[1][i].active()) continue;
-      simplices[1][i].get_vertices(vx);
-      d = skeleton->events[vx[0]].neighbours.size();
+      if (!skeleton->simplices[1][i].active()) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
+      d = skeleton->vertex_valence(vx[0],-1);
       if (d <= 2*geometry->dimension()) continue;
-      d = skeleton->events[vx[1]].neighbours.size();
+      d = skeleton->vertex_valence(vx[1],-1);
       if (d <= 2*geometry->dimension()) continue;
       candidates.push_back(i);
     }
@@ -344,7 +347,7 @@ void Spacetime::chorogenesis(int nsteps)
       break;
     }
     csize = candidates.size();
-    cfactor = int(RND->drandom(0.1*temperature,temperature)*csize);
+    cfactor = int(skeleton->RND->drandom(0.1*temperature,temperature)*csize);
     if (cfactor == 0) {
       std::cout << "Temperature too low for topological operations, exiting loop..." << std::endl;
       break;
@@ -354,12 +357,12 @@ void Spacetime::chorogenesis(int nsteps)
     std::cout << "There are " << csize << " and " << cfactor << " edges to delete at temperature " << temperature << std::endl;
 #endif
     d = 0;
-    RND->shuffle(reorder,csize);
+    skeleton->RND->shuffle(reorder,csize);
     for(i=0; i<csize; ++i) {
       j = candidates[reorder[i]];
-      simplex_deletion(1,j,-1);
-      if (!connected(-1)) {
-        simplices[1][j].set_active(0);
+      skeleton->simplex_deletion(1,j,-1);
+      if (!skeleton->connected(-1)) {
+        skeleton->simplices[1][j].activate(0);
         continue;
       }
       d++;
@@ -369,7 +372,7 @@ void Spacetime::chorogenesis(int nsteps)
     std::cout << "Deleted " << d << " edges from the spacetime complex." << std::endl;
 #endif
     regularization(false,-1);
-    compute_graph(G,-1);
+    skeleton->compute_graph(G,-1);
     G->degree_distribution(false,hgram);
     derror = 0;
     for(i=0; i<hgram.size(); ++i) {
@@ -384,7 +387,7 @@ void Spacetime::chorogenesis(int nsteps)
 #ifdef VERBOSE
     std::cout << "Vertex degree error is " << derror << std::endl;
 #endif
-    compute_connectivity_distribution(-1);
+    skeleton->compute_connectivity_distribution(!geometry->get_memory_type(),-1);
     // Now the geometry...
     optimize();
     // Prepare for the next iteration...
@@ -393,7 +396,6 @@ void Spacetime::chorogenesis(int nsteps)
   } while(true);
   if (iterations == 1) optimize();
   compute_volume();
-  compute_curvature();
   compute_obliquity();
   structural_deficiency();
   write_state();
@@ -404,13 +406,13 @@ double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) con
 {
   int i,vx[2];
   double d,ell,output = 0.0;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const double pfactor = (2.0/M_PI)*5.0;
   const double sq_tolerance = edge_flexibility_threshold*edge_flexibility_threshold;
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active()) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     d = geometry->get_squared_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
@@ -430,7 +432,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x,const std::ve
 {
   int i,vx[2];
   double d,ell,output = 0.0;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
   const double pfactor = (2.0/M_PI)*5.0;
   const double sq_tolerance = edge_flexibility_threshold*edge_flexibility_threshold;
 
@@ -440,8 +442,8 @@ double Spacetime::compute_abnormality(const std::vector<double>& x,const std::ve
   geometry->compute_squared_distances();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active()) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active()) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     d = geometry->get_squared_distance(vx[0],vx[1],false);
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
@@ -469,19 +471,19 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
   if (geometry->get_relational()) {
     std::set<int> vmodified,last,current;
     double E,alpha;
-    const double B = compute_abnormality();
+    const double B = compute_abnormality(flexible_edge);
 
     for(i=0; i<system_size; ++i) {
       geometry->add(i,geometry_tolerance);
       geometry->get_implied_vertices(i,current);
-      compute_geometric_dependency(current);
+      skeleton->compute_dependent_simplices(current);
       vmodified = last;
       for(it=current.begin(); it!=current.end(); ++it) {
         vmodified.insert(*it);
       }
       geometry->compute_squared_distances(vmodified);
       compute_volume();
-      E = compute_abnormality();
+      E = compute_abnormality(flexible_edge);
       alpha = (E - B)/geometry_tolerance;
       df[i] = alpha;
       geometry->add(i,-geometry_tolerance);
@@ -493,7 +495,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
   else {
     int j,k,na = 0;
     double l,ell;
-    std::set<int> S;
+    std::set<int> S,N;
     std::vector<double> x1,x2;
     SYNARMOSMA::hash_map::const_iterator qt;
     const int nv = (signed) skeleton->events.size();
@@ -510,7 +512,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
     assert(system_size == D*na);
 #endif
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,l,S,x1,x2,ell,alpha,it,qt)
+#pragma omp parallel for default(shared) private(i,j,k,l,S,N,x1,x2,ell,alpha,it,qt)
 #endif
     for(i=0; i<nv; ++i) {
       if (!skeleton->events[i].active()) continue;
@@ -518,14 +520,15 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
       for(j=0; j<D; ++j) {
         alpha[j] = 0.0;
       }
-      for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+      skeleton->events[i].get_neighbours(N);
+      for(it=N.begin(); it!=N.end(); ++it) {
         k = *it;
         geometry->get_coordinates(k,x2);
         l = geometry->get_squared_distance(i,k,false);
         S.clear();
         S.insert(i);
         S.insert(k);
-        qt = index_table[1].find(S);
+        qt = skeleton->index_table[1].find(S);
         if (flexible_edge[qt->second] == 1) {
           if (l > sq_tolerance) {
             l = std::sqrt(l);
@@ -586,7 +589,7 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   if (geometry->get_euclidean()) return 0.0;
   int u,w,tcount;
   double l,tipsy,vorticity;
-  std::set<int> S;
+  std::set<int> S,N;
   std::vector<int> jset;
   std::set<int>::const_iterator it,jt;
   std::vector<int>::const_iterator vit;
@@ -598,21 +601,22 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   vorticity = G.cyclicity();
 
   tipsy = 0.0;
+  skeleton->events[v].get_neighbours(N);
   if (sheet == -1) {
-    for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+    for(it=N.begin(); it!=N.end(); ++it) {
       u = *it;
       S.clear();
       S.insert(v);
       S.insert(u);
-      qt = index_table[1].find(S);
-      l = simplices[1][qt->second].volume;
+      qt = skeleton->index_table[1].find(S);
+      l = skeleton->simplices[1][qt->second].get_volume();
       // Ignore timelike and null edges...
-      if (!simplices[1][qt->second].spacelike()) continue;
+      if (!skeleton->simplices[1][qt->second].spacelike()) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
       jset.clear();
-      for(jt=skeleton->events[v].neighbours.begin(); jt!=skeleton->events[v].neighbours.end(); ++jt) {
+      for(jt=N.begin(); jt!=N.end(); ++jt) {
         w = *jt;
-        if (skeleton->events[u].neighbours.count(w) > 0) jset.push_back(w);
+        if (skeleton->events[u].is_neighbour(w) > 0) jset.push_back(w);
       }
       if (jset.empty()) continue;
       tcount = 0;
@@ -627,21 +631,21 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
     }
   }
   else {
-    for(it=skeleton->events[v].neighbours.begin(); it!=skeleton->events[v].neighbours.end(); ++it) {
+    for(it=N.begin(); it!=N.end(); ++it) {
       u = *it;
       S.clear();
       S.insert(v);
       S.insert(u);
-      qt = index_table[1].find(S);
-      if (!simplices[1][qt->second].active(sheet)) continue;
-      l = simplices[1][qt->second].volume;
+      qt = skeleton->index_table[1].find(S);
+      if (!skeleton->simplices[1][qt->second].active(sheet)) continue;
+      l = skeleton->simplices[1][qt->second].get_volume();
       // Ignore timelike and null edges...
-      if (!simplices[1][qt->second].spacelike()) continue;
+      if (!skeleton->simplices[1][qt->second].spacelike()) continue;
       // This edge is spacelike, so it will contribute to the temporal vorticity
       jset.clear();
-      for(jt=skeleton->events[v].neighbours.begin(); jt!=skeleton->events[v].neighbours.end(); ++jt) {
+      for(jt=N.begin(); jt!=N.end(); ++jt) {
         w = *jt;
-        if (skeleton->events[u].neighbours.count(w) > 0) jset.push_back(w);
+        if (skeleton->events[u].is_neighbour(w) > 0) jset.push_back(w);
       }
       if (jset.empty()) continue;
       tcount = 0;
@@ -652,15 +656,15 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
         S.clear();
         S.insert(v);
         S.insert(u);
-        qt = index_table[1].find(S);
-        if (!simplices[1][qt->second].active(sheet)) continue;
+        qt = skeleton->index_table[1].find(S);
+        if (!skeleton->simplices[1][qt->second].active(sheet)) continue;
         d1 = geometry->get_temporal_order(v,u);
 
         S.clear();
         S.insert(u);
         S.insert(w);
-        qt = index_table[1].find(S);
-        if (!simplices[1][qt->second].active(sheet)) continue;
+        qt = skeleton->index_table[1].find(S);
+        if (!skeleton->simplices[1][qt->second].active(sheet)) continue;
         d2 = geometry->get_temporal_order(u,w);
         if (d1 != d2) tcount++;
       }
@@ -677,7 +681,7 @@ void Spacetime::compute_obliquity()
   const int nv = (signed) skeleton->events.size();
   if (geometry->get_relational()) {
     for(int i=0; i<nv; ++i) {
-      skeleton->events[i].obliquity = 0.0;
+      skeleton->events[i].set_obliquity(0.0);
     }
     return;
   }
@@ -685,20 +689,24 @@ void Spacetime::compute_obliquity()
   double rho,theta,alpha;
   bool first;
   std::vector<double> vx,vy;
+  std::set<int> N;
   std::set<int>::const_iterator it;
 
   const double A = 2.5;
 
   for(i=0; i<nv; ++i) {
-    if (!skeleton->events[i].active() || skeleton->events[i].neighbours.size() < 2 || !skeleton->events[i].geometry_modified) continue;
+    if (!skeleton->events[i].active()) continue;
+    
+    if (skeleton->vertex_valence(i,-1) < 2 || !skeleton->events[i].get_geometry_modified()) continue;
 
-    j = *(skeleton->events[i].neighbours.begin());
+    skeleton->events[i].get_neighbours(N);
+    j = *(N.begin());
 
     geometry->vertex_difference(i,j,vx);
 
     rho = 0.0;
     first = true;
-    for(it=skeleton->events[i].neighbours.begin(); it!=skeleton->events[i].neighbours.end(); ++it) {
+    for(it=N.begin(); it!=N.end(); ++it) {
       if (first) {
         first = false;
         continue;
@@ -709,9 +717,9 @@ void Spacetime::compute_obliquity()
       theta = std::acos(alpha);
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);
     }
-    rho = rho/double(skeleton->events[i].neighbours.size() - 1);
+    rho = rho/double(skeleton->vertex_valence(i,-1) - 1);
     if (rho < std::numeric_limits<double>::epsilon()) rho = 0.0;
-    skeleton->events[i].obliquity = rho;
+    skeleton->events[i].set_obliquity(rho);
   }
 }
 
@@ -727,7 +735,7 @@ double Spacetime::representational_energy(bool weighted) const
   std::vector<int> offset;
   SYNARMOSMA::Graph G;
   const int nv = (signed) skeleton->events.size();
-  const int N = skeleton->cardinality(0);
+  const int N = skeleton->cardinality(0,-1);
   const int D = geometry->dimension();
   double coordinates[N][D],result[N][D],sum[D];
   SYNARMOSMA::Matrix<double> L(N);
@@ -814,7 +822,7 @@ bool Spacetime::realizable(int d,int n) const
   double* w = new double[dp1];
   double* work = new double[nwork];
 
-  simplices[d][n].get_vertices(vx);
+  skeleton->simplices[d][n].get_vertices(vx);
 
   for(i=0; i<dp1; ++i) {
     alpha = 0.0;
@@ -822,22 +830,22 @@ bool Spacetime::realizable(int d,int n) const
       S.clear();
       S.insert(vx[i]);
       S.insert(vx[0]);
-      qt = index_table[1].find(S);
-      alpha = simplices[1][qt->second].volume;
+      qt = skeleton->index_table[1].find(S);
+      alpha = skeleton->simplices[1][qt->second].get_volume();
     }
     for(j=0; j<dp1; ++j) {
       if (j != 0) {
         S.clear();
         S.insert(vx[j]);
         S.insert(vx[0]);
-        qt = index_table[1].find(S);
-        alpha += simplices[1][qt->second].volume;
+        qt = skeleton->index_table[1].find(S);
+        alpha += skeleton->simplices[1][qt->second].get_volume();
       }
       S.clear();
       S.insert(vx[i]);
       S.insert(vx[j]);
-      qt = index_table[1].find(S);
-      alpha -= simplices[1][qt->second].volume;
+      qt = skeleton->index_table[1].find(S);
+      alpha -= skeleton->simplices[1][qt->second].get_volume();
       A[dp1*i+j] = alpha;
     }
   }
@@ -862,32 +870,34 @@ void Spacetime::compute_volume()
   int i,j,k,l,n,m,vx[Complex::ND+3];
   double prefactor,V,l1,l2,l3;
   std::set<int> S;
+  std::vector<std::set<int> > F;
   SYNARMOSMA::UINT64 q,p = 8;
   SYNARMOSMA::Matrix<double> A;
   SYNARMOSMA::hash_map::const_iterator qt;
 
   compute_lengths();
 
-  for(i=0; i<(signed) simplices[2].size(); ++i) {
+  for(i=0; i<(signed) skeleton->simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
-    // without LAPACK
-    if (!simplices[2][i].active() || !simplices[2][i].modified) continue;
-    qt = index_table[1].find(simplices[2][i].faces[0]);
-    l1 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(simplices[2][i].faces[1]);
-    l2 = simplices[1][qt->second].sq_volume;
-    qt = index_table[1].find(simplices[2][i].faces[2]);
-    l3 = simplices[1][qt->second].sq_volume;
+    // without LAPACK thanks to Heron's formula
+    if (!skeleton->simplices[2][i].active() || !skeleton->simplices[2][i].get_modified()) continue;
+    skeleton->simplices[2][i].get_faces(F);
+    qt = skeleton->index_table[1].find(F[0]);
+    l1 = skeleton->simplices[1][qt->second].get_squared_volume();
+    qt = skeleton->index_table[1].find(F[1]);
+    l2 = skeleton->simplices[1][qt->second].get_squared_volume();
+    qt = skeleton->index_table[1].find(F[2]);
+    l3 = skeleton->simplices[1][qt->second].get_squared_volume();
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
-    simplices[2][i].volume = std::sqrt(std::abs(V));
-    simplices[2][i].sq_volume = V;
-    simplices[2][i].modified = false;
+    skeleton->simplices[2][i].set_volume(std::sqrt(std::abs(V)));
+    skeleton->simplices[2][i].set_squared_volume(V);
+    skeleton->simplices[2][i].set_modified(false);
   }
 
   for(i=3; i<=Complex::ND; ++i) {
-    if (simplices[i].empty()) continue;
+    if (skeleton->simplices[i].empty()) continue;
     m = i + 2;
-    n = (signed) simplices[i].size();
+    n = (signed) skeleton->simplices[i].size();
     q = SYNARMOSMA::factorial(i);
     q *= q;
     prefactor = 1.0/(double(p)*double(q));
@@ -898,23 +908,23 @@ void Spacetime::compute_volume()
       A.set(j,0,1.0);
     }
     for(j=0; j<n; ++j) {
-      if (!simplices[i][j].active() || !simplices[i][j].modified) continue;
-      simplices[i][j].get_vertices(vx);
+      if (!skeleton->simplices[i][j].active() || !skeleton->simplices[i][j].get_modified()) continue;
+      skeleton->simplices[i][j].get_vertices(vx);
       for(k=0; k<1+i; ++k) {
         for(l=k+1; l<1+i; ++l) {
           S.clear();
           S.insert(vx[k]);
           S.insert(vx[l]);
-          qt = index_table[1].find(S);
-          V = simplices[1][qt->second].sq_volume;
+          qt = skeleton->index_table[1].find(S);
+          V = skeleton->simplices[1][qt->second].get_squared_volume();
           A.set(1+k,1+l,V);
           A.set(1+l,1+k,V);
         }
       }
       V = prefactor*A.determinant();
-      simplices[i][j].volume = std::sqrt(std::abs(V));
-      simplices[i][j].sq_volume = V;
-      simplices[i][j].modified = false;
+      skeleton->simplices[i][j].set_volume(std::sqrt(std::abs(V)));
+      skeleton->simplices[i][j].set_squared_volume(V);
+      skeleton->simplices[i][j].set_modified(false);
     }
     p *= 2;
   }
@@ -924,15 +934,15 @@ void Spacetime::compute_lengths()
 {
   int i,vx[2];
   double delta;
-  const int ne = (signed) simplices[1].size();
+  const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!simplices[1][i].active() || !simplices[1][i].modified) continue;
-    simplices[1][i].get_vertices(vx);
+    if (!skeleton->simplices[1][i].active() || !skeleton->simplices[1][i].get_modified()) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
     delta = geometry->get_squared_distance(vx[0],vx[1],false);
-    simplices[1][i].sq_volume = delta;
-    simplices[1][i].volume = std::sqrt(std::abs(delta));
-    simplices[1][i].modified = false;
+    skeleton->simplices[1][i].set_squared_volume(delta);
+    skeleton->simplices[1][i].set_volume(std::sqrt(std::abs(delta)));
+    skeleton->simplices[1][i].set_modified(false);
   }
 }
 

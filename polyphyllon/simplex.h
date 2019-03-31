@@ -5,9 +5,6 @@
 
 namespace DIAPLEXIS {
   class Simplex: public SYNARMOSMA::Cell {
-   private:
-    using SYNARMOSMA::Cell::initialize;
-
    protected:
     double volume = 0.0;
     double sq_volume = 0.0;
@@ -46,6 +43,7 @@ namespace DIAPLEXIS {
     inline void set_modified(bool t) {modified = t;};
     inline int get_incept() const {return incept;};
     inline void set_incept(int n) {incept = n;};
+    inline double get_energy() const {return energy;};
     inline void set_volume(double V) {volume = V;};
     inline double get_volume() const {return volume;};
     inline void set_squared_volume(double V) {sq_volume = V;};

@@ -138,6 +138,7 @@ namespace DIAPLEXIS {
     inline int get_edge_index(const std::set<int>& vx) const {SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); return qt->second;};
     inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
     inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
+    inline bool is_orientable() const {return orientable;};
     inline double get_total_energy(int sheet) const {return total_energy(sheet);};
     inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
     inline int get_events() const {return (signed) events.size();};

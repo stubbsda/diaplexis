@@ -607,9 +607,10 @@ void Spacetime::compute_obliquity()
 
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    skeleton->events[i].get_neighbours(N);
-    if (N.size() < 2 || !skeleton->events[i].get_geometry_modified()) continue;
 
+    if (skeleton->vertex_valence(i) < 2 || !skeleton->events[i].get_geometry_modified()) continue;
+
+    skeleton->events[i].get_neighbours(N);
     j = *(N.begin());
 
     geometry->vertex_difference(i,j,vx);
@@ -627,7 +628,7 @@ void Spacetime::compute_obliquity()
       theta = std::acos(alpha);
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);
     }
-    rho = rho/double(N.size() - 1);
+    rho = rho/double(skeleton->vertex_valence(i) - 1);
     if (rho < std::numeric_limits<double>::epsilon()) rho = 0.0;
     skeleton->events[i].set_obliquity(rho);
   }
@@ -789,7 +790,7 @@ void Spacetime::compute_volume()
 
   for(i=0; i<(signed) skeleton->simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
-    // without LAPACK
+    // without LAPACK thanks to Heron's formula
     if (!skeleton->active_simplex(2,i) || !skeleton->simplices[2][i].get_modified()) continue;
     skeleton->simplices[2][i].get_faces(F);
     qt = skeleton->index_table[1].find(F[0]);

@@ -208,7 +208,6 @@ namespace DIAPLEXIS {
     void read_state(const std::string&);
     void write_state(const std::string& = "") const;
     void read_parameters(const std::string&);
-    void set_default_values();
     bool adjust_dimension();
     void arclength_statistics(double*) const;
     void condense();

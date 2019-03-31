@@ -53,7 +53,6 @@ namespace DIAPLEXIS {
     bool reversible = false;
     double error = 0.0;
     double global_deficiency = 0.0;
-    std::set<int> modified_vertices;
     Complex* skeleton;
     SYNARMOSMA::Geometry* geometry;
     std::vector<Sheet> codex;
@@ -139,22 +138,24 @@ namespace DIAPLEXIS {
     // and the energy
     static const double Lambda;
 
-    std::string sheet_activity() const;
-    void compute_geometric_gradient(std::vector<double>&,bool);
     // The various methods needed for the hyphantic operators
     void hyphansis(int);
     void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
     void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
     std::string implicative_scale(int,std::vector<double>&) const;
     std::string explicative_scale(int,std::vector<double>&) const;
+    void implication(std::string&) const;
+    void explication(std::string&) const;
     int select_vertex(const std::vector<int>&,double,int) const;
     int vertex_addition(const std::vector<double>&,int);
     int vertex_addition(const std::set<int>&,int);
     int vertex_addition(int,int);
     bool vertex_deletion(int,int);
+    void vertex_fusion(int,int,int);
+    bool vertex_twist(int);
+
     bool circumvolution(int);
     bool circumvolution(int,int);
-    bool reduction(int,int);
     bool contraction(int,double,int);
     bool compensation_m(int,int);
     bool compensation_g(int,int);
@@ -162,6 +163,7 @@ namespace DIAPLEXIS {
     bool expansion(int,double,int);
     bool foliation_m(int,int);
     bool foliation_x(int,int);
+    bool reduction(int,int);
     bool amputation(int,double,int);
     bool fusion_x(int,double,int);
     bool fusion_m(int,int);
@@ -171,10 +173,8 @@ namespace DIAPLEXIS {
     bool perforation(int,int,int);
     bool correction(int,int);
     bool germination(int,int);
-    bool vertex_twist(int);
     bool stellar_addition(int,int);
     bool stellar_deletion(int,int);
-    void vertex_fusion(int,int,int);
 
     bool interplication(int,double,int,int);
     int compression(double);
@@ -184,47 +184,49 @@ namespace DIAPLEXIS {
     void entourage(std::vector<int>&) const;
 
     bool realizable(int,int) const;
-    void arclength_statistics(double*,int) const;
     void compute_volume();
     void compute_lengths();
     void compute_obliquity();
-    double compute_abnormality() const;
-    double compute_abnormality(const std::vector<double>&) const;
+    double compute_abnormality(const std::vector<int>&) const;
+    double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
+    void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
     void mechanical_force(const std::vector<int>&,const std::vector<double>&,double*) const;
+    void mechanical_solver();
+    void annealing_solver();
+    void simplex_solver();
+    void evolutionary_solver();
+    void optimize();
     double minimize_lengths(const std::vector<int>&,const std::vector<int>&,int*) const;
     void structural_deficiency();
-    void compute_lightcones();
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
+    void compute_lightcones();
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
     double compute_temporal_vorticity(int,int) const;
     double compute_temporal_nonlinearity() const;
     double representational_energy(bool) const;
-    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
-    void implication(std::string&) const;
-    void explication(std::string&) const;
-    void compute_delta();
+
+    std::string sheet_activity() const;
     int sheet_fission(int);
     int sheet_dynamics();
+    int ubiquity_permutation(double);
+    void compute_global_topology(int);
     bool global_operations();
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
-    void compute_global_topology(int);
     void build_initial_state(const std::set<int>&);
     void write_log() const;
-    void read_state();
-    void write_state() const;
+    void write(Spacetime&) const;
+    void read(const Spacetime&);
+    void read_state(const std::string&);
+    void write_state(const std::string& = "") const;
     void read_parameters(const std::string&);
-    int ubiquity_permutation(double,std::set<int>&);
-    void mechanical_solver();
-    void evolutionary_solver();
-    void annealing_solver();
-    void simplex_solver();
-    void optimize();
     bool adjust_dimension();
+    void arclength_statistics(double*,int) const;
     void condense();
     void initialize();
     void allocate();
     void clear();
-    void write(Spacetime&) const;
-    void read(const Spacetime&);
+    void clean() const;
+    bool correctness();
 
    public:
     Spacetime();
@@ -232,39 +234,32 @@ namespace DIAPLEXIS {
     Spacetime(const std::string&);
     Spacetime(const std::string&,bool);
     ~Spacetime();
-    void read_state(const std::string&);
-    void fallback();
     bool advance();
+    void fallback();
     void evolve();
     void chorogenesis(int);
     void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*,int) const;
-    bool active_element(int,int) const;
-    void get_ubiquity(int,int,std::string&) const;
-    void get_edge_topology(std::vector<std::set<int> >&) const;
-    void get_ubiquity_vector(std::vector<int>&) const;
-    void get_energy_values(std::vector<double>&,int) const;
-    void get_deficiency_values(std::vector<double>&,int) const;
+    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
     void get_coordinates(int,std::vector<double>&) const;
     void get_coordinates(std::vector<double>&) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;
-    void write_vertex_data(int) const;
-    inline bool is_pseudomanifold(bool*,int) const;
-    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
     inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
     inline std::string get_state_file() const {return state_file;};
-    inline std::string get_sheet_ops(int n) const {return codex[n].hyphantic_ops;};
-    inline std::string get_sheet_activity() const {return sheet_activity();};
     inline void get_arclength_statistics(double* output,int sheet) const {arclength_statistics(output,sheet);};
-    inline int get_codex_size() const {return (signed) codex.size();};
     inline int get_iterations() const {return iterations;};
     inline double get_error() const {return error;};
     inline int get_maximum_iterations() const {return max_iter;};
     inline bool is_converged() const {return converged;};
-    inline bool is_orientable(int sheet) const {bool output = (sheet == -1) ? skeleton->orientable : codex[sheet].orientable; return output;};
+
+    void get_ubiquity(int,int,std::string&) const;
+    void get_ubiquity_vector(std::vector<int>&) const;
+    inline std::string get_sheet_ops(int n) const {return codex[n].hyphantic_ops;};
+    inline std::string get_sheet_activity() const {return sheet_activity();};
+    inline int get_codex_size() const {return (signed) codex.size();};
   };
 
   inline std::string Spacetime::sheet_activity() const
@@ -276,17 +271,6 @@ namespace DIAPLEXIS {
     out += boost::lexical_cast<std::string>(codex[codex.size()-1].active);
     out += ")";
     return out;
-  }
-
-  inline bool Spacetime::is_pseudomanifold(bool* bdry,int sheet) const 
-  {
-    if (sheet == -1) {
-      return skeleton->is_pseudomanifold(bdry);
-    }
-    else {
-      *bdry = codex[sheet].boundary;
-      return codex[sheet].pseudomanifold;
-    }
   }
 }
 #endif

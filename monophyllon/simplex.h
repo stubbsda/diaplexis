@@ -10,9 +10,9 @@ namespace DIAPLEXIS {
     double sq_volume = 0.0;
     double energy = 0.0;
     bool modified = true;
-    bool active = true;
     int incept = -1;
     int parity = 0;
+    bool active = true;
 
     void clear() override;
     void initialize(int,int,int = 0);
