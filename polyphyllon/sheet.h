@@ -16,7 +16,7 @@ namespace DIAPLEXIS {
     bool orientable = false;
     std::string hyphantic_ops = "";
     SYNARMOSMA::Homology* H;
-    SYNARMOSMA::Homotopy* pi;
+    SYNARMOSMA::Homotopy* pi1;
 
     void clear();
     void set_topology(const SYNARMOSMA::Homology*,const SYNARMOSMA::Homotopy*,bool,bool,bool);

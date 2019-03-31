@@ -5,7 +5,7 @@ using namespace DIAPLEXIS;
 Sheet::Sheet()
 {
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
-  pi = new SYNARMOSMA::Homotopy;
+  pi1 = new SYNARMOSMA::Homotopy;
 
   active = true;
 }
@@ -13,7 +13,7 @@ Sheet::Sheet()
 Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 {
   H = new SYNARMOSMA::Homology(f,m);
-  pi = new SYNARMOSMA::Homotopy;
+  pi1 = new SYNARMOSMA::Homotopy;
 
   active = true;
   index = n;
@@ -22,7 +22,7 @@ Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
 {
   H = new SYNARMOSMA::Homology(f,m);
-  pi = new SYNARMOSMA::Homotopy;
+  pi1 = new SYNARMOSMA::Homotopy;
 
   active = true;
   index = n;
@@ -32,7 +32,7 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Met
 Sheet::Sheet(const Sheet& source)
 {
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
-  pi = new SYNARMOSMA::Homotopy;
+  pi1 = new SYNARMOSMA::Homotopy;
 
   index = source.index;
   parent = source.parent;
@@ -40,7 +40,7 @@ Sheet::Sheet(const Sheet& source)
   active = source.active;
   hyphantic_ops = source.hyphantic_ops;
   *H = *source.H;
-  *pi = *source.pi;
+  *pi1 = *source.pi1;
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
@@ -56,7 +56,7 @@ Sheet& Sheet::operator =(const Sheet& source)
   nstep = source.nstep;
   hyphantic_ops = source.hyphantic_ops;
   *H = *source.H;
-  *pi = *source.pi;
+  *pi1 = *source.pi1;
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
@@ -67,7 +67,7 @@ Sheet& Sheet::operator =(const Sheet& source)
 Sheet::~Sheet()
 {
   delete H;
-  delete pi;
+  delete pi1;
 }
 
 void Sheet::clear()
@@ -78,7 +78,7 @@ void Sheet::clear()
   parent = -1;
   index = -1;
   H->clear();
-  pi->clear();
+  pi1->clear();
   pseudomanifold = false;
   boundary = false;
   orientable = false;  
@@ -88,8 +88,8 @@ void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotop
 {
   delete H;
   H = new SYNARMOSMA::Homology(*K);
-  delete pi;
-  pi = new SYNARMOSMA::Homotopy(*p); 
+  delete pi1;
+  pi1 = new SYNARMOSMA::Homotopy(*p); 
   pseudomanifold = pm;
   boundary = bd;
   orientable = orient;
@@ -109,7 +109,7 @@ int Sheet::serialize(std::ofstream& s) const
   }
   // Now the algebraic properties...
   count += H->serialize(s);
-  count += pi->serialize(s);
+  count += pi1->serialize(s);
   s.write((char*)(&pseudomanifold),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&orientable),sizeof(bool)); count += sizeof(bool);
@@ -135,7 +135,7 @@ int Sheet::deserialize(std::ifstream& s)
   }
   // Now the algebraic properties...
   count += H->deserialize(s);
-  count += pi->deserialize(s);
+  count += pi1->deserialize(s);
   s.read((char*)(&pseudomanifold),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&orientable),sizeof(bool)); count += sizeof(bool);

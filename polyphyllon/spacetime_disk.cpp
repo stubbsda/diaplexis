@@ -833,7 +833,7 @@ void Spacetime::write_log() const
 
     if (high_memory) {
       atom = sheet.append_child("Homotopy");
-      nvalue = codex[i].pi->write();
+      nvalue = codex[i].pi1->write();
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
 
@@ -1133,17 +1133,23 @@ void Spacetime::read_state(const std::string& filename)
   s.close();
 }
 
-void Spacetime::write_state() const
+void Spacetime::write_state(const std::string& filename) const
 {
   int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
+  std::string datafile;
+
   // This is a polyphyllon file, so the first value is 2...
   const int ftype = 2;
 
-  std::stringstream sstream;
-  sstream << iterations;
-  std::string filename = state_file + "_" + sstream.str() + ".dat";
-
-  std::ofstream s(filename,std::ios::out | std::ios::trunc | std::ios::binary);
+  if (filename == "") {
+    std::stringstream sstream;
+    sstream << iterations;
+    datafile = state_file + "_" + sstream.str() + ".dat";
+  }
+  else {
+    datafile = filename;
+  }
+  std::ofstream s(datafile,std::ios::out | std::ios::trunc | std::ios::binary);
 
   // First the global parameters...
   s.write((char*)(&ftype),sizeof(int));
