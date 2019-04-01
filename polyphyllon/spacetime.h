@@ -190,7 +190,7 @@ namespace DIAPLEXIS {
     double compute_abnormality(const std::vector<int>&) const;
     double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
     void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
-    void mechanical_force(const std::vector<int>&,const std::vector<double>&,double*) const;
+    void mechanical_force(const std::vector<int>&, const std::vector<int>&, const std::vector<double>&, const std::vector<double>&, double*) const;
     void mechanical_solver();
     void annealing_solver();
     void simplex_solver();
