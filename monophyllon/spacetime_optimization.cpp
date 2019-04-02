@@ -112,7 +112,30 @@ void Spacetime::mechanical_solver()
         vnorm += ynew[i]*ynew[i];
       }
       vnorm = std::sqrt(vnorm);
-      if (vnorm < geometry_tolerance || its > max_int_steps) break;
+      if (vnorm < geometry_tolerance) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver converged, exiting loop..." << std::endl;
+#endif
+        break;
+      }
+      else if (vnorm > 100.0*double(nreal)) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver has excessive velocity norm " << vnorm << " after " << its << " iterations, exiting loop..." << std::endl;
+#endif
+        break;
+      } 
+      else if (its > max_int_steps) {
+#ifdef VERBOSE
+        std::cout << "Mechanical solver reached maximum iterations with velocity norm " << vnorm << ", exiting loop..." << std::endl;
+#endif
+        break;
+      }
+      for(i=0; i<2*D*nreal; ++i) {
+        if (std::isnan(ynew[i])) {
+          std::cout << "NaN detected in mechanical solver at iteration " << its << std::endl;
+          std::exit(1);
+        }
+      }
       y = ynew; 
       its++;
     } while(true);
