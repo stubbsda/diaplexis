@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Parameters>
 	<Global>
-		<InitialEvents>1</InitialEvents>
+		<InitialEvents>81</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
@@ -19,8 +19,8 @@
 		<Permutable>Yes</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
 		<!--InitialState>MONOPLEX</InitialState-->
-		<!--InitialState>CARTESIAN</InitialState-->
-		<InitialState>SINGLETON</InitialState>
+		<InitialState>CARTESIAN</InitialState>
+		<!--InitialState>SINGLETON</InitialState-->
 		<!--InitialState>DISKFILE</InitialState-->
 		<EdgeProbability>0.15</EdgeProbability>
 		<CheckpointFrequency>5</CheckpointFrequency>

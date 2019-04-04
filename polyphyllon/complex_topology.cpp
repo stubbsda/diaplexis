@@ -663,12 +663,15 @@ void Complex::simplex_deletion(int d,int n,int sheet)
 
 bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)
 {
+  bool output = false;
   std::set<int> S;
+  std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
 
   S.insert(u); S.insert(v);
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) {
+    output = true;
     Simplex s(S,locus);
     s.incept = n;
     simplices[1].push_back(s);
@@ -677,27 +680,35 @@ bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)
     events[u].neighbours.insert(v);
   }
   else {
-    std::set<int>::const_iterator it;
-    bool output = false;
-
     for(it=locus.begin(); it!=locus.end(); ++it) {
       if (!simplices[1][qt->second].active(*it)) {
         simplices[1][qt->second].activate(*it);
         output = true;
       }
     }
-    if (!output) return false;
   }
-  events[u].topology_modified = true;
-  events[v].topology_modified = true;
-  return true;
+  for(it=locus.begin(); it!=locus.end(); ++it) {
+    if (!events[u].active(*it)) {
+      events[u].activate(*it);
+      output = true;
+    }
+    if (!events[v].active(*it)) {
+      events[v].activate(*it);
+      output = true;
+    }
+  }
+  if (output) {
+    events[u].topology_modified = true;
+    events[v].topology_modified = true;
+  }
+  return output;
 }
 
 bool Complex::simplex_addition(const std::set<int>& S,const std::set<int>& locus,int n)
 {
   int i,j;
   std::set<int> fc;
-  std::set<int>::const_iterator it;
+  std::set<int>::const_iterator it,jt;
   std::vector<int> vec,vx;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int d = (signed) S.size() - 1;
@@ -735,6 +746,9 @@ bool Complex::simplex_addition(const std::set<int>& S,const std::set<int>& locus
 
   for(it=S.begin(); it!=S.end(); ++it) {
     events[*it].topology_modified = true;
+    for(jt=locus.begin(); jt!=locus.end(); ++jt) {
+      events[*it].activate(*jt);
+    }
   }
 
   if (d == 1) {

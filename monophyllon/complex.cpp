@@ -131,9 +131,10 @@ bool Complex::consistent() const
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;
-      for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
-        if (!simplices[i+1][*it].active) {
-          std::cout << "Error with entourage: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+      for(k=0; k<1+i; ++k) {
+        qt = index_table[i-1].find(simplices[i][j].faces[k]);
+        if (!simplices[i-1][qt->second].active()) {
+          std::cout << "Error with entailment: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "  " << ulimit << std::endl;
           return false;
         }
       }
@@ -173,7 +174,7 @@ bool Complex::consistent() const
           return false;
         }
         if (!events[l].active) {
-          std::cout << "Inactive vertex: " << l << std::endl;
+          std::cout << "Error with entailment for vertex: " << l << std::endl;
           return false;
         }
       }
@@ -185,11 +186,11 @@ bool Complex::consistent() const
     if (vx[0] < 0 || vx[0] >= nv) return false;
     if (vx[1] < 0 || vx[0] >= nv) return false;
     if (!events[vx[0]].active) {
-      std::cout << "Inactive vertex: " << vx[0] << std::endl;
+      std::cout << "Error with entailment for vertex: " << vx[0] << std::endl;
       return false;
     }
     if (!events[vx[1]].active) {
-      std::cout << "Inactive vertex: " << vx[1] << std::endl;
+      std::cout << "Error with entailment for vertex: " << vx[1] << std::endl;
       return false;
     }
     if (events[vx[0]].neighbours.count(vx[1]) == 0) {
@@ -205,13 +206,6 @@ bool Complex::consistent() const
   }
   for(i=0; i<nv; ++i) {
     if (!events[i].active) continue;
-    if (events[i].neighbours.empty()) 
-    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
-      if (!simplices[1][*it].active) {
-        std::cout << "Error with entourage: " << i << "  " << *it << std::endl;
-        return false;
-      }
-    }
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       n = *it;
       if (n == i) {
@@ -350,7 +344,7 @@ void Complex::compute_global_topology(bool high_memory)
 {
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
-  if (cardinality(0) == 1) return;
+  if (cardinality(0) < 2) return;
 
   SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
 

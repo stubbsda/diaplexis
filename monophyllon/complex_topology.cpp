@@ -579,6 +579,9 @@ bool Complex::simplex_addition(int u,int v,int n)
     if (simplices[1][qt->second].active) return false;
     simplices[1][qt->second].activate();
   }
+  events[v].neighbours.active = true;
+  events[u].neighbours.active = true;
+
   events[u].topology_modified = true;
   events[v].topology_modified = true;
   return true;
@@ -610,6 +613,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
 
   for(it=S.begin(); it!=S.end(); ++it) {
     events[*it].topology_modified = true;
+    events[*it].active = true;
   }
 
   if (d == 1) {

@@ -7,7 +7,7 @@ void Spacetime::read_parameters(const std::string& filename)
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
   std::string name,value;
-  unsigned int rs;
+  unsigned long rs;
   int q,n_is = 0,n_so = 0,D = 0;
   bool euclidean = false,relational = false,uniform = false;
 
@@ -57,7 +57,7 @@ void Spacetime::read_parameters(const std::string& filename)
       uniform = (value == "YES") ? true : false;
     }
     else if (name == "RandomSeed") {
-      rs = boost::lexical_cast<unsigned int>(value);
+      rs = boost::lexical_cast<unsigned long>(value);
       if (rs == 0) rs = (unsigned) std::time(nullptr);
       skeleton->RND->set_seed(rs);
     }

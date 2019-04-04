@@ -51,6 +51,7 @@ void Spacetime::allocate()
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
   geometry = new SYNARMOSMA::Geometry;
+  skeleton = new Complex;
 }
 
 void Spacetime::restart(const std::string& filename,bool save_seed)
@@ -739,6 +740,8 @@ void Spacetime::compute_global_topology(int sheet)
 {
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
+  if (skeleton->cardinality(0,sheet) < 2) return;
+
   SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
 
   skeleton->compute_global_nexus(NX,sheet);

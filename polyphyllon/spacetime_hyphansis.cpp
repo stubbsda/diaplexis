@@ -799,8 +799,8 @@ void Spacetime::vertex_fusion(int n1,int n2,int sheet)
     for(i=1; i<=ulimit; ++i) {
       skeleton->index_table[i].clear();
       m = (signed) skeleton->simplices[i].size();
-      skeleton->simplices[i][j].get_vertices(S);
       for(j=0; j<m; ++j) {
+        skeleton->simplices[i][j].get_vertices(S);
         skeleton->simplices[i][j].clear_entourage();
         skeleton->index_table[i][S] = j;
       }

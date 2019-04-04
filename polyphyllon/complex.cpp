@@ -169,9 +169,10 @@ bool Complex::consistent(int sheet) const
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active()) continue;
-        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
-          if (!simplices[i+1][*it].active()) {
-            std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+        for(k=0; k<1+i; ++k) {
+          qt = index_table[i-1].find(simplices[i][j].faces[k]);
+          if (!simplices[i-1][qt->second].active()) {
+            std::cout << "Error with ubiquity entailment: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "  " << ulimit << std::endl;
             return false;
           }
         }
@@ -211,7 +212,7 @@ bool Complex::consistent(int sheet) const
             return false;
           }
           if (!events[l].active()) {
-            std::cout << "Inactive vertex: " << l << std::endl;
+            std::cout << "Error with ubiquity entailment for vertex: " << l << std::endl;
             return false;
           }
         }
@@ -223,22 +224,16 @@ bool Complex::consistent(int sheet) const
       if (vx[0] < 0 || vx[0] >= nv) return false;
       if (vx[1] < 0 || vx[0] >= nv) return false;
       if (!events[vx[0]].active()) {
-        std::cout << "Inactive vertex: " << vx[0] << std::endl;
+        std::cout << "Error with ubiquity entailment for vertex: " << vx[0] << std::endl;
         return false;
       }
       if (!events[vx[1]].active()) {
-        std::cout << "Inactive vertex: " << vx[1] << std::endl;
+        std::cout << "Error with ubiquity entailment for vertex: " << vx[1] << std::endl;
         return false;
       }
     }
     for(i=0; i<nv; ++i) {
       if (!events[i].active()) continue;
-      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
-        if (!simplices[1][*it].active()) {
-          std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
-          return false;
-        }
-      }
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         n = *it;
         if (n == i) {
@@ -268,6 +263,13 @@ bool Complex::consistent(int sheet) const
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active(sheet)) continue;
+        for(k=0; k<1+i; ++k) {
+          qt = index_table[i-1].find(simplices[i][j].faces[k]);
+          if (!simplices[i-1][qt->second].active(sheet)) {
+            std::cout << "Error with ubiquity entailment: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "  " << ulimit << std::endl;
+            return false;
+          }
+        }
         if (simplices[i][j].dimension() != i) {
           std::cout << i << "-simplex  " << j << " has dimension " << simplices[i][j].dimension() << std::endl;
           return false;
@@ -298,7 +300,7 @@ bool Complex::consistent(int sheet) const
             return false;
           }
           if (!events[l].active(sheet)) {
-            std::cout << "Inactive vertex: " << l << std::endl;
+            std::cout << "Error with ubiquity entailment for vertex: " << l << std::endl;
             return false;
           }
         }
@@ -310,11 +312,11 @@ bool Complex::consistent(int sheet) const
       if (vx[0] < 0 || vx[0] >= nv) return false;
       if (vx[1] < 0 || vx[0] >= nv) return false;
       if (!events[vx[0]].active(sheet)) {
-        std::cout << "Inactive vertex: " << vx[0] << std::endl;
+        std::cout << "Error with ubiquity entailment for vertex: " << vx[0] << std::endl;
         return false;
       }
       if (!events[vx[1]].active(sheet)) {
-        std::cout << "Inactive vertex: " << vx[1] << std::endl;
+        std::cout << "Error with ubiquity entailment for vertex: " << vx[1] << std::endl;
         return false;
       }
     }
