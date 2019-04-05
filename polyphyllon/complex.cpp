@@ -169,6 +169,11 @@ bool Complex::consistent(int sheet) const
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active()) continue;
+        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
+          if (!simplices[i+1][*it].active()) {
+            std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+          }
+        }
         for(k=0; k<1+i; ++k) {
           qt = index_table[i-1].find(simplices[i][j].faces[k]);
           if (!simplices[i-1][qt->second].active()) {
@@ -220,6 +225,11 @@ bool Complex::consistent(int sheet) const
     }
     for(i=0; i<(signed) simplices[1].size(); ++i) {
       if (!simplices[1][i].active()) continue;
+      for(it=simplices[1][i].entourage.begin(); it!=simplices[1][i].entourage.end(); ++it) {
+        if (!simplices[2][*it].active()) {
+          std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+        }
+      }
       simplices[1][i].get_vertices(vx);
       if (vx[0] < 0 || vx[0] >= nv) return false;
       if (vx[1] < 0 || vx[0] >= nv) return false;
@@ -234,6 +244,12 @@ bool Complex::consistent(int sheet) const
     }
     for(i=0; i<nv; ++i) {
       if (!events[i].active()) continue;
+      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
+        if (!simplices[1][*it].active()) {
+          std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
+          return false;
+        }
+      }
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         n = *it;
         if (n == i) {
@@ -263,6 +279,11 @@ bool Complex::consistent(int sheet) const
       n = (signed) simplices[i].size();
       for(j=0; j<n; ++j) {
         if (!simplices[i][j].active(sheet)) continue;
+        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
+          if (!simplices[i+1][*it].active(sheet)) {
+            std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+          }
+        }
         for(k=0; k<1+i; ++k) {
           qt = index_table[i-1].find(simplices[i][j].faces[k]);
           if (!simplices[i-1][qt->second].active(sheet)) {
@@ -308,6 +329,11 @@ bool Complex::consistent(int sheet) const
     }
     for(i=0; i<(signed) simplices[1].size(); ++i) {
       if (!simplices[1][i].active(sheet)) continue;
+      for(it=simplices[1][i].entourage.begin(); it!=simplices[1][i].entourage.end(); ++it) {
+        if (!simplices[2][*it].active(sheet)) {
+          std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+        }
+      }
       simplices[1][i].get_vertices(vx);
       if (vx[0] < 0 || vx[0] >= nv) return false;
       if (vx[1] < 0 || vx[0] >= nv) return false;
@@ -322,6 +348,12 @@ bool Complex::consistent(int sheet) const
     }
     for(i=0; i<nv; ++i) {
       if (!events[i].active(sheet)) continue;
+      for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
+        if (!simplices[1][*it].active(sheet)) {
+          std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
+          return false;
+        }
+      }
       for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
         n = *it;
         if (n == i) {
@@ -498,13 +530,16 @@ int Complex::component_analysis(std::vector<int>& component,int sheet) const
   return n;
 }
 
-void Complex::compute_global_topology(const SYNARMOSMA::Nexus* NX,bool high_memory)
+void Complex::compute_global_topology(bool high_memory)
 {
+  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
+  compute_global_nexus(NX,-1);
   H->compute(NX);
   if (high_memory) pi1->compute(NX);
   // Finally, the pseudomanifold and orientability properties
   pseudomanifold = NX->pseudomanifold(&boundary);
   if (pseudomanifold) orientable = NX->orientable();
+  delete NX;
 }
 
 void Complex::write_topology(int sheet) const

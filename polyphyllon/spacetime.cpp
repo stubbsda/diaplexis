@@ -573,8 +573,8 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping vertices
   if (superposable) {
-    superposition_fusion(0.1); assert(skeleton->consistent(-1));
-    superposition_fission(int(0.02*nv)); assert(skeleton->consistent(-1));
+    superposition_fusion(0.1);
+    superposition_fission(int(0.02*nv));
   }
 
   if (compressible) {
@@ -593,7 +593,7 @@ bool Spacetime::global_operations()
     }
     sigma = std::sqrt(sigma/double(k));
     // Get rid of edges that are more than one standard deviation from the mean...
-    i = compression(mu + sigma); assert(skeleton->consistent(-1));
+    i = compression(mu + sigma);
   }
 
   if (permutable) {
@@ -606,7 +606,7 @@ bool Spacetime::global_operations()
       }
     }
     delta = Spacetime::T_zero/std::sqrt(Spacetime::kappa*double(1+iterations));
-    n = ubiquity_permutation(delta); assert(skeleton->consistent(-1));
+    n = ubiquity_permutation(delta);
 #ifdef VERBOSE
     std::cout << "The inter-cosmic jump for this iteration is " << n << std::endl;
 #endif
@@ -742,24 +742,22 @@ void Spacetime::compute_global_topology(int sheet)
   // the fundamental group, for the total spacetime, operations that are serial...
   if (skeleton->cardinality(0,sheet) < 2) return;
 
-  SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
-
-  skeleton->compute_global_nexus(NX,sheet);
-
   if (sheet == -1) {
     // The global case...
-    skeleton->compute_global_topology(NX,high_memory);
+    skeleton->compute_global_topology(high_memory);
   }
   else {
+    SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
     bool bdry;
+
+    skeleton->compute_global_nexus(NX,sheet);
     codex[sheet].H->compute(NX);
     if (high_memory) codex[sheet].pi1->compute(NX);
     codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
     codex[sheet].boundary = bdry;
     if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
+    delete NX;
   }
-
-  delete NX;
 }
 
 void Spacetime::get_ubiquity(int d,int n,std::string& output) const

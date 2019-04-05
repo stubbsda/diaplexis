@@ -67,7 +67,7 @@ namespace DIAPLEXIS {
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
-    void compute_global_topology(const SYNARMOSMA::Nexus*,bool);
+    void compute_global_topology(bool);
     void simplex_membership(int,std::vector<int>&) const;
     int chromatic_number(int) const;
     double dimensional_stress(int,int) const;
