@@ -31,16 +31,16 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Met
 
 Sheet::Sheet(const Sheet& source)
 {
-  H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
-  pi1 = new SYNARMOSMA::Homotopy;
+  //H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
+  //pi1 = new SYNARMOSMA::Homotopy;
 
   index = source.index;
   parent = source.parent;
   nstep = source.nstep;
   active = source.active;
   hyphantic_ops = source.hyphantic_ops;
-  *H = *source.H;
-  *pi1 = *source.pi1;
+  H = new SYNARMOSMA::Homology(*source.H);
+  pi1 = new SYNARMOSMA::Homotopy(*source.pi1);
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
@@ -50,13 +50,16 @@ Sheet& Sheet::operator =(const Sheet& source)
 {
   if (this == &source) return *this;
 
+  delete H;
+  delete pi1;
+
   index = source.index;
   parent = source.parent;
   active = source.active;
   nstep = source.nstep;
   hyphantic_ops = source.hyphantic_ops;
-  *H = *source.H;
-  *pi1 = *source.pi1;
+  H = new SYNARMOSMA::Homology(*source.H);
+  pi1 = new SYNARMOSMA::Homotopy(*source.pi1);
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
@@ -87,8 +90,9 @@ void Sheet::clear()
 void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotopy* p,bool pm,bool bd,bool orient)
 {
   delete H;
-  H = new SYNARMOSMA::Homology(*K);
   delete pi1;
+
+  H = new SYNARMOSMA::Homology(*K);
   pi1 = new SYNARMOSMA::Homotopy(*p); 
   pseudomanifold = pm;
   boundary = bd;

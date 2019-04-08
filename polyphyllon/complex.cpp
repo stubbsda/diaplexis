@@ -227,7 +227,7 @@ bool Complex::consistent(int sheet) const
       if (!simplices[1][i].active()) continue;
       for(it=simplices[1][i].entourage.begin(); it!=simplices[1][i].entourage.end(); ++it) {
         if (!simplices[2][*it].active()) {
-          std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+          std::cout << "Error with entourage ubiquity: 1 " << i << "  " << *it << "  " << ulimit << std::endl;
         }
       }
       simplices[1][i].get_vertices(vx);
@@ -246,7 +246,7 @@ bool Complex::consistent(int sheet) const
       if (!events[i].active()) continue;
       for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
         if (!simplices[1][*it].active()) {
-          std::cout << "Error with entourage ubiquity: " << i << "  " << *it << std::endl;
+          std::cout << "Error with entourage ubiquity: 0 " << i << "  " << *it << std::endl;
           return false;
         }
       }

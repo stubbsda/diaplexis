@@ -579,8 +579,8 @@ bool Complex::simplex_addition(int u,int v,int n)
     if (simplices[1][qt->second].active) return false;
     simplices[1][qt->second].activate();
   }
-  events[v].neighbours.active = true;
-  events[u].neighbours.active = true;
+  events[v].active = true;
+  events[u].active = true;
 
   events[u].topology_modified = true;
   events[v].topology_modified = true;

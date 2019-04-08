@@ -131,9 +131,14 @@ bool Complex::consistent() const
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;
+        for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
+          if (!simplices[i+1][*it].active) {
+            std::cout << "Error with entourage ubiquity: " << i << "  " << j << "  " << *it << "  " << ulimit << std::endl;
+          }
+        }
       for(k=0; k<1+i; ++k) {
         qt = index_table[i-1].find(simplices[i][j].faces[k]);
-        if (!simplices[i-1][qt->second].active()) {
+        if (!simplices[i-1][qt->second].active) {
           std::cout << "Error with entailment: " << i << "  " << j << "  " << SYNARMOSMA::make_key(simplices[i][j].faces[k]) << "  " << ulimit << std::endl;
           return false;
         }
@@ -182,6 +187,11 @@ bool Complex::consistent() const
   }
   for(i=0; i<(signed) simplices[1].size(); ++i) {
     if (!simplices[1][i].active) continue;
+    for(it=simplices[1][i].entourage.begin(); it!=simplices[1][i].entourage.end(); ++it) {
+      if (!simplices[2][*it].active) {
+        std::cout << "Error with entourage ubiquity: 1 " << i << "  " << *it << "  " << ulimit << std::endl;
+      }
+    }
     simplices[1][i].get_vertices(vx);
     if (vx[0] < 0 || vx[0] >= nv) return false;
     if (vx[1] < 0 || vx[0] >= nv) return false;
@@ -206,6 +216,12 @@ bool Complex::consistent() const
   }
   for(i=0; i<nv; ++i) {
     if (!events[i].active) continue;
+    for(it=events[i].entourage.begin(); it!=events[i].entourage.end(); ++it) {
+      if (!simplices[1][*it].active) {
+        std::cout << "Error with entourage ubiquity: 0 " << i << "  " << *it << std::endl;
+        return false;
+      }
+    }
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       n = *it;
       if (n == i) {

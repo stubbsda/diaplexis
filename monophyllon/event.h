@@ -5,8 +5,8 @@
 #define _eventh
 
 namespace DIAPLEXIS {
+  /// A class representing the nodes of the spacetime complex, i.e. its event structure, derived from the Vertex class of the Synarmosma library.
   class Event: public SYNARMOSMA::Vertex {
-   // For the event structure, the nodes of spacetime...
    protected:
     SYNARMOSMA::Proposition theorem;
     bool boundary = false;
