@@ -37,6 +37,8 @@ OBJECTS = spacetime.o spacetime_disk.o spacetime_visualization.o spacetime_optim
 spacetime_hyphansis.o spacetime_initialization.o spacetime_explication.o spacetime_implication.o event.o complex.o \
 spacetime_topology.o complex_topology.o complex_dynamics.o simplex.o sheet.o
 
+LD_FLAGS += -Wl,-rpath $(INSTALL_DIR)/lib
+
 install: diaplexis 
 	mkdir -p $(INSTALL_DIR)/lib
 	install -p libdiaplexis.so $(INSTALL_DIR)/lib/
