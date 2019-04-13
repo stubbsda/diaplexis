@@ -4,6 +4,11 @@
 #define _simplexh
 
 namespace DIAPLEXIS {
+  /// A class representing the d-simplices (where \f$d\ge 1\f$) of the spacetime complex.
+
+  /// This class is derived from the Synarmosma library's Cell class, 
+  /// whose documentation should therefore also be consulted for more 
+  /// details. 
   class Simplex: public SYNARMOSMA::Cell {
    protected:
     double volume = 0.0;
@@ -17,7 +22,6 @@ namespace DIAPLEXIS {
     void clear() override;
     void initialize(int,int,const std::set<int>&,int = 0);
     void initialize(const std::set<int>&,const std::set<int>&);
-    int absolute_embedding() const;
     int serialize(std::ofstream&) const override;
     int deserialize(std::ifstream&) override;
    public:
@@ -38,15 +42,14 @@ namespace DIAPLEXIS {
     inline int presence() const {return (signed) ubiquity.size();};
     inline void set_entourage(const std::set<int>& N) {entourage = N;};
     inline void clear_entourage() {entourage.clear();};
-    inline int get_parity(int,int) const;
+    inline int get_parity(int,int) const {return parity;};
     inline bool get_modified() const {return modified;};
     inline void set_modified(bool t) {modified = t;};
     inline int get_incept() const {return incept;};
     inline void set_incept(int n) {incept = n;};
     inline double get_energy() const {return energy;};
-    inline void set_volume(double V) {volume = V;};
     inline double get_volume() const {return volume;};
-    inline void set_squared_volume(double V) {sq_volume = V;};
+    inline void set_squared_volume(double V) {sq_volume = V; volume = std::sqrt(std::abs(V));};
     inline double get_squared_volume() const {return sq_volume;};
     inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
     inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
@@ -55,18 +58,6 @@ namespace DIAPLEXIS {
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
     friend class Complex;
   };
-
-  inline int Simplex::get_parity(int u,int v) const
-  {
-#ifdef DEBUG
-    assert(u != v);
-    assert(u >= 0 && v >= 0);
-    assert(vertices.size() == 2 && vertices.count(u) == 1 && vertices.count(v) == 1);
-#endif
-    if (parity == 0) return 0;
-    int output = (u < v) ? parity : -parity;
-    return output;
-  }
 }
 #endif
 

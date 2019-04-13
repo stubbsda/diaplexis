@@ -17,6 +17,9 @@ Simplex::Simplex(int n)
 
 Simplex::Simplex(int v1,int v2,int d)
 {
+#ifdef DEBUG
+  assert(d == 0 || std::abs(d) == 1);
+#endif
   // A specialized constructor for 1-simplices
   vertices.insert(v1);
   faces.push_back(vertices);
@@ -24,8 +27,7 @@ Simplex::Simplex(int v1,int v2,int d)
   vertices.insert(v2);
   faces.push_back(vertices);
   vertices.insert(v1);
-  if (d == 0) return;
-  parity = (v1 < v2) ? d : -d;
+  parity = d;
 }
 
 Simplex::Simplex(const std::set<int>& vx,int n)
@@ -87,12 +89,15 @@ void Simplex::clear()
 
 void Simplex::initialize(int v1,int v2,int d)
 {
+#ifdef DEBUG
+  assert(d == 0 || std::abs(d) == 1);
+#endif
+
   clear();
 
   SYNARMOSMA::Cell::initialize(v1,v2);
   active = true;
-  if (d == 0) return;
-  parity = (v1 < v2) ? d : -d;
+  parity = d;
 }
 
 void Simplex::initialize(const std::set<int>& vx)
@@ -150,23 +155,23 @@ int Simplex::deserialize(std::ifstream& s)
 namespace DIAPLEXIS {
   Simplex operator ^(const Simplex& s1,const Simplex& s2)
   {
-    std::set<int>::const_iterator it,jt;
+    std::set<int>::const_iterator it;
     std::set<int> vx;
 
     for(it=s1.vertices.begin(); it!=s1.vertices.end(); ++it) {
-      jt = std::find(s2.vertices.begin(),s2.vertices.end(),*it);
-      if (jt != s2.vertices.end()) vx.insert(*it);
+      if (s2.vertices.count(*it) > 0) vx.insert(*it);
     }
     Simplex output(vx);
     output.active = s1.active && s2.active;
+    output.parity = s1.parity * s2.parity;
     return output;
   }
 
   std::ostream& operator <<(std::ostream& s,const Simplex& S)
   {
-    s << S.dimension() << std::endl;
+    s << S.incept << "  " << S.active << "  " << S.parity << std::endl;
     s << SYNARMOSMA::make_key(S.vertices) << std::endl;
-    s << S.active << std::endl;
+    s << S.energy << "  " << S.sq_volume;
     return s;
   }
 }

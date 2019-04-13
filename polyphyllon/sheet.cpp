@@ -31,12 +31,8 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Met
 
 Sheet::Sheet(const Sheet& source)
 {
-  //H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
-  //pi1 = new SYNARMOSMA::Homotopy;
-
   index = source.index;
   parent = source.parent;
-  nstep = source.nstep;
   active = source.active;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
@@ -56,7 +52,6 @@ Sheet& Sheet::operator =(const Sheet& source)
   index = source.index;
   parent = source.parent;
   active = source.active;
-  nstep = source.nstep;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
   pi1 = new SYNARMOSMA::Homotopy(*source.pi1);
@@ -77,7 +72,6 @@ void Sheet::clear()
 {
   hyphantic_ops = "";
   active = false;
-  nstep = 0;
   parent = -1;
   index = -1;
   H->clear();
@@ -104,7 +98,6 @@ int Sheet::serialize(std::ofstream& s) const
   int i,count = 0,n = (signed) hyphantic_ops.size();
 
   s.write((char*)(&index),sizeof(int)); count += sizeof(int);
-  s.write((char*)(&nstep),sizeof(int)); count += sizeof(int);
   s.write((char*)(&parent),sizeof(int)); count += sizeof(int);
   s.write((char*)(&active),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&n),sizeof(int)); count += sizeof(int);
@@ -129,7 +122,6 @@ int Sheet::deserialize(std::ifstream& s)
   clear();
 
   s.read((char*)(&index),sizeof(int)); count += sizeof(int);
-  s.read((char*)(&nstep),sizeof(int)); count += sizeof(int);
   s.read((char*)(&parent),sizeof(int)); count += sizeof(int);
   s.read((char*)(&active),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&n),sizeof(int)); count += sizeof(int);

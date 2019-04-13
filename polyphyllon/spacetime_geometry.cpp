@@ -393,7 +393,7 @@ void Spacetime::chorogenesis(int nsteps)
     // Prepare for the next iteration...
     temperature *= 0.95; 
     candidates.clear();    
-  } while(true);
+  } while(iterations < nsteps);
   if (iterations == 1) optimize();
   compute_volume();
   compute_obliquity();

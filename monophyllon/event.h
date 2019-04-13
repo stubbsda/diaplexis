@@ -57,9 +57,9 @@ namespace DIAPLEXIS {
     int serialize(std::ofstream&) const override; 
     /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
     int deserialize(std::ifstream&) override;
-    /// This method sets the Event::activate property to true.
+    /// This method sets the Event::active property to true as well as noting that the topology has been modified.
     inline void activate() {active = true; topology_modified = true;};
-    /// This method sets the Event::activate property to false.
+    /// This method sets the Event::active property to false as well as noting that the topology has been modified.
     inline void deactivate() {active = false; topology_modified = true;};
     /// This method clears the inherited posterior property.
     inline void clear_posterior() {posterior.clear();};
