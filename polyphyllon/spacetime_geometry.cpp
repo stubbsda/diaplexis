@@ -889,7 +889,6 @@ void Spacetime::compute_volume()
     qt = skeleton->index_table[1].find(F[2]);
     l3 = skeleton->simplices[1][qt->second].get_squared_volume();
     V = -(l3*l3 - 2.0*l3*(l1 + l2) + (l2 - l1)*(l2 - l1))/16.0;
-    skeleton->simplices[2][i].set_volume(std::sqrt(std::abs(V)));
     skeleton->simplices[2][i].set_squared_volume(V);
     skeleton->simplices[2][i].set_modified(false);
   }
@@ -922,7 +921,6 @@ void Spacetime::compute_volume()
         }
       }
       V = prefactor*A.determinant();
-      skeleton->simplices[i][j].set_volume(std::sqrt(std::abs(V)));
       skeleton->simplices[i][j].set_squared_volume(V);
       skeleton->simplices[i][j].set_modified(false);
     }
@@ -941,7 +939,6 @@ void Spacetime::compute_lengths()
     skeleton->simplices[1][i].get_vertices(vx);
     delta = geometry->get_squared_distance(vx[0],vx[1],false);
     skeleton->simplices[1][i].set_squared_volume(delta);
-    skeleton->simplices[1][i].set_volume(std::sqrt(std::abs(delta)));
     skeleton->simplices[1][i].set_modified(false);
   }
 }

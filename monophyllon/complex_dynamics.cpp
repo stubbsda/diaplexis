@@ -11,18 +11,24 @@ void Complex::inversion()
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
+    if (!events[i].active) {
+      // In principle this should be unnecessary...
+      events[i].neighbours.clear();
+      continue;
+    }
     // hold = V / events[i].neighbours
     for(j=0; j<nv; ++j) {
       if (!events[j].active) continue;
       if (j == i) continue;
-      it = std::find(events[i].neighbours.begin(),events[i].neighbours.end(),j);
-      if (it == events[i].neighbours.end()) hold.insert(j);
+      if (events[i].neighbours.count(j) == 0) hold.insert(j);
     }
     events[i].neighbours = hold;
     hold.clear();
   }
-  simplices[1].clear();
-  index_table[1].clear();
+  for(i=1; i<=Complex::ND; ++i) {
+    simplices[i].clear();
+    index_table[i].clear();
+  }
   for(i=0; i<nv; ++i) {
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
@@ -33,6 +39,7 @@ void Complex::inversion()
       }
     }
   }
+  compute_entourages();
 }
 
 void Complex::distribute(int nprocs) const

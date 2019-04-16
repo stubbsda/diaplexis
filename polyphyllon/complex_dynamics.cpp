@@ -11,6 +11,11 @@ void Complex::inversion(int nsheet)
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
+    if (!events[i].active) {
+      // In principle this should be unnecessary...
+      events[i].neighbours.clear();
+      continue;
+    }
     // hold = V / events[i].neighbours
     for(j=0; j<nv; ++j) {
       if (!events[j].active()) continue;
@@ -21,14 +26,18 @@ void Complex::inversion(int nsheet)
     events[i].neighbours = hold;
     hold.clear();
   }
-  simplices[1].clear();
-  index_table[1].clear();
+  for(i=1; i<=Complex::ND; ++i) {
+    simplices[i].clear();
+    index_table[i].clear();
+  }
   for(i=0; i<nv; ++i) {
     for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
       j = *it;
       if (i < j) {
         p = RND->irandom(nsheet);
         locus.insert(p);
+        events[i].activate(p);
+        events[j].activate(p);
         S.initialize(i,j,locus);
         simplices[1].push_back(S);
         index_table[1][S.vertices] = (signed) simplices[1].size() - 1;
@@ -36,6 +45,7 @@ void Complex::inversion(int nsheet)
       }
     }
   }
+  compute_entourages();
 }
 
 void Complex::distribute(int nprocs) const

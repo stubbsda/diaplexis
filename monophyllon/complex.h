@@ -8,31 +8,57 @@
 #define _complexh
 
 namespace DIAPLEXIS {
+  /// A class representing an abstract simplicial complex of finite dimension. 
   class Complex {
    private:
+    /// This property is true if this complex satisfies the axioms of a combinatorial 
+    /// pseudomanifold.
     bool pseudomanifold = false;
+    /// This property is true if this complex satisfies the axioms of a 
+    /// pseudomanifold-with-boundary.
     bool boundary = false;
+    /// This property is true if this complex satisfies the axioms of an 
+    /// orientable pseudomanifold.
     bool orientable = false;
+    /// This property stores the 0-simplices (events) of the complex as a 
+    /// vector of type Event.
     std::vector<Event> events;
+    /// This property stores the higher-dimensional simplices, as an array of 
+    /// 1 + Complex::ND vectors of type Simplex.
     std::vector<Simplex>* simplices;
+    /// This property contains a hash map for each dimension greater than zero 
+    /// that allows a rapid lookup of a d-simplex's index in Complex::simplices[d] 
+    /// given the simplex's vertex set.
     SYNARMOSMA::hash_map* index_table;
+    /// This property stores the homology of the complex, using the 
+    /// Homology class of the Synarmosma library.
     SYNARMOSMA::Homology* H;
+    /// This property stores the fundamental group of the complex, using the 
+    /// Homotopy class of the Synarmosma library.
     SYNARMOSMA::Homotopy* pi1;
+    /// The property which handles random number generation for this class and whose default seed 
+    /// is set to the current time value (seconds since January 1, 1970).
     SYNARMOSMA::Random* RND;
 
-    // Maximum combinatorial dimension of the spacetime
+    /// The maximum dimension of the complex and thus size of the Complex::simplices and 
+    /// Complex::index_table arrays.
     static const int ND = 10;
-    // The combinatorial size of the subgraph used to compute
-    // the topological entwinement at a vertex
+    /// The combinatorial size of the subgraph which is used to compute the Event::entwinement 
+    /// property.
     static const int topological_radius = 4;
 
+    /// This method allocates the memory for the properties Complex::simplices, Complex::index_table, Complex::pi1, Complex::H and Complex::RND.
     void allocate();
+    /// This method transforms the complex by converting it to a graph (one-dimensional complex) whose topology is the inverse of the current topology, calling the Complex::compute_entourages method. 
     void inversion();
+    /// This method computes the inherited neighbours property of the elements of the Complex::events vector.
     void compute_neighbours();
+    /// This method calculates the value of the inherited entourage property for the elements of the Complex::events and Complex::simplices arrays.
     void compute_entourages();
     bool simplex_addition(int,int,int);
     bool simplex_addition(const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,std::set<int>&);
+    /// This method deletes a d-simplex by setting its active property to false, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex. 
     void simplex_deletion(int,int);
     void compute_modified_vertices();
     void compute_dependent_simplices(const std::set<int>&);
@@ -50,6 +76,7 @@ namespace DIAPLEXIS {
     void recompute_parity(const std::set<int>&);
     void compute_parity();
     void determine_flexible_edges(std::vector<int>&);
+    /// This method returns true if there is an active edge connecting the two vertices that are the method's arguments.
     bool edge_exists(int,int) const;
     int cardinality(int) const;
     int cardinality_safe(int) const;
@@ -69,28 +96,42 @@ namespace DIAPLEXIS {
     void simplex_membership(int,std::vector<int>&) const;
     int chromatic_number() const;
     double dimensional_stress(int,int) const;
+    /// This method calculates the combinatorial distance - the minimal number of event to event hops - between the two events whose index in the Complex::events vector is given by the arguments
     int combinatorial_distance(int,int) const;
     double entwinement() const;
     double cyclic_resistance() const;
+    /// This method returns the maximum value of the degree - the number of neighbours - over the entire collection of events.
     int max_degree() const;
+    /// This method returns the sum of the vertex_dimension() for each active event in the complex.
     int total_dimension() const;
     int structural_index() const;
+    /// This method returns the highest dimension D of this complex which has an active D-simplex. If there are no active d-simplices for any non-negative d, the method returns -1.
     int dimension() const;
+    /// This method returns the number of active 1-simplices that are in the entourage of the event given by the argument.
     int vertex_valence(int) const;
+    /// This method returns the dimension of the highest-dimensional simplex in the complex which contains the event specified by the method's argument; if the event is inactive the method returns -1.
     int vertex_dimension(int) const;
     int weighted_entourage(int,int) const;
     int cyclicity() const;
     double dimensional_frontier(int) const;
     double dimensional_uniformity(int) const;
+    /// This method returns the circuit rank of the complex, i.e. \f$T = c - v + e\f$ where \f$c\f$ is the number of connected components, \f$v\f$ the number of events and \f$e\f$ the number of 1-simplices.
     int circuit_rank() const;
+    /// This method returns the Euler characteristic of the complex, i.e. the alternating sum of the elements of the \f$f\f$-vector, \f$\chi = \sum_{n=0}^D (-1)^n f_n\f$.
     int euler_characteristic() const;
     int component_analysis(std::vector<int>&) const;
     int entourage(int) const;
+    /// This method returns true if the complex is connected and false otherwise. 
     bool connected() const;
+    /// This method carries out a series of tests of the internal consistency of various Event and Simplex properties and returns false if any problems are discovered.
     bool consistent() const;
+    /// This method writes the simplicial inclusion relations for the complex as a directed graph in the DOT file format, where the method's argument is the filename.
     void write_incastrature(const std::string&) const;
+    /// This method writes to the screen a summary of the topology of the complex, including the simplices that each event belongs to and the number of simplices of a given dimension.
     void write_topology() const;
+    /// This method returns false if there is an inactive event whose energy property has a non-zero value.
     bool energy_check() const;
+    /// This method returns the sum of the energy property for every active event in the complex.
     double total_energy() const;
     void energy_diffusion(double);
     void energy_diffusion(int);
@@ -102,11 +143,16 @@ namespace DIAPLEXIS {
     inline double distribution_fitness(int*,const std::vector<int>&,int) const;
 
    public:
+    /// The default constructor which calls the allocate() method.
     Complex();
+    /// The destructor which frees the memory from the instance's properties (Complex::simplices, Complex::RND etc.).
     ~Complex();
     void distribute(int) const; 
+    /// This method writes the instance properties to a binary disk file and returns the number of bytes written to the file.    
     int serialize(std::ofstream&) const;
+    /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
     int deserialize(std::ifstream&);
+    /// This method clears all of the instance's extended properties and sets the scalar properties to their default value.
     void clear();
     void get_edge_topology(std::vector<std::set<int> >&) const;
     bool active_element(int,int) const;
@@ -120,8 +166,11 @@ namespace DIAPLEXIS {
     inline void set_homology_method(SYNARMOSMA::Homology::Method M) {H->set_method(M);};
     inline SYNARMOSMA::Homology::Field get_homology_field() const {return H->get_field();};
     inline SYNARMOSMA::Homology::Method get_homology_method() const {return H->get_method();};
+    /// This method returns true if the element of Complex::events given by the method's argument is active, false otherwise.
     inline bool active_event(int n) const {return events[n].active;};
-    inline bool active_simplex(int d,int n) const {return simplices[d][n].active;};
+    /// This method returns true if the element of Complex::events (for d = 0) or Complex::simplices (for d > 0) given by the method's second argument is active.
+    inline bool active_simplex(int d,int n) const {bool output = (d == 0) ? events[n].active : simplices[d][n].active; return output;};
+    /// This method returns the value of the dimension() method.
     inline int get_dimension() const {return dimension();};
     inline int get_event_dimension(int n) const {return vertex_dimension(n);};
     inline int get_cardinality(int d) const {return cardinality_safe(d);};

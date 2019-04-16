@@ -302,11 +302,11 @@ int Complex::dimension() const
 
 int Complex::total_dimension() const
 {
-  int i,sum = 0;
+  int i,d,sum = 0;
 
   for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active) continue;
-    sum += vertex_dimension(i);
+    d = vertex_dimension(i);
+    if (d > 0) sum += d;
   }
   return sum;
 }
@@ -440,7 +440,9 @@ bool Complex::energy_check() const
   for(int i=0; i<nv; ++i) {
     if (!events[i].zero_energy()) {
       if (!events[i].active) {
-        std::cout << "Potential problem here: " << i << "  " << events[i].get_energy() << std::endl;
+#ifdef VERBOSE
+        std::cout << "An inactive event has non-zero energy! " << i << "  " << events[i].get_energy() << std::endl;
+#endif
         output = false;
       }
     }
@@ -526,6 +528,8 @@ int Complex::serialize(std::ofstream& s) const
 {
   int i,j,n,output = 0;
   unsigned long q;
+
+  clear();
 
   s.write((char*)(&pseudomanifold),sizeof(bool)); output += sizeof(bool);
   s.write((char*)(&boundary),sizeof(bool)); output += sizeof(bool);

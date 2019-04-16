@@ -169,7 +169,7 @@ namespace DIAPLEXIS {
 
   std::ostream& operator <<(std::ostream& s,const Simplex& S)
   {
-    s << S.incept << "  " << S.active << "  " << S.parity << std::endl;
+    s << S.incept << "  " << S.parity << "  " << S.active << std::endl;
     s << SYNARMOSMA::make_key(S.vertices) << std::endl;
     s << S.energy << "  " << S.sq_volume;
     return s;

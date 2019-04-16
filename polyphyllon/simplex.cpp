@@ -7,16 +7,20 @@ Simplex::Simplex()
 
 }
 
-Simplex::Simplex(int n)
+Simplex::Simplex(int n,const std::set<int>& locus)
 {
   for(int i=0; i<=n; ++i) {
     vertices.insert(i);
   }
-  calculate_faces();  
+  calculate_faces();
+  ubiquity = locus;  
 }
 
 Simplex::Simplex(int v1,int v2,const std::set<int>& locus,int d)
 {
+#ifdef DEBUG
+  assert(d == 0 || std::abs(d) == 1);
+#endif
   // A specialized constructor for 1-simplices
   vertices.insert(v1);
   faces.push_back(vertices);
@@ -25,13 +29,13 @@ Simplex::Simplex(int v1,int v2,const std::set<int>& locus,int d)
   faces.push_back(vertices);
   vertices.insert(v1);
   ubiquity = locus;
-  if (d == 0) return;
-  parity = (v1 < v2) ? d : -d;
+  parity = d;
 }
 
-Simplex::Simplex(const std::set<int>& v,const std::set<int>& locus)
+Simplex::Simplex(const std::set<int>& vx,const std::set<int>& locus,int n)
 {
-  vertices = v;
+  vertices = vx;
+  incept = n;
   calculate_faces();
   ubiquity = locus;
 }
@@ -73,22 +77,6 @@ Simplex::~Simplex()
 
 }
 
-void Simplex::initialize(int v1,int v2,const std::set<int>& locus,int d)
-{
-  clear();
-  SYNARMOSMA::Cell::initialize(v1,v2);
-  set_ubiquity(locus);
-  if (d == 0) return;
-  parity = (v1 < v2) ? d : -d;
-}
-
-void Simplex::initialize(const std::set<int>& vx,const std::set<int>& locus)
-{
-  clear();
-  SYNARMOSMA::Cell::initialize(vx);
-  set_ubiquity(locus);
-}
-
 void Simplex::clear()
 {
   SYNARMOSMA::Cell::clear();
@@ -100,6 +88,27 @@ void Simplex::clear()
   incept = -1;
   parity = 0;
   modified = true;
+}
+
+void Simplex::initialize(int v1,int v2,const std::set<int>& locus,int d)
+{
+#ifdef DEBUG
+  assert(d == 0 || std::abs(d) == 1);
+#endif
+
+  clear();
+
+  SYNARMOSMA::Cell::initialize(v1,v2);
+  ubiquity = locus;
+  parity = d;
+}
+
+void Simplex::initialize(const std::set<int>& vx,const std::set<int>& locus)
+{
+  clear();
+
+  SYNARMOSMA::Cell::initialize(vx);
+  set_ubiquity(locus);
 }
 
 int Simplex::serialize(std::ofstream& s) const
@@ -169,6 +178,7 @@ namespace DIAPLEXIS {
     }
 
     Simplex output(vx,locus);
+    output.parity = s1.parity * s2.parity;
     return output;
   }
 
@@ -176,13 +186,14 @@ namespace DIAPLEXIS {
   {
     std::set<int>::const_iterator it;
 
-    s << S.dimension() << std::endl;
-    s << SYNARMOSMA::make_key(S.vertices) << std::endl;
+    s << S.incept << "  " << S.parity << std::endl;
     s << "[ ";
     for(it=S.ubiquity.begin(); it!=S.ubiquity.end(); ++it) {
       s << *it << " ";
     }
     s << "]" << std::endl;
+    s << SYNARMOSMA::make_key(S.vertices) << std::endl;
+    s << S.energy << "  " << S.sq_volume;
     return s;
   }
 }
