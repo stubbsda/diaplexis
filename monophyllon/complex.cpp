@@ -313,19 +313,18 @@ int Complex::total_dimension() const
 
 int Complex::structural_index() const
 {
-  int i,j,l,n,sum = 0,d = dimension();
+  int i,l,sum = 0;
+  unsigned int j,n = events.size();
+  const int d = dimension();
 
-
-  for(i=0; i<(signed) events.size(); ++i) {
-    if (!events[i].active) continue;
-    sum++;
+  for(j=0; j<n; ++j) {
+    if (events[j].active) sum++;
   }
   for(i=1; i<d; ++i) {
     l = 0;
-    n = (signed) simplices[i].size();
+    n = simplices[i].size();
     for(j=0; j<n; ++j) {
-      if (!simplices[i][j].active) continue;
-      l++;
+      if (simplices[i][j].active) l++;
     }
     sum += (1+i)*l;
   }
@@ -529,8 +528,6 @@ int Complex::serialize(std::ofstream& s) const
   int i,j,n,output = 0;
   unsigned long q;
 
-  clear();
-
   s.write((char*)(&pseudomanifold),sizeof(bool)); output += sizeof(bool);
   s.write((char*)(&boundary),sizeof(bool)); output += sizeof(bool);
   s.write((char*)(&orientable),sizeof(bool)); output += sizeof(bool);
@@ -637,7 +634,7 @@ int Complex::simplex_embedding(int d,int n) const
       S.insert(vx[i]);
       S.insert(vx[j]);
       qt = index_table[1].find(S);
-      delta = std::abs(simplices[1][qt->second].volume);
+      delta = simplices[1][qt->second].volume;
       dmatrix[n*i+j] = delta;
       dmatrix[n*j+i] = delta;
       if (simplices[1][qt->second].spacelike()) {

@@ -4,8 +4,8 @@ using namespace DIAPLEXIS;
 
 void Complex::compute_simplicial_dimension()
 {
-  int i;
-  const int nv = (signed) events.size();
+  unsigned int i;
+  const unsigned int nv = events.size();
 
   for(i=0; i<nv; ++i) {
     if (!events[i].active()) continue;
@@ -15,8 +15,8 @@ void Complex::compute_simplicial_dimension()
 
 void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 {
-  int i;
-  const int nv = cardinality(0,-1);
+  unsigned int i;
+  const unsigned int nv = events.size();
 
   vx.clear();
   for(i=0; i<nv; ++i) {
@@ -135,19 +135,6 @@ void Complex::compute_connectivity_distribution(bool direct,int sheet) const
   for(i=1; i<=m; ++i) {
     std::cout << i << "  " << 100.0*double(pcount[i])/ntotal << std::endl;
   }
-}
-
-bool Complex::active_element(int d,int n) const
-{
-  bool output = true;
-
-  if (d == 0) {
-    if (!events[n].active()) output = false;
-  }
-  else {
-    if (!simplices[d][n].active()) output = false;
-  }
-  return output;
 }
 
 std::pair<double,double> Complex::random_walk(int sheet) const
@@ -385,11 +372,12 @@ double Complex::dimensional_stress(int v,int sheet) const
 
 void Complex::simplex_membership(int v,std::vector<int>& output) const
 {
-  int i,j,m,k = 0;
+  int i,k = 0;
+  unsigned int j,m;
 
   output.clear();
   for(i=1; i<=Complex::ND; ++i) {
-    m = (signed) simplices[i].size();
+    m = simplices[i].size();
     for(j=0; j<m; ++j) {
       if (!simplices[i][j].active()) continue;
       if (simplices[i][j].contains(v)) ++k;
@@ -401,8 +389,9 @@ void Complex::simplex_membership(int v,std::vector<int>& output) const
 
 void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
 {
-  int offset[events.size()];
+  if (events.empty()) return;
 
+  int offset[events.size()];
   compute_graph(G,offset,sheet);
 }
 
@@ -423,6 +412,9 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
     for(i=0; i<ne; ++i) {
       if (!simplices[1][i].active()) continue;
       simplices[1][i].get_vertices(vx);
+#ifdef DEBUG
+      assert(offset[vx[0]] >= 0 && offset[vx[1]] >= 0);
+#endif
       G->add_edge(offset[vx[0]],offset[vx[1]]);
     }
   }
@@ -435,6 +427,9 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
     for(i=0; i<ne; ++i) {
       if (!simplices[1][i].active(sheet)) continue;
       simplices[1][i].get_vertices(vx);
+#ifdef DEBUG
+      assert(offset[vx[0]] >= 0 && offset[vx[1]] >= 0);
+#endif
       G->add_edge(offset[vx[0]],offset[vx[1]]);
     }
   }
@@ -1124,6 +1119,7 @@ void Complex::simplicial_implication(int base,int sheet) const
 
 int Complex::entourage(int base,int sheet) const
 {
+  if (!events[base].active(sheet)) return -1;
   // Calculates a measure of this event's integration/implication in its
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
@@ -1190,38 +1186,37 @@ int Complex::combinatorial_distance(int v1,int v2,int sheet) const
   return d;
 }
 
-int Complex::cardinality_safe(int d,int sheet) const
+int Complex::cardinality(int d,int sheet) const
 {
-  int i,n = 0;
+  if (d < 0) return 0;
+  unsigned int i;
+  int n = 0;
+
   if (sheet == -1) {
     if (d == 0) {
-      const int M = (signed) events.size();
+      const int M = events.size();
       for(i=0; i<M; ++i) {
-        if (!events[i].active()) continue;
-        n++;
+        if (events[i].active()) n++;
       }
     }
     else {
-      const int M = (signed) simplices[d].size();
+      const int M = simplices[d].size();
       for(i=0; i<M; ++i) {
-        if (!simplices[d][i].active()) continue;
-        n++;
+        if (simplices[d][i].active()) n++;
       }
     }
   }
   else {
     if (d == 0) {
-      const int M = (signed) events.size();
+      const int M = events.size();
       for(i=0; i<M; ++i) {
-        if (!events[i].active(sheet)) continue;
-        n++;
+        if (events[i].active(sheet)) n++;
       }
     }
     else {
-      const int M = (signed) simplices[d].size();
+      const int M = simplices[d].size();
       for(i=0; i<M; ++i) {
-        if (!simplices[d][i].active(sheet)) continue;
-        n++;
+        if (simplices[d][i].active(sheet)) n++;
       }
     }
   }
@@ -1290,41 +1285,49 @@ int Complex::vertex_dimension(int v,int sheet) const
 
 double Complex::dimensional_frontier(int D,int sheet) const
 {
-  int i,d[2],s = 0;
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
+  unsigned int i,s = 0,ne = 0;
+  int vx[2];
+  const unsigned int n = simplices[1].size();
+
+  for(i=0; i<n; ++i) {
     if (!simplices[1][i].active(sheet)) continue;
-    simplices[1][i].get_vertices(d);
-    d[0] = (d[0] < D) ? D : d[0];
-    d[1] = (d[1] < D) ? D : d[1];
-    if (d[0] != d[1]) s++;
+    simplices[1][i].get_vertices(vx);
+    vx[0] = std::max(vertex_dimension(vx[0],sheet),D);
+    vx[1] = std::max(vertex_dimension(vx[1],sheet),D);
+    if (vx[0] != vx[1]) s++;
+    ne++;
   }
-  return double(s)/double(simplices[1].size());
+  if (ne == 0) return 0.0;
+
+  return double(s)/double(ne);
 }
 
 double Complex::dimensional_uniformity(int geometric_dimension,int sheet) const
 {
-  int i,n,nv,sdimension = dimension(sheet),sum = 0;
+  int i,d,nv = 0,sdimension = dimension(sheet),sum = 0;
   if (sdimension < geometric_dimension) sdimension = geometric_dimension;
+  const int n = (signed) events.size();
 
-  nv = 0;
   if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
+    for(i=0; i<n; ++i) {
       if (!events[i].active()) continue;
-      n = vertex_dimension(i,sheet);
-      n = (n < geometric_dimension) ? geometric_dimension : n;
-      sum += sdimension - n;
+      d = vertex_dimension(i,sheet);
+      d = std::max(d,geometric_dimension);
+      sum += d - sdimension;
       nv++;
     }
   }
   else {
-    for(i=0; i<(signed) events.size(); ++i) {
+    for(i=0; i<n; ++i) {
       if (!events[i].active(sheet)) continue;
-      n = vertex_dimension(i,sheet);
-      n = (n < geometric_dimension) ? geometric_dimension : n;
-      sum += sdimension - n;
+      d = vertex_dimension(i,sheet);
+      d = std::max(d,geometric_dimension);
+      sum += d - sdimension;
       nv++;
     }
   }
+  if (nv == 0) return 0.0;
+
   return double(sum)/double(nv);
 }
 

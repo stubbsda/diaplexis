@@ -28,7 +28,7 @@ namespace DIAPLEXIS {
     int incept = -1;
     /// This property stores the parity of this simplex, which can be 0, +1 or -1 and 
     /// is an independent physical property of each 1-simplex. Higher-dimensional simplices 
-    /// have a parity value equal to the product of the parity of their faces.
+    /// have a parity value equal to the product of the parity of their edges.
     int parity = 0;
     /// This property is true if this simplex is active and false if the simplex has been 
     /// deleted from the spacetime complex.

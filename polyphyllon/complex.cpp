@@ -446,48 +446,41 @@ int Complex::dimension(int sheet) const
 
 int Complex::total_dimension(int sheet) const
 {
-  int i,sum = 0;
+  int i,d,sum = 0;
 
-  if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
-      sum += dimension(i);
-    }
-  }
-  else {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) sum += vertex_dimension(i,sheet);
-    }
+  for(i=0; i<(signed) events.size(); ++i) {
+    d = vertex_dimension(i,sheet);
+    if (d > 0) sum += dimension(i);
   }
   return sum;
 }
 
 int Complex::structural_index(int sheet) const
 {
-  int i,j,l,n,sum = 0,d = dimension(sheet);
+  int i,l,sum = 0;
+  unsigned int j,n = events.size();
+  const int d = dimension(sheet);
 
   if (sheet == -1) {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (!events[i].active()) continue;
-      sum++;
+    for(j=0; j<n; ++j) {
+      if (events[j].active()) sum++;
     }
     for(i=1; i<d; ++i) {
       l = 0;
-      n = (signed) simplices[i].size();
+      n = simplices[i].size();
       for(j=0; j<n; ++j) {
-        if (!simplices[i][j].active()) continue;
-        l++;
+        if (simplices[i][j].active()) l++;
       }
       sum += (1+i)*l;
     }
   }
   else {
-    for(i=0; i<(signed) events.size(); ++i) {
-      if (events[i].active(sheet)) sum++;
+    for(j=0; j<n; ++j) {
+      if (events[j].active(sheet)) sum++;
     }
     for(i=1; i<d; ++i) {
       l = 0;
-      n = (signed) simplices[i].size();
+      n = simplices[i].size();
       for(j=0; j<n; ++j) {
         if (simplices[i][j].active(sheet)) l++;
       }
@@ -643,7 +636,9 @@ bool Complex::energy_check() const
   for(int i=0; i<nv; ++i) {
     if (!events[i].zero_energy()) {
       if (!events[i].active()) {
-        std::cout << "Potential problem here: " << i << "  " << events[i].get_energy() << std::endl;
+#ifdef VERBOSE
+        std::cout << "An inactive event has non-zero energy! " << i << "  " << events[i].get_energy() << std::endl;
+#endif
         output = false;
       }
     }
@@ -800,6 +795,8 @@ int Complex::deserialize(std::ifstream& s)
   unsigned long q;
   Event v;
   Simplex S;
+
+  clear();
 
   s.read((char*)(&q),sizeof(long)); output += sizeof(long);
   RND->set_seed(q);

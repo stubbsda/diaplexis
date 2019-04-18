@@ -4,8 +4,8 @@ using namespace DIAPLEXIS;
 
 void Complex::compute_simplicial_dimension()
 {
-  int i;
-  const int nv = (signed) events.size();
+  unsigned int i;
+  const unsigned int nv = events.size();
 
   for(i=0; i<nv; ++i) {
     if (!events[i].active) continue;
@@ -15,8 +15,8 @@ void Complex::compute_simplicial_dimension()
 
 void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 {
-  int i;
-  const int nv = cardinality(0);
+  unsigned int i;
+  const unsigned int nv = events.size();
 
   vx.clear();
   for(i=0; i<nv; ++i) {
@@ -100,16 +100,6 @@ void Complex::compute_connectivity_distribution(bool direct) const
   }
 }
 
-bool Complex::active_element(int d,int n) const
-{
-  if (d == 0) {
-    return events[n].active;
-  }
-  else {
-    return simplices[d][n].active;
-  }
-}
-
 std::pair<double,double> Complex::random_walk() const
 {
   std::pair<double,double> output;
@@ -162,6 +152,24 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices
       next.clear();
     }
   }
+}
+
+double Complex::dimensional_stress(int v) const
+{
+  // This method should sum the dimensional stress associated with
+  // each d-simplex (d > 0) that is active and contains the vertex v.
+  int i,j,ds;
+  double sum = 0.0;
+  const int nd = dimension();
+
+  for(i=nd; i>0; i--) {
+    ds = (signed) simplices[i].size();
+    for(j=0; j<ds; ++j) {
+      if (!simplices[i][j].active) continue;
+      if (simplices[i][j].contains(v)) sum += dimensional_stress(i,j);
+    }
+  }
+  return sum;
 }
 
 double Complex::dimensional_stress(int d,int n) const
@@ -322,32 +330,14 @@ void Complex::compute_simplex_parity(int d,int n)
   }
 }
 
-double Complex::dimensional_stress(int v) const
-{
-  // This method should sum the dimensional stress associated with
-  // each d-simplex (d > 0) that contains the vertex v and exists on
-  // the specified sheet.
-  int i,j,ds;
-  const int nd = dimension();
-  double sum = 0.0;
-
-  for(i=nd; i>0; i--) {
-    ds = (signed) simplices[i].size();
-    for(j=0; j<ds; ++j) {
-      if (!simplices[i][j].active) continue;
-      if (simplices[i][j].contains(v)) sum += dimensional_stress(i,j);
-    }
-  }
-  return sum;
-}
-
 void Complex::simplex_membership(int v,std::vector<int>& output) const
 {
-  int i,j,m,k = 0;
+  int i,k = 0;
+  unsigned int j,m;
 
   output.clear();
   for(i=1; i<=Complex::ND; ++i) {
-    m = (signed) simplices[i].size();
+    m = simplices[i].size();
     for(j=0; j<m; ++j) {
       if (!simplices[i][j].active) continue;
       if (simplices[i][j].contains(v)) ++k;
@@ -359,6 +349,8 @@ void Complex::simplex_membership(int v,std::vector<int>& output) const
 
 void Complex::compute_graph(SYNARMOSMA::Graph* G) const
 {
+  if (events.empty()) return;
+
   int offset[events.size()];
   compute_graph(G,offset);
 }
@@ -379,6 +371,9 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
   for(i=0; i<ne; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vx);
+#ifdef DEBUG
+    assert(offset[vx[0]] >= 0 && offset[vx[1]] >= 0);
+#endif
     G->add_edge(offset[vx[0]],offset[vx[1]]);
   }
 }
@@ -852,6 +847,7 @@ void Complex::simplicial_implication(int base) const
 
 int Complex::entourage(int base) const
 {
+  if (!events[base].active) return -1;
   // Calculates a measure of this event's integration/implication in its
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
@@ -913,21 +909,21 @@ int Complex::combinatorial_distance(int v1,int v2) const
   return d;
 }
 
-int Complex::cardinality_safe(int d) const
+int Complex::cardinality(int d) const
 {
-  int i,n = 0;
+  if (d < 0) return 0;
+  unsigned int i;
+  int n = 0;
   if (d == 0) {
-    const int M = (signed) events.size();
+    const unsigned int M = events.size();
     for(i=0; i<M; ++i) {
-      if (!events[i].active) continue;
-      n++;
+      if (events[i].active) n++;
     }
   }
   else {
-    const int M = (signed) simplices[d].size();
+    const unsigned int M = simplices[d].size();
     for(i=0; i<M; ++i) {
-      if (!simplices[d][i].active) continue;
-      n++;
+      if (simplices[d][i].active) n++;
     }
   }
   return n;
@@ -984,30 +980,38 @@ int Complex::vertex_dimension(int v) const
 
 double Complex::dimensional_frontier(int D) const
 {
-  int i,d[2],s = 0;
-  for(i=0; i<(signed) simplices[1].size(); ++i) {
+  unsigned int i,s = 0,ne = 0;
+  int vx[2];
+  const unsigned int n = simplices[1].size();
+  
+  for(i=0; i<n; ++i) {
     if (!simplices[1][i].active) continue;
-    simplices[1][i].get_vertices(d);
-    d[0] = (d[0] < D) ? D : d[0];
-    d[1] = (d[1] < D) ? D : d[1];
-    if (d[0] != d[1]) s++;
+    simplices[1][i].get_vertices(vx);
+    vx[0] = std::max(vertex_dimension(vx[0]),D); //(vx[0] < D) ? D : vx[0];
+    vx[1] = std::max(vertex_dimension(vx[1]),D); //(vx[1] < D) ? D : vx[1];
+    if (vx[0] != vx[1]) s++;
+    ne++;
   }
-  return double(s)/double(simplices[1].size());
+  if (ne == 0) return 0.0;
+
+  return double(s)/double(ne);
 }
 
 double Complex::dimensional_uniformity(int geometric_dimension) const
 {
-  int i,n,nv,sdimension = dimension(),sum = 0;
+  int i,d,nv = 0,sdimension = dimension(),sum = 0;
   if (sdimension < geometric_dimension) sdimension = geometric_dimension;
+  const int n = (signed) events.size(); 
 
-  nv = 0;
-  for(i=0; i<(signed) events.size(); ++i) {
+  for(i=0; i<n; ++i) {
     if (!events[i].active) continue;
-    n = vertex_dimension(i);
-    n = (n < geometric_dimension) ? geometric_dimension : n;
-    sum += sdimension - n;
+    d = vertex_dimension(i);
+    d = std::max(d,geometric_dimension); //(d < geometric_dimension) ? geometric_dimension : d;
+    sum += d - sdimension;
     nv++;
   }
+  if (nv == 0) return 0.0;
+
   return double(sum)/double(nv);
 }
 

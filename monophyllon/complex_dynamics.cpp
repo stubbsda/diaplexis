@@ -315,28 +315,34 @@ double Complex::set_logical_atoms(int n)
 
 double Complex::logical_energy(int v) const
 {
-  if (events[v].neighbours.empty()) return 0.0;
+  if (events[v].neighbours.empty() || !events[v].active) return 0.0;
+  int n = 0;
   double sum = 0.0;
   std::set<int>::const_iterator it;
   SYNARMOSMA::Proposition q,p = events[v].theorem;
 
   for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
+    if (!events[*it].active) continue;
     q = p & events[*it].theorem;
     sum += double(q.satisfiable());
+    n++;
   }
-  sum = sum/double(events[v].neighbours.size());
+  sum = sum/double(n);
   return sum;
 }
 
 bool Complex::logical_conformity(int v) const
 {
+  if (!events[v].active) return false;
+
   std::set<int>::const_iterator it;
-  SYNARMOSMA::Proposition Q = events[v].theorem;
+  SYNARMOSMA::Proposition p = events[v].theorem;
 
   for(it=events[v].neighbours.begin(); it!=events[v].neighbours.end(); ++it) {
-    Q = Q & events[*it].theorem;
+    if (!events[*it].active) continue;
+    p = p & events[*it].theorem;
   }
-  return Q.satisfiable();
+  return p.satisfiable();
 }
 
 void Complex::compute_simplex_energy(int d,int n)

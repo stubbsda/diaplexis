@@ -53,17 +53,15 @@ namespace DIAPLEXIS {
     void write_incastrature(const std::string&,int) const;
     bool edge_exists(int,int,int) const;
     int cardinality(int,int) const;
-    // A non-inlined version to avoid problems for external programs that need this method
-    int cardinality_safe(int,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     void compute_degree_distribution(bool,int) const;
     void compute_connectivity_distribution(bool,int) const;
     std::pair<double,double> random_walk(int) const;
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
     void compute_hvector(std::vector<int>&,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
@@ -125,7 +123,7 @@ namespace DIAPLEXIS {
     inline SYNARMOSMA::Homology::Field get_homology_field() const {return H->get_field();};
     inline SYNARMOSMA::Homology::Method get_homology_method() const {return H->get_method();};
     inline int get_dimension(int sheet) const {return dimension(sheet);};
-    inline int get_cardinality(int d,int sheet) const {return cardinality_safe(d,sheet);};
+    inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
     inline double get_event_obliquity(int n) const {return events[n].obliquity;};
     inline double get_event_energy(int n) const {return events[n].get_energy();};
@@ -172,44 +170,6 @@ namespace DIAPLEXIS {
   inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
     compute_graph(G,base,Complex::topological_radius,sheet);
-  }
-
-  inline int Complex::cardinality(int d,int sheet) const
-  {
-    int i,n = 0;
-    if (sheet == -1) {
-      if (d == 0) {
-        const int M = (signed) events.size();
-        for(i=0; i<M; ++i) {
-          if (!events[i].active()) continue;
-          n++;
-        }
-      }
-      else {
-        const int M = (signed) simplices[d].size();
-        for(i=0; i<M; ++i) {
-          if (!simplices[d][i].active()) continue;
-          n++;
-        }
-      }
-    }
-    else {
-      if (d == 0) {
-        const int M = (signed) events.size();
-        for(i=0; i<M; ++i) {
-          if (!events[i].active(sheet)) continue;
-          n++;
-        }
-      }
-      else {
-        const int M = (signed) simplices[d].size();
-        for(i=0; i<M; ++i) {
-          if (!simplices[d][i].active(sheet)) continue;
-          n++;
-        }
-      }
-    }
-    return n;
   }
 
   inline double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
