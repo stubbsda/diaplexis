@@ -28,17 +28,16 @@ void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 void Complex::compute_degree_distribution(bool logarithmic) const
 {
   std::vector<double> histogram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Graph G;
 
-  compute_graph(G);
+  compute_graph(&G);
 
-  G->degree_distribution(logarithmic,histogram);
+  G.degree_distribution(logarithmic,histogram);
 
   std::cout << "Vertex degree histogram:" << std::endl;
   for(int i=0; i<(signed) histogram.size(); ++i) {
     if (histogram[i] > 0) std::cout << i+1 << "  " << 100.0*histogram[i] << std::endl;
   }
-  delete G;
 }
 
 void Complex::compute_connectivity_distribution(bool direct) const
@@ -114,7 +113,7 @@ std::pair<double,double> Complex::random_walk() const
   return output;
 }
 
-void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices)
+void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
 {
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
@@ -125,7 +124,7 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices
   std::set<int>::const_iterator it,jt,kt;
 
 #ifdef VERBOSE
-  std::cout << "There are " << modified_vertices.size() << " vertices directly implicated." << std::endl;
+  std::cout << "There are " << modified_vertices.size() << " events directly implicated." << std::endl;
 #endif
 
   for(i=1; i<=Complex::ND; ++i) {
@@ -136,7 +135,7 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices
   }
   // We assume that the number of modified vertices is small relative
   // to the total number of vertices in the complex...
-  for(it=modified_vertices.begin(); it!=modified_vertices.end(); ++it) {
+  for(it=modified_events.begin(); it!=modified_events.end(); ++it) {
     n = *it;
     current = events[n].entourage;
     for(i=1; i<=Complex::ND; ++i) {
@@ -280,6 +279,8 @@ void Complex::compute_hvector(std::vector<int>& h) const
   const int D = dimension();
 
   compute_fvector(f,fstar);
+
+  h.clear();
   for(i=0; i<=D; ++i) {
     sum = SYNARMOSMA::ipow(-1,i)*int(SYNARMOSMA::binomial(D+1,i));
     for(j=1; j<=i; ++j) {
@@ -292,6 +293,7 @@ void Complex::compute_hvector(std::vector<int>& h) const
 void Complex::vertex_degree_statistics(double* output) const
 {
   SYNARMOSMA::Graph G;  
+
   compute_graph(&G);
   output[0] = double(G.max_degree());
   output[1] = double(G.min_degree());
@@ -345,14 +347,6 @@ void Complex::simplex_membership(int v,std::vector<int>& output) const
     output.push_back(k);
     k = 0;
   }
-}
-
-void Complex::compute_graph(SYNARMOSMA::Graph* G) const
-{
-  if (events.empty()) return;
-
-  int offset[events.size()];
-  compute_graph(G,offset);
 }
 
 void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
@@ -538,6 +532,7 @@ bool Complex::edge_parity_mutation(int u,int v)
   else {
     simplices[1][n].parity *= -1;
   }
+  recompute_parity(n);
   return true;
 }
 
@@ -657,7 +652,7 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
   return true;
 }
 
-void Complex::compute_modified_vertices()
+void Complex::compute_modified_events()
 {
   int i,j,n,m,l,nhop;
   std::set<int> S,vx,current,next;
@@ -686,7 +681,7 @@ void Complex::compute_modified_vertices()
   // Now with this know we can calculate which events need to have their
   // entwinement and/or dimensional stress recalculated
 #ifdef VERBOSE
-  std::cout << "There are " << S.size() << " vertices directly modified in this relaxation step." << std::endl;
+  std::cout << "There are " << S.size() << " events directly modified in this relaxation step." << std::endl;
 #endif
   for(it=S.begin(); it!=S.end(); ++it) {
     // Every vertex within topological_radius hops of n is labelled as
@@ -722,7 +717,7 @@ void Complex::compute_modified_vertices()
     if (events[i].topology_modified) nmod++;
   }
 #ifdef VERBOSE
-  std::cout << "There are " << nmod << " modified vertices out of " << nv << " in this relaxation step." << std::endl;
+  std::cout << "There are " << nmod << " modified events out of " << nv << " in this relaxation step." << std::endl;
 #endif
 }
 
@@ -765,11 +760,10 @@ void Complex::simplicial_implication()
 void Complex::simplicial_implication(int base) const
 {
   // This method will calculate all of the n-simplices (n > 1) that are "implied" by
-  // the base vertex and its neighbours (via their mutual edges) and list them, as well
-  // as checking to see if they already exist in the spacetime complex.
+  // the base event and its neighbours (via their mutual edges) and list them, as well
+  // as checking to see if they already exist in the complex.
   // One wrinkle with this method is that it can only be used when the "entourage" and
-  // "neighbours" properties of the events are well-defined... so after the calls to
-  // "regularize".
+  // "neighbours" properties of the events are well-defined... 
   int i,j,k,n,l,d,M,nsimp,nfound,w1,w2;
   std::vector<int> C,vx;
   std::vector<std::set<int> >* implied_simplex;
@@ -839,7 +833,7 @@ void Complex::simplicial_implication(int base) const
       nsimp++;
     }
 #ifdef VERBOSE
-    std::cout << "There are " << nsimp << " implied " << i-1 << "-simplices of which " << nfound << " already exist in the spacetime complex." << std::endl;
+    std::cout << "There are " << nsimp << " implied " << i-1 << "-simplices of which " << nfound << " already exist in the complex." << std::endl;
 #endif
   }
   delete[] implied_simplex;
@@ -931,20 +925,14 @@ int Complex::cardinality(int d) const
 
 int Complex::weighted_entourage(int n1,int n2) const
 {
-  int i,j,nfound,output = 0;
-  bool f1,f2;
-  std::set<int>::const_iterator it;
+  int i,nfound,output = 0;
+  unsigned j,n;
 
   for(i=2; i<=Complex::ND; ++i) {
     nfound = 0;
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n1);
-      f1 = (it == simplices[i][j].vertices.end()) ? false : true;
-
-      it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n2);
-      f2 = (it == simplices[i][j].vertices.end()) ? false : true;
-
-      if (f1 && f2) nfound++;
+    n = simplices[i].size();
+    for(j=0; j<n; ++j) {
+      if (simplices[i][j].vertices.count(n1) > 0 && simplices[i][j].vertices.count(n2) > 0) nfound++;
     }
     output += i*nfound;
   }

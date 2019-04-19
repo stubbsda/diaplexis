@@ -48,6 +48,31 @@ void Complex::inversion(int nsheet)
   compute_entourages();
 }
 
+double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
+{ 
+  int i,sum = 0,bcount = 0;
+  double mu,sigma = 0.0;
+  std::set<int>::const_iterator it;
+  const int nv = (signed) events.size();
+     
+  for(i=0; i<nprocs; ++i) {
+    sum += volume[i];
+  }
+  mu = double(sum)/double(nprocs);
+  for(i=0; i<nprocs; ++i) {
+    sigma += (volume[i] - mu)*(volume[i] - mu);
+  }
+  sigma = std::sqrt(sigma/double(nprocs));
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active()) continue;
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      if (*it < i) continue;
+      if (affinity[*it] != affinity[i]) bcount++;
+    }
+  }
+  return sigma + double(bcount);
+}
+
 void Complex::distribute(int nprocs) const
 {
   assert(nprocs > 0);

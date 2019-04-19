@@ -475,14 +475,14 @@ void Complex::get_deficiency_values(std::vector<double>& output) const
   }
 }
 
-void Complex::write_vertex_data(int v) const
+void Complex::write_event_data(int v) const
 {
   if (v < 0 || v >= (signed) events.size()) return;
-  std::cout << "For vertex " << v << " we have:" << std::endl;
+  std::cout << "For event " << v << " we have:" << std::endl;
   std::cout << "    Incept = " << events[v].incept << std::endl;
   std::cout << "    Structural deficiency = " << events[v].deficiency << std::endl;
   std::cout << "    Energy = " << events[v].get_energy() << std::endl;
-  std::cout << "    Orthogonality = " << events[v].obliquity << std::endl;
+  std::cout << "    Obliquity = " << events[v].obliquity << std::endl;
   std::cout << std::endl;
 }
 
@@ -613,8 +613,12 @@ double Complex::total_energy() const
 
 int Complex::simplex_embedding(int d,int n) const
 {
-  int i,j,info,vx[1+d],ns = 0,nt = 0,p = 0,nwork = 3*n - 1;
-  double delta,sum,s1,s2,c,dmatrix[n*n],A[n*n],a[n],b[n],w[n],work[nwork];
+#ifdef DEBUG
+  assert(d > 1);
+#endif
+  int N = 1 + d;  
+  int i,j,info,vx[N],ns = 0,nt = 0,p = 0,nwork = 3*N - 1;
+  double delta,sum,s1,s2,c,dmatrix[N*N],A[N*N],a[N],b[N],w[N],work[nwork];
   char jtype = 'V',uplo = 'U';
   std::set<int> S;
   std::set<int>::const_iterator it;
@@ -622,21 +626,21 @@ int Complex::simplex_embedding(int d,int n) const
 
   simplices[d][n].get_vertices(vx);
 
-  for(i=0; i<(1+d)*(1+d); ++i) {
+  for(i=0; i<N*N; ++i) {
     dmatrix[i] = 0.0;
   }
 
   // First we need to check if all the edges of this simplex are
   // of the same type
-  for(i=0; i<1+d; ++i) {
-    for(j=i+1; j<1+d; ++j) {
+  for(i=0; i<N; ++i) {
+    for(j=i+1; j<N; ++j) {
       S.clear();
       S.insert(vx[i]);
       S.insert(vx[j]);
       qt = index_table[1].find(S);
       delta = simplices[1][qt->second].volume;
-      dmatrix[n*i+j] = delta;
-      dmatrix[n*j+i] = delta;
+      dmatrix[N*i+j] = delta;
+      dmatrix[N*j+i] = delta;
       if (simplices[1][qt->second].spacelike()) {
         ns++;
       }
@@ -650,39 +654,39 @@ int Complex::simplex_embedding(int d,int n) const
     // If the simplex's edges are all timelike, we should change the
     // sign from negative to positive before proceeding with the
     // calculation
-    for(i=0; i<n*n; ++i) {
+    for(i=0; i<N*N; ++i) {
       dmatrix[i] = -dmatrix[i];
     }
   }
 
-  for(i=0; i<n*n; ++i) {
+  for(i=0; i<N*N; ++i) {
     dmatrix[i] = -0.5*dmatrix[i]*dmatrix[i];
   }
 
   sum = 0.0;
-  for(i=0; i<n; ++i) {
+  for(i=0; i<N; ++i) {
     s1 = 0.0;
     s2 = 0.0;
-    for(j=0; j<n; ++j) {
-      sum += dmatrix[n*i+j];
-      s1 += dmatrix[n*i+j];
-      s2 += dmatrix[n*j+i];
+    for(j=0; j<N; ++j) {
+      sum += dmatrix[N*i+j];
+      s1 += dmatrix[N*i+j];
+      s2 += dmatrix[N*j+i];
     }
-    a[i] = s1/double(n);
-    b[i] = s2/double(n);
+    a[i] = s1/double(N);
+    b[i] = s2/double(N);
   }
-  c = sum/double(n*n);
-  for(i=0; i<n; ++i) {
-    for(j=0; j<n; ++j) {
-      A[n*i+j] = dmatrix[n*i+j] - a[i] - b[j] + c;
+  c = sum/double(N*N);
+  for(i=0; i<N; ++i) {
+    for(j=0; j<N; ++j) {
+      A[N*i+j] = dmatrix[N*i+j] - a[i] - b[j] + c;
     }
   }
-  dsyev_(&jtype,&uplo,&n,A,&n,w,work,&nwork,&info);
+  dsyev_(&jtype,&uplo,&N,A,&N,w,work,&nwork,&info);
 #ifdef DEBUG
   assert(info == 0);
 #endif
-  for(i=0; i<n; ++i) {
-    if (std::abs(w[i]) > 0.0) p++;
+  for(i=0; i<N; ++i) {
+    if (std::abs(w[i]) > std::numeric_limits<double>::epsilon()) p++;
   }
   return p;
 }

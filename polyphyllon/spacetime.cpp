@@ -487,7 +487,7 @@ bool Spacetime::global_operations()
 #endif
   iterations++;
 
-  skeleton->compute_modified_vertices();
+  skeleton->compute_modified_events();
 
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].get_incept() == -1) skeleton->events[i].set_incept(iterations);
@@ -615,7 +615,7 @@ bool Spacetime::global_operations()
   if (superposable || compressible || permutable) {
     skeleton->compute_entourages(-1);
     skeleton->compute_neighbours();
-    skeleton->compute_modified_vertices();
+    skeleton->compute_modified_events();
     n = (signed) skeleton->events.size();
     std::set<int> S;
     for(i=0; i<n; ++i) {

@@ -42,6 +42,31 @@ void Complex::inversion()
   compute_entourages();
 }
 
+double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
+{
+  int i,sum = 0,bcount = 0;
+  double mu,sigma = 0.0;
+  std::set<int>::const_iterator it;
+  const int nv = (signed) events.size();
+
+  for(i=0; i<nprocs; ++i) {
+    sum += volume[i];
+  }
+  mu = double(sum)/double(nprocs);
+  for(i=0; i<nprocs; ++i) {
+    sigma += (volume[i] - mu)*(volume[i] - mu);
+  }
+  sigma = std::sqrt(sigma/double(nprocs));
+  for(i=0; i<nv; ++i) {
+    if (!events[i].active) continue;
+    for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
+      if (*it < i) continue;
+      if (affinity[*it] != affinity[i]) bcount++;
+    }
+  }
+  return sigma + double(bcount);
+}
+
 void Complex::distribute(int nprocs) const
 {
   assert(nprocs > 0);
@@ -361,11 +386,12 @@ void Complex::compute_simplex_energy(int d,int n)
 double Complex::parity_hamiltonian(double J,bool ferromagnetic) const 
 {
   // An Ising-like model based on the simplex parity...
-  int i,ND = dimension();
+  int i;
   unsigned int j,n;
   SYNARMOSMA::INT64 H = 0;
+  const int D = dimension();
 
-  for(i=ND; i>=1; --i) {
+  for(i=D; i>=1; --i) {
     n = simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;

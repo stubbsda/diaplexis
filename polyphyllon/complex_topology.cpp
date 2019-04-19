@@ -387,14 +387,6 @@ void Complex::simplex_membership(int v,std::vector<int>& output) const
   }
 }
 
-void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
-{
-  if (events.empty()) return;
-
-  int offset[events.size()];
-  compute_graph(G,offset,sheet);
-}
-
 void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset,int sheet) const
 {
   int i,vx[2];
@@ -803,7 +795,7 @@ bool Complex::simplex_addition(const std::set<int>& S,const std::set<int>& locus
   return true;
 }
 
-void Complex::compute_modified_vertices()
+void Complex::compute_modified_events()
 {
   int i,j,n,m,l,nhop;
   std::set<int> S,vx,current,next;
@@ -1225,20 +1217,14 @@ int Complex::cardinality(int d,int sheet) const
 
 int Complex::weighted_entourage(int n1,int n2) const
 {
-  int i,j,nfound,output = 0;
-  bool f1,f2;
-  std::set<int>::const_iterator it;
+  int i,nfound,output = 0;
+  unsigned int n,j;
 
   for(i=2; i<=Complex::ND; ++i) {
     nfound = 0;
-    for(j=0; j<(signed) simplices[i].size(); ++j) {
-      it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n1);
-      f1 = (it == simplices[i][j].vertices.end()) ? false : true;
-
-      it = std::find(simplices[i][j].vertices.begin(),simplices[i][j].vertices.end(),n2);
-      f2 = (it == simplices[i][j].vertices.end()) ? false : true;
-
-      if (f1 && f2) nfound++;
+    n = simplices[i].size();
+    for(j=0; j<n; ++j) {
+      if (simplices[i][j].vertices.count(n1) > 0 && simplices[i][j].vertices.count(n2) > 0) nfound++;
     }
     output += i*nfound;
   }

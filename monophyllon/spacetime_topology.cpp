@@ -384,11 +384,7 @@ void Spacetime::regularization(bool minimal)
   int i,j,k,v1,v2,n1,n2,nc,loc = -1;
   unsigned int max = 0;
   double l,mdelta;
-  std::string sx;
-  std::set<int> colours;
   std::vector<int> component;
-  Simplex S;
-  SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) skeleton->events.size();
 
   nc = skeleton->component_analysis(component);

@@ -33,7 +33,7 @@ namespace DIAPLEXIS {
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
     bool simplex_addition(const std::set<int>&,const std::set<int>&,int = -1);
     void simplex_deletion(int,int,int);
-    void compute_modified_vertices();
+    void compute_modified_events();
     void compute_dependent_simplices(const std::set<int>&);
     void simplicial_implication(int);
     void simplicial_implication(int,int);
@@ -59,8 +59,8 @@ namespace DIAPLEXIS {
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
     void compute_hvector(std::vector<int>&,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    inline void compute_graph(SYNARMOSMA::Graph*,int) const;
+    inline void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
@@ -111,8 +111,7 @@ namespace DIAPLEXIS {
     int deserialize(std::ifstream&);
     void clear();
     void get_edge_topology(std::vector<std::set<int> >&) const;
-    bool active_element(int,int) const;
-    void write_vertex_data(int) const;
+    void write_event_data(int) const;
     void get_energy_values(std::vector<double>&,int) const;
     void get_deficiency_values(std::vector<double>&,int) const;
     inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
@@ -133,7 +132,7 @@ namespace DIAPLEXIS {
     inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};
     inline void get_vertex_degree_statistics(double* output,int sheet) const {vertex_degree_statistics(output,sheet);};
     inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const {compute_fvector(f,fstar,sheet);};
-    inline int get_edge_index(const std::set<int>& vx) const {SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); return qt->second;};
+    inline int get_edge_index(const std::set<int>&) const;
     inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
     inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
     inline bool is_orientable() const {return orientable;};
@@ -146,7 +145,7 @@ namespace DIAPLEXIS {
     friend class Spacetime;
   };
 
-  inline bool Complex::edge_exists(int u,int v,int sheet) const
+  bool Complex::edge_exists(int u,int v,int sheet) const
   {
     std::set<int> vx;
     vx.insert(u); vx.insert(v);
@@ -161,40 +160,33 @@ namespace DIAPLEXIS {
     return true;
   }
 
-  inline bool Complex::is_pseudomanifold(bool* bdry) const 
+  int Complex::get_edge_index(const std::set<int>& vx) const 
+  {
+#ifdef DEBUG
+    assert(vx.size() == 2);
+#endif    
+    SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); 
+    if (qt == index_table[1].end()) return -1;
+    return qt->second;
+  }
+
+  bool Complex::is_pseudomanifold(bool* bdry) const 
   {
     *bdry = boundary;
     return pseudomanifold;
   }
 
-  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
+  void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
   {
-    compute_graph(G,base,Complex::topological_radius,sheet);
+    if (events.empty()) return;
+
+    int offset[events.size()];
+    compute_graph(G,offset,sheet);
   }
 
-  inline double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
+  void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
-    int i,sum = 0,bcount = 0;
-    double mu,sigma = 0.0;
-    std::set<int>::const_iterator it;
-    const int nv = (signed) events.size();
-
-    for(i=0; i<nprocs; ++i) {
-      sum += volume[i];
-    }
-    mu = double(sum)/double(nprocs);
-    for(i=0; i<nprocs; ++i) {
-      sigma += (volume[i] - mu)*(volume[i] - mu);
-    }
-    sigma = std::sqrt(sigma/double(nprocs));
-    for(i=0; i<nv; ++i) {
-      if (!events[i].active()) continue;
-      for(it=events[i].neighbours.begin(); it!=events[i].neighbours.end(); ++it) {
-        if (*it < i) continue;
-        if (affinity[*it] != affinity[i]) bcount++;
-      }
-    }
-    return sigma + double(bcount);
+    compute_graph(G,base,Complex::topological_radius,sheet);
   }
 }
 #endif

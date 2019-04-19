@@ -688,14 +688,14 @@ void Complex::get_deficiency_values(std::vector<double>& output,int sheet) const
   }
 }
 
-void Complex::write_vertex_data(int v) const
+void Complex::write_event_data(int v) const
 {
   if (v < 0 || v >= (signed) events.size()) return;
   std::cout << "For vertex " << v << " we have:" << std::endl;
   std::cout << "    Incept = " << events[v].incept << std::endl;
   std::cout << "    Structural deficiency = " << events[v].deficiency << std::endl;
   std::cout << "    Energy = " << events[v].get_energy() << std::endl;
-  std::cout << "    Orthogonality = " << events[v].obliquity << std::endl;
+  std::cout << "    Obliquity = " << events[v].obliquity << std::endl;
   std::cout << std::endl;
 }
 
