@@ -214,9 +214,9 @@ namespace DIAPLEXIS {
     /// This method returns the inherited neighbours property of the event with index equal to the method's argument.
     inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
     /// This method returns the homology of the complex as a compact string, the method's argument.
-    inline void get_homotopy(std::string& s) const {s = pi1->write();};
-    /// This method returns a combinatorial presentation of the homotopy group of the complex as a compact string, the method's argument.
     inline void get_homology(std::string& s) const {s = H->write();};
+    /// This method returns a combinatorial presentation of the homotopy group of the complex as a compact string, the method's argument.
+    inline void get_homotopy(std::string& s) const {s = pi1->write();};
     /// This method sets the field over which the complex's homology is calculated to the argument.
     inline void set_homology_field(SYNARMOSMA::Homology::Field F) {H->set_field(F);};
     /// This method sets the method by which the complex's homology is calculated to the argument.
@@ -255,7 +255,7 @@ namespace DIAPLEXIS {
     inline int get_euler_characteristic() const {return euler_characteristic();};
     /// This method returns the Event::obliquity property of the event with index equal to the method's argument.
     inline double get_event_obliquity(int n) const {return events[n].obliquity;};
-    /// This method returns the Event::energy property of the event with index equal to the method's argument.
+    /// This method returns the inherited energy property of the event with index equal to the method's argument.
     inline double get_event_energy(int n) const {return events[n].get_energy();};
     /// This method returns the Event::deficiency property of the event with index equal to the method's argument.
     inline double get_event_deficiency(int n) const {return events[n].deficiency;};

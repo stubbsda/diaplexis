@@ -4,7 +4,7 @@
 #define _simplexh
 
 namespace DIAPLEXIS {
-  /// A class representing the d-simplices (where \f$d\ge 1\f$) of the spacetime complex.
+  /// A class representing the d-simplices (where d > 0) of the spacetime complex.
 
   /// This class is derived from the Synarmosma library's Cell class, 
   /// whose documentation should therefore also be consulted for more 

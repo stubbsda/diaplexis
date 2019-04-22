@@ -191,7 +191,24 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_vertices
   }
 }
 
+double Complex::dimensional_stress(int v,int sheet) const
+{
+  // This method should sum the dimensional stress associated with
+  // each d-simplex (d > 0) that contains the vertex v and exists on
+  // the specified sheet.
+  int i,j,ds;
+  const int nd = dimension(-1);
+  double sum = 0.0;
 
+  for(i=nd; i>0; i--) {
+    ds = (signed) simplices[i].size();
+    for(j=0; j<ds; ++j) {
+      if (!simplices[i][j].active()) continue;
+      if (simplices[i][j].contains(v)) sum += dimensional_stress(i,j,sheet);
+    }
+  }
+  return sum;
+}
 
 double Complex::dimensional_stress(int d,int n,int sheet) const
 {
@@ -349,25 +366,6 @@ void Complex::compute_simplex_parity(int d,int n)
       S.clear();     
     }
   }
-}
-
-double Complex::dimensional_stress(int v,int sheet) const
-{
-  // This method should sum the dimensional stress associated with
-  // each d-simplex (d > 0) that contains the vertex v and exists on
-  // the specified sheet.
-  int i,j,ds;
-  const int nd = dimension(-1);
-  double sum = 0.0;
-
-  for(i=nd; i>0; i--) {
-    ds = (signed) simplices[i].size();
-    for(j=0; j<ds; ++j) {
-      if (!simplices[i][j].active()) continue;
-      if (simplices[i][j].contains(v)) sum += dimensional_stress(i,j,sheet);
-    }
-  }
-  return sum;
 }
 
 void Complex::simplex_membership(int v,std::vector<int>& output) const
