@@ -118,13 +118,13 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
   // modified property set to true...
-  if (modified_vertices.empty()) return;
+  if (modified_events.empty()) return;
   int i,j,m,n;
   std::set<int> current,next;
   std::set<int>::const_iterator it,jt,kt;
 
 #ifdef VERBOSE
-  std::cout << "There are " << modified_vertices.size() << " events directly implicated." << std::endl;
+  std::cout << "There are " << modified_events.size() << " events directly implicated." << std::endl;
 #endif
 
   for(i=1; i<=Complex::ND; ++i) {
@@ -932,6 +932,7 @@ int Complex::weighted_entourage(int n1,int n2) const
     nfound = 0;
     n = simplices[i].size();
     for(j=0; j<n; ++j) {
+      if (!simplices[i][j].active) continue;
       if (simplices[i][j].vertices.count(n1) > 0 && simplices[i][j].vertices.count(n2) > 0) nfound++;
     }
     output += i*nfound;

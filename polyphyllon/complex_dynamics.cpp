@@ -11,7 +11,7 @@ void Complex::inversion(int nsheet)
   const int nv = (signed) events.size();
 
   for(i=0; i<nv; ++i) {
-    if (!events[i].active) {
+    if (!events[i].active()) {
       // In principle this should be unnecessary...
       events[i].neighbours.clear();
       continue;
@@ -45,7 +45,7 @@ void Complex::inversion(int nsheet)
       }
     }
   }
-  compute_entourages();
+  compute_entourages(-1);
 }
 
 double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const

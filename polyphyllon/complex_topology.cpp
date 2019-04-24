@@ -1184,13 +1184,13 @@ int Complex::cardinality(int d,int sheet) const
 
   if (sheet == -1) {
     if (d == 0) {
-      const int M = events.size();
+      const unsigned int M = events.size();
       for(i=0; i<M; ++i) {
         if (events[i].active()) n++;
       }
     }
     else {
-      const int M = simplices[d].size();
+      const unsigned int M = simplices[d].size();
       for(i=0; i<M; ++i) {
         if (simplices[d][i].active()) n++;
       }
@@ -1198,13 +1198,13 @@ int Complex::cardinality(int d,int sheet) const
   }
   else {
     if (d == 0) {
-      const int M = events.size();
+      const unsigned int M = events.size();
       for(i=0; i<M; ++i) {
         if (events[i].active(sheet)) n++;
       }
     }
     else {
-      const int M = simplices[d].size();
+      const unsigned int M = simplices[d].size();
       for(i=0; i<M; ++i) {
         if (simplices[d][i].active(sheet)) n++;
       }
@@ -1222,6 +1222,7 @@ int Complex::weighted_entourage(int n1,int n2) const
     nfound = 0;
     n = simplices[i].size();
     for(j=0; j<n; ++j) {
+      if (!simplices[i][j].active()) continue;
       if (simplices[i][j].vertices.count(n1) > 0 && simplices[i][j].vertices.count(n2) > 0) nfound++;
     }
     output += i*nfound;

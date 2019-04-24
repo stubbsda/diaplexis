@@ -68,8 +68,8 @@ namespace DIAPLEXIS {
     /// This method ensures that the entailment property among simplices is respected, so that if a d-simplex is active then so are all of its (d-1)-dimensional faces and so forth.
     void simplicial_implication();
     /// This method will calculate all of the n-simplices (n > 1) that are entailed by the base event (the method's argument) and its neighbours (via their mutual edges) and list them, as well as checking to see if they already exist in the complex.
-    void simplicial_implication(int);
-    /// This method computes the Event::topological_dimension property of the complex's 0-simplices. 
+    void simplicial_implication(int) const;
+    /// This method computes the inherited topological_dimension property of the Event class for the complex's 0-simplices. 
     void compute_simplicial_dimension();
     /// This method sets the atomic propositions of the Event::theorem property for each active event in the complex. The method's argument is the total number of atomic propositions in the whole complex and the algorithm assigns more atomic propositions to an event's theorem in direct proportion to its energy and topological dimension. The method returns the average number of atomic propositions assigned to each active event.
     double set_logical_atoms(int);
@@ -114,7 +114,7 @@ namespace DIAPLEXIS {
     /// This method calls the compute_graph method and stores the offset array used to deal with the problem of inactive events, so that the 1-skeleton of the complex is stored in the first argument.
     void compute_graph(SYNARMOSMA::Graph*,int*) const;
     /// This method computes the 1-skeleton of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to Complex::topological_radius.
-    inline void compute_graph(SYNARMOSMA::Graph* G,int) const
+    inline void compute_graph(SYNARMOSMA::Graph* G,int) const;
     /// This method computes the 1-skeleton of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to the third argument.
     void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     /// This method computes the instance of the Synarmosma library's Nexus class corresponding to this complex.
@@ -127,7 +127,7 @@ namespace DIAPLEXIS {
     void simplex_membership(int,std::vector<int>&) const;
     /// This method computes the 1-skeleton of the complex as an instance of the Synarmosma library's Graph class and returns the chromatic_number method of this class.
     int chromatic_number() const;
-    /// This method calculates the combinatorial distance - the minimal number of event to event hops - between the two events whose index in the Complex::events vector is given by the arguments
+    /// This method calculates the combinatorial distance - the minimal number of event to event hops - between the two events whose index in the Complex::events vector is given by the arguments.
     int combinatorial_distance(int,int) const;
     /// This method calls the compute_graph method and returns the output of the entwinement method of the Synarmosma library's Graph class. 
     double entwinement() const;
@@ -145,7 +145,7 @@ namespace DIAPLEXIS {
     int vertex_valence(int) const;
     /// This method returns the dimension of the highest-dimensional simplex in the complex which contains the event specified by the method's argument; if the event is inactive the method returns -1.
     int vertex_dimension(int) const;
-    /// This method accepts two events as its arguments and returns the sum of d-simplices that contain both events, weighted by the dimension.
+    /// This method accepts two events as its arguments and returns the sum of active d-simplices that contain both events, weighted by the dimension.
     int weighted_entourage(int,int) const;
     /// This method computes the 1-skeleton of the complex as an instance of the Synarmosma library's Graph class and if the graph is connected (otherwise it returns zero), it returns the number of edges less the number of bridges in the graph.
     int cyclicity() const;
@@ -183,7 +183,7 @@ namespace DIAPLEXIS {
     void energy_diffusion(int);
     /// This method computes the extent to which a given d-simplex (d is the first argument while the second is the simplex's index in Complex::simplices[d]) can be embedded in Euclidean space by calculating the number of non-zero eigenvalues of a matrix derived from the simplex's edge lengths. The simplex can only be embedded if it is entirely timelike or spacelike, otherwise the method returns -1.
     int simplex_embedding(int,int) const;
-    /// This method returns the value of a simple Ising-like Hamiltonian based on the Simplex::parity property of the complex's d-simplices (d > 0). The first argument is the strength of the magnetic field and the second determines where it is ferromagnetic or not.
+    /// This method returns the value of a simple Ising-like Hamiltonian based on the Simplex::parity property of the complex's d-simplices (d > 0). The first argument is the strength of the magnetic field and the second determines whether it is ferromagnetic or not.
     double parity_hamiltonian(double,bool) const;
     /// This method writes the complex's 1-skeleton as a binary file whose name is the argument. The file format is a list of the energy of all active events followed by a pair of integers for each active edge.
     void write_graph(const std::string&) const;
@@ -229,7 +229,7 @@ namespace DIAPLEXIS {
     inline bool active_event(int n) const {return events[n].active;};
     /// This method returns true if the element of Complex::events (for d = 0) or Complex::simplices (for d > 0) given by the method's second argument is active.
     inline bool active_simplex(int d,int n) const {bool output = (d == 0) ? events[n].active : simplices[d][n].active; return output;};
-    /// This method returns the value of the dimension() method.
+    /// This method returns the output of the dimension() method.
     inline int get_dimension() const {return dimension();};
     /// This method returns the inherited topological_dimension of the event with index equal to the method's argument.
     inline int get_event_dimension(int n) const {return vertex_dimension(n);};
@@ -237,7 +237,7 @@ namespace DIAPLEXIS {
     inline int get_cardinality(int d) const {return cardinality(d);};
     /// This method sets the argument, an array of three double precision numbers, to the maximum, minimum and average degree of the complex's active events.
     inline void get_vertex_degree_statistics(double* output) const {vertex_degree_statistics(output);};
-    /// This method calls the compute_fvector() method using the two arguments. 
+    /// This method calls the compute_fvector() method using its two arguments. 
     inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar) const {compute_fvector(f,fstar);};
     /// This method returns the vertices of a d-simplex (d > 0) where the arguments are the dimension and index in Complex::simplices[d], while the final argument is an integer array of length 1+d to store the vertices.
     inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};

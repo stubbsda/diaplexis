@@ -49,6 +49,7 @@ namespace DIAPLEXIS {
 
     /// This method allocates the memory for the properties Complex::simplices, Complex::index_table, Complex::pi1, Complex::H and Complex::RND.
     void allocate();
+    /// This method transforms the complex by converting it to a graph (one-dimensional complex) whose topology is the inverse of the current topology (using a different random sheet for each newly created 1-simplex), calling the compute_entourages() method with the argument -1. The method's argument is the number of sheets in the complex. 
     void inversion(int);
     /// This method computes the inherited neighbours property of the elements of the Complex::events vector.
     void compute_neighbours();
@@ -62,7 +63,7 @@ namespace DIAPLEXIS {
     void compute_dependent_simplices(const std::set<int>&);
     void simplicial_implication(int);
     void simplicial_implication(int,int) const;
-    /// This method computes the Event::topological_dimension property of the complex's 0-simplices. 
+    /// This method computes the inherited topological_dimension property of the Event class for the complex's 0-simplices. 
     void compute_simplicial_dimension();
     /// This method sets the atomic propositions of the Event::theorem property for each active event in the complex. The method's argument is the total number of atomic propositions in the whole complex and the algorithm assigns more atomic propositions to an event's theorem in direct proportion to its energy and topological dimension. The method returns the average number of atomic propositions assigned to each active event.
     double set_logical_atoms(int);
@@ -74,7 +75,9 @@ namespace DIAPLEXIS {
     void compute_simplex_energy(int,int);
     /// This method computes the parity of a d-simplex where the first argument is the dimension and the second is the index of the simplex in Complex::simplices[d]. The parity is defined to be the product of the parity of its (1+d)*d/2 edges.
     void compute_simplex_parity(int,int);
+    /// This method accepts as its first argument the index of an event; it then randomly selects one of the 1-simplices belonging to the sheet indicated by the method's second argument that connects this event and alters its parity (changing it to +1 or -1 with equal probability if it is zero and multiplying it by -1 otherwise). The method then calls recompute_parity and returns true if an edge's parity is changed and false otherwise.
     bool edge_parity_mutation(int,int);
+    /// This method seeks to change the parity of the edge joining together the two events specified by the method's first two arguments, existing on the sheet indicated by its third argument. If such an edge exists, the method alters its parity (changing it to +1 or -1 with equal probability if it is zero and multiplying it by -1 otherwise), calls recompute_parity and returns true.
     bool edge_parity_mutation(int,int,int);
     /// This method accepts the index of a 1-simplex in the complex and then recomputes the parity of all the higher-dimensional simplices which contain this edge.
     void recompute_parity(int);
@@ -84,11 +87,17 @@ namespace DIAPLEXIS {
     void compute_parity();
     /// This method loops over all the 1-simplices in the simplicial complex - if a 1-simplex is active and at least one of its vertices has a non-zero energy, the corresponding element of the method's argument is given the value 1, otherwise 0. 
     void determine_flexible_edges(std::vector<int>&) const;
+    /// This method returns true if there is an active edge belonging to the sheet indicated in the third argument which connects the two vertices that are the method's first two arguments.
     inline bool edge_exists(int,int,int) const;
+    /// This method returns the number of active d-simplices belonging to the sheet indicated by the final argument, where d is the method's first argument.
     int cardinality(int,int) const;
+    /// This method computes the 1-skeleton of the sheet indicated by the second argument, calls the method Graph::degree_distribution from the Synarmosma library and prints out the vertex degree histogram to the console. If the method's first argument is true the histogram is logarithmic and linear otherwise. 
     void compute_degree_distribution(bool,int) const;
+    /// This method computes and writes to the console the histogram of combinatorial distances among the complex's events belonging to the sheet indicated by the second argument. The first argument controls the algorithm used; if true it assumes memory is abundant relative to the number of events and uses a direct method for the calculation.
     void compute_connectivity_distribution(bool,int) const;
+    /// This method computes the 1-skeleton of the sheet indicated by the unique argument and using the compute_graph() method and then returns the output of the random_walk method of the Graph class in the Synarmosma library.
     std::pair<double,double> random_walk(int) const;
+    /// This method accepts as its argument an array of three double precision numbers and computes the 1-skeleton of the sheet indicated by the second argument and then uses Graph class methods to assign the maximum degree, minimum degree and average degree to the elements of the method's first argument.
     void vertex_degree_statistics(double*,int) const;
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
     void compute_hvector(std::vector<int>&,int) const;
@@ -98,38 +107,57 @@ namespace DIAPLEXIS {
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
+    /// This method computes the Nexus class from the Synarmosma library corresponding to all active d-simplices in the complex and then computes the homology which is stored in the Complex::H property. If the method's argument is true, it also computes the fundamental group of the Nexus and stores it in Complex::pi1. Finally this method computes the Complex::pseudomanifold, Complex::orientable and Complex::boundary properties.
     void compute_global_topology(bool);
     /// This method accepts as its first argument an event and then proceeds to compute the number of d-simplices (d > 0) that contain this event, appending this figure to the second argument which is the method's output.
     void simplex_membership(int,std::vector<int>&) const;
+    /// This method computes the 1-skeleton of the sheet indicated by the method's argument as an instance of the Synarmosma library's Graph class and returns the chromatic_number method of this class.
     int chromatic_number(int) const;
+    /// This method calculates the combinatorial distance - the minimal number of event to event hops - between the two events whose index in the Complex::events vector is given by the first two arguments, on the sheet indicated by the final argument.
     int combinatorial_distance(int,int,int) const;
+    /// This method calls the compute_graph method for the sheet indicated by the argument and returns the output of the entwinement method of the Synarmosma library's Graph class.     
     double entwinement(int) const;
+    /// This method computes the 1-skeleton of the sheet indicated by the method's argument as an instance of the Synarmosma library's Graph class and returns the cyclic_resistance method of this class.
     double cyclic_resistance(int) const;
     /// This method returns the maximum value of the degree - the number of neighbours - over the entire collection of events.
     int max_degree() const;
+    /// This method returns the sum of the vertex_dimension() for each active event in the sheet indicated by the method's argument.
     int total_dimension(int) const;
+    /// This method returns the sum of the number of d-simplices (d >= 0) belonging to the sheet indicated by the argument, weighted by the number of vertices in each simplex.
     int structural_index(int) const;
+    /// This method returns the highest dimension D of this complex which has a D-simplex belonging to the sheet indicated by the argument. If there are no d-simplices belonging to the sheet for any non-negative d, the method returns -1.
     int dimension(int) const;
+    /// This method returns the number of 1-simplices belonging to the sheet indicated by the second argument that are in the entourage of the event given by the first argument.
     int vertex_valence(int,int) const;
+    /// This method returns the dimension of the highest-dimensional simplex belonging to the sheet indicated by the second argument and which contains the event specified by the method's first argument; if the event is inactive the method returns -1.
     int vertex_dimension(int,int) const;
+    /// This method accepts two events as its arguments and returns the sum of active d-simplices that contain both events, weighted by the dimension.
     int weighted_entourage(int,int) const;
+    /// This method computes the 1-skeleton of the sheet indicated by the method's argument as an instance of the Synarmosma library's Graph class and if the graph is connected (otherwise it returns zero), it returns the number of edges less the number of bridges in the graph.
     int cyclicity(int) const;
     double dimensional_stress(int,int) const;
     double dimensional_stress(int,int,int) const;
     double dimensional_frontier(int,int) const;
     double dimensional_uniformity(int,int) const;
+    /// This method returns the circuit rank of a given sheet of the complex, i.e. \f$T = c - v + e\f$ where \f$c\f$ is the number of connected components, \f$v\f$ the number of events and \f$e\f$ the number of 1-simplices. The method's argument is the index of the sheet.
     int circuit_rank(int) const;
+    /// This method returns the Euler characteristic of a given sheet (indicated by the argument) of the complex, i.e. the alternating sum of the elements of the \f$f\f$-vector, \f$\chi = \sum_{n=0}^D (-1)^n f_n\f$.
     int euler_characteristic(int) const;
+    /// This method computes the number of connected components (the method's return value) of the sheet indicated by the final argument as well as the number of events in each component, stored in the method's first argument.
     int component_analysis(std::vector<int>&,int) const;
+    /// This method computes the number of active d-simplices belonging to the sheet indicated by the second argument and which contain the event whose index is the first argument, multiplied by the dimension d. If the event is inactive the method returns -1. 
     int entourage(int,int) const;
+    /// This method returns true if the 1-skeleton of events belonging to the sheet indicated by its argument is connected and false otherwise.
     bool connected(int) const;
+    /// This method carries out a series of tests of the internal consistency of various Event and Simplex properties for those elements which belong to the sheet indicated by the method's argument. The method returns false if any problems are discovered.
     bool consistent(int) const;
-    /// This method writes the simplicial inclusion relations for the complex as a directed graph in the DOT file format, where the method's argument is the filename.
-    void write_incastrature(const std::string&) const;
-    /// This method writes to the console a summary of the topology of the complex, including the simplices that each event belongs to and the number of simplices of a given dimension.
-    void write_topology() const;
+    /// This method writes the simplicial inclusion relations for the complex as a directed graph in the DOT file format, where the method's first argument is the filename and the second the sheet to write out.
+    void write_incastrature(const std::string&,int) const;
+    /// This method writes to the console a summary of the topology of a given sheet (the method's argument) of the complex, including the simplices that each event belongs to and the number of simplices of a given dimension.
+    void write_topology(int) const;
     /// This method returns false if there is an inactive event whose energy property has a non-zero value.
     bool energy_check() const;
+    /// This method returns the sum of the energy property for every event belonging to the sheet whose index is the method's argument.
     double total_energy(int) const;
     /// This method carries out the energy diffusion among neighbouring active events in the complex - the method's argument is a parameter that controls the rate of energy transfer.
     void energy_diffusion(double);
@@ -137,8 +165,11 @@ namespace DIAPLEXIS {
     void energy_diffusion(int);
     /// This method computes the extent to which a given d-simplex (d is the first argument while the second is the simplex's index in Complex::simplices[d]) can be embedded in Euclidean space by calculating the number of non-zero eigenvalues of a matrix derived from the simplex's edge lengths. The simplex can only be embedded if it is entirely timelike or spacelike, otherwise the method returns -1.
     int simplex_embedding(int,int) const;
+    /// This method returns the value of a simple Ising-like Hamiltonian based on the Simplex::parity property of the complex's d-simplices (d > 0) belonging to a given sheet (whose index is the method's final argument). The first argument is the strength of the magnetic field and the second determines whether it is ferromagnetic or not.
     double parity_hamiltonian(double,bool,int) const;
+    /// This method writes the complex's 1-skeleton as a binary file whose name is the first argument with the sheet index the second argument. The file format is a list of the energy of all events belonging to the sheet followed by a pair of integers for each edge belonging to the sheet.
     void write_graph(const std::string&,int) const;
+    /// This method returns the "fitness" of a distribution of the complex's events among a set of N processors, where N is the method's final argument. The first argument is the number of events assigned to each processor while the second is the assignment of each event to a processor. The method attempts to ensure that neighbouring events are assigned to the same processor while also have an equal distribution of events among the processors.
     double distribution_fitness(int*,const std::vector<int>&,int) const;
 
    public:
@@ -158,7 +189,9 @@ namespace DIAPLEXIS {
     void get_edge_topology(std::vector<std::set<int> >&) const;
     /// This method writes to the console a set of Event properties for the event whose index is the method's argument.
     void write_event_data(int) const;
+    /// This method writes the energy property of all the events belonging to the sheet indicated in the second argument to the method's first argument.
     void get_energy_values(std::vector<double>&,int) const;
+    /// This method writes the deficiency property of all the active events belonging to the sheet indicated in the second argument to the method's first argument.
     void get_deficiency_values(std::vector<double>&,int) const;
     /// This method returns the inherited neighbours property of the event with index equal to the method's argument.
     inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
@@ -174,10 +207,15 @@ namespace DIAPLEXIS {
     inline SYNARMOSMA::Homology::Field get_homology_field() const {return H->get_field();};
     /// This method returns the method by which the complex's homology is calculated.
     inline SYNARMOSMA::Homology::Method get_homology_method() const {return H->get_method();};
+    /// This method returns the output of the dimension() method for a given sheet.
     inline int get_dimension(int sheet) const {return dimension(sheet);};
+    /// This method returns the inherited topological_dimension of the event with index equal to the method's first argument and sheet equal to the second argument.
     inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
+    /// This method returns the number of d-simplices belonging to the sheet indicated by the second argument.
     inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
+    /// This method sets the first argument, an array of three double precision numbers, to the maximum, minimum and average degree of the events belonging to the sheet indicated by the second argument.    
     inline void get_vertex_degree_statistics(double* output,int sheet) const {vertex_degree_statistics(output,sheet);};
+    /// This method calls the compute_fvector() method using its three arguments.     
     inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const {compute_fvector(f,fstar,sheet);};
     /// This method returns the vertices of a d-simplex (d > 0) where the arguments are the dimension and index in Complex::simplices[d], while the final argument is an integer array of length 1+d to store the vertices.
     inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};
@@ -185,10 +223,13 @@ namespace DIAPLEXIS {
     inline std::string get_simplex_key(int d,int n) const {return SYNARMOSMA::make_key(simplices[d][n].vertices);};
     /// This method returns the index of the 1-simplex whose vertex set is the method's argument; if the edge does not exist the method returns -1. 
     inline int get_edge_index(const std::set<int>&) const;
+    /// This method returns the output of the cyclicity() method for a given sheet.
     inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
+    /// This method returns the output of the circuit_rank() method for a given sheet.
     inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
     /// This method returns whether or not the simplicial complex is orientable, assuming it is a combinatorial pseudomanifold.
     inline bool is_orientable() const {return orientable;};
+    /// This method returns the Euler characteristic of a given sheet of the complex.
     inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
     /// This method returns the Event::obliquity property of the event with index equal to the method's argument.
     inline double get_event_obliquity(int n) const {return events[n].obliquity;};
@@ -196,10 +237,11 @@ namespace DIAPLEXIS {
     inline double get_event_energy(int n) const {return events[n].get_energy();};
     /// This method returns the Event::deficiency property of the event with index equal to the method's argument.
     inline double get_event_deficiency(int n) const {return events[n].deficiency;};
+    /// This method returns the Event::entwinement property for a particular sheet (the second argument) of the event with index equal to the method's first argument.
     inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
     /// This method returns the number of elements in the Complex::events vector.
     inline int get_events() const {return (signed) events.size();};
-    /// This method returns the output of the total_energy() method.
+    /// This method returns the output of the total_energy() method for the given sheet.
     inline double get_total_energy(int sheet) const {return total_energy(sheet);};
     /// This method returns the cardinality of the entourage property of the event (if the first argument is zero) or simplex (if it is greater than zero) whose index is specified by the second argument. 
     inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
@@ -212,6 +254,9 @@ namespace DIAPLEXIS {
 
   bool Complex::edge_exists(int u,int v,int sheet) const
   {
+#ifdef DEBUG
+    assert(u != v);
+#endif
     std::set<int> vx;
     vx.insert(u); vx.insert(v);
     SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);  
