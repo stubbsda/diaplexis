@@ -196,6 +196,13 @@ double Complex::dimensional_stress(int v,int sheet) const
   // This method should sum the dimensional stress associated with
   // each d-simplex (d > 0) that contains the vertex v and exists on
   // the specified sheet.
+  if (sheet == -1) {
+    if (!events[v].active()) return 0.0;
+  }
+  else {
+    if (!events[v].active(sheet)) return 0.0;
+  }
+
   int i,j,ds;
   const int nd = dimension(-1);
   double sum = 0.0;
@@ -215,6 +222,13 @@ double Complex::dimensional_stress(int d,int n,int sheet) const
   // This method measures the standard deviation of the
   // simplicial dimensions of the vertices of a given
   // d-simplex
+  if (sheet == -1) {
+    if (!simplices[d][n].active()) return 0.0;
+  }
+  else {
+    if (!simplices[d][n].active(sheet)) return 0.0;
+  }
+
   int i,vx[1+d];
   double alpha,v[1+d],sigma = 0.0,mu = 0.0;
 

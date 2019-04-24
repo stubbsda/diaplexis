@@ -55,11 +55,11 @@ namespace DIAPLEXIS {
     void compute_neighbours();
     /// This method calculates the value of the inherited entourage property for the elements of the Complex::events and Complex::simplices arrays.
     void compute_entourages();
-    /// This method adds a 1-simplex to the complex, with the first two arguments specifying the events connected by this new edge and the final argument the incept property of the Simplex class. The method returns false if the edge already exists in the complex and is active, true otherwise.
+    /// This method adds a 1-simplex to the complex, with the first two arguments specifying the events connected by this new edge and the optional final argument the incept property of the Simplex class. The method returns false if the edge already exists in the complex and is active, true otherwise.
     bool simplex_addition(int,int,int);
     /// This method adds a d-simplex to the complex, with the first argument specifying the vertex set of the new simplex and the optional final argument the incept property of the simplex. The method returns false if this simplex already exists in the complex and is active, true otherwise.
     bool simplex_addition(const std::set<int>&,int = -1);
-    /// This method deletes a d-simplex by setting its active property to false, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex. 
+    /// This method deletes a d-simplex by setting its Simplex::active property to false, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex. 
     void simplex_deletion(int,int);
     /// This method calculates which events have had their topology modified based on modified d-simplices (d > 0) and the Complex::topological_radius property, setting the topology_modified property of these events to true.
     void compute_modified_events();
@@ -105,9 +105,9 @@ namespace DIAPLEXIS {
     std::pair<double,double> random_walk() const;
     /// This method accepts as its argument an array of three double precision numbers and computes the 1-skeleton of the complex then uses Graph class methods to assign the maximum degree, minimum degree and average degree to the elements of the method's argument.
     void vertex_degree_statistics(double*) const;
-    /// This method computes the \f$f\f$-vector and \f$f^*\f$-vector of the complex, the first of which is the number of d-simplices for each d (d >= 0) and the second the dual of the first.
+    /// This method computes the \f$f\f$-vector and \f$f^*\f$-vector of the complex, the first of which is the number of d-simplices for each d (d >= 0) and the second the dual of the first, storing the output in the method's two arguments.
     void compute_fvector(std::vector<int>&,std::vector<int>&) const;
-    /// This method computes the \f$h\f$-vector of the simplicial complex, after first computing the \f$f\f$-vector and \f$f^*\f$-vector upon which it depends.
+    /// This method computes the \f$h\f$-vector of the simplicial complex, after first computing the \f$f\f$-vector and \f$f^*\f$-vector upon which it depends; the output is written to the method's argument.
     void compute_hvector(std::vector<int>&) const;
     /// This method calls the compute_graph method after allocating the memory for the offset array and results in the calculation of the 1-skeleton corresponding to the complex.
     inline void compute_graph(SYNARMOSMA::Graph*) const;

@@ -53,15 +53,21 @@ namespace DIAPLEXIS {
     void inversion(int);
     /// This method computes the inherited neighbours property of the elements of the Complex::events vector.
     void compute_neighbours();
+    /// This method calculates the value of the inherited entourage property for the elements of the Complex::events and Complex::simplices arrays and a given sheet, the method's unique argument.
     void compute_entourages(int);
+    /// This method adds a 1-simplex to the complex, with the first two arguments specifying the events connected by this new edge, the third argument the ubiquity of the edge and the optional final argument the incept property of the Simplex class. The method returns false if the edge already exists in the complex and has the same ubiquity, true otherwise.
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
+    /// This method adds a d-simplex to the complex, with the first argument specifying the vertex set of the new simplex, the second argument its ubiquity and the optional final argument the incept property of the simplex. The method returns false if this simplex already exists in the complex and has the same ubiquity, true otherwise.
     bool simplex_addition(const std::set<int>&,const std::set<int>&,int = -1);
+    /// This method deletes a d-simplex by removing the sheet index (the method's third argument) from the Simplex::ubiquity property, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex from the sheet. 
     void simplex_deletion(int,int,int);
     /// This method calculates which events have had their topology modified based on modified d-simplices (d > 0) and the Complex::topological_radius property, setting the topology_modified property of these events to true.
     void compute_modified_events();
     /// This method accepts a set of modified events and calculates all of the d-simplices (d > 0) in the complex which should therefore also be considered as modified and sets the Simplex::modified property appropriately.
     void compute_dependent_simplices(const std::set<int>&);
+    /// This method ensures that the entailment property among simplices is respected, so that if a d-simplex is belongs to the sheet indicated by the argument, then so do all of its (d-1)-dimensional faces and so forth.
     void simplicial_implication(int);
+    /// This method will calculate all of the n-simplices (n > 1) belonging to the sheet indicated by the second argument that are entailed by the base event (the method's first argument) and its neighbours (via their mutual edges) and list them, as well as checking to see if they already exist in the complex.
     void simplicial_implication(int,int) const;
     /// This method computes the inherited topological_dimension property of the Event class for the complex's 0-simplices. 
     void compute_simplicial_dimension();
@@ -99,13 +105,21 @@ namespace DIAPLEXIS {
     std::pair<double,double> random_walk(int) const;
     /// This method accepts as its argument an array of three double precision numbers and computes the 1-skeleton of the sheet indicated by the second argument and then uses Graph class methods to assign the maximum degree, minimum degree and average degree to the elements of the method's first argument.
     void vertex_degree_statistics(double*,int) const;
+    /// This method computes the \f$f\f$-vector and \f$f^*\f$-vector of a given sheet (the final argument) of the complex, the first of which is the number of d-simplices for each d (d >= 0) and the second the dual of the first, storing the output in the method's first two arguments.
     void compute_fvector(std::vector<int>&,std::vector<int>&,int) const;
+    /// This method computes the \f$h\f$-vector of a given sheet (the final argument) of the simplicial complex, after first computing the \f$f\f$-vector and \f$f^*\f$-vector upon which it depends; the output is written to the method's first argument.
     void compute_hvector(std::vector<int>&,int) const;
+    /// This method calls the compute_graph method after allocating the memory for the offset array and results in the calculation of the 1-skeleton corresponding to a sheet of the complex, indicated by the method's final argument.
     inline void compute_graph(SYNARMOSMA::Graph*,int) const;
-    inline void compute_graph(SYNARMOSMA::Graph*,int,int) const;
-    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
+    /// This method calls the compute_graph method and stores the offset array used to deal with the problem of inactive events, so that the 1-skeleton of a sheet (the last argument) the complex is stored in the first argument.
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
+    /// This method computes the 1-skeleton of a sheet (the third argument) of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to Complex::topological_radius.
+    inline void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    /// This method computes the 1-skeleton of a sheet (the fourth argument) of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to the third argument.
+    void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
+    /// This method computes the instance of the Synarmosma library's Nexus class corresponding to a given sheet (the second argument) of the complex.
     void compute_global_nexus(SYNARMOSMA::Nexus*,int) const;
+    /// This method computes the instance of the Synarmosma library's Nexus class corresponding to those simplices belonging to a given sheet (the final argument) and which contain the event whose index is the second argument of this method.
     void compute_local_nexus(SYNARMOSMA::Nexus*,int,int) const;
     /// This method computes the Nexus class from the Synarmosma library corresponding to all active d-simplices in the complex and then computes the homology which is stored in the Complex::H property. If the method's argument is true, it also computes the fundamental group of the Nexus and stores it in Complex::pi1. Finally this method computes the Complex::pseudomanifold, Complex::orientable and Complex::boundary properties.
     void compute_global_topology(bool);
@@ -135,9 +149,13 @@ namespace DIAPLEXIS {
     int weighted_entourage(int,int) const;
     /// This method computes the 1-skeleton of the sheet indicated by the method's argument as an instance of the Synarmosma library's Graph class and if the graph is connected (otherwise it returns zero), it returns the number of edges less the number of bridges in the graph.
     int cyclicity(int) const;
+    /// This method returns the sum of the dimensional stress associated with each d-simplex (d > 0) that belongs to the sheet indicated by the method's second argument and contains the event whose index is the method's first argument.
     double dimensional_stress(int,int) const;
+    /// This method measures the standard deviation of the simplicial dimensions on a given sheet (the third argument) of the vertices of a given d-simplex, with the first argument the dimension d and the second the index in the array Complex::simplices[d].
     double dimensional_stress(int,int,int) const;
+    /// This method returns the percentage of 1-simplices belonging to the sheet indicated by the second argument whose two vertices have different topological dimensions, assuming they are greater than the method's first argument.
     double dimensional_frontier(int,int) const;
+    /// This method computes the sum of the differences between the topological dimension of each event belonging to the sheet (indicated by the method's second argument) and the method's first argument (or the dimension of the complex if it is greater). The method then returns this sum divided by the number of active events. 
     double dimensional_uniformity(int,int) const;
     /// This method returns the circuit rank of a given sheet of the complex, i.e. \f$T = c - v + e\f$ where \f$c\f$ is the number of connected components, \f$v\f$ the number of events and \f$e\f$ the number of 1-simplices. The method's argument is the index of the sheet.
     int circuit_rank(int) const;

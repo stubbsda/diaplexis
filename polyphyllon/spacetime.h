@@ -14,6 +14,7 @@
 #define _spacetimeh
 
 namespace DIAPLEXIS {
+  /// A class representing the spacetime, a combination of dynamic geometric and topological properties. 
   class Spacetime {
    protected:
     enum Initial_Topology
