@@ -3,8 +3,6 @@
 using namespace DIAPLEXIS;
 
 const double Spacetime::convergence_threshold = 0.00001;
-const double Spacetime::T_zero = 500.0;
-const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
 
 Spacetime::Spacetime()
@@ -274,7 +272,7 @@ bool Spacetime::correctness()
 void Spacetime::structural_deficiency()
 {
   int i,j,v1,v2,v3,k = 0;
-  double sum1,sum2,l,l_inv,alpha,d1,d2,delta,E_G,E_total = 0.0;
+  double sum1,sum2,l,l_inv,alpha,d1,d2,delta,E_total = 0.0;
   bool found;
   std::set<int> S;
   std::set<int>::const_iterator it;
@@ -423,16 +421,14 @@ void Spacetime::structural_deficiency()
     E_total += skeleton->events[i].get_energy();
   }
 
-  E_G = representational_energy(false);
-
-  global_deficiency =  E_G + 2.0*M_PI*double(skeleton->euler_characteristic()) - E_total;
+  global_deficiency =  representational_energy(false) + 2.0*M_PI*double(skeleton->euler_characteristic()) - E_total;
 
   error = 0.0;
   for(i=0; i<na; ++i) {
     delta = skeleton->events[avertices[i]].get_deficiency();
     error += delta*delta;
   }
-  error = std::sqrt(error)/double(na);
+  error = (std::sqrt(error) + std::abs(global_deficiency))/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
   for(i=0; i<na; ++i) {
@@ -450,7 +446,6 @@ void Spacetime::structural_deficiency()
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
 #endif
-  error += std::abs(global_deficiency)/double(na);
 }
 
 bool Spacetime::global_operations()

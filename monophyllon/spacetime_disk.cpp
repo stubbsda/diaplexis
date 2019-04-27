@@ -356,8 +356,6 @@ void Spacetime::write_log() const
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
     s << "<TopologicalRadius>" << Complex::topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<ConvergenceThreshold>" << Spacetime::convergence_threshold << "</ConvergenceThreshold>" << std::endl;
-    s << "<InitialAnnealingTemperature>" << Spacetime::T_zero << "</InitialAnnealingTemperature>" << std::endl;
-    s << "<ThermalDecayRate>" << Spacetime::kappa << "</ThermalDecayRate>" << std::endl;
     s << "<EnergyCouplingConstant>" << Spacetime::Lambda << "</EnergyCouplingConstant>" << std::endl;
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
@@ -782,22 +780,6 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&x),sizeof(double));
-  if (!SYNARMOSMA::double_equality(x,Spacetime::T_zero)) {
-    s.close();
-    std::cerr << "The compiled binary's T_zero " << Spacetime::T_zero << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-
-  s.read((char*)(&x),sizeof(double));
-  if (!SYNARMOSMA::double_equality(x,Spacetime::kappa)) {
-    s.close();
-    std::cerr << "The compiled binary's kappa " << Spacetime::kappa << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
-
-  s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::Lambda)) {
     s.close();
     std::cerr << "The compiled binary's Lambda " << Spacetime::Lambda << " does not match that (" << x << ") of the data file." << std::endl;
@@ -893,8 +875,6 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&n),sizeof(int));
   s.write((char*)(&Complex::topological_radius),sizeof(int));
   s.write((char*)(&Spacetime::convergence_threshold),sizeof(double));
-  s.write((char*)(&Spacetime::T_zero),sizeof(double));
-  s.write((char*)(&Spacetime::kappa),sizeof(double));
   s.write((char*)(&Spacetime::Lambda),sizeof(double));
 
   // Now the global runtime parameters specific to the
