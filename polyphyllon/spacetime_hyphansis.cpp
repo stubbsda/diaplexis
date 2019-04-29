@@ -283,9 +283,9 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
   return output;
 }
 
-void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
-  int i,j,v,its,opcount;
+  int i,j,v,its,opcount,nsuccess = 0;
   double alpha,m_width = 1.0,x_width = 1.0;
   bool success = false;
   std::string line,op;
@@ -477,6 +477,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       s << "    <Operation>" << opstring.str() << "</Operation>" << std::endl;
       regularization(false,sheet);
       codex[sheet].hyphantic_ops += op;
+      nsuccess++;
     }
     opstring.str("");
   }
@@ -484,9 +485,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
   // We're done, so close the hyphantic log file and return
   s << "  </Sheet>" << std::endl;
   s.close(); 
+
+  return nsuccess;
 }
 
-void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
 {
   int i,v,n,vx[2],nsuccess = 0;
   double alpha;
@@ -606,6 +609,7 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       codex[sheet].hyphantic_ops += op;
       nsuccess++;
     }
+    opstring.str("");
     if (double(nsuccess)/nactive > 0.1) break;
   }
   n = (signed) skeleton->simplices[1].size();
@@ -620,8 +624,12 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     }
   }
   skeleton->recompute_parity(r_edges);
+
+  // We're done, so close the hyphantic log file and return
   s << "  </Sheet>" << std::endl;
   s.close();
+
+  return nsuccess;
 }
 
 void Spacetime::hyphansis(int sheet)

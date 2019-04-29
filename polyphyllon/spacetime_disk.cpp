@@ -948,30 +948,6 @@ void Spacetime::write_log() const
   logfile.save_file(log_file.c_str());
 }
 
-void Spacetime::read(const Spacetime& source)
-{
-  system_size = source.system_size;
-  error = source.error;
-  global_deficiency = source.global_deficiency;
-  skeleton->events = source.skeleton->events;
-  for(int i=0; i<=Complex::ND; ++i) {
-    skeleton->simplices[i] = source.skeleton->simplices[i];
-    skeleton->index_table[i] = source.skeleton->index_table[i];
-  }
-}
-
-void Spacetime::write(Spacetime& state) const
-{
-  state.system_size = system_size;
-  state.error = error;
-  state.global_deficiency = global_deficiency;
-  state.skeleton->events = skeleton->events;
-  for(int i=0; i<=Complex::ND; ++i) {
-    state.skeleton->simplices[i] = skeleton->simplices[i];
-    state.skeleton->index_table[i] = skeleton->index_table[i];
-  }
-}
-
 void Spacetime::read_state(const std::string& filename)
 {
   int i,j,n;

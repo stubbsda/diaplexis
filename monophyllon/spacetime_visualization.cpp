@@ -58,13 +58,6 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
 
   // Here we will make use the energy or deficiency values of the vertices to
   // set the vertex colour according to a thermal palette.
-  for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
-    x_min = (use_energy) ? skeleton->events[i].get_energy() : skeleton->events[i].get_deficiency();
-    x_max = x_min;
-    break;
-  }
-
   if (use_energy) {
     get_energy_extrema(pr);
   }

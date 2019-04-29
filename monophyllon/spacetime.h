@@ -328,10 +328,12 @@ namespace DIAPLEXIS {
     /// and the energy in the structure equation.
     static const double Lambda;
 
-    /// This method is called by the advance() method to carry out the hyphansis step of topological change.
+    /// This method is called by the advance() method to carry out the hyphansis step of topological change; it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
     void hyphansis();
-    void dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
-    void musical_hyphansis(const std::vector<std::pair<int,double> >&);
+    /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
+    int dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
+    /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
+    int musical_hyphansis(const std::vector<std::pair<int,double> >&);
     std::string implicative_scale(int,std::vector<double>&) const;
     std::string explicative_scale(int,std::vector<double>&) const;
     void implication(std::string&) const;
@@ -384,7 +386,9 @@ namespace DIAPLEXIS {
     double compute_abnormality(const std::vector<int>&) const;
     double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
     void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
+    /// This method computes the force on each event in the damped spring mechanical model used by the mechanical_solver() method. The method's arguments are offset mappings for distinguishing active and inactive events (the first two arguments), a vector of energy values for active events, the current event positions and finally the calculated forces on these events. 
     void mechanical_force(const std::vector<int>&,const std::vector<int>&,const std::vector<double>&,const std::vector<double>&,double*) const;
+    /// This method optimizes the spacetime geometry using a damped spring mechanical model for the 1-skeleton.
     void mechanical_solver();
     /// This method optimizes the spacetime geometry using a simulated annealing algorithm.
     void annealing_solver();
@@ -394,14 +398,21 @@ namespace DIAPLEXIS {
     void evolutionary_solver();
     /// This method carries out the geometry optimization, calling other methods (e.g. mechanical_solver(), simplex_solver() etc.) as necessary.
     void optimize();
+    /// This method calculates and returns the minimum of the absolute value of the distances separating the two vectors of events that are its first arguments. The final argument will contain the index of the two events that are the closest. 
     double minimize_lengths(const std::vector<int>&,const std::vector<int>&,int*) const;
     /// This method computes the current value of the terms in the structure equation for the spacetime, including setting the value of the Spacetime::error property. 
     void structural_deficiency();
+    /// This method accepts as its first argument the index of an event and then calculates the "total" (i.e. all events that lie in its past and future, including those which are not direct neighbours of the original event) past and future light cones of this event, which are output as the method's second and third arguments.
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
+    /// This method computes the anterior and posterior properties of the active spacetime events.
     void compute_lightcones();
+    /// This method computes a partially directed graph in which directed edges reflect timelike separation between events, with the graph based on a particular event (the method's second argument). 
     void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int) const;
+    /// This method computes and returns the extent to which the chrono-geometry matches the topology in the vicinity of a given event (the method's argument); a value of zero indicates that the geometry and topology match well, while a positive value indicates more entwinement is needed while a negative value less entwinement.  
     double compute_temporal_vorticity(int) const;
+    /// This method calls compute_total_lightcone() for each active event and then checks for temporal loops, sinks and sources as well as the cyclicity of the causal graph of this event if the event is a source or sink. The method's return value is an index of such exotic causal behaviour in the spacetime as a whole.
     double compute_temporal_nonlinearity() const;
+    /// This method computes a measure of how well the spacetime's geometry corresponds to its topological 1-skeleton and returns this value. If the argument is true the spatial embedding is weighted by the absolute value of the length of the 1-simplices.  
     double representational_energy(bool) const;
 
     /// This method carries out the various global operations that must be performed at each relaxation step.
@@ -412,8 +423,6 @@ namespace DIAPLEXIS {
     void build_initial_state();
     /// This method writes out information on the current configuration of the Spacetime instance to the log file, whose name is stored in the Spacetime::log_file property.
     void write_log() const;
-    void write(Spacetime&) const;
-    void read(const Spacetime&);
     /// This method calls clear() and then reads an instance of the Spacetime class from the binary file whose name is the method's unique argument.
     void read_state(const std::string&);
     /// This method writes the Spacetime instance to a binary file; the file's name is the method's argument if it has one, otherwise it uses the Spacetime::state_file property.
@@ -436,8 +445,11 @@ namespace DIAPLEXIS {
     bool clean() const;
     /// This method computes the value of Spacetime::error in the spacetime's current state, then sets all of the d-simplices (d >= 0) as modified and re-computes the Spacetime::error property; if there is any difference in the two values it returns false. 
     bool correctness();
+    /// This method steps forward in the relaxation process, successively calling the hyphansis(), regularization(), condense() and global_operations() methods. The output of the latter is the output of this method.
     bool advance();
+    /// If Spacetime::reversible is true, this method will call read_state() using the previous step's snapshot on disk to restore the simulation. 
     void fallback();
+    /// This method calls clear(), re-reads the parameters from its first argument (an XML file) and then calls the initialize() method. The second argument determines whether or not it reuses the existing random number seed.
     void restart(const std::string&,bool);
 
    public:

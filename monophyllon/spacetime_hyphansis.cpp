@@ -283,9 +283,9 @@ int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity
   return output;
 }
 
-void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates)
+int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates)
 {
-  int i,j,v,its,opcount;
+  int i,j,v,its,opcount,nsuccess = 0;
   double m_width = 1.0,x_width = 1.0;
   bool success = false;
   std::string line,op;
@@ -472,6 +472,7 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
       s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
       regularization(false);
       hyphantic_ops += op;
+      nsuccess++;
     }
     opstring.str("");
     assert(skeleton->consistent());
@@ -479,9 +480,11 @@ void Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& can
 
   // We're done, so close the hyphantic log file and return
   s.close(); 
+
+  return nsuccess;
 }
 
-void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates)
+int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates)
 {
   int i,v,n,vx[2],nsuccess = 0;
   double alpha;
@@ -600,11 +603,12 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
       regularization(false);
       hyphantic_ops += op;
       nsuccess++;
-      opstring.str("");
     }
+    opstring.str("");
     assert(skeleton->consistent());
     if (double(nsuccess)/nactive > 0.1) break;
   }
+
   n = (signed) skeleton->simplices[1].size();
   for(i=0; i<n; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
@@ -617,7 +621,11 @@ void Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& can
     }
   }
   skeleton->recompute_parity(r_edges);
+
+  // We're done, so close the hyphantic log file and return
   s.close();
+
+  return nsuccess;
 }
 
 void Spacetime::hyphansis()

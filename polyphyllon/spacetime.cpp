@@ -444,7 +444,7 @@ void Spacetime::structural_deficiency()
   }
   E_total = E_total/double(nt);
 
-  global_deficiency = representational_energy(false) + 2.0*M_PI*double(skeleton->euler_characteristic(-1)) - E_total;
+  global_deficiency = representational_energy(false) + compute_temporal_nonlinearity() + 2.0*M_PI*double(skeleton->euler_characteristic(-1)) - E_total;
 
   error = 0.0;
   for(i=0; i<na; ++i) {

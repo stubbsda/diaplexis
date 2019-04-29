@@ -141,8 +141,8 @@ namespace DIAPLEXIS {
 
     // The various methods needed for the hyphantic operators
     void hyphansis(int);
-    void dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
-    void musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    int dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    int musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
     std::string implicative_scale(int,std::vector<double>&) const;
     std::string explicative_scale(int,std::vector<double>&) const;
     void implication(std::string&) const;
@@ -215,8 +215,6 @@ namespace DIAPLEXIS {
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
     void build_initial_state(const std::set<int>&);
     void write_log() const;
-    void write(Spacetime&) const;
-    void read(const Spacetime&);
     void read_state(const std::string&);
     void write_state(const std::string& = "") const;
     void read_parameters(const std::string&);
@@ -243,8 +241,8 @@ namespace DIAPLEXIS {
     inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
     inline void get_coordinates(int n,std::vector<double>& x) const {geometry->get_coordinates(n,x);};
     void get_coordinates(std::vector<double>&) const;
-    void get_energy_extrema(double*) const;
-    void get_deficiency_extrema(double*) const;
+    void get_energy_extrema(std::pair<double,double>&) const;
+    void get_deficiency_extrema(std::pair<double,double>&) const;
     inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
     inline int get_background_dimension() const {return geometry->dimension();};
     inline std::string get_state_file() const {return state_file;};

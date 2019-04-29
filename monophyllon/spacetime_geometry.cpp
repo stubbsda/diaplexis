@@ -22,7 +22,7 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
 void Spacetime::arclength_statistics(double* output) const
 {
   unsigned int i;
-  double wm,avg_length = 0.0,max_length = 0.0,min_length = std::numeric_limits<double>::max();
+  double wm,avg_length = 0.0,max_length = 0.0,min_length = std::numeric_limits<double>::infinity();
   const unsigned int Ne = skeleton->simplices[1].size();
 
   output[0] = 0.0;
@@ -177,6 +177,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
 
 double Spacetime::compute_temporal_nonlinearity() const
 {
+  if (skeleton->cardinality(0) < 2) return 0.0;
+
   int i,nsink = 0,nsource = 0,causal_loop = 0;
   double output,nlinearity = 0.0;
   std::set<int> past,future;
@@ -192,16 +194,16 @@ double Spacetime::compute_temporal_nonlinearity() const
     // Now calculate the future and past lightcones for this vertex on this sheet...
     compute_total_lightcone(i,past,future);
     if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
+    if (past.empty() && future.empty()) continue;
+    if (!past.empty() && !future.empty()) continue;
     // If it's a sink, that means all of its edges have orientation equal to -1;
     // for a source, the edges must all have an orientation equal to +1.
-    if (past.empty() && !future.empty()) {
-      compute_causal_graph(&G,i);
-      nlinearity += G.cyclicity();
+    compute_causal_graph(&G,i);
+    nlinearity += G.cyclicity();
+    if (past.empty()) {
       nsource++;
     }
-    else if (!past.empty() && future.empty()) {
-      compute_causal_graph(&G,i);
-      nlinearity += G.cyclicity();
+    else {
       nsink++;
     }
   }
@@ -533,6 +535,9 @@ double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<
     v1 = S1[i];
     for(j=0; j<n2; ++j) {
       v2 = S2[j];
+#ifdef DEBUG
+      assert(v1 != v2);
+#endif
       delta = std::abs(geometry->get_squared_distance(v1,v2,false));
       if (delta < mdelta) {
         mdelta = delta;
