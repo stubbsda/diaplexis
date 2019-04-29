@@ -2,17 +2,12 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::get_coordinates(int v,std::vector<double>& x) const
-{
-  geometry->get_coordinates(v,x);
-}
-
 void Spacetime::get_coordinates(std::vector<double>& x) const
 {
   int i;
   unsigned int j;
   std::vector<double> vx;
-  const int nv = skeleton->cardinality(0);
+  const int nv = (signed) skeleton->events.size();
 
   x.clear();
   for(i=0; i<nv; ++i) {
@@ -26,10 +21,13 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
 
 void Spacetime::arclength_statistics(double* output) const
 {
-  int i;
-  double wm,avg_length = 0.0,max_length = 0.0,min_length = 1000.0;
-  const int Ne = (signed) skeleton->simplices[1].size();
-  const double ne = double(skeleton->cardinality(1));
+  unsigned int i;
+  double wm,avg_length = 0.0,max_length = 0.0,min_length = std::numeric_limits<double>::max();
+  const unsigned int Ne = skeleton->simplices[1].size();
+
+  output[0] = 0.0;
+  output[1] = 0.0;
+  output[2] = 0.0;
 
   for(i=0; i<Ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
@@ -38,10 +36,12 @@ void Spacetime::arclength_statistics(double* output) const
     if (wm > max_length) max_length = wm;
     if (wm < min_length) min_length = wm;
   }
-  if (ne > 0) avg_length /= ne;
-  output[0] = max_length;
-  output[1] = min_length;
-  output[2] = avg_length;
+  if (skeleton->cardinality(1) > 0) {
+    avg_length /= double(skeleton->cardinality(1));
+    output[0] = max_length;
+    output[1] = min_length;
+    output[2] = avg_length;
+  }
 }
 
 bool Spacetime::adjust_dimension()
@@ -234,7 +234,7 @@ void Spacetime::compute_lightcones()
   }
 }
 
-void Spacetime::chorogenesis(int nsteps)
+double Spacetime::chorogenesis()
 {
   assert(solver == Geometry_Solver::mechanical);
   assert(edge_probability > 0.3);
@@ -280,7 +280,7 @@ void Spacetime::chorogenesis(int nsteps)
   double temperature = 1.0;
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Graph G;
   const unsigned int ne = skeleton->simplices[1].size();
 
 #ifdef VERBOSE
@@ -299,13 +299,17 @@ void Spacetime::chorogenesis(int nsteps)
       candidates.push_back(i);
     }
     if (candidates.empty()) {
+#ifdef VERBOSE
       std::cout << "No viable candidates for topological operations, exiting loop..." << std::endl;
+#endif
       break;
     }
     csize = candidates.size();
     cfactor = int(skeleton->RND->drandom(0.1*temperature,temperature)*csize);
     if (cfactor == 0) {
+#ifdef VERBOSE
       std::cout << "Temperature too low for topological operations, exiting loop..." << std::endl;
+#endif
       break;
     }
     cfactor = std::max(cfactor,2*nv);
@@ -328,8 +332,8 @@ void Spacetime::chorogenesis(int nsteps)
     std::cout << "Deleted " << d << " edges from the spacetime complex." << std::endl;
 #endif
     regularization(false);
-    skeleton->compute_graph(G);
-    G->degree_distribution(false,hgram);
+    skeleton->compute_graph(&G);
+    G.degree_distribution(false,hgram);
     derror = 0;
     for(i=0; i<hgram.size(); ++i) {
       d = int(nv*hgram[i]);
@@ -349,13 +353,17 @@ void Spacetime::chorogenesis(int nsteps)
     // Prepare for the next iteration...
     temperature *= 0.95; 
     candidates.clear();    
-  } while(iterations < nsteps);
+  } while(iterations < max_iter);
+
   if (iterations == 1) optimize();
+
   compute_volume();
   compute_obliquity();
   structural_deficiency();
+
   write_state();
-  delete G;
+
+  return error;
 }
 
 double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) const

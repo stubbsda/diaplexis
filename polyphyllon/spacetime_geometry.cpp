@@ -2,17 +2,12 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::get_coordinates(int v,std::vector<double>& x) const
-{
-  geometry->get_coordinates(v,x);
-}
-
 void Spacetime::get_coordinates(std::vector<double>& x) const
 {
   int i;
   unsigned int j;
   std::vector<double> vx;
-  const int nv = skeleton->cardinality(0,-1);
+  const int nv = (signed) skeleton->events.size();
 
   x.clear();
   for(i=0; i<nv; ++i) {
@@ -26,10 +21,13 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
 
 void Spacetime::arclength_statistics(double* output,int sheet) const
 {
-  int i;
-  double wm,avg_length = 0.0,max_length = 0.0,min_length = 1000.0;
-  const int Ne = (signed) skeleton->simplices[1].size();
-  const double ne = double(skeleton->cardinality(1,sheet));
+  unsigned int i;
+  double wm,avg_length = 0.0,max_length = 0.0,min_length = std::numeric_limits<double>::max();
+  const unsigned int Ne = skeleton->simplices[1].size();
+
+  output[0] = 0.0;
+  output[1] = 0.0;
+  output[2] = 0.0;
 
   if (sheet == -1) {
     for(i=0; i<Ne; ++i) {
@@ -51,9 +49,13 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
     }
     if (ne > 0) avg_length /= ne;
   }
-  output[0] = max_length;
-  output[1] = min_length;
-  output[2] = avg_length;
+
+  if (skeleton->cardinality(1,sheet) > 0) {
+    avg_length /= double(skeleton->cardinality(1,sheet));
+    output[0] = max_length;
+    output[1] = min_length;
+    output[2] = avg_length;
+  }
 }
 
 bool Spacetime::adjust_dimension()

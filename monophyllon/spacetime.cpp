@@ -5,24 +5,11 @@ using namespace DIAPLEXIS;
 const double Spacetime::convergence_threshold = 0.00001;
 const double Spacetime::Lambda = 0.2;
 
-Spacetime::Spacetime()
-{
-  allocate();
-  initialize();
-}
-
 Spacetime::Spacetime(bool no_disk)
 {
   allocate();
   diskless = no_disk;
   if (diskless) checkpoint_frequency = 0;
-  initialize();
-}
-
-Spacetime::Spacetime(const std::string& filename)
-{
-  allocate();
-  read_parameters(filename);
   initialize();
 }
 
@@ -67,30 +54,26 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
 void Spacetime::clear()
 {
   skeleton->clear();
-  hyphantic_ops = "";
+  geometry->clear();
   iterations = 0;
+  hyphantic_ops = "";
 }
 
-void Spacetime::condense()
+double Spacetime::condense()
 {
   // First check how many ghost vertices and edges there are in this spacetime....
-  int i,n = 0,m = 0;
+  int n = skeleton->cardinality(0),m = skeleton->cardinality(1);
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
-  for(i=0; i<nv; ++i) {
-    if (skeleton->active_event(i)) n++;
-  }
-  for(i=0; i<ne; ++i) {
-    if (skeleton->active_simplex(1,i)) m++;
-  }
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
+  double output = std::max(rho_v,rho_e);
 #ifdef VERBOSE
   std::cout << "Topological density is " << rho_v << " for vertices and " << rho_e << " for edges." << std::endl;
 #endif
-  if (rho_v > 0.5 || rho_e > 0.5) return;
+  if (output > 0.5) return output;
   // So we need to condense this spacetime to reduce memory pressure...
-  int j,offset[nv];
+  int i,j,offset[nv];
   std::set<int> N,S,vx;
   std::vector<double> xc;
   std::vector<std::vector<double> > svalues;
@@ -136,19 +119,21 @@ void Spacetime::condense()
     nsimplices.clear();
   }
   skeleton->compute_entourages();
+  return 1.0;
 }
 
-void Spacetime::clean() const
+bool Spacetime::clean() const
 {
-  int i,j;
-  for(i=0; i<(signed) skeleton->events.size(); ++i) {
-    assert(!skeleton->events[i].get_topology_modified());
+  unsigned int i;
+  for(i=0; i<skeleton->events.size(); ++i) {
+    if (skeleton->events[i].get_topology_modified()) return false;
   }
-  for(i=1; i<=Complex::ND; ++i) {
-    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
-      assert(!skeleton->simplices[i][j].get_modified());
+  for(int d=1; d<=Complex::ND; ++d) {
+    for(i=0; i<skeleton->simplices[d].size(); ++i) {
+      if (skeleton->simplices[d][i].get_modified()) return false;
     }
   }
+  return true;
 }
 
 void Spacetime::fallback()
@@ -204,13 +189,13 @@ bool Spacetime::advance()
   return done;
 }
 
-void Spacetime::evolve()
+double Spacetime::evolve()
 {
   for(int i=0; i<max_iter; ++i) {
     if (advance()) break;
   }
 
-  if (diskless) return;
+  if (diskless) return error;
 
   // Write the spacetime state to disk
   write_state();
@@ -239,24 +224,27 @@ void Spacetime::evolve()
   nvalue = (converged) ? "True" : "False";
   rstep.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   logfile.save_file(log_file.c_str());
+
+  return error;
 }
 
 bool Spacetime::correctness()
 {
-  int i,j;
-  const int nv = (signed) skeleton->events.size();
+  unsigned int i,j;
+  double delta,original_error;
+  const unsigned int nv = skeleton->events.size();
 
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  double anterior_error = error;
+  original_error = error;
 
   for(i=0; i<nv; ++i) {
     skeleton->events[i].set_topology_modified(true);
     skeleton->events[i].set_geometry_modified(true);
   }
   for(i=1; i<=Complex::ND; ++i) {
-    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+    for(j=0; j<skeleton->simplices[i].size(); ++j) {
       skeleton->simplices[i][j].set_modified(true);
     }
   }
@@ -264,8 +252,11 @@ bool Spacetime::correctness()
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  if (std::abs(anterior_error - error) < std::numeric_limits<double>::epsilon()) return true;
-  std::cout << "Error difference is " << anterior_error << "  " << error << "  " << std::abs(anterior_error - error) << std::endl;
+  delta = std::abs(original_error - error);
+  if (delta < std::numeric_limits<double>::epsilon()) return true;
+#ifdef VERBOSE
+  std::cout << "Error difference in Spacetime::correctness method is " << original_error << "  " << error << "  " << delta << std::endl;
+#endif
   return false;
 }
 

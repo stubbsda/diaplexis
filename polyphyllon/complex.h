@@ -265,8 +265,8 @@ namespace DIAPLEXIS {
     inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
     /// This method returns the incept property of an Event or Simplex - depending on the dimension (the first argument) - of the element of Complex::events or Complex::simplices[d] with index value equal to the second argument.
     inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
-    /// This method returns the value of the Complex::pseudomanifold property and sets the argument to the value of the Complex::boundary property.
-    inline bool is_pseudomanifold(bool*) const;
+    /// This method sets the first element of the argument to the Complex::pseudomanifold property and second element to the value of the Complex::boundary property.
+    inline void is_pseudomanifold(std::pair<bool,bool>&) const;
     friend class Spacetime;
   };
 
@@ -298,10 +298,10 @@ namespace DIAPLEXIS {
     return qt->second;
   }
 
-  bool Complex::is_pseudomanifold(bool* bdry) const 
+  void Complex::is_pseudomanifold(std::pair<bool,bool>& output) const 
   {
-    *bdry = boundary;
-    return pseudomanifold;
+    output.first = pseudomanifold;
+    output.second = boundary;
   }
 
   void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const

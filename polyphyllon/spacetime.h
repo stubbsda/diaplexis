@@ -222,28 +222,26 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     bool adjust_dimension();
     void arclength_statistics(double*,int) const;
-    void condense();
+    double condense();
     void initialize();
     void allocate();
     void clear();
-    void clean() const;
+    bool clean() const;
     bool correctness();
-
-   public:
-    Spacetime();
-    Spacetime(bool);
-    Spacetime(const std::string&);
-    Spacetime(const std::string&,bool);
-    ~Spacetime();
     bool advance();
     void fallback();
+    void restart(const std::string&,bool);
+
+   public:
+    Spacetime(bool = false);
+    Spacetime(const std::string&,bool = false);
+    ~Spacetime();
     void evolve();
     void chorogenesis(int);
-    void restart(const std::string&,bool);
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
     void export_visual_data(std::vector<float>&,std::vector<int>&,int*,int) const;
     inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
-    void get_coordinates(int,std::vector<double>&) const;
+    inline void get_coordinates(int n,std::vector<double>& x) const {geometry->get_coordinates(n,x);};
     void get_coordinates(std::vector<double>&) const;
     void get_energy_extrema(double*) const;
     void get_deficiency_extrema(double*) const;

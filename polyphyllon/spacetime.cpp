@@ -8,24 +8,11 @@ const double Spacetime::T_zero = 500.0;
 const double Spacetime::kappa = 1.35;
 const double Spacetime::Lambda = 0.2;
 
-Spacetime::Spacetime()
-{
-  allocate();
-  initialize();
-}
-
 Spacetime::Spacetime(bool no_disk)
 {
   allocate();
   diskless = no_disk;
   if (diskless) checkpoint_frequency = 0;
-  initialize();
-}
-
-Spacetime::Spacetime(const std::string& filename)
-{
-  allocate();
-  read_parameters(filename);
   initialize();
 }
 
@@ -71,31 +58,27 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
 
 void Spacetime::clear()
 {
-  codex.clear();
   skeleton->clear();
+  geometry->clear();
   iterations = 0;
+  codex.clear();
 }
 
-void Spacetime::condense()
+double Spacetime::condense()
 {
   // First check how many ghost vertices and edges there are in this spacetime....
-  int i,n = 0,m = 0;
+  int n = skeleton->cardinality(0,-1),m = skeleton->cardinality(1,-1);
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
-  for(i=0; i<nv; ++i) {
-    if (skeleton->events[i].active()) n++;
-  }
-  for(i=0; i<ne; ++i) {
-    if (skeleton->simplices[1][i].active()) m++;
-  }
   double rho_v = double(n)/double(nv);
   double rho_e = double(m)/double(ne);
+  double output = std::max(rho_v,rho_e);
 #ifdef VERBOSE
   std::cout << "Topological density is for vertices " << rho_v << " and for edges " << rho_e << std::endl;
 #endif
-  if (rho_v > 0.5 || rho_e > 0.5) return;
+  if (output > 0.5) return output;
   // So we need to condense this spacetime to reduce memory pressure...
-  int j,offset[nv];
+  int i,j,offset[nv];
   std::set<int> N,S,vx,locus;
   std::set<int>::const_iterator it;
   std::vector<Event> nevents;
@@ -137,6 +120,21 @@ void Spacetime::condense()
     nsimplices.clear();
   }
   skeleton->compute_entourages(-1);  
+  return 1.0;
+}
+
+bool Spacetime::clean() const
+{
+  unsigned int i;
+  for(i=0; i<skeleton->events.size(); ++i) {
+    if (skeleton->events[i].get_topology_modified()) return false;
+  }
+  for(int d=1; d<=Complex::ND; ++d) {
+    for(i=0; i<skeleton->simplices[d].size(); ++i) {
+      if (skeleton->simplices[d][i].get_modified()) return false;
+    }
+  }
+  return true;
 }
 
 void Spacetime::fallback()
@@ -236,20 +234,21 @@ void Spacetime::evolve()
 
 bool Spacetime::correctness()
 {
-  int i,j;
-  const int nv = (signed) skeleton->events.size();
+  unsigned int i,j;
+  double delta,original_error;
+  const unsigned int nv = skeleton->events.size();
 
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  double anterior_error = error;
+  original_error = error;
 
   for(i=0; i<nv; ++i) {
     skeleton->events[i].set_topology_modified(true);
     skeleton->events[i].set_geometry_modified(true);
   }
   for(i=1; i<=Complex::ND; ++i) {
-    for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
+    for(j=0; j<skeleton->simplices[i].size(); ++j) {
       skeleton->simplices[i][j].set_modified(true);
     }
   }
@@ -257,15 +256,18 @@ bool Spacetime::correctness()
   compute_volume();
   compute_obliquity();
   structural_deficiency();
-  if (std::abs(anterior_error - error) < std::numeric_limits<double>::epsilon()) return true;
-  std::cout << "Error difference is " << anterior_error << "  " << error << "  " << std::abs(anterior_error - error) << std::endl;
+  delta = std::abs(original_error - error);
+  if (delta < std::numeric_limits<double>::epsilon()) return true;
+#ifdef VERBOSE
+  std::cout << "Error difference in Spacetime::correctness is " << original_error << "  " << error << "  " << delta << std::endl;
+#endif
   return false;
 }
 
 void Spacetime::structural_deficiency()
 {
   int i,j,k,v1,v2,v3,c = 0;
-  double alpha,sum,sum1,sum2,l,l_inv,d1,d2,delta,E_G,E_total = 0.0;
+  double alpha,sum,sum1,sum2,l,l_inv,d1,d2,delta,E_total = 0.0;
   bool found;
   std::vector<double> tvector;
   std::set<int> S;
@@ -442,16 +444,14 @@ void Spacetime::structural_deficiency()
   }
   E_total = E_total/double(nt);
 
-  E_G = representational_energy(false);
-
-  global_deficiency =  E_G + 2.0*M_PI*double(skeleton->euler_characteristic(-1)) - E_total;
+  global_deficiency = representational_energy(false) + 2.0*M_PI*double(skeleton->euler_characteristic(-1)) - E_total;
 
   error = 0.0;
   for(i=0; i<na; ++i) {
     delta = skeleton->events[avertices[i]].get_deficiency();
     error += delta*delta;
   }
-  error = std::sqrt(error)/double(na);
+  error = (std::sqrt(error) + std::abs(global_deficiency))/double(na);
 #ifdef VERBOSE
   double total_error = 0.0;
   for(i=0; i<na; ++i) {
@@ -469,7 +469,6 @@ void Spacetime::structural_deficiency()
   }
   if (nv_test == 0) assert(error < std::numeric_limits<double>::epsilon());
 #endif
-  error += std::abs(global_deficiency)/double(na);
 }
 
 bool Spacetime::global_operations()
