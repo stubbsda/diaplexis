@@ -59,8 +59,8 @@ namespace DIAPLEXIS {
     bool simplex_addition(int,int,const std::set<int>&,int = -1);
     /// This method adds a d-simplex to the complex, with the first argument specifying the vertex set of the new simplex, the second argument its ubiquity and the optional final argument the incept property of the simplex. The method returns false if this simplex already exists in the complex and has the same ubiquity, true otherwise.
     bool simplex_addition(const std::set<int>&,const std::set<int>&,int = -1);
-    /// This method deletes a d-simplex by removing the sheet index (the method's third argument) from the Simplex::ubiquity property, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex from the sheet. 
-    void simplex_deletion(int,int,int);
+    /// This method deletes a d-simplex by removing the sheet index (the method's third argument) from the Simplex::ubiquity property, where d is the first argument and the second argument is the index of the simplex in Complex::simplices[d]. The method then recursively deletes all the higher-dimensional simplices which depend on this simplex from the sheet. The method returns false if the simplex doesn't belong to the sheet in question and true otherwise. 
+    bool simplex_deletion(int,int,int);
     /// This method calculates which events have had their topology modified based on modified d-simplices (d > 0) and the Complex::topological_radius property, setting the topology_modified property of these events to true.
     void compute_modified_events();
     /// This method accepts a set of modified events and calculates all of the d-simplices (d > 0) in the complex which should therefore also be considered as modified and sets the Simplex::modified property appropriately.

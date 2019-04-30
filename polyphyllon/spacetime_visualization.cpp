@@ -287,7 +287,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
     if (D == 1) {
       for(i=0; i<nv; ++i) {
         if (!skeleton->events[i].active()) continue;
-        vcoords.push_back(float(x[offset[i]]));i
+        vcoords.push_back(float(x[offset[i]]));
         vcoords.push_back(0.0);
         vcoords.push_back(0.0);
       }

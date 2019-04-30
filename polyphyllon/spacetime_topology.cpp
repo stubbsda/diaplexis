@@ -2,7 +2,7 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::superposition_fusion(double threshold)
+int Spacetime::superposition_fusion(double threshold)
 {
   int i,j,m,nf,v1,v2,nfail = 0,nfused = 0;
   double delta,pfusion = 0.0;
@@ -24,7 +24,7 @@ void Spacetime::superposition_fusion(double threshold)
       if (delta < threshold) candidates.push_back(std::pair<int,int>(i,j));
     }
   }
-  if (candidates.empty()) return;
+  if (candidates.empty()) return 0;
 
   // Now we need to carry out the fusions...
   nf = (signed) candidates.size();
@@ -41,8 +41,7 @@ void Spacetime::superposition_fusion(double threshold)
 #ifdef VERBOSE
     std::cout << "Fusing vertices: " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
-    vertex_fusion(v1,v2,-1);
-    nfused++;
+    if (vertex_fusion(v1,v2,-1)) nfused++;
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
 
@@ -66,6 +65,8 @@ void Spacetime::superposition_fusion(double threshold)
 #ifdef DEBUG
   assert(skeleton->consistent(-1));
 #endif
+
+  return nfused;
 }
 
 void Spacetime::superposition_fission(int ulimit)
@@ -87,7 +88,7 @@ void Spacetime::superposition_fission(int ulimit)
 
 int Spacetime::compression(double threshold)
 {
-  int i,n,nc,v[2];
+  int i,n,nc,v[2],output = 0;
   std::set<int> locus;
   std::set<int>::const_iterator it;
   double s,alpha;
@@ -107,7 +108,7 @@ int Spacetime::compression(double threshold)
   nc = (signed) candidates.size();
   for(i=0; i<nc; ++i) {
     n = candidates[i];
-    skeleton->simplex_deletion(1,n,-1);
+    if (skeleton->simplex_deletion(1,n,-1)) output++;
   }
   if (!skeleton->connected(-1)) {
     // We need to add enough (short!) edges to keep the spacetime connected...
@@ -192,7 +193,7 @@ int Spacetime::compression(double threshold)
 #endif
     delete[] cvertex;
   }
-  return nc;
+  return output;
 }
 
 bool Spacetime::interplication(int centre,double size,int D,int sheet)

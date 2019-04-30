@@ -335,8 +335,9 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
 
   if (key_list.empty()) {
     // We're done!
+    s << "  </Sheet>" << std::endl;
     s.close();
-    return; 
+    return 0; 
   }
 
   // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
@@ -685,7 +686,7 @@ void Spacetime::hyphansis()
   }
 }
 
-void Spacetime::vertex_fusion(int n1,int n2)
+bool Spacetime::vertex_fusion(int n1,int n2)
 {
   int i,j,l,k,m,n,im1,in1;
   std::set<int> S,vx,duplicate;
@@ -805,6 +806,7 @@ void Spacetime::vertex_fusion(int n1,int n2)
   // Then recalculate the entourages...
   skeleton->compute_entourages();
   skeleton->compute_neighbours();
+  return true;
 }
 
 bool Spacetime::vertex_twist()

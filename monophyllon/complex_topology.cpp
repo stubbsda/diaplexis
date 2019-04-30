@@ -540,13 +540,13 @@ bool Complex::edge_parity_mutation(int u,int v)
   return true;
 }
 
-void Complex::simplex_deletion(int d,int n)
+bool Complex::simplex_deletion(int d,int n)
 {
   std::set<int>::const_iterator it;
   std::set<int> parents;
   int i,dp1 = d + 1;
   
-  if (!simplices[d][n].active) return;
+  if (!simplices[d][n].active) return false;
 
   simplices[d][n].deactivate();
   parents = simplices[d][n].entourage;
@@ -554,6 +554,7 @@ void Complex::simplex_deletion(int d,int n)
     i = *it;
     simplex_deletion(dp1,i);
   }
+  return true;
 }
 
 bool Complex::simplex_addition(int u,int v,int n)

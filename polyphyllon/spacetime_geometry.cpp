@@ -37,7 +37,6 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
       if (wm > max_length) max_length = wm;
       if (wm < min_length) min_length = wm;
     }
-    if (ne > 0) avg_length /= ne;
   }
   else {
     for(i=0; i<Ne; ++i) {
@@ -47,7 +46,6 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
       if (wm > max_length) max_length = wm;
       if (wm < min_length) min_length = wm;
     }
-    if (ne > 0) avg_length /= ne;
   }
 
   if (skeleton->cardinality(1,sheet) > 0) {

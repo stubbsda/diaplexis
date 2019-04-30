@@ -152,7 +152,7 @@ namespace DIAPLEXIS {
     int vertex_addition(const std::set<int>&,int);
     int vertex_addition(int,int);
     bool vertex_deletion(int,int);
-    void vertex_fusion(int,int,int);
+    bool vertex_fusion(int,int,int);
     bool vertex_twist(int);
 
     bool circumvolution(int);
@@ -179,10 +179,9 @@ namespace DIAPLEXIS {
 
     bool interplication(int,double,int,int);
     int compression(double);
-    void superposition_fusion(double);
+    int superposition_fusion(double);
     void superposition_fission(int);
     void regularization(bool,int);
-    void entourage(std::vector<int>&) const;
 
     bool realizable(int,int) const;
     void compute_volume();

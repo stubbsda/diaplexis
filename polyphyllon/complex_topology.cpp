@@ -634,19 +634,19 @@ bool Complex::edge_parity_mutation(int u,int v,int sheet)
   return true;
 }
 
-void Complex::simplex_deletion(int d,int n,int sheet)
+bool Complex::simplex_deletion(int d,int n,int sheet)
 {
   std::set<int>::const_iterator it;
   std::set<int> parents;
   int i,dp1 = d + 1;
 
   if (sheet == -1) {
-    if (simplices[d][n].active()) return;
+    if (simplices[d][n].active()) return false;
     simplices[d][n].deactivate();
     simplices[d][n].modified = true;
   } 
   else {
-    if (!simplices[d][n].active(sheet)) return;
+    if (!simplices[d][n].active(sheet)) return false;
     simplices[d][n].deactivate(sheet);
     simplices[d][n].modified = true;
     for(it=simplices[d][n].vertices.begin(); it!=simplices[d][n].vertices.end(); ++it) {
@@ -658,6 +658,7 @@ void Complex::simplex_deletion(int d,int n,int sheet)
     i = *it;
     simplex_deletion(dp1,i,sheet);
   }
+  return true;
 }
 
 bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)

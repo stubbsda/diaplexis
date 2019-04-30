@@ -334,16 +334,20 @@ namespace DIAPLEXIS {
     int dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
     /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
     int musical_hyphansis(const std::vector<std::pair<int,double> >&);
+    /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
+    /// This method is used in the musical_hyphansis() method and converts a (lower-pitched) key - a musical note - into an explicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string explicative_scale(int,std::vector<double>&) const;
+    /// This method is used by the dynamic_hyphansis() method and assigns an implicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void implication(std::string&) const;
+    /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
     int select_vertex(const std::vector<int>&,double) const;
     int vertex_addition(const std::vector<double>&);
     int vertex_addition(const std::set<int>&);
     int vertex_addition(int);
     bool vertex_deletion(int);
-    void vertex_fusion(int,int);
+    bool vertex_fusion(int,int);
     bool vertex_twist();
 
     bool circumvolution();
@@ -368,12 +372,16 @@ namespace DIAPLEXIS {
     bool stellar_addition(int);
     bool stellar_deletion(int);
 
+    /// This method first carves out a hole in the centre of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in this hole. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the final argument its dimensionality. The method returns true if it succeeds.
     bool interplication(int,double,int);
+    /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
-    void superposition_fusion(double);
+    /// This method fuses together events whose squared distance is less than the method's argument using the vertex_fusion() method; the method returns the number of pairs of events fused together.
+    int superposition_fusion(double);
+    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the vertex_fission() method.
     void superposition_fission(int);
+    /// This method ensures that the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the argument is false, the Complex::simplicial_implication() method is called at the beginning of the method.
     void regularization(bool);
-    void entourage(std::vector<int>&) const;
 
     /// This method tests where the d-simplex specified by the method's two arguments (the dimension d and index of the simplex in Complex::simplices[d]) can be realized given the geometry of the simplex's events; the method returns true if the d-simplex has a real volume and false otherwise. 
     bool realizable(int,int) const;
@@ -383,8 +391,11 @@ namespace DIAPLEXIS {
     void compute_lengths();
     /// This method computes the Event::obliquity property for all of the spacetime's active events using the current geometry.
     void compute_obliquity();
+    /// This method returns the abormality of the lengths of the spacetime's 1-simplices, while ignoring those 1-simplices deemed "flexible", which are listed in the method's unique argument.
     double compute_abnormality(const std::vector<int>&) const;
+    /// This method returns the abormality of the lengths of the spacetime's 1-simplices, while ignoring those 1-simplices deemed "flexible", which are listed in the method's second argument; the first argument is the vector of current event coordinates. 
     double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
+    /// This method computes the gradient of the edge length abnormality with respect to the event geometry; the gradient is written to the method's first argument, while the third argument is the vector listing which edges are deemed "flexible". If the second argument is true this method computes the negative gradient.   
     void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
     /// This method computes the force on each event in the damped spring mechanical model used by the mechanical_solver() method. The method's arguments are offset mappings for distinguishing active and inactive events (the first two arguments), a vector of energy values for active events, the current event positions and finally the calculated forces on these events. 
     void mechanical_force(const std::vector<int>&,const std::vector<int>&,const std::vector<double>&,const std::vector<double>&,double*) const;
