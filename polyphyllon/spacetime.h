@@ -212,10 +212,12 @@ namespace DIAPLEXIS {
     bool foliodynamics = false;
     /// This property controls whether or not the ubiquity_permutation() method 
     /// is called when the global_operations() method is invoked. If true, it is 
-    /// possible for events to jump from one spacetime sheet to another, i.e. to 
-    /// permute their Event::ubiquity property. As the number of relaxation steps 
-    /// increases this inter-cosmic jumping becomes less common, using the idea of 
-    /// a gradually cooling "cosmic temperature" and a Boltzmann criterion. 
+    /// possible for d-simplices (d > 0) to jump from one spacetime sheet to another, 
+    /// i.e. to permute their Simplex::ubiquity property if their Simplex::energy 
+    /// property is sufficiently elevated and the "cosmic temperature" is high enough. 
+    /// As the number of relaxation steps increases this inter-cosmic jumping becomes 
+    /// less common, since the cosmic temperature cools and this causes the Boltzmann 
+    /// criterion to be satisfied less frequently. 
     bool permutable = false;
 
     /// This property controls which optimization algorithm is used to try and 
@@ -351,16 +353,18 @@ namespace DIAPLEXIS {
     static const double ramosity;
     /// This property sets the initial temperature for the process of cosmic 
     /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of events when Spacetime::permutable is true.
+    /// jumping of simplices when Spacetime::permutable is true.
     static const double T_zero;
     // This property determines the rate of cooling in the process of cosmic 
     /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of events when Spacetime::permutable is true.
+    /// jumping of simplices when Spacetime::permutable is true.
     static const double kappa;
 
-    // The various methods needed for the hyphantic operators
+    /// This method is called by the advance() method to carry out the hyphansis step of topological change for a given sheet (the method's unique argument); it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
     void hyphansis(int);
+    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed. 
     int dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
     int musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
     /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
@@ -370,14 +374,20 @@ namespace DIAPLEXIS {
     void implication(std::string&) const;
     /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
+    /// This method returns the index of an event belonging to sheet (the final argument) from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
     int select_event(const std::vector<int>&,double,int) const;
+    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is the coordinate vector for the new event; the method returns the index of the new event. 
     int event_addition(const std::vector<double>&,int);
+    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is a set of parent events for the new event; the method returns the index of the new event. 
     int event_addition(const std::set<int>&,int);
+    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the argument is the parent event for the new event; the method returns the index of the new event.     
     int event_addition(int,int);
+    /// This method deletes the event whose index is the first argument from the sheet indicated by the last argument, by removing this sheet index from its Event::ubiquity property. The method returns false if the event was already not a member of this sheet, otherwise true.  
     bool event_deletion(int,int);
+    /// This method fuses the second argument into the first, both interpreted as indices of events, for the sheet indicated by the final argument; it returns true if the fusion succeeded and false otherwise. 
     bool event_fusion(int,int,int);
+    /// This method carries out an event fusion for a given sheet (the method's argument) that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
     bool event_twist(int);
-
     bool circumvolution(int);
     bool circumvolution(int,int);
     bool contraction(int,double,int);
@@ -400,6 +410,7 @@ namespace DIAPLEXIS {
     bool stellar_addition(int,int);
     bool stellar_deletion(int,int);
 
+    /// This method first deletes events in the centre of a sheet (specified by the final argument) of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in the location of these inactive events. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the third argument its dimensionality. The method returns true if it succeeds.
     bool interplication(int,double,int,int);
     /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
@@ -455,13 +466,19 @@ namespace DIAPLEXIS {
 
     /// This method returns a string containing a compact summary of which sheets are active (1) and which dormant (0), in the form "(0,1,1,0,...,0,1)" with length equal to the number of sheets.
     inline std::string sheet_activity() const;
+    /// This method causes the sheet indicated by the argument to undergo branching, creating one to four daughter sheets (the number of new sheets is the method's return value) from the parent sheet. This method is invoked by the sheet_dynamics() method.
     int sheet_fission(int);
+    /// This method is only called if Spacetime::foliodynamics is true and is responsible for spawning new sheets from existing sheets as well as modifying the Sheet::active property for these existing sheets. The method returns the number of newly created sheets.
     int sheet_dynamics();
+    /// This method carries out the inter-cosmic jumping of d-simplices (d > 0) in the spacetime complex; it is only called if Spacetime::permutable is true and the number of active sheets is greater than unity. The method returns the amount of inter-cosmic jumping: the sum over the d-simplices of the Hamming distance between the before and after ubiquity property.
     int ubiquity_permutation(double);
+    /// This method calculates the global topology (homology and homotopy) for a sheet of the spacetime, specified by the method's argument. If this is for the sheet of all active d-simplices the Complex::compute_global_topology method is called, otherwise the Sheet::H and Sheet::pi1 properties are used to store the output.
     void compute_global_topology(int);
     /// This method carries out the various global operations that must be performed at each relaxation step.
     bool global_operations();
+    /// This method computes the colours to be used for the events when visualizing the spacetime; a set of three RGB 8 bit unsigned integers (lying between 0 and 255) is used for each event - the inactive events are made invisible - and the criterion used for the colouring is either sheet membership (second argument is true), event energy (third argument is true) or event deficiency property (second and third arguments are false). 
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
+    /// This method computes the initial configuration of the spacetime based on its parameters; its argument is the ubiquity set to be used for the initial d-simplices in the spacetime complex.
     void build_initial_state(const std::set<int>&);
     /// This method writes out information on the current configuration of the Spacetime instance to the log file, whose name is stored in the Spacetime::log_file property.
     void write_log() const;

@@ -332,7 +332,7 @@ namespace DIAPLEXIS {
     void hyphansis();
     /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
     int dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
-    /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
+    /// This method carries out the hyphansis step according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
     int musical_hyphansis(const std::vector<std::pair<int,double> >&);
     /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
@@ -344,7 +344,7 @@ namespace DIAPLEXIS {
     void explication(std::string&) const;
     /// This method returns the index of an active event from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
     int select_event(const std::vector<int>&,double) const;
-    /// This method adds a new event to the spacetime, where the argument is the coordinates for the new event; the method returns the index of the new event. 
+    /// This method adds a new event to the spacetime, where the argument is the coordinate vector for the new event; the method returns the index of the new event. 
     int event_addition(const std::vector<double>&);
     /// This method adds a new event to the spacetime, where the argument is a set of parent events for the new event; the method returns the index of the new event. 
     int event_addition(const std::set<int>&);
@@ -399,7 +399,7 @@ namespace DIAPLEXIS {
     /// This method accepts as its argument the index of an event and, if this event has a degree of at least three and is not a member of a d-simplex (d > 1), carries out a Y => Δ transformation, returning true if it is successful.
     bool stellar_deletion(int);
 
-    /// This method first carves out a hole in the centre of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in this hole. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the final argument its dimensionality. The method returns true if it succeeds.
+    /// This method first deletes events in the centre of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in the location of these inactive events. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the final argument its dimensionality. The method returns true if it succeeds.
     bool interplication(int,double,int);
     /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
@@ -455,7 +455,7 @@ namespace DIAPLEXIS {
 
     /// This method carries out the various global operations that must be performed at each relaxation step.
     bool global_operations();
-    /// This method computes the colours to be used for the events when visualizing the spacetime; a set of three RGB float values (lying between zero and unity) is used for each event - the inactive events are made invisible - and the criterion used for the colouring is either the energy (second argument true) or deficiency property (false) of the event. 
+    /// This method computes the colours to be used for the events when visualizing the spacetime; a set of three RGB 8 bit unsigned integers (lying between 0 and 255) is used for each event - the inactive events are made invisible - and the criterion used for the colouring is either the energy (second argument true) or deficiency property (false) of the event. 
     void compute_colours(std::vector<unsigned char>&,bool) const;
     /// This method computes the initial configuration of the spacetime based on its parameters.
     void build_initial_state();

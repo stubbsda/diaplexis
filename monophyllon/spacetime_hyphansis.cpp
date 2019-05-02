@@ -607,7 +607,10 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
     }
     opstring.str("");
     assert(skeleton->consistent());
-    if (double(nsuccess)/nactive > 0.1) break;
+    // If more than 10% of the initial candidate vertices have been successfully used in hyphantic
+    // operations, it's time to exit - we don't want to modify the topology too profoundly in any
+    // given relaxation step...
+    if (double(nsuccess)/nc > 0.1) break;
   }
 
   n = (signed) skeleton->simplices[1].size();

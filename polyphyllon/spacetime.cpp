@@ -597,7 +597,7 @@ bool Spacetime::global_operations()
     i = compression(mu + sigma);
   }
 
-  if (permutable && codex.size() > 1) {
+  if (permutable && nactive > 1) {
     // Take care of any inter-cosmic jumping...
     for(i=1; i<nd; ++i) {
       n = (signed) skeleton->simplices[i].size();
@@ -851,6 +851,7 @@ int Spacetime::ubiquity_permutation(double temperature)
     alpha = std::exp(-temperature*E);
     hdistance = 0;
     for(j=0; j<nt; ++j) {
+      if (!codex[j].active) continue;
       if (skeleton->RND->drandom() > alpha) {
         if (ubiquity.count(j) > 0) {
           mutated.erase(j);
