@@ -200,6 +200,11 @@ namespace DIAPLEXIS {
     /// control the selection of hyphantic operators that will be applied at 
     /// each relaxation step. 
     std::string hyphansis_score = "";
+    /// This property sets the number of initial sheets in the spacetime and 
+    /// should be greater than or equal to unity. If it is equal to unity and 
+    /// Spacetime::foliodynamics is false, the net result is that the simulation 
+    /// behaves in a manner identical to the Monophyllon version of this library.
+    int nt_initial = 1;
     /// This property determines whether or not the sheets of the spacetime can 
     /// "reproduce" by generating daughter sheets at each invocation of the 
     /// global_operations() method. The relative fertility of the sheets is 

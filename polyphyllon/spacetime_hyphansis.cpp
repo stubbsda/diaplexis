@@ -290,7 +290,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   bool success = false;
   std::string line,op;
   std::stringstream opstring;
-  std::vector<int> key_list,m_event,x_events,neutral_events,m_keys,x_keys;
+  std::vector<int> key_list,m_events,x_events,neutral_events,m_keys,x_keys;
   std::vector<std::string> elements;
   std::vector<double> pvalues;
   boost::char_separator<char> sp("/");

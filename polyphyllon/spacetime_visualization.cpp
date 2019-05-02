@@ -373,7 +373,7 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
   evertex.clear();
 
   vdata.first = nv;
-  vdata.ssecond = ne;
+  vdata.second = ne;
 
   for(i=0; i<nv; ++i) {
     offset[i] = -1;

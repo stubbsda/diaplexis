@@ -195,13 +195,13 @@ bool Spacetime::advance()
   return done;
 }
 
-void Spacetime::evolve()
+double Spacetime::evolve()
 {
   for(int i=0; i<max_iter; ++i) {
     if (advance()) break;
   }
 
-  if (diskless) return;
+  if (diskless) return error;
 
   // Write the spacetime state to disk
   write_state();
@@ -230,6 +230,8 @@ void Spacetime::evolve()
   nvalue = (converged) ? "True" : "False";
   rstep.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
   logfile.save_file(log_file.c_str());
+
+  return error;
 }
 
 bool Spacetime::correctness()
@@ -595,7 +597,7 @@ bool Spacetime::global_operations()
     i = compression(mu + sigma);
   }
 
-  if (permutable) {
+  if (permutable && codex.size() > 1) {
     // Take care of any inter-cosmic jumping...
     for(i=1; i<nd; ++i) {
       n = (signed) skeleton->simplices[i].size();

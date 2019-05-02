@@ -218,12 +218,12 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   // We begin by eliminating the central event along with any events on this 
   // sheet that are within the a sphere of radius "size"
   geometry->get_coordinates(centre,cvertex); 
-  assert(vertex_deletion(centre,sheet));
+  assert(event_deletion(centre,sheet));
   for(i=0; i<(signed) skeleton->events.size(); ++i) {
     if (!skeleton->events[i].active(sheet)) continue;
     l = geometry->get_squared_distance(centre,i,false);
     if (l < size) {
-      assert(vertex_deletion(i,sheet));
+      assert(event_deletion(i,sheet));
       continue;
     }
     ambient.push_back(std::pair<int,double>(i,l - size));
