@@ -41,8 +41,8 @@ void Spacetime::build_initial_state()
       entourage.push_back(0);
     }
     
-    // First the vertices, making sure (if this is a non-relational
-    // model) that the vertex coordinates are balanced...
+    // First the events, making sure (if this is a non-relational
+    // model) that the event coordinates are balanced...
     for(l=0; l<initial_size; ++l) {
       k = nd;
       in1 = l/k;
@@ -130,7 +130,7 @@ void Spacetime::build_initial_state()
         if (j < 0) j = skeleton->RND->irandom(initial_size,v);
         v.push_back(j);
         // Now add some edges among the neighbours of this
-        // vertex
+        // event
         N.insert(v[i]);
         j = skeleton->RND->irandom(2,5);
         for(l=0; l<j; ++l) {
@@ -145,7 +145,7 @@ void Spacetime::build_initial_state()
     }
     if (perturb_geometry) {
       // No changes to the spacetime topology, merely the geometry of some
-      // existing vertices are altered...
+      // existing events are altered...
       if (v.empty()) {  
         for(i=0; i<nperturbed; ++i) {
           j = skeleton->RND->irandom(initial_size,v);
@@ -158,7 +158,7 @@ void Spacetime::build_initial_state()
     }
     if (perturb_energy) {
       if (v.empty()) {
-        // In this particular case I will simply alter the energy value of a single vertex
+        // In this particular case I will simply alter the energy value of a single event
         // near the centre of the Cartesian network...
         k = int(double(n)/2.0);
         if (k > 2) {
@@ -180,7 +180,7 @@ void Spacetime::build_initial_state()
     }
   }
   else if (initial_state == Initial_Topology::singleton) {
-    // An initial spacetime consisting of a single isolated vertex, though with very
+    // An initial spacetime consisting of a single isolated event, though with very
     // high energy
     geometry_type = "SINGLETON";
     if (relational) {
@@ -237,12 +237,12 @@ void Spacetime::build_initial_state()
     const double nv = double(initial_size);
 
     geometry_type = "RANDOM";
-    // Add the vertices
+    // Add the events
     for(i=0; i<initial_size; ++i) {
       skeleton->events.push_back(vt);
     }
     
-    // Next distribute energy among the vertices, ensuring at least one vertex 
+    // Next distribute energy among the event, ensuring at least one event 
     // has non-zero energy
     do {
       i = skeleton->RND->irandom(initial_size);

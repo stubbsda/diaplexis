@@ -280,7 +280,7 @@ void Spacetime::compute_lightcones()
   }
 }
 
-void Spacetime::chorogenesis(int nsteps)
+double Spacetime::chorogenesis()
 {
   assert(solver == Geometry_Solver::mechanical);
   assert(edge_probability > 0.3);
@@ -302,7 +302,7 @@ void Spacetime::chorogenesis(int nsteps)
   for(i=0; i<=D; ++i) {
     dpopulation[i] = SYNARMOSMA::ipow(2,i)*int(SYNARMOSMA::binomial(D,i))*SYNARMOSMA::ipow(n - 2,D - i);
   }
-  // Zero out the spacetime energy and make sure the vertex geometry is dimensionally homogeneous...
+  // Zero out the spacetime energy and make sure the event geometry is dimensionally homogeneous...
   std::vector<double> x,y;
   system_size = 0;
   for(i=0; i<nv; ++i) {
@@ -326,7 +326,7 @@ void Spacetime::chorogenesis(int nsteps)
   double temperature = 1.0;
   std::vector<int> candidates,reorder;
   std::vector<double> hgram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Graph G;
   const unsigned int ne = skeleton->simplices[1].size();
 
 #ifdef VERBOSE
@@ -345,13 +345,17 @@ void Spacetime::chorogenesis(int nsteps)
       candidates.push_back(i);
     }
     if (candidates.empty()) {
+#ifdef VERBOSE
       std::cout << "No viable candidates for topological operations, exiting loop..." << std::endl;
+#endif
       break;
     }
     csize = candidates.size();
     cfactor = int(skeleton->RND->drandom(0.1*temperature,temperature)*csize);
     if (cfactor == 0) {
+#ifdef VERBOSE
       std::cout << "Temperature too low for topological operations, exiting loop..." << std::endl;
+#endif
       break;
     }
     cfactor = std::max(cfactor,2*nv);
@@ -374,8 +378,8 @@ void Spacetime::chorogenesis(int nsteps)
     std::cout << "Deleted " << d << " edges from the spacetime complex." << std::endl;
 #endif
     regularization(false,-1);
-    skeleton->compute_graph(G,-1);
-    G->degree_distribution(false,hgram);
+    skeleton->compute_graph(&G,-1);
+    G.degree_distribution(false,hgram);
     derror = 0;
     for(i=0; i<hgram.size(); ++i) {
       d = int(nv*hgram[i]);
@@ -395,13 +399,17 @@ void Spacetime::chorogenesis(int nsteps)
     // Prepare for the next iteration...
     temperature *= 0.95; 
     candidates.clear();    
-  } while(iterations < nsteps);
+  } while(iterations < max_iter);
+
   if (iterations == 1) optimize();
+
   compute_volume();
   compute_obliquity();
   structural_deficiency();
+
   write_state();
-  delete G;
+
+  return error;
 }
 
 double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) const

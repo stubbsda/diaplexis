@@ -473,7 +473,7 @@ void Spacetime::write_log() const
   nch = 0;
   nat = 0;
   for(i=0; i<Nv; ++i) {
-    // Is this vertex atemporal (no timelike edges) or chiral
+    // Is this event atemporal (no timelike edges) or chiral
     // (number of FUTURE edges != number of PAST edges)?
     if (!skeleton->active_event(i)) continue;
     nf = 0;

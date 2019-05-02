@@ -61,7 +61,7 @@ void Spacetime::clear()
 
 double Spacetime::condense()
 {
-  // First check how many ghost vertices and edges there are in this spacetime....
+  // First check how many ghost events and edges there are in this spacetime....
   int n = skeleton->cardinality(0),m = skeleton->cardinality(1);
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
@@ -69,7 +69,7 @@ double Spacetime::condense()
   double rho_e = double(m)/double(ne);
   double output = std::max(rho_v,rho_e);
 #ifdef VERBOSE
-  std::cout << "Topological density is " << rho_v << " for vertices and " << rho_e << " for edges." << std::endl;
+  std::cout << "Topological density is " << rho_v << " for events and " << rho_e << " for edges." << std::endl;
 #endif
   if (output > 0.5) return output;
   // So we need to condense this spacetime to reduce memory pressure...
@@ -319,7 +319,7 @@ void Spacetime::structural_deficiency()
       v2 = avertices[j];
       l = std::abs(geometry->get_squared_distance(v1,v2,false));
       if (l < 3.8025 || l > 4.2025) continue;
-      // See if there is a third vertex that lies between these two...
+      // See if there is a third event that lies between these two...
       found = false;
       for(k=0; k<i; ++k) {
         v3 = avertices[k];
@@ -501,9 +501,9 @@ bool Spacetime::global_operations()
     sigma += (skeleton->events[i].get_energy() - E_avg)*(skeleton->events[i].get_energy() - E_avg);
   }
   sigma = std::sqrt(sigma/nc);
-  std::cout << "Standard deviation of vertex energy is " << sigma << std::endl;
+  std::cout << "Standard deviation of event energy is " << sigma << std::endl;
 
-  // Analyze the distribution of vertex dimensionalities...
+  // Analyze the distribution of event dimensionalities...
   int histogram[1 + Complex::ND],histo2[1 + Complex::ND];
   for(i=0; i<=Complex::ND; ++i) {
     histogram[i] = 0;
@@ -516,7 +516,7 @@ bool Spacetime::global_operations()
     histogram[skeleton->vertex_dimension(i)] += 1;
   }
   for(i=0; i<=Complex::ND; ++i) {
-    std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional vertices." << std::endl;
+    std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional events." << std::endl;
   }
 #endif
 
@@ -530,10 +530,10 @@ bool Spacetime::global_operations()
       if (std::abs(skeleton->events[i].get_deficiency()) > std::numeric_limits<double>::epsilon()) ntouch++;
     }
   }
-  std::cout << "Percentage of perturbed initial vertices " << 100.0*double(ntouch)/double(ninitial) << std::endl;
+  std::cout << "Percentage of perturbed initial events " << 100.0*double(ntouch)/double(ninitial) << std::endl;
 #endif
 
-  // Eliminate any overlapping vertices
+  // Eliminate any overlapping events
   if (superposable) {
     superposition_fusion(0.1); 
     superposition_fission(int(0.02*nv)); 

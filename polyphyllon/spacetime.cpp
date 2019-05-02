@@ -66,7 +66,7 @@ void Spacetime::clear()
 
 double Spacetime::condense()
 {
-  // First check how many ghost vertices and edges there are in this spacetime....
+  // First check how many ghost events and edges there are in this spacetime....
   int n = skeleton->cardinality(0,-1),m = skeleton->cardinality(1,-1);
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
@@ -74,7 +74,7 @@ double Spacetime::condense()
   double rho_e = double(m)/double(ne);
   double output = std::max(rho_v,rho_e);
 #ifdef VERBOSE
-  std::cout << "Topological density is for vertices " << rho_v << " and for edges " << rho_e << std::endl;
+  std::cout << "Topological density is " << rho_v << " for events and " << rho_e << " for edges." << std::endl;
 #endif
   if (output > 0.5) return output;
   // So we need to condense this spacetime to reduce memory pressure...
@@ -482,7 +482,7 @@ bool Spacetime::global_operations()
   const int nv = (signed) skeleton->events.size();
   const int ne = (signed) skeleton->simplices[1].size();
 #ifdef VERBOSE
-  std::cout << "Main thread in global operations method with " << nv << " vertices." << std::endl;
+  std::cout << "Main thread in global operations method with " << nv << " events." << std::endl;
 #endif
   iterations++;
 
@@ -567,7 +567,7 @@ bool Spacetime::global_operations()
       if (std::abs(skeleton->events[i].get_deficiency()) > std::numeric_limits<double>::epsilon()) ntouch++;
     }
   }
-  std::cout << "Percentage of perturbed initial vertices " << 100.0*double(ntouch)/double(ninitial) << std::endl;
+  std::cout << "Percentage of perturbed initial events " << 100.0*double(ntouch)/double(ninitial) << std::endl;
 #endif
 
   // Eliminate any overlapping vertices

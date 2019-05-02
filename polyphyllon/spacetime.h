@@ -17,6 +17,11 @@ namespace DIAPLEXIS {
   /// A class representing the spacetime, a combination of dynamic geometric and topological properties. 
   class Spacetime {
    protected:
+    /// This enumerated class lists the five initial states for the spacetime: random (the Spacetime::edge_probability 
+    /// property is used to randomly distribute edges among the events), monoplex (a d-simplex where d is the value of 
+    /// the Spacetime::initial_dim property), cartesian (the initial state is an orthonormal lattice of events), singleton 
+    /// (a single event and thus a sort of "Big Bang" model) and diskfile, where the initial state is read from a binary 
+    /// disk file for checkpoint-restart. 
     enum Initial_Topology
     {
         random,
@@ -26,6 +31,13 @@ namespace DIAPLEXIS {
         diskfile
     };
 
+    /// This enumerated class lists the five different geometry solvers available for fitting the spacetime geometry to 
+    /// its current topology: the minimal solver (random event geometry changes that are accepted if the error is reduced),
+    /// the mechanical solver (using a damped spring model and an ODE integrator for assigning event geometry along with 
+    /// a conjugate gradient algorithm to reduce 1-simplex abnormality), the evolutionary solver (using an evolutionary 
+    /// model with a population where each individual has a different geometry), the annealing solver (using a simulated 
+    /// annealing algorithm to minimize the Spacetime::error value) and the simplex solver (using the Nelder-Mead downhill 
+    /// simplex optimization algorithm). 
     enum Geometry_Solver
     {
         minimal,
@@ -35,125 +47,331 @@ namespace DIAPLEXIS {
         simplex
     };
 
+    /// This enumerated class lists the two different algorithms available for solving the ODE system when using the 
+    /// mechanical geometry solver: either a forward Euler method (fast but rather inaccurate and unstable) or the fourth-order 
+    /// Runge-Kutta method which is more costly but also more reliable. 
     enum class Integrator
     {
         euler,
         rk4
     };
 
+    /// This enumerated class lists the two different algorithms according to which the hyphansis step in the spacetime 
+    /// simulation is carried out: either a dynamic method based on the magnitude and sign of the Event::deficiency property 
+    /// for each active event or else one which is based on a music score. 
     enum class Hyphansis
     {
         dynamic,
         musical
     };
 
-    // The main (variable) properties of the Spacetime class
+
+    /// This property represents the number of relaxation steps 
+    /// that have been taken thus far in the simulation.
     int iterations = 0;
+    /// This property is the size of the spacetime complex, adjusted 
+    /// for dimensionality - the sum of the active events, each event 
+    /// multiplied by its geometric dimensionality. 
     int system_size = 0;
+    /// This property stores the number of active events in the 
+    /// spacetime complex.
     int nactive = 1;
+    /// This property is true if the current relaxation step can be 
+    /// reversed and false otherwise. The simulation always stores a 
+    /// snapshot of the preceding relaxation step and can thus reverse 
+    /// itself by a single step (but only a single step). 
     bool reversible = false;
+    /// This property stores the total error of the spacetime: the sum 
+    /// of the square of the Event::deficiency property for all active 
+    /// events and the Spacetime::global_deficiency property, all divided 
+    /// by the number of active events.
     double error = 0.0;
+    /// This property stores the global component of the spacetime error: 
+    /// the sum of the output of representational_energy() and \f$2\pi\f$
+    /// times the output of Complex::euler_characteristic, less the sum 
+    /// of the energy property of all active events. 
     double global_deficiency = 0.0;
+    /// This property contains all of the spacetime's topology, stored in a 
+    /// pointer to an instance of the Complex class.
     Complex* skeleton;
+    /// This property contains the spacetime's geometry, stored in a pointer to 
+    /// an instance of the Synarmosma library's Geometry class.
     SYNARMOSMA::Geometry* geometry;
+    /// This property stores the collection of sheets that are associated 
+    /// with this multi-sheeted spacetime, as a vector of type Sheet.
     std::vector<Sheet> codex;
 
-    // The global parameters
+    /// This property controls the sort of initial state from which the simulation 
+    /// begins, including eventually from a checkpoint file. 
     Initial_Topology initial_state = Initial_Topology::random;
+    /// If the initial state of the simulation is Initial_Topology::diskfile, then 
+    /// this property records that the original state was indeed "diskfile" while the 
+    /// checkpoint file alters the value of Spacetime::initial_state.
     Initial_Topology original_state = Initial_Topology::random;
+    /// This property determines the way in which the hyphantic operators which 
+    /// are applied at each relaxation step are chosen. If this property is set to 
+    /// Hyphansis::musical then a musical score is used to control the operators, 
+    /// otherwise a dynamic algorithm is used based on Event::deficiency value 
+    /// of the spacetime's active events.  
     Hyphansis weaving = Hyphansis::dynamic;
+    /// This property stores the initial number of events in the 
+    /// spacetime complex.
     int initial_size = 10;
+    /// This property stores the maximum number of relaxation steps 
+    /// that will be carried out in the simulation.
     int max_iter = 50;
-    int nt_initial = 1;
+    /// This property is the initial topological dimension of the 
+    /// spacetime complex, i.e. the output of the Complex::dimension() 
+    /// method.
     int initial_dim = 4;
+    /// This property stores the time (as measured in seconds since 
+    /// the beginning of the Unix era on January 1, 1970) at which the 
+    /// simulation started. 
     boost::posix_time::ptime start_time;
+    /// This property stores the date (in the format YYYYMMDD) of the 
+    /// simulation's beginning, which is used in the name of the output 
+    /// files for this particular simulation. 
     std::string date_string = "";
+    /// This property stores the Unix process ID of the simulation, 
+    /// which is used in the name of the output files for this particular 
+    /// simulation. 
     std::string pid_string = "";
+    /// The initial part of the name of the checkpoint file(s) created 
+    /// during the simulation - these are placed in the "data" directory 
+    /// with the name spacetime_date_pid_step.dat
     std::string state_file = "data/spacetime";
+    /// The initial part of the name of the log file created during the 
+    /// simulation - this file is placed in the "data" directory with the 
+    /// name spacetime_date_pid.log
     std::string log_file = "data/spacetime";
+    /// The name of the input file from which the simulation will read its 
+    /// state assuming the value of Spacetime::initial_state is set to 
+    /// Initial_Topology::diskfile. 
     std::string input_file = "";
+    /// If the spacetime's initial topology is random, then this property 
+    /// controls the probability that there is an edge connecting any pair 
+    /// of distinct events. 
     double edge_probability = std::log(500.0)/250.0;
+    /// This property, a percentage between zero and one, controls the frequency 
+    /// with which the spacetime complex's d-simplices (d > 0) have their Simplex::parity
+    /// property mutated at each relaxation step. 
     double parity_mutation = 0.01;
+    /// If this property is true the simulation does not carry out any disk 
+    /// I/O operations - there is no log file, no checkpoint files are created 
+    /// and so forth. 
     bool diskless = false;
+    /// This property determines whether or not the spacetime complex's 
+    /// initial topology is perturbed at the start of the simulation. 
     bool perturb_topology = false;
+    /// This property determines whether or not the spacetime complex's 
+    /// initial geometry is perturbed at the start of the simulation. 
     bool perturb_geometry = false;
+    /// This property determines whether or not the spacetime complex's 
+    /// initial energy distribution is perturbed at the start of the 
+    /// simulation. 
     bool perturb_energy = true;
+    /// If this property is set to true then the superposition_fusion() 
+    /// and superposition_fission() methods are called at each relaxation 
+    /// step. 
     bool superposable = false;
+    /// If this property is set to true then the compression() method is 
+    /// called at each relaxation step.
     bool compressible = false;
-    bool permutable = false;
+    /// If the Spacetime::error property falls below the value of Spacetime::convergence_threshold,
+    /// then this property is set to true.
     bool converged = false;
-    bool foliodynamics = false;
+    /// If the amount of physical memory available on the computer is plentiful 
+    /// relative to the size of the spacetime complex, then this property should 
+    /// be set to true to improve the program's performance (at the expense of 
+    /// significantly increasing its memory footprint).
     bool high_memory = true;
+    /// This property controls how frequently the the method write_state() 
+    /// is invoked during the simulation, in terms of how many relaxation 
+    /// steps elapse before a new checkpoint is made. If the value is zero
+    /// (or greater than Spacetime::max_iter) then no checkpoint files will 
+    /// be written to disk.
     int checkpoint_frequency = 50;
+    /// The initial part of the name of the hyphansis log file created during 
+    /// the simulation - this file is placed in the "data" directory with the 
+    /// name hyphansis_date_pid.log
     std::string hyphansis_file = "data/hyphansis";
+    /// If the Spacetime::weaving property is set to Hyphansis::musical, then 
+    /// this property stores the filename of the score file that is used to 
+    /// control the selection of hyphantic operators that will be applied at 
+    /// each relaxation step. 
     std::string hyphansis_score = "";
+    /// This property determines whether or not the sheets of the spacetime can 
+    /// "reproduce" by generating daughter sheets at each invocation of the 
+    /// global_operations() method. The relative fertility of the sheets is 
+    /// determined by the Spacetime::ramosity property. 
+    bool foliodynamics = false;
+    /// This property controls whether or not the ubiquity_permutation() method 
+    /// is called when the global_operations() method is invoked. If true, it is 
+    /// possible for events to jump from one spacetime sheet to another, i.e. to 
+    /// permute their Event::ubiquity property. As the number of relaxation steps 
+    /// increases this inter-cosmic jumping becomes less common, using the idea of 
+    /// a gradually cooling "cosmic temperature" and a Boltzmann criterion. 
+    bool permutable = false;
 
-    // Now the parameters associated with the
-    // geometry solver
+    /// This property controls which optimization algorithm is used to try and 
+    /// ensure the geometry meshes well with the topology and energy distribution 
+    /// at a given relaxation step. 
     Geometry_Solver solver = Geometry_Solver::minimal;
-    Integrator engine = Integrator::rk4;
+    /// This is the convergence threshold used for determining if a geometry solver 
+    /// has succeeded and the algorithm can exit. 
     double geometry_tolerance = 0.0001;
-    // Minimal
+    /// This property is only meaningful for the Geometry_Solver::minimal case and 
+    /// controls the number of random event coordinate changes attempted before exiting 
+    /// the geometry solver. This property should be positive. 
     int solver_its = 50;
-    // Evolutionary
+    /// This property is only meaningful for the Geometry_Solver::evolutionary case and 
+    /// controls the number of generations of artificial evolution that will be attempted 
+    /// before exiting the geometry solver. This property should be positive.
     int ngenerations = 1000;
+    /// This property is only meaningful for the Geometry_Solver::evolutionary case and 
+    /// controls the number of one-on-one contests carried out at each generation to determine 
+    /// which individuals will survive to the next generation. This property should be 
+    /// positive and no greater than Spacetime::pool_size.  
     int njousts = 20;
+    /// This property is only meaningful for the Geometry_Solver::evolutionary case and 
+    /// controls the number of individuals in a generation; a higher number means more 
+    /// genetic diversity but at the price of consuming more memory. This property should 
+    /// be positive.
     int pool_size = 100;
     // Annealing
+    /// This positive property controls the variance used in mutating the geometry of an 
+    /// individual event in the simulated annealing geometry solver and so is only relevant 
+    /// when Spacetime::solver is set to Geometry_Solver::annealing.
     double thermal_variance = 0.5;
+    /// This positive property determines the number of iterations of the thermal sweep loop, 
+    /// used in testing whether the spacetime geometry has reached thermal equilibrium at a 
+    /// given temperature. It is thus only relevant when Spacetime::solver is set to 
+    /// Geometry_Solver::annealing.
     int thermal_sweep = 1000;
+    /// This positive property is the number of iterations performed by the main annealing loop, 
+    /// which gradually lowers the temperature, ensuring the spacetime geometry reaches thermal 
+    /// equilibrium at each temperature. It is thus only relevant when Spacetime::solver is set 
+    /// to Geometry_Solver::annealing.
     int annealing_steps = 500;
+    /// This positive property that should normally be less than unity is what determines whether 
+    /// or not the spacetime geometry has reached thermal equilibrium, by calculating the variance 
+    /// of energies over the ensemble of thermal sweeps. If the variance is less than this threshold 
+    /// then the spacetime geometry has reached thermal equilibrium. This property is naturally 
+    /// meaningful only when Spacetime::solver is set to Geometry_Solver::annealing.
     double thermalization = 0.001;
     // Mechanical
+    /// This property controls which ODE integration algorithm is used (forward Euler 
+    /// or fourth order Runge-Kutta) if the Spacetime::solver property is set to 
+    /// Geometry_Solver::mechanical. 
+    Integrator engine = Integrator::rk4;
+    /// This property sets the maximum number of integration steps that will be carried 
+    /// out for the Geometry_Solver::mechanical solver model, which uses a velocity norm 
+    /// convergence criterion. This property should be positive.
     int max_int_steps = 10000;
+    /// This property is the step size for the integration algorithm used to numerically 
+    /// solve the ODE system in the Geometry_Solver::mechanical solver and it should normally 
+    /// be greater than zero and (significantly) less than one. 
     double step_size = 0.05;
+    /// This property determines in part the damped spring model which is used to compute 
+    /// event geometry in the Geometry_Solver::mechanical engine. This property should be negative 
+    /// and expresses the spring's stiffness. 
     double spring_constant = -1.5;
+    /// This property determines in part the damped spring model which is used to compute 
+    /// event geometry in the Geometry_Solver::mechanical engine. This property should be positive 
+    /// and expresses the strength of the repulsive force between events. 
     double repulsion_constant = 1.0;
+    /// This property determines in part the damped spring model which is used to compute 
+    /// event geometry in the Geometry_Solver::mechanical engine. This property should be positive 
+    /// and expresses the strength of the friction in the system, causing the model to gradually 
+    /// lose its kinetic energy.  
     double damping_constant = 0.85;
+    /// This property is used to compute the degree of "abnormality" in the spacetime geometry; 
+    /// if the distance between two connected events is less than this value, then the distance is 
+    /// ignored in the abnormality calculation. This property should be positive and is only 
+    /// meaningful if Spacetime::solver is Geometry_Solver::mechanical and Spacetime::cgradient_refinement 
+    /// is true.
     double edge_flexibility_threshold = 2.0;
+    /// This property controls whether or not a the Geometry_Solver::mechanical engine will attempt 
+    /// to perform a conjugate gradient optimization designed to normalize as much as possible the 
+    /// inter-event distance so that it is close to unity. 
     bool cgradient_refinement = true;
-    // Conjugate gradient
+    /// This property is only meaningful if Spacetime::solver is set to Geometry_Solver::mechanical 
+    /// and Spacetime::cgradient_refinement is true, in which case it controls the maximum number of 
+    /// conjugate gradient steps. 
     int max_CG_steps = 10;
+    /// This property is only meaningful if Spacetime::solver is set to Geometry_Solver::mechanical 
+    /// and Spacetime::cgradient_refinement is true, in which case it controls the maximum number of 
+    /// line search steps. 
     int max_LS_steps = 20;
     // Simplex
+    /// This positive property controls the reflection transformation used when the Spacetime::solver 
+    /// property is set to Geometry_Solver::simplex.
     double simplex_alpha = 1.0;
+    /// This property controls the expansion transformation used when the Spacetime::solver property
+    /// is set to Geometry_Solver::simplex; it must be greater than the maximum of 1.0 and Spacetime::simplex_alpha. 
     double simplex_gamma = 2.0;
+    /// This positive property controls the external contraction transformation used when the Spacetime::solver 
+    /// property is set to Geometry_Solver::simplex. This property must be less than unity.
     double simplex_rho = 0.5;
+    /// This positive property controls the internal contraction transformation used when the Spacetime::solver 
+    /// property is set to Geometry_Solver::simplex. This property must be less than unity.
     double simplex_sigma = 0.5;
 
-    // Stuff for the implicative/explicative operators:
+    /// The total number of available explicative operators 
+    /// for the hyphansis phase of each relaxation step.
     static const int N_EXP = 11;
+    /// The total number of available implicative operators 
+    /// for the hyphansis phase of each relaxation step.
     static const int N_IMP = 8;
+    /// This array of strings stores the abbreviations that are 
+    /// used to represent the explicative operators in the 
+    /// log file for hyphansis as well as the Spacetime::hyphantic_ops 
+    /// property.
     static const std::string EXP_OP[N_EXP];
+    /// This array of strings stores the abbreviations that are 
+    /// used to represent the implicative operators in the 
+    /// log file for hyphansis as well as the Spacetime::hyphantic_ops 
+    /// property.
     static const std::string IMP_OP[N_IMP];
 
-    // The intensity of branching in the polycosmos, 0 < x < 1
-    static const double ramosity;
-    // Error tolerance for convergence
+    /// This property stores the error tolerance for the 
+    /// convergence of the relaxation process.
     static const double convergence_threshold;
-    // The initial temperature for cosmic annealing
-    static const double T_zero;
-    // The rate of thermal decay in the annealing schedule
-    static const double kappa;
-    // The coupling constant between the topological-geometric torsion 
-    // and the energy
+    /// The coupling constant between the topological-geometric torsion 
+    /// and the energy in the structure equation.
     static const double Lambda;
+    /// This property stores the intensity of branching in the polycosmos, 
+    /// as a floating point number between zero and unity. It is only meaningful 
+    /// if Spacetime::foliodynamics is true.
+    static const double ramosity;
+    /// This property sets the initial temperature for the process of cosmic 
+    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
+    /// jumping of events when Spacetime::permutable is true.
+    static const double T_zero;
+    // This property determines the rate of cooling in the process of cosmic 
+    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
+    /// jumping of events when Spacetime::permutable is true.
+    static const double kappa;
 
     // The various methods needed for the hyphantic operators
     void hyphansis(int);
     int dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
     int musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
+    /// This method is used in the musical_hyphansis() method and converts a (lower-pitched) key - a musical note - into an explicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string explicative_scale(int,std::vector<double>&) const;
+    /// This method is used by the dynamic_hyphansis() method and assigns an implicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void implication(std::string&) const;
+    /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
-    int select_vertex(const std::vector<int>&,double,int) const;
-    int vertex_addition(const std::vector<double>&,int);
-    int vertex_addition(const std::set<int>&,int);
-    int vertex_addition(int,int);
-    bool vertex_deletion(int,int);
-    bool vertex_fusion(int,int,int);
-    bool vertex_twist(int);
+    int select_event(const std::vector<int>&,double,int) const;
+    int event_addition(const std::vector<double>&,int);
+    int event_addition(const std::set<int>&,int);
+    int event_addition(int,int);
+    bool event_deletion(int,int);
+    bool event_fusion(int,int,int);
+    bool event_twist(int);
 
     bool circumvolution(int);
     bool circumvolution(int,int);
@@ -178,87 +396,153 @@ namespace DIAPLEXIS {
     bool stellar_deletion(int,int);
 
     bool interplication(int,double,int,int);
+    /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
+    /// This method fuses together events whose squared distance is less than the method's argument using the event_fusion() method; the method returns the number of pairs of events fused together.
     int superposition_fusion(double);
+    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the event_fission() method.
     void superposition_fission(int);
+    /// This method ensures that a sheet - specified by the final argument - of the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the first argument is false, the Complex::simplicial_implication() method is called at the beginning of the method. 
     void regularization(bool,int);
 
+    /// This method tests where the d-simplex specified by the method's two arguments (the dimension d and index of the simplex in Complex::simplices[d]) can be realized given the geometry of the simplex's events; the method returns true if the d-simplex has a real volume and false otherwise. 
     bool realizable(int,int) const;
+    /// This method computes the volume of all of the spacetime's active d-simplices (d > 0) using the current geometry; to handle the 1-simplices, it calls compute_lengths().
     void compute_volume();
+    /// This method computes the length of all of the spacetime's active 1-simplices (edges) using the current geometry.
     void compute_lengths();
+    /// This method computes the Event::obliquity property for all of the spacetime's active events using the current geometry.
     void compute_obliquity();
+    /// This method returns the abormality of the lengths of the spacetime's 1-simplices, while ignoring those 1-simplices deemed "flexible", which are listed in the method's unique argument.
     double compute_abnormality(const std::vector<int>&) const;
+    /// This method returns the abormality of the lengths of the spacetime's 1-simplices, while ignoring those 1-simplices deemed "flexible", which are listed in the method's second argument; the first argument is the vector of current event coordinates. 
     double compute_abnormality(const std::vector<double>&,const std::vector<int>&) const;
+    /// This method computes the gradient of the edge length abnormality with respect to the event geometry; the gradient is written to the method's first argument, while the third argument is the vector listing which edges are deemed "flexible". If the second argument is true this method computes the negative gradient.   
     void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
+    /// This method computes the force on each event in the damped spring mechanical model used by the mechanical_solver() method. The method's arguments are offset mappings for distinguishing active and inactive events (the first two arguments), a vector of energy values for active events, the current event positions and finally the calculated forces on these events. 
     void mechanical_force(const std::vector<int>&, const std::vector<int>&, const std::vector<double>&, const std::vector<double>&, double*) const;
+    /// This method optimizes the spacetime geometry using a damped spring mechanical model for the 1-skeleton.
     void mechanical_solver();
+    /// This method optimizes the spacetime geometry using a simulated annealing algorithm.
     void annealing_solver();
+    /// This method optimizes the spacetime geometry using the Nelder-Mead downhill simplex algorithm.
     void simplex_solver();
+    /// This method optimizes the spacetime geometry using an evolutionary algorithm, with a population of geometries undergoing selection based on the value of the Spacetime::error property.
     void evolutionary_solver();
+    /// This method carries out the geometry optimization, calling other methods (e.g. mechanical_solver(), simplex_solver() etc.) as necessary.
     void optimize();
+    /// This method calculates and returns the minimum of the absolute value of the distances separating the two vectors of events that are its first arguments. The final argument will contain the index of the two events that are the closest. 
     double minimize_lengths(const std::vector<int>&,const std::vector<int>&,int*) const;
+    /// This method computes the current value of the terms in the structure equation for the spacetime, including setting the value of the Spacetime::error property. 
     void structural_deficiency();
+    /// This method accepts as its first argument the index of an event and then calculates the "total" (i.e. all events that lie in its past and future, including those which are not direct neighbours of the original event) past and future light cones of this event, which are output as the method's second and third arguments.
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
+    /// This method computes the anterior and posterior properties of the active spacetime events.
     void compute_lightcones();
+    /// This method computes a partially directed graph in which directed edges reflect timelike separation between events, with the graph based on a particular event (the method's second argument) and a particulat sheet (the method's final argument). 
     void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
+    /// This method computes and returns the extent to which the chrono-geometry matches the topology in the vicinity of a given event (the method's first argument) on a particular sheet (the second argument); a value of zero indicates that the geometry and topology match well, while a positive value indicates more entwinement is needed while a negative value less entwinement.   
     double compute_temporal_vorticity(int,int) const;
+    /// This method calls compute_total_lightcone() for each active event and then checks for temporal loops, sinks and sources as well as the cyclicity of the causal graph of this event if the event is a source or sink. The method's return value is an index of such exotic causal behaviour in the spacetime as a whole.
     double compute_temporal_nonlinearity() const;
+    /// This method computes a measure of how well the spacetime's geometry corresponds to its topological 1-skeleton and returns this value. If the argument is true the spatial embedding is weighted by the absolute value of the length of the 1-simplices.  
     double representational_energy(bool) const;
 
-    std::string sheet_activity() const;
+    /// This method returns a string containing a compact summary of which sheets are active (1) and which dormant (0), in the form "(0,1,1,0,...,0,1)" with length equal to the number of sheets.
+    inline std::string sheet_activity() const;
     int sheet_fission(int);
     int sheet_dynamics();
     int ubiquity_permutation(double);
     void compute_global_topology(int);
+    /// This method carries out the various global operations that must be performed at each relaxation step.
     bool global_operations();
     void compute_colours(std::vector<unsigned char>&,bool,bool) const;
     void build_initial_state(const std::set<int>&);
+    /// This method writes out information on the current configuration of the Spacetime instance to the log file, whose name is stored in the Spacetime::log_file property.
     void write_log() const;
+    /// This method calls clear() and then reads an instance of the Spacetime class from the binary file whose name is the method's unique argument.
     void read_state(const std::string&);
+    /// This method writes the Spacetime instance to a binary file; the file's name is the method's argument if it has one, otherwise it uses the Spacetime::state_file property.
     void write_state(const std::string& = "") const;
+    /// This method reads the run-time parameters of the Spacetime class from an XML file whose name is the method's unique argument.
     void read_parameters(const std::string&);
+    /// This method adjusts the dimension of each spacetime event according to its simplicial membership (topological dimension) and updates the value of Spacetime::system_size accordingly. It returns the output from calling the Geometry::adjust_dimension method of the Synarmosma library.
     bool adjust_dimension();
+    /// This method computes the maximum, minimum and arithmetic mean of the absolute value of the length of the spacetime's 1-simplices which belong to the sheet indicated by the last argument and writes it to the method's argument, an array with three elements. 
     void arclength_statistics(double*,int) const;
+    /// This method reduces memory pressure in the simulation by eliminating inactive events and 1-simplices from the spacetime, if the ratio of active to inactive is less than half for both categories. The method returns the maximum of the current ratios.  
     double condense();
+    /// This method attributes a value to a variety of Spacetime properties and the calls the build_initial_state() method.  
     void initialize();
+    /// This method allocates the resources for the Spacetime::geometry and Spacetime::skeleton properties.
     void allocate();
+    /// This method calls the clear method on the extended properties of the class and sets Spacetime::iterations to zero and Spacetime::hyphantic_ops to the empty string. 
     void clear();
+    /// This method returns true if all of the spacetime's d-simplices (d >= 0) have a modified property equal to false; it will otherwise return false. 
     bool clean() const;
+    /// This method computes the value of Spacetime::error in the spacetime's current state, then sets all of the d-simplices (d >= 0) as modified and re-computes the Spacetime::error property; if there is any difference in the two values it returns false. 
     bool correctness();
+    /// This method steps forward in the relaxation process, successively calling the hyphansis(), regularization(), condense() and global_operations() methods. The output of the latter is the output of this method.
     bool advance();
+    /// If Spacetime::reversible is true, this method will call read_state() using the previous step's snapshot on disk to restore the simulation. 
     void fallback();
+    /// This method calls clear(), re-reads the parameters from its first argument (an XML file) and then calls the initialize() method. The second argument determines whether or not it reuses the existing random number seed.
     void restart(const std::string&,bool);
 
    public:
+    /// This constructor begins by calling the allocate() method; if the optional argument is true, it sets Spacetime::diskless to true and Spacetime::checkpoint_frequency to zero, then calls initialize(). 
     Spacetime(bool = false);
+    /// This constructor accepts a string argument which contains the XML parameter file which is parsed using the read_parameters() method, after calling the allocate() method. If the optional second argument is true, it sets Spacetime::diskless to true and Spacetime::checkpoint_frequency to zero, then calls initialize(). 
     Spacetime(const std::string&,bool = false);
+    /// The destructor frees the resources associated with the Spacetime::geometry and Spacetime::skeleton properties.
     ~Spacetime();
-    void evolve();
-    void chorogenesis(int);
-    void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,int*,bool) const;
-    void export_visual_data(std::vector<float>&,std::vector<int>&,int*,int) const;
+    /// This is the main public method of this class, which evolves the spacetime over a set of relaxation steps until Spacetime::converged is true or the number of steps exceeds Spacetime::max_iter. The method returns the value of Spacetime::error at completion.
+    double evolve();
+    /// This method is similar to evolve(), in that it carries out a simulation of the spacetime but this time with the goal of adapting the topology to the geometric constraints (e.g. dimensionality). The spacetime is assumed to start in a state with many edges, some of which must be deleted to match the geometry and degree distribution for a regular space. The method returns the value of Spacetime::error at completion. 
+    double chorogenesis();
+    /// This method writes (using an offset to handle events and edges not belonging to the sheet) the coordinates of the spacetime's events in the first argument, an edge table (listing the two event indices) in the second argument and the third argument is a pair of integers containing the number of events and edges belonging to the sheet. The sheet index is the method's final argument.
+    void export_visual_data(std::vector<float>&,std::vector<int>&,std::pair<int,int>&,int) const;
+    /// This method writes the coordinates (second argument), edge table (third argument) and the total number of events and edges (the pair of integers that is the fourth argument). The first argument is a vector of colours for each event with inactive events and edges set to be invisible; the final argument determines the basis for the colouring scheme, using energy or deficiency values.
+    void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,std::pair<int,int>&,bool) const;
+    /// This method sets the value of Spacetime::checkpoint_frequency to the method's argument.
     inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
+    /// This method sets the second argument to the coordinates of the event whose index is the first argument.
     inline void get_coordinates(int n,std::vector<double>& x) const {geometry->get_coordinates(n,x);};
+    /// This method collects the coordinates of all active events in the spacetime, stored in the argument as a vector of a length equal to the product of the background dimension and the number of active events.
     void get_coordinates(std::vector<double>&) const;
+    /// This method computes the maximum and minimum energy over the set of active events and sets the argument's two elements to them. 
     void get_energy_extrema(std::pair<double,double>&) const;
+    /// This method computes the maximum and minimum deficiency over the set of active events and sets the argument's two elements to them. 
     void get_deficiency_extrema(std::pair<double,double>&) const;
+    /// This method returns the square of the distance between the two events that are the method's arguments. 
     inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
+    /// This method returns the background dimension of the Spacetime::geometry property.
     inline int get_background_dimension() const {return geometry->dimension();};
+    /// This method returns the value of Spacetime::state_file.
     inline std::string get_state_file() const {return state_file;};
+    /// This method calls the arclength_statistics() method with the same arguments.
     inline void get_arclength_statistics(double* output,int sheet) const {arclength_statistics(output,sheet);};
+    /// This method returns the value of Spacetime::iterations.
     inline int get_iterations() const {return iterations;};
+    /// This method returns the value of Spacetime::error.
     inline double get_error() const {return error;};
+    /// This method returns the value of Spacetime::max_iter.
     inline int get_maximum_iterations() const {return max_iter;};
+    /// This method returns the value of Spacetime::converged.
     inline bool is_converged() const {return converged;};
-
+    /// This method accepts as its first two arguments the dimension d and index n of a d-simplex (d >= 0) and then computes a representation of its ubiquity property as a string, the final argument. This string has the form "{0,1,1,0,...,1,0,1}" where the number of elements is equal to length of Spacetime::codex.  
     void get_ubiquity(int,int,std::string&) const;
+    /// This method computes a vector with two distinct parts: the first is of length equal to the number of active events multiplied by the number of sheets and contains a 0 or 1 for the sheet membership of each such event. The second part of the vector is the same layout but for the spacetime's active edges.  
     void get_ubiquity_vector(std::vector<int>&) const;
+    /// This method returns the string of hyphantic operations performed for a given sheet.
     inline std::string get_sheet_ops(int n) const {return codex[n].hyphantic_ops;};
+    /// This method returns the output of the sheet_activity() method.
     inline std::string get_sheet_activity() const {return sheet_activity();};
+    /// This method returns the total number of sheets, active and inactive, of the spacetime at the moment it is invoked. 
     inline int get_codex_size() const {return (signed) codex.size();};
   };
 
-  inline std::string Spacetime::sheet_activity() const
+  std::string Spacetime::sheet_activity() const
   {
     std::string out = "(";
     for(int i=0; i<(signed) codex.size()-1; ++i) {

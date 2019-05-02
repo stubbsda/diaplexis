@@ -191,7 +191,7 @@ double Spacetime::compute_temporal_nonlinearity() const
 #endif
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
-    // Now calculate the future and past lightcones for this vertex on this sheet...
+    // Now calculate the future and past lightcones for this event...
     compute_total_lightcone(i,past,future);
     if (past.count(i) == 1 || future.count(i) == 1) causal_loop++;
     if (past.empty() && future.empty()) continue;
@@ -258,7 +258,7 @@ double Spacetime::chorogenesis()
   for(i=0; i<=D; ++i) {
     dpopulation[i] = SYNARMOSMA::ipow(2,i)*int(SYNARMOSMA::binomial(D,i))*SYNARMOSMA::ipow(n - 2,D - i);
   }
-  // Zero out the spacetime energy and make sure the vertex geometry is dimensionally homogeneous...
+  // Zero out the spacetime energy and make sure the event geometry is dimensionally homogeneous...
   std::vector<double> x,y;
   system_size = 0;
   for(i=0; i<nv; ++i) {
@@ -731,7 +731,7 @@ bool Spacetime::realizable(int d,int n) const
 {
   // Can the d*(d+1)/2 edge lengths lead to a geometrically
   // realizable d-simplex?
-  // An edge or vertex is always geometrically realizable...
+  // An edge or event is always geometrically realizable...
   if (d < 2) return true;
   int i,j,info,dp1 = d + 1;
   SYNARMOSMA::hash_map::const_iterator qt;

@@ -258,7 +258,7 @@ void Spacetime::explication(std::string& output) const
   }
 }
 
-int Spacetime::select_vertex(const std::vector<int>& candidates,double intensity,int sheet) const
+int Spacetime::select_event(const std::vector<int>& candidates,double intensity,int sheet) const
 {
   if (candidates.empty()) return -1;
   // The closer the intensity is to unity, the more we should try to choose an element 
@@ -290,7 +290,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   bool success = false;
   std::string line,op;
   std::stringstream opstring;
-  std::vector<int> key_list,m_vertices,x_vertices,neutral_vertices,m_keys,x_keys;
+  std::vector<int> key_list,m_event,x_events,neutral_events,m_keys,x_keys;
   std::vector<std::string> elements;
   std::vector<double> pvalues;
   boost::char_separator<char> sp("/");
@@ -344,11 +344,11 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   opcount = (signed) key_list.size();
 
   // This is a fairly complicated operation - we need to play the notes the in the right order, 
-  // while at the same time highest pitched key above 44 is assigned to the vertex with the most 
-  // negative deficiency, the next highest pitched key above 44 acts upon the vertex with the  
+  // while at the same time highest pitched key above 44 is assigned to the event with the most 
+  // negative deficiency, the next highest pitched key above 44 acts upon the event with the  
   // second most negative deficiency etc.
   // We need to create a list of the distinct explicative and implicative piano keys in this measure, 
-  // paired to the appropriate vertex
+  // paired to the appropriate event
   for(i=0; i<opcount; ++i) {
 #ifdef DEBUG
     assert(key_list[i] >= 1 && key_list[i] <= 88);
@@ -368,13 +368,13 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
     if (!skeleton->events[v].active(sheet)) continue;
-    neutral_vertices.push_back(v);
+    neutral_events.push_back(v);
     alpha = skeleton->events[v].get_deficiency();
     if (alpha < -std::numeric_limits<double>::epsilon()) {
-      m_vertices.push_back(v);
+      m_events.push_back(v);
     }
     else if (alpha > std::numeric_limits<double>::epsilon()) {
-      x_vertices.push_back(v);
+      x_events.push_back(v);
     }
   }
 
@@ -383,17 +383,17 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   for(i=0; i<opcount; ++i) {
     j = key_list[i];
     if (j > 40) {
-      v = select_vertex(m_vertices,double(j - m_keys.back())/m_width,sheet);
+      v = select_event(m_events,double(j - m_keys.back())/m_width,sheet);
     }
     else if (j < 40) {
-      v = select_vertex(x_vertices,double(j - x_keys[0])/x_width,sheet);
+      v = select_event(x_events,double(j - x_keys[0])/x_width,sheet);
     }
     else {
-      // Any active vertex will do for a neutral operator
-      v = skeleton->RND->irandom(neutral_vertices);
+      // Any active event will do for a neutral operator
+      v = skeleton->RND->irandom(neutral_events);
     }
     if (v == -1) continue;
-    // Now we have the base vertex v, next we need to get the operator and 
+    // Now we have the base event v, next we need to get the operator and 
     // parameters for this piano key
     if (j > 40) {
       op = implicative_scale(j,pvalues);
@@ -504,7 +504,7 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
   for(i=nc-1; i>0; --i) {
     v = candidates[i].first;
     // An earlier hyphantic operation may have rendered this
-    // vertex inactive...
+    // event inactive...
     if (!skeleton->events[v].active(sheet)) continue;
     alpha = skeleton->events[v].get_deficiency();
     if (alpha < -std::numeric_limits<double>::epsilon()) {
@@ -656,14 +656,14 @@ void Spacetime::hyphansis(int sheet)
     if (alpha > std::numeric_limits<double>::epsilon()) npos++;
     if (alpha < -std::numeric_limits<double>::epsilon()) nneg++;
 #endif
-    // Eliminate vertices whose structural deficiency is close to zero...
+    // Eliminate events whose structural deficiency is close to zero...
     alpha = std::abs(alpha);
     if (alpha < std::numeric_limits<double>::epsilon()) continue;
     candidates.push_back(std::pair<int,double>(i,alpha));
   }
 #ifdef VERBOSE
-  std::cout << "There are " << nze << " vertices with positive energy or " << 100.0*double(nze)/double(skeleton->cardinality(0,sheet)) << " percent of the total." << std::endl;
-  std::cout << "There are " << npos << " positive vertices and " << nneg << " negative vertices in the spacetime complex." << std::endl;
+  std::cout << "There are " << nze << " events with positive energy or " << 100.0*double(nze)/double(skeleton->cardinality(0,sheet)) << " percent of the total." << std::endl;
+  std::cout << "There are " << npos << " positive events and " << nneg << " negative events in the spacetime complex." << std::endl;
 #endif
   if (candidates.empty()) {
     s << "  </Sheet>" << std::endl;
@@ -695,7 +695,7 @@ void Spacetime::hyphansis(int sheet)
   }
 }
 
-bool Spacetime::vertex_fusion(int n1,int n2,int sheet)
+bool Spacetime::event_fusion(int n1,int n2,int sheet)
 {
   int i,j,l;
   std::set<int> vx,locus;
@@ -710,7 +710,7 @@ bool Spacetime::vertex_fusion(int n1,int n2,int sheet)
     std::vector<int> mindex;
     std::vector<int>* mutation = new std::vector<int>[ulimit+1];
 
-    // Do the actual vertex swap...
+    // Do the actual event swap...
     for(i=1; i<=ulimit; ++i) {
       m = (signed) skeleton->simplices[i].size();
       for(j=0; j<m; ++j) {
@@ -832,9 +832,9 @@ bool Spacetime::vertex_fusion(int n1,int n2,int sheet)
     for(i=1; i<=Complex::ND; ++i) {
       for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
         if (!skeleton->simplices[i][j].active(sheet)) continue;
-        // Check of this simplex contains the vertex "n2", if so
+        // Check of this simplex contains the event "n2", if so
         // divide its colour by sheet and create a new simplex with the
-        // right vertices. Check to see if it already exists, if so
+        // right events. Check to see if it already exists, if so
         // multiply its colour by sheet otherwise add the new simplex.
         skeleton->simplices[i][j].get_vertices(v);
         found = false;
@@ -883,7 +883,7 @@ bool Spacetime::vertex_fusion(int n1,int n2,int sheet)
   return true;
 }
 
-bool Spacetime::vertex_twist(int sheet)
+bool Spacetime::event_twist(int sheet)
 {
   // This method will fuse two 0-skeleton->simplices with each other, so as to twist the
   // complex's topology, creating non-orientability and torsion groups in the
@@ -940,12 +940,12 @@ bool Spacetime::vertex_twist(int sheet)
       skeleton->events[n2].nullify_energy();
     }
   }
-  vertex_fusion(n1,n2,sheet);
+  event_fusion(n1,n2,sheet);
   if (first == 1) first = 0;
   return true;
 }
 
-bool Spacetime::vertex_deletion(int n,int sheet)
+bool Spacetime::event_deletion(int n,int sheet)
 {
   if (!skeleton->events[n].active(sheet)) return false;
   int i,vx[2],ne = (signed) skeleton->simplices[1].size();
@@ -958,7 +958,7 @@ bool Spacetime::vertex_deletion(int n,int sheet)
   return true;  
 }
 
-int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
+int Spacetime::event_addition(const std::vector<double>& xc,int sheet)
 {
   int n = (signed) skeleton->events.size();
   Event vt;
@@ -970,7 +970,7 @@ int Spacetime::vertex_addition(const std::vector<double>& xc,int sheet)
   return n;
 }
 
-int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
+int Spacetime::event_addition(const std::set<int>& antecedents,int sheet)
 {
   int n = (signed) skeleton->events.size();
   Event vt;
@@ -982,7 +982,7 @@ int Spacetime::vertex_addition(const std::set<int>& antecedents,int sheet)
   return n;
 }
 
-int Spacetime::vertex_addition(int base,int sheet)
+int Spacetime::event_addition(int base,int sheet)
 {
   int n = (signed) skeleton->events.size();
   Event vt;

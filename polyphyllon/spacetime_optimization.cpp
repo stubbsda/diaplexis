@@ -17,11 +17,11 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
 #pragma omp parallel for default(shared) private(i,j,k,S,r_true,it,delta)
 #endif 
   for(i=0; i<nreal; ++i) {
-    // This vertex's force begins at zero...
+    // This event's force begins at zero...
     for(j=0; j<D; ++j) {
       force[D*i+j] = 0.0;
     }
-    // Vertex-Vertex Repulsion...
+    // Event-Event Repulsion...
     for(j=0; j<nreal; ++j) {
       if (i == j) continue;
       r_true = repulsion_constant/(1.0 + pfactor*std::atan(0.5*(energy[i] + energy[j])));
@@ -34,9 +34,9 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
       }
     }
     // Edge-Edge Repulsion?
-    // This means two edges, so four vertices would have their force 
+    // This means two edges, so four events would have their force 
     // modified 
-    // Spring-like attraction between connected vertices...
+    // Spring-like attraction between connected events...
     skeleton->events[offset[i]].get_neighbours(S);
     for(it=S.begin(); it!=S.end(); ++it) {
       j = vx_map[*it];
@@ -70,7 +70,7 @@ void Spacetime::mechanical_solver()
   const int D = geometry->dimension();
 
 #ifdef VERBOSE
-  std::cout << "Using effective force geometry solver with " << nreal << " active vertices and background dimension = " << D << "." << std::endl;
+  std::cout << "Using effective force geometry solver with " << nreal << " active events and background dimension = " << D << "." << std::endl;
 #endif
 
   for(i=0; i<nv; ++i) {
@@ -702,7 +702,7 @@ void Spacetime::simplex_solver()
       }
     }
   }
-  // Compute the error for the new vertices...
+  // Compute the error for the new events...
   for(i=1; i<1+system_size; ++i) {
     geometry->load(&S[i]);
     geometry->compute_squared_distances();
@@ -917,7 +917,7 @@ void Spacetime::optimize()
     if (candidates.empty() && bbarrel.empty()) return;
     if (candidates.empty()) candidates = bbarrel;
 #ifdef VERBOSE
-    std::cout << "There are " << candidates.size() << " candidate vertices for geometric optimization." << std::endl;
+    std::cout << "There are " << candidates.size() << " candidate events for geometric optimization." << std::endl;
     std::cout << "In the geometry solver the initial error is " << error << std::endl;
 #endif
     old_error = error;

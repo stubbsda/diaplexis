@@ -189,7 +189,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
   }
   else {
     // Here rather than using the sheet ubiquity for colouring everything
-    // we will make use the energy or deficiency values of the vertices to
+    // we will make use the energy or deficiency values of the events to
     // set the vertex colour according to a thermal palette.
     int vx[2];
     unsigned char out[3];
@@ -263,7 +263,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
   }
 }
 
-void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>& evertex,int* vdata,int sheet) const
+void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,int sheet) const
 {
   int i,j = 0,D,vx[2];
   std::vector<double> x;
@@ -275,8 +275,8 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   vcoords.clear();
   evertex.clear();
 
-  vdata[0] = skeleton->cardinality(0,sheet);
-  vdata[1] = skeleton->cardinality(1,sheet);
+  vdata.first = skeleton->cardinality(0,sheet);
+  vdata.second = skeleton->cardinality(1,sheet);
 
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
@@ -356,7 +356,7 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   }
 }
 
-void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float>& vcoords,std::vector<int>& evertex,int* vdata,bool use_energy) const
+void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,bool use_energy) const
 {
   int i,j = 0,D,vx[2];
   std::vector<double> x;
@@ -372,8 +372,8 @@ void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float
   vcoords.clear();
   evertex.clear();
 
-  vdata[0] = nv;
-  vdata[1] = ne;
+  vdata.first = nv;
+  vdata.ssecond = ne;
 
   for(i=0; i<nv; ++i) {
     offset[i] = -1;

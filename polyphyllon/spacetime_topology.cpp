@@ -13,7 +13,7 @@ int Spacetime::superposition_fusion(double threshold)
   const int nv = (signed) skeleton->events.size();
   const int ulimit = skeleton->dimension(-1);
 
-  // Vertex fusion - if two vertices are close enough together, they
+  // Event fusion - if two events are close enough together, they
   // should coalesce.
   for(i=0; i<nv; ++i) {
     modified.push_back(0);
@@ -39,9 +39,9 @@ int Spacetime::superposition_fusion(double threshold)
     modified[v1] = 1;
     modified[v2] = 1;
 #ifdef VERBOSE
-    std::cout << "Fusing vertices: " << v2 << " => " << v1 << " via superposition" << std::endl;
+    std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
-    if (vertex_fusion(v1,v2,-1)) nfused++;
+    if (event_fusion(v1,v2,-1)) nfused++;
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
 
@@ -74,8 +74,8 @@ void Spacetime::superposition_fission(int ulimit)
   int n,sheet,nc = 0;
   std::set<int> locus;
 
-  // Finally, the opposite possibility - that a given vertex might undergo
-  // spontaneous fission, creating a new vertex in its immediate vicinity...
+  // Finally, the opposite possibility - that a given event might undergo
+  // spontaneous fission, creating a new event in its immediate vicinity...
   do {
     n = skeleton->RND->irandom(skeleton->events.size());
     if (!skeleton->events[n].active()) continue;
@@ -215,7 +215,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
 
   locus.insert(sheet);
 
-  // We begin by eliminating the central vertex along with any vertices on this 
+  // We begin by eliminating the central event along with any events on this 
   // sheet that are within the a sphere of radius "size"
   geometry->get_coordinates(centre,cvertex); 
   assert(vertex_deletion(centre,sheet));
@@ -230,7 +230,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   }
   std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
 
-  // Ideally the number of boundary vertices should be the surface area of a d-sphere
+  // Ideally the number of boundary events should be the surface area of a d-sphere
   d = g_dim;
   alpha = double(d)/2.0;
   l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/boost::math::tgamma(1.0 + alpha);  
@@ -238,7 +238,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   q = (signed) ambient.size();
   if (d > q) d = q;
   for(i=0; i<d; ++i) {
-    // If we can't get enough boundary vertices that are close enough, exit
+    // If we can't get enough boundary events that are close enough, exit
     if (ambient[i].second > 1.5*size) break;
     bvertex.insert(ambient[i].first);
   }
@@ -254,7 +254,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
         xc.push_back(-dm + dm/2.0*skeleton->RND->drandom()); 
       }
     }
-    S.insert(vertex_addition(xc,sheet));
+    S.insert(event_addition(xc,sheet));
     xc.clear();
   }
   skeleton->simplex_addition(S,locus);
@@ -290,7 +290,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
               xc.push_back(alpha); 
             }
           }
-          q = vertex_addition(xc,sheet);
+          q = event_addition(xc,sheet);
           xc.clear();
           nvertex.insert(q);
           kvertex.insert(q);
@@ -317,7 +317,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
               xc.push_back(alpha); 
             }
           }
-          q = vertex_addition(xc,sheet);
+          q = event_addition(xc,sheet);
           xc.clear();
           nvertex.insert(q);
           kvertex.insert(q);          
@@ -325,7 +325,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
         S.insert(q);
       }
 #ifdef VERBOSE
-      std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new vertices" << std::endl;
+      std::cout << "Created " << i << "-simplex with " << nvertex.size() << " new events" << std::endl;
 #endif
       skeleton->simplex_addition(S,locus);
       S.clear();
@@ -361,7 +361,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     }
     S.insert(q);
     S.insert(p);
-    // Find the closest new vertex...
+    // Find the closest new event...
     ambient.clear();
     for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
       if (p == *it) continue;
@@ -415,8 +415,8 @@ void Spacetime::regularization(bool minimal,int sheet)
   // most minimal fashion, using (nc-1) edges
   // November 2, 2012: We need to consider ensuring that the minimalist linking of these
   // distinct components is also minimalist in a geometric sense (i.e. the shortest possible
-  // edge) and if a "component" is nothing more than an isolated vertex with zero energy
-  // then drop the vertex (set ubiquity = 1).
+  // edge) and if a "component" is nothing more than an isolated event with zero energy
+  // then drop the event (set ubiquity = 1).
   std::vector<int>* cvertex = new std::vector<int>[nc];
   if (sheet == -1) {
     for(i=0; i<nv; ++i) {
@@ -455,7 +455,7 @@ void Spacetime::regularization(bool minimal,int sheet)
     for(i=0; i<nc; ++i) {
       if (i == loc) continue;
       if (cvertex[i].empty()) continue;
-      // We need to choose the closest pair of vertices, not just a random pair
+      // We need to choose the closest pair of events, not just a random pair
       n2 = (signed) cvertex[i].size();
       mdelta = std::numeric_limits<double>::infinity();
       v1 = -1;

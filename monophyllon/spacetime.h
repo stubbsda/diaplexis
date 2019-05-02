@@ -342,43 +342,70 @@ namespace DIAPLEXIS {
     void implication(std::string&) const;
     /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
-    int select_vertex(const std::vector<int>&,double) const;
-    int vertex_addition(const std::vector<double>&);
-    int vertex_addition(const std::set<int>&);
-    int vertex_addition(int);
-    bool vertex_deletion(int);
-    bool vertex_fusion(int,int);
-    bool vertex_twist();
-
+    /// This method returns the index of an active event from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
+    int select_event(const std::vector<int>&,double) const;
+    /// This method adds a new event to the spacetime, where the argument is the coordinates for the new event; the method returns the index of the new event. 
+    int event_addition(const std::vector<double>&);
+    /// This method adds a new event to the spacetime, where the argument is a set of parent events for the new event; the method returns the index of the new event. 
+    int event_addition(const std::set<int>&);
+    /// This method adds a new event to the spacetime, where the argument is the parent event for the new event; the method returns the index of the new event.     
+    int event_addition(int);
+    /// This method deletes the event whose index is the argument, by setting its Event::active property to false. The method returns false if the event was already inactive, otherwise true. 
+    bool event_deletion(int);
+    /// This method fuses the second argument into the first, both interpreted as indices of events; it returns true if the fusion succeeded and false otherwise.
+    bool event_fusion(int,int);
+    /// This method carries out an event fusion that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
+    bool event_twist();
+    /// This method attempts a circumvolution using boundary edges; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
     bool circumvolution();
+    /// This method seeks to fuse together two d-simplices (d > 0), one of which contains the event whose index is the method's argument; it returns true if successful.
     bool circumvolution(int);
+    /// This method looks for 1-simplices connected to the method's first argument (an event index) whose length exceeds the second argument; if the method finds such edges, it attempts to delete one and returns true if successful.
     bool contraction(int,double);
+    /// This method attempts to remove a 1-simplex from the event whose index is the argument, favouring edges whose length is much greater than unity and whose connecting event also has an excessive degree. The method returns true if it succeeds in deleting an edge.
     bool compensation_m(int);
+    /// This method adds or removes a 1-simplex from the event whose index is the argument, depending on the event's degree which has a goal of being twice the background dimension. When choosing an edge the method favours shorter over longer edges and ensuring that the partner event has a similar degree deficiency or excess. If an edge is added or removed the method returns true. 
     bool compensation_g(int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's argument and returning true if successful. This method creates new events for the simplex's other d vertices.
     bool expansion(int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and returning true if successful. The second argument is the percentage of the new simplex's vertex-events which should be newly created. 
     bool expansion(int,double);
+    /// This method examines all the active neighbours with non-zero deficiency that are connected to the event whose index is the method's argument. Two such neighbours are chosen and along with the base event a 2-simplex is created; if the simplex creation is successful, the method returns true. 
     bool foliation_m(int);
+    /// This method examines all the active neighbours with non-zero deficiency that are connected to the event whose index is the method's argument. One such neighbour is chosen and the connecting 1-simplex is deleted; if the edge deletion is successful, the method returns true. 
     bool foliation_x(int);
+    /// This method calculates the edges connecting the event whose index is the method's argument and selects one of those which is used in a d-simplex (d > 1) so that it can be deleted. If the edge deletion is successful the method returns true.
     bool reduction(int);
+    /// This method deletes an event drawn from the base event whose index is the method's first argument and its neighbours, assuming their deficiency property exceeds the value of the second argument. The method also deletes all the higher-dimensional simplices depending on this event; it returns true if the deletion is successful.
     bool amputation(int,double);
+    /// This method fuses an active event with non-zero deficiency and which lies within a distance L (the second argument) of the base event (the first argument), to the base event. It returns true if the fusion is successful. 
     bool fusion_x(int,double);
+    /// This method accepts as its unique argument the index of an event and chooses at random one of the active events among its neighbours and then fuses this neighbour to the original event. It returns true if this fusion is successful.
     bool fusion_m(int);
+    /// This method causes an event to undergo fission into one or more events, duplicating the original event's neighbour connections depending on the value of the second argument which should lie between zero and unity. If the first argument is non-negative, it is the index of the event which undergoes fission otherwise a random active event is chosen. The method returns true if the fission is successful.
     bool fission(int,double);
+    /// This method inflates a d-simplex into an n-simplex, where n > d. If the first argument is non-negative, it is assumed to be the index of an event which must belong to the d-simplex, otherwise an active d-simplex is chosen at random. The second argument argument is a creativity index controlling whether or not new events are created to supply the other vertices of the n-simplex. The method returns true if it succeeds in inflating a d-simplex.
     bool inflation(int,double);
+    /// This method accepts the index of an active event as its argument and if the topological dimension of this event is greater than unity, it deletes a d-simplex (d > 1) containing this event, thereby reducing the event's topological dimension to d-1. 
     bool deflation(int);
+    /// This method attempts to create a hole or perforation in a simplex. If the first argument is non-negative the method tries to create this hole in a d-simplex (d > 1) containing the base event (the first argument), where d is the second argument. If the first argument is negative, the method is global and the second argument is ignored; it tries to find a random d-simplex (d > 1) in which to create a hole. The method returns true if it is successful in creating such a perforation in the spacetime complex. 
     bool perforation(int,int);
+    /// This method needs to loop over all active events and then find those which are capable of adding another event at a distance of (roughly) unity and which is orthogonal to the event's current set of edges.
     bool correction(int);
+    /// This method constructs new neighbour events w_i for the base event whose index is the method's argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible.
     bool germination(int);
+    /// This method accepts as its argument the index of an event and, if this event is a member of a 2-simplex, carries out a Δ => Y transformation, returning true if it is successful.
     bool stellar_addition(int);
+    /// This method accepts as its argument the index of an event and, if this event has a degree of at least three and is not a member of a d-simplex (d > 1), carries out a Y => Δ transformation, returning true if it is successful.
     bool stellar_deletion(int);
 
     /// This method first carves out a hole in the centre of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in this hole. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the final argument its dimensionality. The method returns true if it succeeds.
     bool interplication(int,double,int);
     /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
-    /// This method fuses together events whose squared distance is less than the method's argument using the vertex_fusion() method; the method returns the number of pairs of events fused together.
+    /// This method fuses together events whose squared distance is less than the method's argument using the event_fusion() method; the method returns the number of pairs of events fused together.
     int superposition_fusion(double);
-    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the vertex_fission() method.
+    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the event_fission() method.
     void superposition_fission(int);
     /// This method ensures that the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the argument is false, the Complex::simplicial_implication() method is called at the beginning of the method.
     void regularization(bool);
@@ -442,7 +469,7 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     /// This method adjusts the dimension of each spacetime event according to its simplicial membership (topological dimension) and updates the value of Spacetime::system_size accordingly. It returns the output from calling the Geometry::adjust_dimension method of the Synarmosma library.
     bool adjust_dimension();
-    /// This method computes the maximum, minimum and arithmetic mean of the absolute value of the length of the complex's active 1-simplices and writes it to the method's argument, an array with three elements. 
+    /// This method computes the maximum, minimum and arithmetic mean of the absolute value of the length of the spacetime's active 1-simplices and writes it to the method's argument, an array with three elements. 
     void arclength_statistics(double*) const;
     /// This method reduces memory pressure in the simulation by eliminating inactive events and 1-simplices from the spacetime, if the ratio of active to inactive is less than half for both categories. The method returns the maximum of the current ratios.  
     double condense();

@@ -6,7 +6,7 @@ bool Spacetime::stellar_addition(int base)
 {
   if (skeleton->vertex_dimension(base) < 2) return false;
   // Take one of these 2-simplices and eliminate it in favour of a 
-  // new vertex
+  // new event
   int i,m = (signed) skeleton->simplices[2].size();
   unsigned int l;
   std::vector<int> sx;
@@ -18,7 +18,7 @@ bool Spacetime::stellar_addition(int base)
     if (!skeleton->active_simplex(2,i)) continue;
     if (skeleton->simplices[2][i].contains(base)) candidates.insert(i);
   }
-  // Choose a 2-simplex at random, get its three vertices and then 
+  // Choose a 2-simplex at random, get its three events and then 
   // eliminate each of the three edges in succession...
   m = skeleton->RND->irandom(candidates);
   skeleton->simplices[2][m].get_vertices(sx);
@@ -37,7 +37,7 @@ bool Spacetime::stellar_addition(int base)
   S.insert(sx[1]); S.insert(sx[2]);
   qt = skeleton->index_table[1].find(S);
   skeleton->simplex_deletion(1,qt->second);    
-  // Now add the new vertex and the three edges...
+  // Now add the new event and the three edges...
   for(l=0; l<geometry->dimension(); ++l) {
     xc.push_back(0.0);
   }
@@ -50,7 +50,7 @@ bool Spacetime::stellar_addition(int base)
   for(l=0; l<geometry->dimension(); ++l) {
     xc[l] = xc[l]/3.0;
   }
-  m = vertex_addition(xc);
+  m = event_addition(xc);
   for(i=0; i<3; ++i) {
     S.clear();
     S.insert(m);
@@ -64,9 +64,9 @@ bool Spacetime::stellar_addition(int base)
 
 bool Spacetime::correction(int base)
 {
-  // This method needs to loop over all vertices in a given sheet and find those which
-  // are capable of adding another vertex at a distance of (roughly) one and which is
-  // orthogonal to the vertex's current set of edges.
+  // This method needs to loop over all active events and then find those which
+  // are capable of adding another event at a distance of (roughly) one and which is
+  // orthogonal to the event's current set of edges.
   int i,j,n,m,in1;
   unsigned int r;
   bool active,modified = false;
@@ -82,7 +82,7 @@ bool Spacetime::correction(int base)
     if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,i,true);
     if (l < 3.8025 || l > 4.2025) continue;
-    // See if there is a third vertex that lies between these two...
+    // See if there is a third event that lies between these two...
     in1 = -1;
     active = false;
     dbest = 100.0;
@@ -106,12 +106,12 @@ bool Spacetime::correction(int base)
     if (in1 >= 0) {
       if (!skeleton->active_event(in1)) {
 #ifdef VERBOSE
-        std::cout << "Restoring vertex " << in1 << " in orthonormal fission between " << base << "  " << i << std::endl;
+        std::cout << "Restoring event " << in1 << " in orthonormal fission between " << base << "  " << i << std::endl;
 #endif
         skeleton->events[in1].activate();
         modified = true;
       }
-      // Connect this vertex to v and i if necessary
+      // Connect this event to v and i if necessary
       modified = skeleton->simplex_addition(base,in1,-1);
       modified = skeleton->simplex_addition(i,in1,-1);
       continue;
@@ -122,22 +122,22 @@ bool Spacetime::correction(int base)
   if (candidates.empty()) return false;
   n = skeleton->RND->irandom(candidates);
   std::vector<double> xc,x1,x2;
-  // Perform the vertex fission on the n'th vertex pair...
+  // Perform the event fission on the n'th event pair...
   geometry->get_coordinates(base,x1);
   geometry->get_coordinates(n,x2);
   for(r=0; r<geometry->dimension(); ++r) {
     l = 0.5*(x1[r] + x2[r]);
     xc.push_back(l);
   }
-  // Add something to check here if this new vertex is within 0.5 of an existing vertex...
+  // Add something to check here if this new event is within 0.5 of an existing event...
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
     if (geometry->get_squared_distance(i,xc) <= 0.5) return false;
   }
 #ifdef VERBOSE
-  std::cout << "Adding vertex between " << base << " and " << n << std::endl;
+  std::cout << "Adding event between " << base << " and " << n << std::endl;
 #endif
-  m = vertex_addition(xc);
+  m = event_addition(xc);
   skeleton->simplex_addition(base,m,-1);
   skeleton->simplex_addition(n,m,-1);
 
@@ -178,7 +178,7 @@ bool Spacetime::compensation_m(int base)
   std::cout << "Compensation with " << skeleton->dimension() << std::endl;
 #endif
 
-  // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
+  // Remove an edge from this event: ideally one that connects with a event whose degree
   // is also excessive *and* which is relatively far away (edge length >> 1)
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
@@ -235,7 +235,7 @@ bool Spacetime::compensation_g(int base)
   std::cout << "Compensation with " << base << "  " << up << "  " << sdegree - idegree << std::endl;
 #endif
   if (up) {
-    // Add an edge to the vertex base: ideally one that connects with a vertex whose degree is
+    // Add an edge to the event base: ideally one that connects with a event whose degree is
     // also too low and which is relatively close at hand. If the only candidates are distant
     // then do nothing and return false!
     for(i=0; i<nv; ++i) {
@@ -258,7 +258,7 @@ bool Spacetime::compensation_g(int base)
     skeleton->simplex_addition(base,j,-1);
   }
   else {
-    // Remove an edge from this vertex: ideally one that connects with a vertex whose degree
+    // Remove an edge from this event: ideally one that connects with a event whose degree
     // is also excessive *and* which is relatively far away (edge length >> 1)
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
@@ -346,7 +346,7 @@ bool Spacetime::reduction(int base)
   SYNARMOSMA::hash_map::const_iterator qt;
   const int N = (signed) skeleton->simplices[d].size();
 
-  // Find which edges this vertex possesses are used in n-simplices (n > 1) and
+  // Find which edges this event possesses are used in n-simplices (n > 1) and
   // eliminate one of them...
   for(i=0; i<N; ++i) {
     if (!skeleton->active_simplex(d,i)) continue;
@@ -388,9 +388,9 @@ bool Spacetime::amputation(int base,double tolerance)
   n = skeleton->RND->irandom(candidates);
  
 #ifdef VERBOSE
-  std::cout << "Amputating vertex " << n << " and all its dependent simplices" << std::endl;
+  std::cout << "Amputating event " << n << " and all its dependent simplices" << std::endl;
 #endif
-  // Delete this vertex and all its edges...
+  // Delete this event and all its edges...
   skeleton->events[n].deactivate();
   skeleton->events[n].set_topology_modified(true);
   for(i=ulimit; i>=1; --i) {
@@ -426,16 +426,17 @@ bool Spacetime::fusion_x(int base,double tolerance)
   if (candidates.empty()) return false;
   u = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Fusing deficient vertices: " << u << " => " << base << std::endl;
+  std::cout << "Fusing deficient events: " << u << " => " << base << std::endl;
 #endif
-  vertex_fusion(base,u);
+  event_fusion(base,u);
   return true;
 }
 
 bool Spacetime::germination(int base)
 {
-  // This method constructs new neighbour vertices w_i for the vertex base which are
-  // unit distance from v and orthogonal to v's existing edges, if possible.
+  // This method constructs new neighbour events w_i for the event base which are
+  // unit distance from the base and orthogonal to the base's existing edges, if 
+  // possible.
   if (skeleton->events[base].get_boundary()) return false;
 
   bool good,modified = false;
@@ -488,7 +489,7 @@ bool Spacetime::germination(int base)
   }
   if (D1 == -1) return false;
 
-  // Check the three possible locations for a vertex orthogonal to this edge:
+  // Check the three possible locations for a event orthogonal to this edge:
   // First, a 90 degree rotation...
   d_min = 0.5;
   in1 = -1;
@@ -512,7 +513,7 @@ bool Spacetime::germination(int base)
   }
   else {
     modified = true;
-    m = vertex_addition(base);
+    m = event_addition(base);
     Dm1.insert(m);
     geometry->set_coordinates(m,xc);
     skeleton->simplex_addition(base,m,-1);
@@ -541,7 +542,7 @@ bool Spacetime::germination(int base)
   }
   else {
     modified = true;
-    m = vertex_addition(base);
+    m = event_addition(base);
     geometry->set_coordinates(m,xc);
     skeleton->simplex_addition(base,m,-1);
   }
@@ -569,7 +570,7 @@ bool Spacetime::germination(int base)
   }
   else {
     modified = true;
-    m = vertex_addition(base);
+    m = event_addition(base);
     geometry->set_coordinates(m,xc);
     Dm1.insert(m);
     skeleton->simplex_addition(base,m,-1);
@@ -640,7 +641,7 @@ bool Spacetime::germination(int base)
 
     SYNARMOSMA::cross_product(x,y,z);
 
-    // Now look to see if there are any existing vertices near xc
+    // Now look to see if there are any existing events near xc
     // and -xc...
     xc.clear();
     for(i=0; i<D; ++i) {
@@ -670,7 +671,7 @@ bool Spacetime::germination(int base)
     }
     else {
       modified = true;
-      m = vertex_addition(base);
+      m = event_addition(base);
       current.insert(m);
       geometry->set_coordinates(m,xc);
       skeleton->simplex_addition(base,m,-1);
@@ -700,7 +701,7 @@ bool Spacetime::germination(int base)
     }
     else {
       modified = true;
-      m = vertex_addition(base);
+      m = event_addition(base);
       current.insert(m);
       geometry->set_coordinates(m,xc);
       skeleton->simplex_addition(base,m,-1);

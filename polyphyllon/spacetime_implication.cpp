@@ -4,7 +4,7 @@ using namespace DIAPLEXIS;
 
 bool Spacetime::stellar_deletion(int base,int sheet)
 {
-  // If this vertex is already part of a d-simplex, d >= 2, then 
+  // If this event is already part of a d-simplex, d >= 2, then 
   // this operation is pointless... 
   if (skeleton->vertex_dimension(base,sheet) >= 2) return false;
   int m,vx[2];
@@ -21,7 +21,7 @@ bool Spacetime::stellar_deletion(int base,int sheet)
     }
   }
   if (nset.size() != 3) return false;    
-  vertex_deletion(base,sheet);
+  event_deletion(base,sheet);
   skeleton->simplex_addition(nset,locus);
   regularization(true,sheet);
   return true;
@@ -75,9 +75,9 @@ bool Spacetime::fusion_m(int base,int sheet)
   if (candidates.empty()) return false;
   u = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Fusing vertices: " << u << " => " << base << std::endl;
+  std::cout << "Fusing events: " << u << " => " << base << std::endl;
 #endif
-  vertex_fusion(base,u,sheet);
+  event_fusion(base,u,sheet);
   return true;
 }
 
@@ -92,7 +92,7 @@ bool Spacetime::fission(int base,double density,int sheet)
   if (base >= 0) {
     n = 0;
 
-    p = vertex_addition(base,sheet);
+    p = event_addition(base,sheet);
 
     for(i=0; i<ne; ++i) {
       if (!skeleton->simplices[1][i].active(sheet)) continue;
@@ -118,16 +118,16 @@ bool Spacetime::fission(int base,double density,int sheet)
     if (skeleton->dimension(sheet) < 1) return false;
 
     if (skeleton->RND->drandom() < 0.5) {
-      // The simplest case: we just need to add a new vertex, clone the antecedent
-      // vertex's one-dimensional entourage and lastly create a 1-simplex joining
-      // the two vertices.
+      // The simplest case: we just need to add a new event, clone the antecedent
+      // event's one-dimensional entourage and lastly create a 1-simplex joining
+      // the two events.
       int d;
 
       do {
         p = skeleton->RND->irandom(skeleton->events.size());
         if (skeleton->events[p].active(sheet)) break;
       } while(true);
-      q = vertex_addition(p,sheet);
+      q = event_addition(p,sheet);
       nsimplex.insert(p);
       nsimplex.insert(q);
 
@@ -150,7 +150,7 @@ bool Spacetime::fission(int base,double density,int sheet)
       }
       skeleton->simplex_addition(nsimplex,locus);
 #ifdef VERBOSE
-      std::cout << "Vertex fission on " << p << " with new vertex " << q << " and simplex dimension " << d << std::endl;
+      std::cout << "Event fission on " << p << " with new event " << q << " and simplex dimension " << d << std::endl;
 #endif
     }
     else {
@@ -165,9 +165,9 @@ bool Spacetime::fission(int base,double density,int sheet)
       skeleton->simplices[1][n].get_vertices(vx);
       antecedent.insert(vx[0]);
       antecedent.insert(vx[1]);
-      p = vertex_addition(antecedent,sheet);
+      p = event_addition(antecedent,sheet);
       antecedent.insert(p);
-      q = vertex_addition(antecedent,sheet);
+      q = event_addition(antecedent,sheet);
 
       nsimplex.insert(vx[0]);
       nsimplex.insert(p);
@@ -256,12 +256,12 @@ bool Spacetime::circumvolution(int sheet)
   skeleton->simplices[1][n1].get_vertices(w);
   skeleton->simplices[1][n2].get_vertices(u);
   if (skeleton->RND->drandom() < 0.5) {
-    vertex_fusion(w[0],u[0],sheet);
-    vertex_fusion(w[1],u[1],sheet);
+    event_fusion(w[0],u[0],sheet);
+    event_fusion(w[1],u[1],sheet);
   }
   else {
-    vertex_fusion(w[0],u[1],sheet);
-    vertex_fusion(w[1],u[0],sheet);
+    event_fusion(w[0],u[1],sheet);
+    event_fusion(w[1],u[0],sheet);
   }
   regularization(false,sheet);
   return true;
@@ -270,7 +270,7 @@ bool Spacetime::circumvolution(int sheet)
 bool Spacetime::circumvolution(int base,int sheet)
 {
   // This method seeks to fuse together two d-skeleton->simplices, one of
-  // which contains the vertex base
+  // which contains the event base
   int i,d,nd,s1,s2;
   Simplex S;
   std::set<int> candidates;
@@ -344,7 +344,7 @@ bool Spacetime::circumvolution(int base,int sheet)
   skeleton->simplices[d][s2].get_vertices(v2);
 
   for(i=0; i<=d; ++i) {
-    vertex_fusion(v1[i],v2[order[i]],sheet);
+    event_fusion(v1[i],v2[order[i]],sheet);
   }
   return true;
 }
@@ -384,8 +384,8 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
       its++;
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(base,sheet);
+        // Create a new event...
+        k = event_addition(base,sheet);
         novum++;
       }
       else {
@@ -400,12 +400,12 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(vx,sheet);
+        // Create a new event...
+        k = event_addition(vx,sheet);
         novum++;
       }
       else {
-        // Grab an existing vertex...
+        // Grab an existing event...
         j = 0;
         nv = (signed) skeleton->events.size();
         success = false;
@@ -420,7 +420,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
           ++j;
         } while(j < nv);
         if (success == false) {
-          k = vertex_addition(vx,sheet);
+          k = event_addition(vx,sheet);
           novum++;
         }
       }
@@ -428,7 +428,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     } while((signed) vx.size() < (1+d));
   }
 #ifdef VERBOSE
-  std::cout << "Created a " << d << "-simplex with " << novum << " new vertices." << std::endl;
+  std::cout << "Created a " << d << "-simplex with " << novum << " new events." << std::endl;
 #endif
   skeleton->simplex_addition(vx,locus);
   return true;
@@ -451,8 +451,8 @@ bool Spacetime::expansion(int base,int sheet)
 
   vx.insert(base);
   for(i=0; i<d; ++i) {
-    // Create a new vertex...
-    m = vertex_addition(base,sheet);
+    // Create a new event...
+    m = event_addition(base,sheet);
     vx.insert(m);
   }
 #ifdef VERBOSE
@@ -554,7 +554,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
 
 bool Spacetime::inflation(int base,double creativity,int sheet)
 {
-  // Performs an inflation on the vertex base with colour sheet
+  // Performs an inflation on the event base with colour sheet
   int i,k,n1,na,delta,its = 0;
   bool success;
   std::set<int> vx,locus,candidates;
@@ -605,8 +605,8 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       its++;
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(base,sheet);
+        // Create a new event...
+        k = event_addition(base,sheet);
       }
       else {
         k = skeleton->RND->irandom(M);
@@ -614,7 +614,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       vx.insert(k);
     } while((signed) vx.size() < (1 + delta));
 #ifdef VERBOSE
-    std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex based on vertex " << base << std::endl;
+    std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex based on event " << base << std::endl;
 #endif
   }
   else {
@@ -648,15 +648,15 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     if (double(vx.size())/double(na) > 0.9) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(vx,sheet);
+        // Create a new event...
+        k = event_addition(vx,sheet);
       }
       else {
-        // Grab an existing vertex...
+        // Grab an existing event...
         its = 0;
         success = false;
         do {
-          // We should perhaps alter this to favour vertices that are
+          // We should perhaps alter this to favour events that are
           // few hops away
           k = skeleton->RND->irandom(skeleton->events.size());
           if (!skeleton->events[k].active(sheet)) continue;

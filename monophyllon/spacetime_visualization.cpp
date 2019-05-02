@@ -56,7 +56,7 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_energy)
   const int ne = (signed) skeleton->simplices[1].size();
   double xvalue[nv];
 
-  // Here we will make use the energy or deficiency values of the vertices to
+  // Here we will make use the energy or deficiency values of the events to
   // set the vertex colour according to a thermal palette.
   if (use_energy) {
     get_energy_extrema(pr);

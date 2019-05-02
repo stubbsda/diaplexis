@@ -4,7 +4,7 @@ using namespace DIAPLEXIS;
 
 bool Spacetime::stellar_deletion(int base)
 {
-  // If this vertex is already part of a d-simplex, d >= 2, then
+  // If this event is already part of a d-simplex, d >= 2, then
   // this operation is pointless...
   if (skeleton->vertex_dimension(base) >= 2) return false;
   int m,vx[2];
@@ -20,7 +20,7 @@ bool Spacetime::stellar_deletion(int base)
     }
   }
   if (nset.size() != 3) return false;    
-  vertex_deletion(base);
+  event_deletion(base);
   skeleton->simplex_addition(nset,-1);
   regularization(true);
   return true;
@@ -78,9 +78,9 @@ bool Spacetime::fusion_m(int base)
   if (candidates.empty()) return false;
   u = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
-  std::cout << "Fusing vertices: " << u << " => " << base << std::endl;
+  std::cout << "Fusing events: " << u << " => " << base << std::endl;
 #endif
-  vertex_fusion(base,u);
+  event_fusion(base,u);
   return true;
 }
 
@@ -92,7 +92,7 @@ bool Spacetime::fission(int base,double density)
   if (base >= 0) {
     n = 0;
 
-    p = vertex_addition(base);
+    p = event_addition(base);
 
     for(i=0; i<ne; ++i) {
       if (!skeleton->active_simplex(1,i)) continue;
@@ -119,16 +119,16 @@ bool Spacetime::fission(int base,double density)
     if (skeleton->dimension() < 1) return false;
 
     if (skeleton->RND->drandom() < 0.5) {
-      // The simplest case: we just need to add a new vertex, clone the antecedent
-      // vertex's one-dimensional entourage and lastly create a 1-simplex joining
-      // the two vertices.
+      // The simplest case: we just need to add a new event, clone the antecedent
+      // event's one-dimensional entourage and lastly create a 1-simplex joining
+      // the two events.
       int d;
 
       do {
         p = skeleton->RND->irandom(skeleton->events.size());
         if (skeleton->active_event(p)) break;
       } while(true);
-      q = vertex_addition(p);
+      q = event_addition(p);
       nsimplex.insert(p);
       nsimplex.insert(q);
 
@@ -150,7 +150,7 @@ bool Spacetime::fission(int base,double density)
         nsimplex = s1;
       }
 #ifdef VERBOSE
-      std::cout << "Vertex fission on " << p << " with new vertex " << q << " and simplex dimension " << d << std::endl;
+      std::cout << "Event fission on " << p << " with new event " << q << " and simplex dimension " << d << std::endl;
 #endif
       skeleton->simplex_addition(nsimplex,-1);
     }
@@ -166,9 +166,9 @@ bool Spacetime::fission(int base,double density)
       skeleton->simplices[1][n].get_vertices(vx);
       antecedent.insert(vx[0]);
       antecedent.insert(vx[1]);
-      p = vertex_addition(antecedent);
+      p = event_addition(antecedent);
       antecedent.insert(p);
-      q = vertex_addition(antecedent);
+      q = event_addition(antecedent);
 
       nsimplex.insert(vx[0]);
       nsimplex.insert(p);
@@ -260,12 +260,12 @@ bool Spacetime::circumvolution()
   skeleton->events[u[1]].set_topology_modified(true);
 
   if (skeleton->RND->drandom() < 0.5) {
-    vertex_fusion(w[0],u[0]);
-    vertex_fusion(w[1],u[1]);
+    event_fusion(w[0],u[0]);
+    event_fusion(w[1],u[1]);
   }
   else {
-    vertex_fusion(w[0],u[1]);
-    vertex_fusion(w[1],u[0]);
+    event_fusion(w[0],u[1]);
+    event_fusion(w[1],u[0]);
   }
   return true;
 }
@@ -273,7 +273,7 @@ bool Spacetime::circumvolution()
 bool Spacetime::circumvolution(int base)
 {
   // This method seeks to fuse together two d-simplices, one of
-  // which contains the vertex base
+  // which contains the event base
   int i,d,nd,s1,s2;
   Simplex S;
   std::set<int> candidates;
@@ -298,7 +298,7 @@ bool Spacetime::circumvolution(int base)
     }
     if (candidates.empty()) return false;
     // Now find which of these candidates is the closest to the d-simplex s1, where the
-    // distance between two simplices is defined to be the maximum inter-vertex distance
+    // distance between two simplices is defined to be the maximum inter-event distance
     int j,vx1[1+d],vx2[1+d];
     double D1,delta;
     std::set<int> slist;
@@ -349,7 +349,7 @@ bool Spacetime::circumvolution(int base)
   skeleton->simplices[d][s2].get_vertices(v2);
 
   for(i=0; i<=d; ++i) {
-    vertex_fusion(v1[i],v2[order[i]]);
+    event_fusion(v1[i],v2[order[i]]);
   }
   return true;
 }
@@ -383,8 +383,8 @@ bool Spacetime::expansion(int base,double creativity)
       its++;
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(base);
+        // Create a new event...
+        k = event_addition(base);
         novum++;
       }
       else {
@@ -403,12 +403,12 @@ bool Spacetime::expansion(int base,double creativity)
     if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(vx);
+        // Create a new event...
+        k = event_addition(vx);
         novum++;
       }
       else {
-        // Grab an existing vertex...
+        // Grab an existing event...
         j = 0;
         nv = (signed) skeleton->events.size();
         success = false;
@@ -423,7 +423,7 @@ bool Spacetime::expansion(int base,double creativity)
           ++j;
         } while(j < nv);
         if (success == false) {
-          k = vertex_addition(vx);
+          k = event_addition(vx);
           novum++;
         }
       }
@@ -431,7 +431,7 @@ bool Spacetime::expansion(int base,double creativity)
     } while((signed) vx.size() < (1+d));
   }
 #ifdef VERBOSE
-  std::cout << "Created a " << d << "-simplex with " << novum << " new vertices." << std::endl;
+  std::cout << "Created a " << d << "-simplex with " << novum << " new events." << std::endl;
 #endif
   skeleton->simplex_addition(vx,-1);
   return true;
@@ -453,8 +453,8 @@ bool Spacetime::expansion(int base)
 
   vx.insert(base);
   for(i=0; i<d; ++i) {
-    // Create a new vertex...
-    m = vertex_addition(base);
+    // Create a new event...
+    m = event_addition(base);
     vx.insert(m);
   }
 #ifdef VERBOSE
@@ -557,7 +557,7 @@ bool Spacetime::perforation(int base,int d)
 
 bool Spacetime::inflation(int base,double creativity)
 {
-  // Performs an inflation on the vertex base with colour sheet
+  // Performs an inflation on the event base 
   int i,k,n1,na,delta,its = 0;
   Event vt;
   bool success;
@@ -605,8 +605,8 @@ bool Spacetime::inflation(int base,double creativity)
       its++;
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(base);
+        // Create a new event...
+        k = event_addition(base);
       }
       else {
         k = skeleton->RND->irandom(M);
@@ -614,7 +614,7 @@ bool Spacetime::inflation(int base,double creativity)
       vx.insert(k);
     } while((signed) vx.size() < (1 + delta));
 #ifdef VERBOSE
-    std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex based on vertex " << base << std::endl;
+    std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex based on event " << base << std::endl;
 #endif
   }
   else {
@@ -648,15 +648,15 @@ bool Spacetime::inflation(int base,double creativity)
     if (double(vx.size())/double(na) > 0.9) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
-        // Create a new vertex...
-        k = vertex_addition(vx);
+        // Create a new event...
+        k = event_addition(vx);
       }
       else {
-        // Grab an existing vertex...
+        // Grab an existing event...
         its = 0;
         success = false;
         do {
-          // We should perhaps alter this to favour vertices that are
+          // We should perhaps alter this to favour events that are
           // few hops away
           k = skeleton->RND->irandom(skeleton->events.size());
           if (!skeleton->active_event(k)) continue;
