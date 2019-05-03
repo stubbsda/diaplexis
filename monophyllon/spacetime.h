@@ -356,11 +356,11 @@ namespace DIAPLEXIS {
     bool event_fusion(int,int);
     /// This method carries out an event fusion that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
     bool event_twist();
-    /// This method attempts a circumvolution using boundary edges; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
+    /// This method attempts a circumvolution using active boundary edges; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
     bool circumvolution();
     /// This method seeks to fuse together two d-simplices (d > 0), one of which contains the event whose index is the method's argument; it returns true if successful.
     bool circumvolution(int);
-    /// This method looks for 1-simplices connected to the method's first argument (an event index) whose length exceeds the second argument; if the method finds such edges, it attempts to delete one and returns true if successful.
+    /// This method looks for active 1-simplices connected to a particular event (the method's first argument) and whose length exceeds a certain threshold (the second argument); if the method finds such edges, it attempts to delete one and returns true if successful.
     bool contraction(int,double);
     /// This method attempts to remove a 1-simplex from the event whose index is the argument, favouring edges whose length is much greater than unity and whose connecting event also has an excessive degree. The method returns true if it succeeds in deleting an edge.
     bool compensation_m(int);
@@ -390,9 +390,9 @@ namespace DIAPLEXIS {
     bool deflation(int);
     /// This method attempts to create a hole or perforation in a simplex. If the first argument is non-negative the method tries to create this hole in a d-simplex (d > 1) containing the base event (the first argument), where d is the second argument. If the first argument is negative, the method is global and the second argument is ignored; it tries to find a random d-simplex (d > 1) in which to create a hole. The method returns true if it is successful in creating such a perforation in the spacetime complex. 
     bool perforation(int,int);
-    /// This method needs to loop over all active events and then find those which are capable of adding another event at a distance of (roughly) unity and which is orthogonal to the event's current set of edges.
+    /// This method needs to loop over all active events and then find those which are capable of adding another event at a distance of (roughly) unity from the base event (the argument) and which is orthogonal to the base event's current set of edges.
     bool correction(int);
-    /// This method constructs new neighbour events w_i for the base event whose index is the method's argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible.
+    /// This method constructs new neighbour events w_i for the base event whose index is the method's argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible. It returns true if it is successful and false otherwise.
     bool germination(int);
     /// This method accepts as its argument the index of an event and, if this event is a member of a 2-simplex, carries out a Δ => Y transformation, returning true if it is successful.
     bool stellar_addition(int);

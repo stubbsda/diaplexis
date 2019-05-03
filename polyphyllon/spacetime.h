@@ -388,26 +388,47 @@ namespace DIAPLEXIS {
     bool event_fusion(int,int,int);
     /// This method carries out an event fusion for a given sheet (the method's argument) that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
     bool event_twist(int);
+    /// This method attempts a circumvolution using boundary edges belonging to the sheet specified by the argument; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
     bool circumvolution(int);
+    /// This method seeks to fuse together two d-simplices (d > 0) lying on a given sheet (the second argument), one of which contains the event whose index is the method's first argument; it returns true if successful.
     bool circumvolution(int,int);
+    /// This method looks for 1-simplices belonging to a given sheet (the third argument) connected to a particular event (the method's first argument) whose length exceeds a certain threshold (the second argument); if the method finds such edges, it attempts to delete one and returns true if successful. 
     bool contraction(int,double,int);
+    /// This method attempts to remove a 1-simplex from the event whose index is the first argument and belonging to the sheet which is the second argument, favouring edges whose length is much greater than unity and whose connecting event also has an excessive degree. The method returns true if it succeeds in deleting an edge.
     bool compensation_m(int,int);
+    /// This method adds or removes a 1-simplex from the event whose index is the first argument and belonging to the sheet which is the second argument, depending on the event's degree which has a goal of being twice the background dimension. When choosing an edge the method favours shorter over longer edges and ensuring that the partner event has a similar degree deficiency or excess. If an edge is added or removed the method returns true. 
     bool compensation_g(int,int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and belonging to the sheet indicated by the second argument. The method returns true if successful and creates new events for the simplex's other d vertices.
     bool expansion(int,int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and belonging to the sheet indicated by the final argument; it returns true if successful. The second argument is the percentage of the new d-simplex's vertex-events which should be created from scratch. 
     bool expansion(int,double,int);
+    /// This method examines all the neighbours with non-zero deficiency that are connected to the event whose index is the method's first argument and which belong to the sheet indicated by the final argument. Two such neighbours are chosen and along with the base event a 2-simplex is created; if the simplex creation is successful, the method returns true. 
     bool foliation_m(int,int);
+    /// This method examines all the neighbours with non-zero deficiency that are connected to the event whose index is the method's first argument and which belong to the sheet indicated by the final argument. One such neighbour is chosen and the connecting 1-simplex is deleted; if the edge deletion is successful, the method returns true. 
     bool foliation_x(int,int);
+    /// This method calculates the edges connecting the event whose index is the method's first argument, all belonging to the sheet indicated by the method's second argument, and selects one of those which is used in a d-simplex (d > 1) so that it can be deleted. If the edge deletion is successful the method returns true.
     bool reduction(int,int);
+    /// This method deletes an event from a given sheet (the final argument) drawn from the base event (whose index is the method's first argument) and its neighbours, assuming their deficiency property exceeds the value of the second argument. The method also deletes all the higher-dimensional simplices depending on this event; it returns true if the deletion is successful.
     bool amputation(int,double,int);
+    /// This method fuses an event with non-zero deficiency lying on a given sheet (the last argument) and which lies within a distance L (the second argument) of the base event (the first argument), to the base event. It returns true if the fusion is successful. 
     bool fusion_x(int,double,int);
+    /// This method accepts as its first argument the index of an event belonging to a certain sheet (the second argument) and chooses at random one of the events belonging to this sheet among its neighbours and then fuses this neighbour to the original event. It returns true if this fusion is successful.
     bool fusion_m(int,int);
+    /// This method causes an event to undergo fission into one or more events on a given sheet (the final argument), duplicating the original event's neighbour connections depending on the value of the second argument which should lie between zero and unity. If the first argument is non-negative, it is the index of the event which undergoes fission otherwise a random active event is chosen. The method returns true if the fission is successful.
     bool fission(int,double,int);
+    /// This method inflates a d-simplex into an n-simplex, where n > d. If the first argument is non-negative, it is assumed to be the index of an event (on a given sheet, the third argument) which must belong to the d-simplex, otherwise a d-simplex belonging to the sheet is chosen at random. The second argument argument is a creativity index controlling whether or not new events are created to supply the other vertices of the n-simplex. The method returns true if it succeeds in inflating a d-simplex on this sheet.
     bool inflation(int,double,int);
+    /// This method accepts the index of a particular event (first argument) belonging to a given sheet (second argument) and if the topological dimension of this event on this sheet is greater than unity, it deletes a d-simplex (d > 1) containing this event, thereby reducing the event's topological dimension to d-1. 
     bool deflation(int,int);
+    /// This method attempts to create a hole or perforation in a simplex. If the first argument is non-negative the method tries to create this hole in a d-simplex (d > 1) containing the base event (the first argument), where d is the second argument, belonging to a given sheet (the third argument). If the first argument is negative, the method is global over the sheet and the second argument is ignored; it tries to find a random d-simplex (d > 1) belonging to the sheet in which to create a hole. The method returns true if it is successful in creating such a perforation in the spacetime complex. 
     bool perforation(int,int,int);
+    /// This method needs to loop over all events belonging to a given sheet (the second argument) and then find those which are capable of adding another event at a distance of (roughly) unity from the base event (first argument) and which is orthogonal to the base event's current set of edges.
     bool correction(int,int);
+    /// This method constructs new neighbour events w_i on a particular sheet (the last argument) for the base event whose index is the method's first argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible. It returns true if it is successful and false otherwise.
     bool germination(int,int);
+    /// This method accepts as its first argument the index of an event and as its second a particular sheet. If this event is a member of a 2-simplex, the method carries out a Δ => Y transformation, returning true if it is successful.
     bool stellar_addition(int,int);
+    /// This method accepts as its first argument the index of an event and as its second a particular sheet. If this event on this sheet has a degree of at least three and is not a member of a d-simplex (d > 1), the method carries out a Y => Δ transformation, returning true if it is successful.
     bool stellar_deletion(int,int);
 
     /// This method first deletes events in the centre of a sheet (specified by the final argument) of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in the location of these inactive events. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the third argument its dimensionality. The method returns true if it succeeds.

@@ -480,7 +480,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       nsuccess++;
     }
     opstring.str("");
-    assert(skeleton->consistent());
+    assert(skeleton->consistent(sheet));
   }
 
   // We're done, so close the hyphantic log file and return
@@ -611,7 +611,7 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
       nsuccess++;
     }
     opstring.str("");
-    assert(skeleton->consistent());
+    assert(skeleton->consistent(sheet));
     // If more than 10% of the initial candidate vertices have been successfully used in hyphantic 
     // operations, it's time to exit - we don't want to modify the topology too profoundly in any 
     // given relaxation step...
