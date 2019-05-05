@@ -222,11 +222,11 @@ double Spacetime::compute_temporal_nonlinearity() const
   if (skeleton->cardinality(0,-1) < 2) return 0.0;
 
   int i,nsink = 0,nsource = 0,causal_loop = 0;
-  double output,nlinearity = 0.0;
+  double output = 0.0,nlinearity = 0.0;
   std::set<int> past,future;
   SYNARMOSMA::Directed_Graph G;
   const int nv = (signed) skeleton->events.size();
-  const double na = double(skeleton->cardinality(0,-1));
+  const int na = skeleton->cardinality(0,-1);
 
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,G,past,future) reduction(+:nlinearity,nsource,nsink,causal_loop)
@@ -249,7 +249,9 @@ double Spacetime::compute_temporal_nonlinearity() const
       nsink++;
     }
   }
-  output = nlinearity/double(nsink + nsource) + double(causal_loop)/na;
+  if (nsink > 0 || nsource > 0) output += nlinearity/double(nsink + nsource);
+  if (na > 0) output += causal_loop/double(na); 
+
   return output;
 }
 

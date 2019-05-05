@@ -10,7 +10,7 @@
 		<RelationalGeometry>No</RelationalGeometry>
 		<DimensionalUniformity>Yes</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
-		<MaximumIterations>10</MaximumIterations>
+		<MaximumIterations>25</MaximumIterations>
 		<SheetDynamics>Yes</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>High</MemoryFootprint>
@@ -24,7 +24,7 @@
 		<!--InitialState>DISKFILE</InitialState-->
 		<EdgeProbability>0.15</EdgeProbability>
 		<CheckpointFrequency>5</CheckpointFrequency>
-		<InputFile>spacetime_2012-12-30_07973.dat</InputFile>
+		<InputFile>spacetime_2019-05-04_08315_10.dat</InputFile>
 		<!--HomologyMethod>GAP</HomologyMethod-->
 		<HomologyMethod>Native</HomologyMethod>
 		<!--HomologyBase>NTL::ZZ</HomologyBase-->

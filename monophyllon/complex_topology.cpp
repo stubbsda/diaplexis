@@ -440,6 +440,9 @@ void Complex::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (!simplices[i][j].active) continue;
       for(it=simplices[i][j].vertices.begin(); it!=simplices[i][j].vertices.end(); ++it) {
+#ifdef DEBUG
+        assert(offset[*it] >= 0);
+#endif
         vx.insert(offset[*it]);
       }
       NX->paste(vx);
