@@ -71,9 +71,6 @@ namespace DIAPLEXIS {
     /// for dimensionality - the sum of the active events, each event 
     /// multiplied by its geometric dimensionality. 
     int system_size = 0;
-    /// This property stores the number of active events in the 
-    /// spacetime complex.
-    int nactive = 1;
     /// This property is true if the current relaxation step can be 
     /// reversed and false otherwise. The simulation always stores a 
     /// snapshot of the preceding relaxation step and can thus reverse 
@@ -85,20 +82,20 @@ namespace DIAPLEXIS {
     /// by the number of active events.
     double error = 0.0;
     /// This property stores the global component of the spacetime error: 
-    /// the sum of the output of representational_energy() and \f$2\pi\f$
-    /// times the output of Complex::euler_characteristic, less the sum 
-    /// of the energy property of all active events. 
+    /// the sum of the output of representational_energy() and compute_temporal_nonlinearity() 
+    /// and \f$2\pi\f$ times the output of Complex::euler_characteristic, less 
+    /// the sum of the energy property of all active events.
     double global_deficiency = 0.0;
-    /// This property contains a list of all of the hyphantic operations 
-    /// successfully carried out on the spacetime complex since the start 
-    /// of the simulation. 
-    std::string hyphantic_ops = "";
     /// This property contains all of the spacetime's topology, stored in a 
     /// pointer to an instance of the Complex class.
     Complex* skeleton;
     /// This property contains the spacetime's geometry, stored in a pointer to 
     /// an instance of the Synarmosma library's Geometry class.
     SYNARMOSMA::Geometry* geometry;
+    /// This property contains a list of all of the hyphantic operations 
+    /// successfully carried out on the spacetime complex since the start 
+    /// of the simulation. 
+    std::string hyphantic_ops = "";
 
     /// This property controls the sort of initial state from which the simulation 
     /// begins, including eventually from a checkpoint file. 

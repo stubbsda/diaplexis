@@ -413,8 +413,7 @@ void Spacetime::structural_deficiency()
   }
 
   global_deficiency =  representational_energy(false) + compute_temporal_nonlinearity() + 2.0*M_PI*double(skeleton->euler_characteristic()) - E_total;
-  std::cout << compute_temporal_nonlinearity() << std::endl;
-  assert(!std::isnan(global_deficiency));
+
   error = 0.0;
   for(i=0; i<na; ++i) {
     delta = skeleton->events[avertices[i]].get_deficiency();
