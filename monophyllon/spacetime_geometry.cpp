@@ -732,63 +732,61 @@ double Spacetime::representational_energy(bool weighted) const
 bool Spacetime::realizable(int d,int n) const
 {
   // Can the d*(d+1)/2 edge lengths lead to a geometrically
-  // realizable d-simplex?
-  // An edge or event is always geometrically realizable...
-  if (d < 2) return true;
-  int i,j,info,dp1 = d + 1;
-  SYNARMOSMA::hash_map::const_iterator qt;
+  // realizable d-simplex, i.e. one whose volume is positive?
+  if (!geometry->get_euclidean()) throw std::runtime_error("The geometry must be Euclidean for this method to be meaningful!");
+
+  // An event is always geometrically realizable...
+  if (d < 1) return true;
+
+  if (!skeleton->simplices[d][n].get_modified()) {
+    if (skeleton->simplices[d][n].get_squared_volume() > std::numeric_limits<double>::epsilon()) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  const int N = d + 1;
+  int vx[N];
   double alpha;
-  bool output = true;
-  char jtype = 'N';
-  char uplo = 'U';
-  int nwork = 3*dp1 - 1;
-  int vx[dp1];
+
+  if (d == 1) {
+    skeleton->simplices[1][n].get_vertices(vx);
+    alpha = geometry->get_squared_distance(vx[0],vx[1],false);
+    if (alpha > std::numeric_limits<double>::epsilon()) return true;
+    return false;
+  }
+  // The code below creates an instance of SYNARMOSMA::Matrix 
+  // and then uses it to compute the Cayley-Menger determinant 
+  // of the squares of the simplex's edge lengths. The simplex 
+  // is realizable if the product of (-1)^(1 + d) and this 
+  // determinant is positive.
+  int i,j;
   std::set<int> S;
-  double* A = new double[dp1*dp1];
-  double* w = new double[dp1];
-  double* work = new double[nwork];
+  SYNARMOSMA::Matrix<double> A(N);
+  SYNARMOSMA::hash_map::const_iterator qt;
 
   skeleton->simplices[d][n].get_vertices(vx);
 
-  for(i=0; i<dp1; ++i) {
-    alpha = 0.0;
-    if (i != 0) {
-      S.clear();
-      S.insert(vx[i]);
-      S.insert(vx[0]);
-      qt = skeleton->index_table[1].find(S);
-      alpha = skeleton->simplices[1][qt->second].get_volume();
-    }
-    for(j=0; j<dp1; ++j) {
-      if (j != 0) {
-        S.clear();
-        S.insert(vx[j]);
-        S.insert(vx[0]);
-        qt = skeleton->index_table[1].find(S);
-        alpha += skeleton->simplices[1][qt->second].get_volume();
-      }
+  for(i=1; i<N; ++i) {
+    A.set(0,i,1.0);
+    A.set(i,0,1.0)
+  }
+  for(i=0; i<N-1; ++i) {
+    for(j=1+i; j<N-1; ++j) {
       S.clear();
       S.insert(vx[i]);
       S.insert(vx[j]);
       qt = skeleton->index_table[1].find(S);
-      alpha -= skeleton->simplices[1][qt->second].get_volume();
-      A[dp1*i+j] = alpha;
+      alpha = skeleton->simplices[1][qt->second].get_squared_volume();
+      A.set(i+1,j+1,alpha);
+      A.set(j+1,i+1,alpha);
     }
   }
-  dsyev_(&jtype,&uplo,&dp1,A,&dp1,w,work,&nwork,&info);
-#ifdef DEBUG
-  assert(info == 0);
-#endif
-  for(i=0; i<dp1; ++i) {
-    if (w[i] < 0.0) {
-      output = false;
-      break;
-    }
-  }
-  delete[] A;
-  delete[] w;
-  delete[] work;
-  return output;
+  alpha = A.determinant();
+  alpha *= double(SYNARMOSMA::ipow(-1,N));
+  if (alpha > std::numeric_limits<double>::epsilon()) return true;
+  return false;
 }
 
 void Spacetime::compute_volume()

@@ -407,7 +407,7 @@ namespace DIAPLEXIS {
     /// This method ensures that the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the argument is false, the Complex::simplicial_implication() method is called at the beginning of the method.
     void regularization(bool);
 
-    /// This method tests where the d-simplex specified by the method's two arguments (the dimension d and index of the simplex in Complex::simplices[d]) can be realized given the geometry of the simplex's events; the method returns true if the d-simplex has a real volume and false otherwise. 
+    /// This method tests whether the d-simplex specified by the method's two arguments (the dimension d and index of the simplex in Complex::simplices[d]) can be realized given the geometry of the simplex's events; the method returns true if the d-simplex has a positive squared volume and false otherwise. 
     bool realizable(int,int) const;
     /// This method computes the volume of all of the spacetime's active d-simplices (d > 0) using the current geometry; to handle the 1-simplices, it calls compute_lengths().
     void compute_volume();
