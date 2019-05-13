@@ -856,7 +856,7 @@ bool Spacetime::realizable(int d,int n) const
 
   for(i=1; i<N; ++i) {
     A.set(0,i,1.0);
-    A.set(i,0,1.0)
+    A.set(i,0,1.0);
   }
   for(i=0; i<N-1; ++i) {
     for(j=1+i; j<N-1; ++j) {
