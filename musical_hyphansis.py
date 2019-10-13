@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Use the command 
+# sudo pip3 install numpy scipy matplotlib music21 
+# to install the music21 module for Python 3.x.
 import music21
 import sys
 import math
