@@ -4,12 +4,12 @@ using namespace DIAPLEXIS;
 
 void Spacetime::read_parameters(const std::string& filename)
 {
+  int q,tvalue,n_is = 0,n_so = 0,D = 0;
+  unsigned long rs;
+  bool euclidean = false,relational = false,uniform = false;
+  std::string name,value;
   pugi::xml_document pfile;
   pugi::xml_node global,gsolver;
-  std::string name,value;
-  unsigned long rs;
-  int q,n_is = 0,n_so = 0,D = 0;
-  bool euclidean = false,relational = false,uniform = false;
 
   // Open the file
   if (!(pfile.load_file(filename.c_str()))) throw std::invalid_argument("Unable to parse parameter file!");
@@ -20,10 +20,10 @@ void Spacetime::read_parameters(const std::string& filename)
     value = params.first_child().value();
 
     if (name == "InitialEvents") {
-      initial_size = boost::lexical_cast<int>(value);
+      initial_size = std::stoi(value);
     }
     else if (name == "InitialState") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "CARTESIAN") {
         initial_state = Initial_Topology::cartesian;
       }
@@ -39,82 +39,109 @@ void Spacetime::read_parameters(const std::string& filename)
       else if (value == "DISKFILE") {
         initial_state = Initial_Topology::diskfile;
       }
+      else {
+        std::cout << "Unrecognized initial state " << value << "!" << std::endl;
+        std::exit(1);
+      }
       n_is++;
     }
     else if (name == "InputFile") {
       input_file = value;
     }
     else if (name == "EuclideanGeometry") {
-      boost::to_upper(value);
-      euclidean = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      euclidean = (tvalue == 1) ? true : false;
     }
     else if (name == "RelationalGeometry") {
-      boost::to_upper(value);
-      relational = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      relational = (tvalue == 1) ? true : false;
     }
     else if (name == "DimensionalUniformity") {
-      boost::to_upper(value);
-      uniform = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      uniform = (tvalue == 1) ? true : false;
     }
     else if (name == "RandomSeed") {
-      rs = boost::lexical_cast<unsigned long>(value);
+      rs = (unsigned) std::stol(value);
       if (rs == 0) rs = (unsigned) std::time(nullptr);
       skeleton->RND->set_seed(rs);
     }
     else if (name == "BackgroundDimension") {
-      D = boost::lexical_cast<int>(value);
+      D = std::stoi(value);
     }
     else if (name == "EdgeProbability") {
-      edge_probability = boost::lexical_cast<double>(value);
+      edge_probability = std::stod(value);
     }
     else if (name == "MaximumIterations") {
-      max_iter = boost::lexical_cast<int>(value);
+      max_iter = std::stoi(value);
     }
     else if (name == "InitialDimension") {
-      initial_dim = boost::lexical_cast<int>(value);
+      initial_dim = std::stoi(value);
     }
     else if (name == "PerturbTopology") {
-      boost::to_upper(value);
-      perturb_topology = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      perturb_topology = (tvalue == 1) ? true : false;
     }
     else if (name == "PerturbGeometry") {
-      boost::to_upper(value);
-      perturb_geometry = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      perturb_geometry = (tvalue == 1) ? true : false;
     }
     else if (name == "PerturbEnergy") {
-      boost::to_upper(value);
-      perturb_energy = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      perturb_energy = (tvalue == 1) ? true : false;
     }
     else if (name == "MemoryFootprint") {
-      boost::to_upper(value);
-      high_memory = (value == "HIGH") ? true : false;
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
+      if (value == "HIGH") {
+        high_memory = true;
+      }
+      else if (value == "LOW") {
+        high_memory = false;
+      }
+      else {
+        std::cout << "Unrecognized memory footprint " << value << "!" << std::endl;
+        std::exit(1);
+      }
     }
     else if (name == "Hyphansis") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "MUSICAL") {
         weaving = Hyphansis::musical;
       }
       else if (value == "DYNAMIC") {
         weaving = Hyphansis::dynamic;
       }
+      else {
+        std::cout << "Unrecognized hyphansis method " << value << "!" << std::endl;
+        std::exit(1);
+      }
     }
     else if (name == "HyphansisScore") {
       hyphansis_score = value;
     }
     else if (name == "ParityMutation") {
-      parity_mutation = boost::lexical_cast<double>(value);
+      parity_mutation = std::stod(value);
     }
     else if (name == "HomologyMethod") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "GAP") {
         skeleton->set_homology_method(SYNARMOSMA::Homology::Method::gap); 
       }
       else if (value == "NATIVE") {
         skeleton->set_homology_method(SYNARMOSMA::Homology::Method::native);
       }
+      else {
+        std::cout << "Unrecognized homology method " << value << "!" << std::endl;
+        std::exit(1);
+      }
     }
     else if (name == "HomologyBase") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "INT") {
         skeleton->set_homology_field(SYNARMOSMA::Homology::Field::int32);
       }
@@ -124,17 +151,23 @@ void Spacetime::read_parameters(const std::string& filename)
       else if (value == "GF2") {
         skeleton->set_homology_field(SYNARMOSMA::Homology::Field::mod2);
       }
+      else {
+        std::cout << "Unrecognized homology base field " << value << "!" << std::endl;
+        std::exit(1);
+      }
     }
     else if (name == "Compressible") {
-      boost::to_upper(value);
-      compressible = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      compressible = (tvalue == 1) ? true : false;
     }
     else if (name == "Superposable") {
-      boost::to_upper(value);
-      superposable = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      superposable = (tvalue == 1) ? true : false;
     }
     else if (name == "CheckpointFrequency") {
-      checkpoint_frequency = boost::lexical_cast<int>(value);
+      checkpoint_frequency = std::stoi(value);
     }
   }
 
@@ -144,7 +177,7 @@ void Spacetime::read_parameters(const std::string& filename)
     value = params.first_child().value();
 
     if (name == "SolverType") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "MECHANICAL") {
         solver = Geometry_Solver::mechanical;
       }
@@ -160,83 +193,92 @@ void Spacetime::read_parameters(const std::string& filename)
       else if (value == "SIMPLEX") {
         solver = Geometry_Solver::simplex;
       }
+      else {
+        std::cout << "Unrecognized geometry solver " << value << "!" << std::endl;
+        std::exit(1);
+      }
       n_so++;
     }
     else if (name == "SolverIterations") {
-      solver_its = boost::lexical_cast<int>(value);
+      solver_its = std::stoi(value);
     }
     else if (name == "MaximumGenerations") {
-      ngenerations = boost::lexical_cast<int>(value);
+      ngenerations = std::stoi(value);
     }
     else if (name == "MaximumJousts") {
-      njousts = boost::lexical_cast<int>(value);
+      njousts = std::stoi(value);
     }
     else if (name == "PoolSize") {
-      pool_size = boost::lexical_cast<int>(value);
+      pool_size = std::stoi(value);
     }
     else if (name == "ThermalSweeps") {
-      thermal_sweep = boost::lexical_cast<int>(value);
+      thermal_sweep = std::stoi(value);
     }
     else if (name == "AnnealingSteps") {
-      annealing_steps = boost::lexical_cast<int>(value);
+      annealing_steps = std::stoi(value);
     }
     else if (name == "ThermalVariance") {
-      thermal_variance = boost::lexical_cast<double>(value);
+      thermal_variance = std::stod(value);
     }
     else if (name == "ThermalizationCriterion") {
-      thermalization = boost::lexical_cast<double>(value);
+      thermalization = std::stod(value);
     }
     else if (name == "IntegrationEngine") {
-      boost::to_upper(value);
+      std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "EULER") {
         engine = Integrator::euler;
       }
       else if (value == "RK4") {
         engine = Integrator::rk4;
       }
+      else {
+        std::cout << "Unrecognized integration engine " << value << "!" << std::endl;
+        std::exit(1);
+      }
     }
     else if (name == "StepSize") {
-      step_size = boost::lexical_cast<double>(value);
+      step_size = std::stod(value);
     }
     else if (name == "MaximumIntegrationSteps") {
-      max_int_steps = boost::lexical_cast<int>(value);
+      max_int_steps = std::stoi(value);
     }
     else if (name == "DampingConstant") {
-      damping_constant = boost::lexical_cast<double>(value);
+      damping_constant = std::stod(value);
     }
     else if (name == "SpringConstant") {
-      spring_constant = boost::lexical_cast<double>(value);
+      spring_constant = std::stod(value);
     }
     else if (name == "RepulsionConstant") {
-      repulsion_constant = boost::lexical_cast<double>(value);
+      repulsion_constant = std::stod(value);
     } 
     else if (name == "ConjugateGradientRefinement") {
-      boost::to_upper(value);
-      cgradient_refinement = (value == "YES") ? true : false;
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      cgradient_refinement = (tvalue == 1) ? true : false;
     }
     else if (name == "MaximumConjugateGradientSteps") {
-      max_CG_steps = boost::lexical_cast<int>(value);
+      max_CG_steps = std::stoi(value);
     }
     else if (name == "MaximumLineSolverSteps") {
-      max_LS_steps = boost::lexical_cast<int>(value);
+      max_LS_steps = std::stoi(value);
     }
     else if (name == "EdgeFlexibilityThreshold") {
-      edge_flexibility_threshold = boost::lexical_cast<double>(value);
+      edge_flexibility_threshold = std::stod(value);
     }
     else if (name == "ReflectionCoefficient") {
-      simplex_alpha = boost::lexical_cast<double>(value);
+      simplex_alpha = std::stod(value);
     }
     else if (name == "ExpansionCoefficient") {
-      simplex_gamma = boost::lexical_cast<double>(value);
+      simplex_gamma = std::stod(value);
     }
     else if (name == "ContractionCoefficient") {
-      simplex_rho = boost::lexical_cast<double>(value);
+      simplex_rho = std::stod(value);
     }
     else if (name == "ShrinkageCoefficient") {
-      simplex_sigma = boost::lexical_cast<double>(value);
+      simplex_sigma = std::stod(value);
     }
     else if (name == "GeometryTolerance") {
-      geometry_tolerance = boost::lexical_cast<double>(value);
+      geometry_tolerance = std::stod(value);
     }
   }
 

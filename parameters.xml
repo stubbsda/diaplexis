@@ -6,17 +6,17 @@
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
 		<InitialDimension>4</InitialDimension>
-		<EuclideanGeometry>Yes</EuclideanGeometry>
-		<RelationalGeometry>No</RelationalGeometry>
-		<DimensionalUniformity>Yes</DimensionalUniformity>
+		<EuclideanGeometry>1</EuclideanGeometry>
+		<RelationalGeometry>0</RelationalGeometry>
+		<DimensionalUniformity>1</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
 		<MaximumIterations>25</MaximumIterations>
-		<SheetDynamics>Yes</SheetDynamics>
+		<SheetDynamics>1</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
-		<MemoryFootprint>High</MemoryFootprint>
-		<Superposable>Yes</Superposable>
-		<Compressible>Yes</Compressible>
-		<Permutable>Yes</Permutable>
+		<MemoryFootprint>HIGH</MemoryFootprint>
+		<Superposable>1</Superposable>
+		<Compressible>1</Compressible>
+		<Permutable>1</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
 		<!--InitialState>MONOPLEX</InitialState-->
 		<InitialState>CARTESIAN</InitialState>
@@ -26,13 +26,13 @@
 		<CheckpointFrequency>5</CheckpointFrequency>
 		<InputFile>spacetime_2019-05-04_08315_10.dat</InputFile>
 		<!--HomologyMethod>GAP</HomologyMethod-->
-		<HomologyMethod>Native</HomologyMethod>
+		<HomologyMethod>NATIVE</HomologyMethod>
 		<!--HomologyBase>NTL::ZZ</HomologyBase-->
 		<!--HomologyBase>INT</HomologyBase-->
 		<HomologyBase>GF2</HomologyBase>
-		<PerturbTopology>Yes</PerturbTopology>
-		<PerturbGeometry>No</PerturbGeometry>
-		<PerturbEnergy>Yes</PerturbEnergy>
+		<PerturbTopology>1</PerturbTopology>
+		<PerturbGeometry>0</PerturbGeometry>
+		<PerturbEnergy>1</PerturbEnergy>
 		<Hyphansis>DYNAMIC</Hyphansis>
 		<!--Hyphansis>MUSICAL</Hyphansis-->
 		<!--HyphansisScore>melody.txt</HyphansisScore-->
@@ -59,7 +59,7 @@
 		<DampingConstant>0.85</DampingConstant>
 		<SpringConstant>-1.5</SpringConstant>
 		<RepulsionConstant>1.0</RepulsionConstant>
-		<ConjugateGradientRefinement>Yes</ConjugateGradientRefinement>
+		<ConjugateGradientRefinement>1</ConjugateGradientRefinement>
 		<MaximumConjugateGradientSteps>20</MaximumConjugateGradientSteps>
 		<MaximumLineSolverSteps>10</MaximumLineSolverSteps>
 		<EdgeFlexibilityThreshold>2.0</EdgeFlexibilityThreshold>
