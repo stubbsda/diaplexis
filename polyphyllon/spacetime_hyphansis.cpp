@@ -9,10 +9,10 @@ const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
 
 std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
 {
-  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // This consists of twelve "notes", eight of which belong to the scale itself
   // (diatonic notes) and four chromatic notes
-  // The implicative scale is the treble clef in the F major scale, so the following 
-  // twelve piano keys in ascending pitch, 
+  // The implicative scale is the treble clef in the F major scale, so the following
+  // twelve piano keys in ascending pitch,
   // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
   // The four chromatic notes are G4 sharp, C5 sharp, F5 sharp and G5
   // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
@@ -22,12 +22,12 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
   // F3 <=> E5
   // Om <=> D5
   // F2 <=> C5 sharp*
-  // F1 <=> C5 
+  // F1 <=> C5
   // E2 <=> A4 sharp
   // Um <=> A4
   // I2 <=> G4 sharp*
   // E1 <=> G4
-  // I1 <=> F4 
+  // I1 <=> F4
   std::string output = "NULL";
   parameters.clear();
   switch (key) {
@@ -85,11 +85,11 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
 
 std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters) const
 {
-  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // This consists of twelve "notes", eight of which belong to the scale itself
   // (diatonic notes) and four chromatic notes
-  // The explicative scale is the bass clef in the F major scale, so the following 
-  // twelve piano keys in descending pitch, 
-  // A3, G3, F3 sharp, F3, E3, D3, C3 sharp, C3, A2 sharp, A2, G2, F2 
+  // The explicative scale is the bass clef in the F major scale, so the following
+  // twelve piano keys in descending pitch,
+  // A3, G3, F3 sharp, F3, E3, D3, C3 sharp, C3, A2 sharp, A2, G2, F2
   // The four chromatic notes are A3, G3, F3 sharp and C3 sharp
   // The twelve explicative operations are D, Ox, R, C, G, Sg, Sm, A, N1, N2, Ux1 and Ux2
   // G <=> F2
@@ -98,7 +98,7 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
   // C <=> A2 sharp
   // Sg <=> C3
   // N2 <=> C3 sharp*
-  // Ux2 <=> D3 
+  // Ux2 <=> D3
   // Sm <=> E3
   // R <=> F3
   // Ox <=> F3 sharp*
@@ -261,7 +261,7 @@ void Spacetime::explication(std::string& output) const
 int Spacetime::select_event(const std::vector<int>& candidates,double intensity,int sheet) const
 {
   if (candidates.empty()) return -1;
-  // The closer the intensity is to unity, the more we should try to choose an element 
+  // The closer the intensity is to unity, the more we should try to choose an element
   // of candidates close to the beginning
   int i,output,n = (signed) candidates.size();
   double cdeficit,tdeficit;
@@ -288,40 +288,41 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   int i,j,v,its,opcount,nsuccess = 0;
   double alpha,m_width = 1.0,x_width = 1.0;
   bool success = false;
-  std::string line,op;
+  std::string line,temp,op;
   std::stringstream opstring;
   std::vector<int> key_list,m_events,x_events,neutral_events,m_keys,x_keys;
   std::vector<std::string> elements;
   std::vector<double> pvalues;
-  boost::char_separator<char> sp("/");
   const int nc = (signed) candidates.size();
 
-  // Open the file containing the hyphantic score 
+  // Open the file containing the hyphantic score
   std::ifstream mscore;
   mscore.exceptions(std::ifstream::badbit);
   try {
     mscore.open(hyphansis_score);
     // Now read the measure that corresponds to this iteration and sheet...
     while(mscore.good()) {
-      getline(mscore,line);
-      // Break the line up at the forward slash
+      std::getline(mscore,line);
+      // If the line is empty or doesn't contain a forward slash, ignore it...
+      if (line.empty()) continue;
+      if (line.find('/') == std::string::npos) continue;
+      // Tokenize the line at the forward slash...
       elements.clear();
-      boost::tokenizer<boost::char_separator<char> > tok(line,sp);
-      for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-        elements.push_back(*beg);
+      opstring.str(line);
+      while(getline(opstring,temp,'/')) {
+        elements.push_back(temp);
       }
-      if (elements.empty()) continue;
 #ifdef DEBUG
       assert(elements.size() == 3);
 #endif
-      its = boost::lexical_cast<int>(elements[0]) - 1;
+      its = std::stoi(elements[0]) - 1;
       if (its < iterations) continue;
       if (its > iterations) break;
       // So this is a line for this relaxation step, check if it is the right sheet/voice...
-      v = boost::lexical_cast<int>(elements[1]);
+      v = std::stoi(elements[1]);
       if (v != sheet) continue;
       // So, grab the piano key...
-      key_list.push_back(boost::lexical_cast<int>(elements[2]));
+      key_list.push_back(std::stoi(elements[2]));
     }
   }
   catch (const std::ifstream::failure& e) {
@@ -337,7 +338,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
     // We're done!
     s << "  </Sheet>" << std::endl;
     s.close();
-    return 0; 
+    return 0;
   }
 
   // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
@@ -381,6 +382,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
   if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
   for(i=0; i<opcount; ++i) {
+    opstring.str("");
     j = key_list[i];
     if (j > 40) {
       v = select_event(m_events,double(j - m_keys.back())/m_width,sheet);
@@ -479,7 +481,6 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       codex[sheet].hyphantic_ops += op;
       nsuccess++;
     }
-    opstring.str("");
     assert(skeleton->consistent(sheet));
   }
 

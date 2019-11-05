@@ -288,12 +288,11 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   int i,j,v,its,opcount,nsuccess = 0;
   double m_width = 1.0,x_width = 1.0;
   bool success = false;
-  std::string line,op;
+  std::string line,temp,op;
   std::stringstream opstring;
   std::vector<int> key_list,m_events,x_events,neutral_events,m_keys,x_keys;
   std::vector<std::string> elements;
   std::vector<double> pvalues;
-  boost::char_separator<char> sp("/");
   const int nc = (signed) candidates.size();
 
   // Open the file containing the hyphantic score 
@@ -305,23 +304,25 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
     // Now read the measure that corresponds to this iteration and sheet...
     while(mscore.good()) {
       getline(mscore,line);
-      // Break the line up at the forward slash
+      // If the line is empty or doesn't contain a forward slash, ignore it...
+      if (line.empty()) continue;
+      if (line.find('/') == std::string::npos) continue;
+      // Tokenize the line at the forward slash...
       elements.clear();
-      boost::tokenizer<boost::char_separator<char> > tok(line,sp);
-      for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end(); beg++) {
-        elements.push_back(*beg);
+      opstring.str(line);
+      while(getline(opstring,temp,'/')) { 
+        elements.push_back(temp); 
       }
-      if (elements.empty()) continue;
 #ifdef DEBUG
       assert(elements.size() == 3);
 #endif
-      its = boost::lexical_cast<int>(elements[0]) - 1;
+      its = std::stoi(elements[0]) - 1;
       if (its < iterations) continue;
       if (its > iterations) break;
       // So this is a line for this relaxation step, check if it is the right sheet/voice...
-      v = boost::lexical_cast<int>(elements[1]);
+      v = std::stoi(elements[1]);
       // So, grab the piano key...
-      key_list.push_back(boost::lexical_cast<int>(elements[2]));
+      key_list.push_back(std::stoi(elements[2]));
     }
   }
   catch (const std::ifstream::failure& e) {

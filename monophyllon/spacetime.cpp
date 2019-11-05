@@ -168,7 +168,7 @@ bool Spacetime::advance()
   condense();
   t1.stop();
   Z = t1.elapsed();
-  htime += boost::lexical_cast<double>(boost::timer::format(Z,3,"%w"));
+  htime += std::stod(boost::timer::format(Z,3,"%w"));
 
   // Start the global operations phrase...
   t1.start();
@@ -178,7 +178,7 @@ bool Spacetime::advance()
   bool done = global_operations();
   t1.stop();
   Z = t1.elapsed();
-  gtime += boost::lexical_cast<double>(boost::timer::format(Z,3,"%w"));
+  gtime += std::stod(boost::timer::format(Z,3,"%w"));
 
   // If the simulation is finished print out some timing data...
   if (done) {
