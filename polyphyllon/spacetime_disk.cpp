@@ -589,11 +589,11 @@ void Spacetime::write_log() const
   rstep = logfile.child("LogFile").append_child("RelaxationStep");
 
   atom = rstep.append_child("Iteration");
-  nvalue = boost::lexical_cast<std::string>(iterations);
+  nvalue = std::to_string(iterations);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("StructuralDeficiency");
-  nvalue = boost::lexical_cast<std::string>(error);
+  nvalue = std::to_string(error);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("Pseudomanifold");
@@ -629,93 +629,93 @@ void Spacetime::write_log() const
 
   ne = skeleton->cardinality(1,-1);
   atom = rstep.append_child("CircuitRank");
-  nvalue = boost::lexical_cast<std::string>(ne-nn+1);
+  nvalue = std::to_string(ne-nn+1);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("ActiveEvents");
-  nvalue = boost::lexical_cast<std::string>(nn);
+  nvalue = std::to_string(nn);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("SourceEvents");
-  nvalue = boost::lexical_cast<std::string>(nsource);
+  nvalue = std::to_string(nsource);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("SinkEvents");
-  nvalue = boost::lexical_cast<std::string>(nsink);
+  nvalue = std::to_string(nsink);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("ActiveEdges");
-  nvalue = boost::lexical_cast<std::string>(ne);
+  nvalue = std::to_string(ne);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("SpacelikeEdges");
-  nvalue = boost::lexical_cast<std::string>(nspace);
+  nvalue = std::to_string(nspace);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("TimelikeEdges");
-  nvalue = boost::lexical_cast<std::string>(ntime);
+  nvalue = std::to_string(ntime);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("NullEdges");
-  nvalue = boost::lexical_cast<std::string>(nnull);
+  nvalue = std::to_string(nnull);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("CyclicEdges");
-  nvalue = boost::lexical_cast<std::string>(skeleton->cyclicity(-1));
+  nvalue = std::to_string(skeleton->cyclicity(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   arclength_statistics(vdata,-1);
   atom = rstep.append_child("MinimumArcLength");
-  nvalue = boost::lexical_cast<std::string>(vdata[1]);
+  nvalue = std::to_string(vdata[1]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MeanArcLength");
-  nvalue = boost::lexical_cast<std::string>(vdata[2]);
+  nvalue = std::to_string(vdata[2]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MaximumArcLength");
-  nvalue = boost::lexical_cast<std::string>(vdata[0]);
+  nvalue = std::to_string(vdata[0]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   skeleton->vertex_degree_statistics(vdata,-1);
   atom = rstep.append_child("MinimumEventDegree");
-  nvalue = boost::lexical_cast<std::string>(vdata[1]);
+  nvalue = std::to_string(vdata[1]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MeanEventDegree");
-  nvalue = boost::lexical_cast<std::string>(vdata[2]);
+  nvalue = std::to_string(vdata[2]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MaximumEventDegree");
-  nvalue = boost::lexical_cast<std::string>(vdata[0]);
+  nvalue = std::to_string(vdata[0]);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("TotalEnergy");
-  nvalue = boost::lexical_cast<std::string>(skeleton->total_energy(-1));
+  nvalue = std::to_string(skeleton->total_energy(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MinimumEventEnergy");
-  nvalue = boost::lexical_cast<std::string>(min_ven);
+  nvalue = std::to_string(min_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MeanEventEnergy");
-  nvalue = boost::lexical_cast<std::string>(avg_ven);
+  nvalue = std::to_string(avg_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("MaximumEventEnergy");
-  nvalue = boost::lexical_cast<std::string>(max_ven);
+  nvalue = std::to_string(max_ven);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("AtemporalEvents");
-  nvalue = boost::lexical_cast<std::string>(nat);
+  nvalue = std::to_string(nat);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("ChiralEvents");
-  nvalue = boost::lexical_cast<std::string>(nch);
+  nvalue = std::to_string(nch);
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
   atom = rstep.append_child("EulerCharacteristic");
-  nvalue = boost::lexical_cast<std::string>(skeleton->euler_characteristic(-1));
+  nvalue = std::to_string(skeleton->euler_characteristic(-1));
   atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
 #ifdef _OPENMP
@@ -747,7 +747,7 @@ void Spacetime::write_log() const
     sheet = rstep.append_child("Sheet");
 
     atom = sheet.append_child("Index");
-    nvalue = boost::lexical_cast<std::string>(i+1);
+    nvalue = std::to_string(i+1);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("State");
@@ -882,103 +882,103 @@ void Spacetime::write_log() const
     }
 
     atom = sheet.append_child("CircuitRank");
-    nvalue = boost::lexical_cast<std::string>(ne-nn+1);
+    nvalue = std::to_string(ne-nn+1);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("ActiveEvents");
-    nvalue = boost::lexical_cast<std::string>(nn);
+    nvalue = std::to_string(nn);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("SourceEvents");
-    nvalue = boost::lexical_cast<std::string>(nsource);
+    nvalue = std::to_string(nsource);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("SinkEvents");
-    nvalue = boost::lexical_cast<std::string>(nsink);
+    nvalue = std::to_string(nsink);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("ActiveEdges");
-    nvalue = boost::lexical_cast<std::string>(ne);
+    nvalue = std::to_string(ne);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("SpacelikeEdges");
-    nvalue = boost::lexical_cast<std::string>(nspace);
+    nvalue = std::to_string(nspace);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("TimelikeEdges");
-    nvalue = boost::lexical_cast<std::string>(ntime);
+    nvalue = std::to_string(ntime);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("NullEdges");
-    nvalue = boost::lexical_cast<std::string>(nnull);
+    nvalue = std::to_string(nnull);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("CyclicEdges");
-    nvalue = boost::lexical_cast<std::string>(ncyclic);
+    nvalue = std::to_string(ncyclic);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MinimumArcLength");
-    nvalue = boost::lexical_cast<std::string>(min_length);
+    nvalue = std::to_string(min_length);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MeanArcLength");
-    nvalue = boost::lexical_cast<std::string>(avg_length);
+    nvalue = std::to_string(avg_length);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MaximumArcLength");
-    nvalue = boost::lexical_cast<std::string>(max_length);
+    nvalue = std::to_string(max_length);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MinimumEventDegree");
-    nvalue = boost::lexical_cast<std::string>(min_val);
+    nvalue = std::to_string(min_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MeanEventDegree");
-    nvalue = boost::lexical_cast<std::string>(avg_val);
+    nvalue = std::to_string(avg_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MaximumEventDegree");
-    nvalue = boost::lexical_cast<std::string>(max_val);
+    nvalue = std::to_string(max_val);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MinimumEventDimension");
-    nvalue = boost::lexical_cast<std::string>(vd_min[i]);
+    nvalue = std::to_string(vd_min[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MeanEventDimension");
-    nvalue = boost::lexical_cast<std::string>(vd_avg[i]);
+    nvalue = std::to_string(vd_avg[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MaximumEventDimension");
-    nvalue = boost::lexical_cast<std::string>(vd_max[i]);
+    nvalue = std::to_string(vd_max[i]);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("TotalEnergy");
-    nvalue = boost::lexical_cast<std::string>(skeleton->total_energy(i));
+    nvalue = std::to_string(skeleton->total_energy(i));
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MinimumEventEnergy");
-    nvalue = boost::lexical_cast<std::string>(min_ven);
+    nvalue = std::to_string(min_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MeanEventEnergy");
-    nvalue = boost::lexical_cast<std::string>(avg_ven);
+    nvalue = std::to_string(avg_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("MaximumEventEnergy");
-    nvalue = boost::lexical_cast<std::string>(max_ven);
+    nvalue = std::to_string(max_ven);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("AtemporalEvents");
-    nvalue = boost::lexical_cast<std::string>(nat);
+    nvalue = std::to_string(nat);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("ChiralEvents");
-    nvalue = boost::lexical_cast<std::string>(nch);
+    nvalue = std::to_string(nch);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("EulerCharacteristic");
-    nvalue = boost::lexical_cast<std::string>(skeleton->euler_characteristic(i));
+    nvalue = std::to_string(skeleton->euler_characteristic(i));
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("HyphanticSequence");
