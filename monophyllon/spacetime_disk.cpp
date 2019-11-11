@@ -878,9 +878,7 @@ void Spacetime::write_state(const std::string& filename) const
   const int ftype = 1;
 
   if (filename == "") {
-    std::stringstream sstream;
-    sstream << iterations;
-    datafile = state_file + "_" + sstream.str() + ".dat";
+    datafile = state_file + "_" + std::to_string(iterations) + ".dat";
   }
   else {
     datafile = filename;

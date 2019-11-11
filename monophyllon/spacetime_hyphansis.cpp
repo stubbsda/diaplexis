@@ -288,8 +288,8 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   int i,j,v,its,opcount,nsuccess = 0;
   double m_width = 1.0,x_width = 1.0;
   bool success = false;
-  std::string line,temp,op;
-  std::stringstream opstring;
+  std::string line,temp,op,opstring;
+  std::stringstream sstream;
   std::vector<int> key_list,m_events,x_events,neutral_events,m_keys,x_keys;
   std::vector<std::string> elements;
   std::vector<double> pvalues;
@@ -309,8 +309,8 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       if (line.find('/') == std::string::npos) continue;
       // Tokenize the line at the forward slash...
       elements.clear();
-      opstring.str(line);
-      while(getline(opstring,temp,'/')) { 
+      sstream.str(line);
+      while(getline(sstream,temp,'/')) { 
         elements.push_back(temp); 
       }
 #ifdef DEBUG
@@ -402,10 +402,10 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       // Edge reorientation
       op = "T";
     }
-    opstring << op << "," << v;
+    opstring = op + "," + std::to_string(v);
     if (op == "F") {
       success = fission(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
+      opstring += "," + std::to_string(pvalues[0]); 
     }
     else if (op == "Um") {
       success = fusion_m(v);
@@ -415,15 +415,15 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
     }
     else if (op == "E") {
       success = expansion(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
+      opstring += "," + std::to_string(pvalues[0]); 
     }
     else if (op == "I") {
       success = inflation(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
+      opstring += "," + std::to_string(pvalues[0]); 
     }
     else if (op == "P") {
       success = perforation(v,0);
-      opstring << ",0"; 
+      opstring += ",0"; 
     }
     else if (op == "V") {
       success = circumvolution(v);
@@ -433,7 +433,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
     }
     else if (op == "Ux") {
       success = fusion_x(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
+      opstring += "," + std::to_string(pvalues[0]); 
     }
     else if (op == "Ox") {
       success = foliation_x(v);
@@ -458,11 +458,11 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
     }
     else if (op == "N") {
       success = contraction(v,pvalues[0]);
-      opstring << "," << pvalues[0]; 
+      opstring += "," + std::to_string(pvalues[0]); 
     }
     else if (op == "A") {
       success = amputation(v,10.0);
-      opstring << ",10.0"; 
+      opstring += ",10.0"; 
     }
     else if (op == "G") {
       success = germination(v);
@@ -471,12 +471,11 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       success = skeleton->edge_parity_mutation(v);
     }
     if (success) {
-      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      s << "  <Operation>" << opstring << "</Operation>" << std::endl;
       regularization(false);
       hyphantic_ops += op;
       nsuccess++;
     }
-    opstring.str("");
     assert(skeleton->consistent());
   }
 
@@ -490,8 +489,7 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
 {
   int i,v,n,vx[2],nsuccess = 0;
   double alpha;
-  std::string op;
-  std::stringstream opstring;
+  std::string op,opstring;
   std::set<int> r_edges;
   bool success = false;
   const int nc = (signed) candidates.size();
@@ -506,10 +504,10 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
     alpha = skeleton->events[v].get_deficiency();
     if (alpha < -std::numeric_limits<double>::epsilon()) {
       implication(op);
-      opstring << op << "," << v;
+      opstring = op + "," + std::to_string(v);
       if (op == "F") {
         success = fission(v,0.4);
-        opstring << ",0.4";
+        opstring += ",0.4";
       }
       else if (op == "Um") {
         success = fusion_m(v);
@@ -519,15 +517,15 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
       }
       else if (op == "E") {
         success = expansion(v,0.15);
-        opstring << ",0.15";
+        opstring += ",0.15";
       }
       else if (op == "I") {
         success = inflation(v,0.25);
-        opstring << ",0.25";
+        opstring += ",0.25";
       }
       else if (op == "P") {
         success = perforation(v,0);
-        opstring << ",0";
+        opstring += ",0";
       }
       else if (op == "V") {
         success = circumvolution(v);
@@ -541,27 +539,27 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
         if (skeleton->RND->drandom() < alpha/10.0) {
           op = "D";
           success = deflation(v);
-          opstring << "D," << v;
+          opstring = "D," + std::to_string(v);
         }
         else {
           op = "R";
           success = reduction(v);
-          opstring << "R," << v;
+          opstring = "R," + std::to_string(v);
         }
       }
       else {
         explication(op);
-        opstring << op << "," << v;
+        opstring = op + "," + std::to_string(v);
         if (op == "C") {
           success = correction(v);
         }
         else if (op == "N") {
           success = contraction(v,1.2);
-          opstring << ",1.2";
+          opstring += ",1.2";
         }
         else if (op == "Ux") {
           success = fusion_x(v,0.5);
-          opstring << "0.5";
+          opstring += "0.5";
         }
         else if (op == "Sg") {
           success = compensation_g(v);
@@ -577,36 +575,33 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
         }
         else if (op == "A") {
           success = amputation(v,10.0);
-          opstring << ",10.0";
+          opstring += ",10.0";
         }
         if (!success && op == "R") {
-          opstring.str("");
           if (skeleton->RND->irandom(2) == 0) {
             op = "N";
             success = contraction(v,1.2);
-            opstring << "N," << v << ",1.2"; 
+            opstring = "N," + std::to_string(v) + ",1.2"; 
           }
           else {
             op = "Ux";
             success = fusion_x(v,0.5);
-            opstring << "Ux," << v << ",0.5";
+            opstring = "Ux," + std::to_string(v) + ",0.5";
           }
         }
         if (!success) {
           op = "Sg";
           success = compensation_g(v);
-          opstring.str("");
-          opstring << "Sg," << v; 
+          opstring = "Sg," + std::to_string(v); 
         }
       }
     }
     if (success) {
-      s << "  <Operation>" << opstring.str() << "</Operation>" << std::endl;
+      s << "  <Operation>" << opstring << "</Operation>" << std::endl;
       regularization(false);
       hyphantic_ops += op;
       nsuccess++;
     }
-    opstring.str("");
     assert(skeleton->consistent());
     // If more than 10% of the initial candidate vertices have been successfully used in hyphantic
     // operations, it's time to exit - we don't want to modify the topology too profoundly in any
@@ -825,7 +820,6 @@ bool Spacetime::event_twist()
   std::set<int>::const_iterator it;
   std::vector<int> candidates,used;
   std::vector<std::pair<int,int> > slist;
-  std::stringstream s;
   static bool first = true;
 
 #ifdef DEBUG
