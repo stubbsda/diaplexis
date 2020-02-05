@@ -1,43 +1,46 @@
-The Diaplexis library is roughly 23,000 lines of C++ code written to explore the numerical dynamics 
-of a combinatorial spacetime model based on a ramified or multi-sheeted simplicial complex. Compiling 
-this library requires a modern C++ compiler as well as the Synarmosma library, available from GitHub 
-(https://github.com/stubbsda/synarmosma). The current package includes both the standard 
-multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that assumes the 
-entire spacetime complex exists on a single sheet (Monophyllon). The Diaplexis library also depends 
-on various external libraries, which for the most part are also needed to build the Synarmosma library: 
-the the Boost library (www.boost.org), Victor Shoup's NTL (www.shoup.net/ntl) for number theory, the 
-Gnu multiprecision library (www.gmplib.org) and an implementation of LAPACK that's needed for the calculation 
-of eigenvales of dense matrices. The Diaplexis library also requires the PugiXML library (www.pugixml.org) 
-for XML processing, used with the parameter and log files. The Diaplexis library is released under the Gnu 
-Public License version 3.0 (see LICENSE.txt or www.fsf.org/licensing for details). 
+The Diaplexis library is roughly 23,000 lines of C++ code, in its current version, written with the
+goal of exploring the numerical dynamics of a combinatorial spacetime model based on a ramified or
+multi-sheeted simplicial complex. Compiling this library requires a modern C++ compiler as well as
+the [Synarmosma library](https://github.com/stubbsda/synarmosma). The current package includes both
+the standard multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that
+assumes the entire spacetime complex exists on a single sheet (Monophyllon). This repository also
+includes an older version of the library, in the <code>old</code> directory, which uses a slower and
+significantly less robust representation of the ubiquity of the spacetime's _n_-simplices. The Diaplexis
+library also depends on various external libraries, which for the most part are also needed to build
+the Synarmosma library: the [Boost library](www.boost.org), Victor Shoup's [NTL](www.shoup.net/ntl) for
+number theory, the [GNU multiprecision library](www.gmplib.org) and an implementation of LAPACK, needed
+for the calculation of the eigenvales of dense matrices. The Diaplexis library also requires the
+[PugiXML library](www.pugixml.org) for XML processing, used with the parameter and log files. The
+Diaplexis library is released under the Gnu Public License version 3.0; see the <code>LICENSE.txt</code>
+file or the [Free Software Foundation](www.fsf.org/licensing) for details.
 
-To install the Diaplexis library, enter the directory <code>diaplexis</code> and choose between the Monophyllon and 
-Polyphyllon versions of the library. After descending into the desired directory, the command <code>make</code> 
-will carry out the build process and <code>sudo make install</code> will install the Diaplexis library in its 
-default location, <code>/usr/local/diaplexis</code>. If you don't have root access or don't wish to install the 
-library in a system directory, you can modify the value of <code>INSTALL_DIR</code> at the beginning of the Makefile 
-to some other directory, such as <code>$HOME/diaplexis</code>. The compilation of the Diaplexis library has been 
-developed and tested in a Linux environment (with x86, x86-64 and ARMv6 processor architectures), using both the 
-Gnu (g++) and Intel (icpc) compilers. In principle it should also run under Windows using the Cygwin environment. 
+To install the Diaplexis library, enter the directory <code>diaplexis</code> and choose between the
+Monophyllon and Polyphyllon versions of the library. After descending into the appropriate directory, the
+command <code>make</code> will carry out the build process and <code>sudo make install</code> will
+install the Diaplexis library in its default location, <code>/usr/local/diaplexis</code>. If you do
+not have root access or do not wish to install the library in a system directory, you can modify the
+value of <code>INSTALL_DIR</code> at the beginning of the Makefile to some other directory, such as
+<code>$HOME/diaplexis</code>. The compilation of the Diaplexis library has been developed and tested
+in a Linux environment (with x86, x86-64 and ARMv6 processor architectures), using both the GNU
+and Intel C++ compilers. In principle it should also run under Windows using the Cygwin environment.
 
-Normally the only parameters that a user should need to modify in order to build the Diaplexis library 
-are located at the beginning of the Makefile, where various compiler arguments and libraries are all 
-specified. The build variables are all described in the Makefile and in general the default values should 
-be safe on most Unix-like platforms. A sample program file, euplecton.cpp, illustrating the use of the 
-Spacetime class is also included in the current directory along with an example of an XML parameter file, 
-intended for the Polyphyllon version of the Diaplexis library. Using the included makefile a simple test 
-can be run to verify the installation, which writes all its output in the <code>data</code> directory.
+Normally the only parameters that a user should need to modify in order to build the Diaplexis library
+are located at the beginning of the Makefile, where various compiler arguments and libraries are all
+specified. The build variables are all described in the Makefile and in general the default values should
+be safe on most Unix-like platforms. A sample program file, <code>euplecton.cpp</code>, illustrating the
+use of the Spacetime class is also included in the current directory along with an example of an XML parameter
+file, intended for use with the Polyphyllon version of this library. Using the included makefile a simple
+test can be run to verify the installation, which writes all its output in the <code>data</code> directory.
 
-The VERBOSE compilation flag causes the Diaplexis library to write a great deal of diagnostic logging 
-information to the standard output during execution and is normally only useful for developers. That 
-said, with this flag users can have access to a wealth of information about the library's reasoning 
-process for the hyphantic operators that are used, information which does not appear in the log file 
-created by the normal execution of the library. The quantity of text generated by this flag is sufficiently 
-large however that users should redirect the standard output to a disk file for subsequent analysis. 
-The source code contains OpenMP directives that are active when a C++ compiler with support for OpenMP 
-is used for the compilation, assumed to be compatible with OpenMP 3.1. The two branches of the Diaplexis 
-library are documented using Doxygen, with the configuration file <code>docs.config</code> in the relevant 
-directory that can be modified as needed.   
+The <code>VERBOSE</code> compilation flag causes the Diaplexis library to write a great deal of diagnostic
+logging information to the standard output during execution and is normally only useful for developers.
+That said, with this flag users can have access to a wealth of information about the library's reasoning
+process for the hyphantic operators that are used, information which does not appear in the log file
+created by the normal execution of the library. The quantity of output which is generated by this flag
+is however sufficiently large that users should redirect the standard output to a disk file for post-execution
+study. The source code contains OpenMP directives that are active when a C++ compiler with support for OpenMP
+is used for the compilation, assumed to be compatible with the OpenMP 3.1 standard. Both of the branches of
+the Diaplexis library are documented using [Doxygen](http://doxygen.nl/), for which there is a configuration
+file <code>docs.config</code> in the relevant directory that can be modified as needed.
 
-For any questions, comments or suggestions, please contact info@synarmosma.org
-
+For any questions, comments or suggestions, please contact <info@synarmosma.org>
