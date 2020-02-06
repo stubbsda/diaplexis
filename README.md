@@ -40,7 +40,7 @@ created by the normal execution of the library. The quantity of output which is 
 is however sufficiently large that users should redirect the standard output to a disk file for post-execution
 study. The source code contains OpenMP directives that are active when a C++ compiler with support for OpenMP
 is used for the compilation, assumed to be compatible with the OpenMP 3.1 standard. Both of the branches of
-the Diaplexis library are documented using [Doxygen](http://doxygen.nl/), for which there is a configuration
+the Diaplexis library are documented using [Doxygen](doxygen.nl/), for which there is a configuration
 file <code>docs.config</code> in the relevant directory that can be modified as needed.
 
 For any questions, comments or suggestions, please contact <info@synarmosma.org>

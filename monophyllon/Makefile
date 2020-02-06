@@ -13,9 +13,6 @@ OPT         = -O3 -fstrict-aliasing -ftree-vectorize -funroll-loops
 CXX_FLAGS  += $(DEBUG) 
 # Verbose output 
 CXX_FLAGS  += -DVERBOSE 
-# If the Synarmosma library was compiled with the DISCRETE flag, so must 
-# the Diaplexis library
-#CXX_FLAGS += -DDISCRETE
 # Standard linking flags, shouldn't need to be changed
 LD_FLAGS    = -L$(SYNARMOSMA)/lib -Wall -shared -fopenmp
 # Debug or optimized version for linking...
