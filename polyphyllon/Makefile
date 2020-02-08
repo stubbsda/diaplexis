@@ -13,6 +13,10 @@ OPT         = -O3 -fstrict-aliasing -ftree-vectorize -funroll-loops
 CXX_FLAGS  += $(DEBUG) 
 # Verbose output 
 CXX_FLAGS  += -DVERBOSE 
+# Use the 64 bit integer versions of the vertex energy and spatial geometry?
+# If the Synarmosma library was compiled with this parameter, then so does the 
+# Diaplexis library.
+#CXX_FLAGS += -DDISCRETE
 # Standard linking flags, shouldn't need to be changed
 LD_FLAGS    = -L$(SYNARMOSMA)/lib -Wall -shared -fopenmp
 # Debug or optimized version for linking...
