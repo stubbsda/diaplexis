@@ -389,7 +389,7 @@ double Spacetime::chorogenesis()
         derror += d;
       }
       else {
-        derror += std::abs(d - dpopulation[i]);
+        derror += (unsigned) std::abs(int(d - dpopulation[i]));
       }
     }
 #ifdef VERBOSE
