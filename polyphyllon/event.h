@@ -112,6 +112,7 @@ namespace DIAPLEXIS {
     inline void get_entwinement(std::vector<double>& x) const {x = entwinement;};
     /// This method sets the Event::entwinement property to the argument.
     inline void set_entwinement(const std::vector<double>& x) {entwinement = x;};
+    inline void set_entwinement(const double* x,int n) {entwinement.clear(); for(int i=0; i<n; ++i) {entwinement.push_back(x[i]);}};
     /// This method returns the value of the Event::obliquity property.
     inline double get_obliquity() const {return obliquity;};
     /// This method sets the value of the Event::obliquity property to the argument.

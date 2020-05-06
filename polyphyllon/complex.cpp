@@ -241,6 +241,16 @@ bool Complex::consistent(int sheet) const
         std::cout << "Error with ubiquity entailment for vertex: " << vx[1] << std::endl;
         return false;
       }
+      if (events[vx[0]].neighbours.count(vx[1]) == 0) {
+        std::cout << "Edge in simplices array but not neighbour set: " << vx[0] << "  " << vx[1] << std::endl;
+        std::cout << SYNARMOSMA::make_key(simplices[1][i].vertices) << "  " << simplices[1][i].incept << std::endl;
+        return false;
+      }
+      if (events[vx[1]].neighbours.count(vx[0]) == 0) {
+        std::cout << "Edge in simplices array but not neighbour set: " << vx[1] << "  " << vx[0] << std::endl;
+        std::cout << SYNARMOSMA::make_key(simplices[1][i].vertices) << "  " << simplices[1][i].incept << std::endl;
+        return false;
+      }
     }
     for(i=0; i<nv; ++i) {
       if (!events[i].active()) continue;

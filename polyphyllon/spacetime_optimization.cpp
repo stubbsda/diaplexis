@@ -14,7 +14,7 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
   double force[D*nreal];
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,k,S,r_true,it,delta)
+#pragma omp parallel for default(shared) private(i,j,k,delta,r_true,S,it)
 #endif 
   for(i=0; i<nreal; ++i) {
     // This event's force begins at zero...

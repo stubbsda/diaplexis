@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Parameters>
 	<Global>
-		<InitialEvents>81</InitialEvents>
+		<!--InitialEvents>81</InitialEvents-->
+		<InitialEvents>625</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
-		<InitialSheets>3</InitialSheets>
+		<InitialSheets>1</InitialSheets>
 		<InitialDimension>4</InitialDimension>
 		<EuclideanGeometry>1</EuclideanGeometry>
 		<RelationalGeometry>0</RelationalGeometry>
 		<DimensionalUniformity>1</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
 		<MaximumIterations>25</MaximumIterations>
-		<SheetDynamics>1</SheetDynamics>
-		<RandomSeed>0</RandomSeed>
+		<SheetDynamics>0</SheetDynamics>
+		<RandomSeed>88</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>
 		<Superposable>1</Superposable>
 		<Compressible>1</Compressible>

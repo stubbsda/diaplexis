@@ -291,7 +291,7 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel for default(shared) private(i,j,alpha,v1,G)
+#pragma omp parallel for default(shared) private(i,j,k,alpha,v1,G)
 #endif
   for(i=0; i<na; ++i) {
     v1 = avertices[i];
@@ -299,8 +299,8 @@ void Spacetime::structural_deficiency()
     j = skeleton->vertex_dimension(v1);
     alpha = 0.5*double(j - 1) + compute_temporal_vorticity(v1);
     skeleton->compute_graph(&G,v1);
-    alpha += G.completeness();
-    if (G.order() > 1) alpha += G.entwinement()/double(G.order() - 1); 
+    k = G.order();
+    if (k > 1) alpha += G.completeness() + G.median_degree()/double(k - 1);
     skeleton->events[v1].set_entwinement(alpha);
     skeleton->events[v1].set_topological_dimension(j);
     skeleton->events[v1].set_topology_modified(false);

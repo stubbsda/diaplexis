@@ -28,17 +28,16 @@ void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
 void Complex::compute_degree_distribution(bool logarithmic,int sheet) const
 {
   std::vector<double> histogram;
-  SYNARMOSMA::Graph* G = new SYNARMOSMA::Graph;
+  SYNARMOSMA::Graph G;
 
-  compute_graph(G,sheet);
+  compute_graph(&G,sheet);
 
-  G->degree_distribution(logarithmic,histogram);
+  G.degree_distribution(logarithmic,histogram);
 
   std::cout << "Vertex degree histogram (sheet = " << sheet << "):" << std::endl;
   for(int i=0; i<(signed) histogram.size(); ++i) {
     if (histogram[i] > 0) std::cout << i+1 << "  " << 100.0*histogram[i] << std::endl;
   }
-  delete G;
 }
 
 void Complex::compute_connectivity_distribution(bool direct,int sheet) const

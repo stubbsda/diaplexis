@@ -269,17 +269,16 @@ bool Spacetime::correctness()
 void Spacetime::structural_deficiency()
 {
   int i,j,k,v1,v2,v3,c = 0;
-  double alpha,sum,sum1,sum2,l,l_inv,d1,d2,delta,E_total = 0.0;
   bool found;
-  std::vector<double> tvector;
+  double alpha,sum,sum1,sum2,l,l_inv,d1,d2,delta,E_total = 0.0;
   std::set<int> S;
   std::set<int>::const_iterator it;
-  SYNARMOSMA::hash_map::const_iterator qt;
   SYNARMOSMA::Graph G;
+  SYNARMOSMA::hash_map::const_iterator qt;
   const int na = double(skeleton->cardinality(0,-1));
   const int nv = (signed) skeleton->events.size();
   const int nt = (signed) codex.size();
-  double R[nv],gvalue[nv],length_deviation[nv],rho[nv];
+  double R[nv],gvalue[nv],length_deviation[nv],rho[nv],tangle[nt];
   int avertices[na];
 
   for(i=0; i<nv; ++i) {
@@ -296,22 +295,14 @@ void Spacetime::structural_deficiency()
   }
 
 #ifdef _OPENMP
-#pragma omp parallel default(shared) private(i,j,G)
-  {
-#endif
-  std::vector<double> tangle;
-  for(i=0; i<nt; ++i) {
-    tangle.push_back(0.0);
-  }
-#ifdef _OPENMP
-#pragma omp for
+#pragma omp parallel for default(shared) private(i,j,k,sum,tangle,G)
 #endif
   for(i=0; i<nv; ++i) {
     for(j=0; j<nt; ++j) {
       tangle[j] = 0.0;
     }
     if (!skeleton->events[i].active()) {
-      skeleton->events[i].set_entwinement(tangle);
+      skeleton->events[i].set_entwinement(tangle,nt);
       continue;
     }
     if (!skeleton->events[i].get_topology_modified()) continue;
@@ -319,27 +310,19 @@ void Spacetime::structural_deficiency()
       if (!skeleton->events[i].active(j)) continue;
       tangle[j] = 0.5*double(skeleton->vertex_dimension(i,j) - 1) + compute_temporal_vorticity(i,j);
       skeleton->compute_graph(&G,i,j);
-      if (G.order() < 2) continue;
-      tangle[j] += G.completeness();
-      tangle[j] += G.entwinement()/double(G.order() - 1);
+      k = G.order();
+      if (k > 1) tangle[j] += G.completeness() + G.median_degree()/double(k - 1);
     }
-    skeleton->events[i].set_entwinement(tangle);
+    skeleton->events[i].set_entwinement(tangle,nt);
     skeleton->events[i].set_topological_dimension(skeleton->vertex_dimension(i,-1));
     skeleton->events[i].set_topology_modified(false);
-  }
-#ifdef _OPENMP
-  }
-#endif
-
-  for(i=0; i<nv; ++i) {
     sum = 0.0;
-    skeleton->events[i].get_entwinement(tvector);
     for(j=0; j<nt; ++j) {
-      sum += tvector[j];
+      sum += tangle[j];
     }
     gvalue[i] = sum/double(nt);
   }
-  
+
 #ifdef _OPENMP
 #pragma omp parallel for default(shared) private(i,j,k,v1,v2,v3,l,found,d1,d2) schedule(dynamic,1)
 #endif
