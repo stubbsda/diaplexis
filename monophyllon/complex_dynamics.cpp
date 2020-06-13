@@ -69,7 +69,7 @@ double Complex::distribution_fitness(int* volume,const std::vector<int>& affinit
 
 void Complex::distribute(int nprocs) const
 {
-  assert(nprocs > 0);
+  if (nprocs < 1) throw std::invalid_argument("The number of processors must be greater than zero!");
   int i,j,k,n,p,p_old,ecount,bcount,its = 0,volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
   int cneighbour;
   bool done,bdry;
@@ -117,9 +117,11 @@ void Complex::distribute(int nprocs) const
                 affinity[*it] = cproc;
                 volume[cproc] += 1;
               }
+#ifdef DEBUG
               else {
                 assert(affinity[*it] == cproc);
               }
+#endif
             }
           }
         }
@@ -136,7 +138,9 @@ void Complex::distribute(int nprocs) const
                 neg.insert(*it);
               }
               else {
+#ifdef DEBUG
                 assert(affinity[*it] == cproc);
+#endif
                 bdry = true;
               }
             }
@@ -203,7 +207,9 @@ void Complex::distribute(int nprocs) const
       }
       if (next.empty()) break;
       for(it=next.begin(); it!=next.end(); ++it) {
+#ifdef DEBUG
         assert(affinity[*it] == -1);
+#endif
         affinity[*it] = i;
         volume[i] += 1;
         if (volume[i] >= nreal/nprocs) {
@@ -260,6 +266,7 @@ void Complex::distribute(int nprocs) const
 #endif
   } while(its < 10000);
   // Some basic sanity checks: every vertex has a processor...
+#ifdef DEBUG
   n = 0;
   for(i=0; i<nv; ++i) {
     if (!events[i].active) continue;
@@ -272,6 +279,7 @@ void Complex::distribute(int nprocs) const
     n += volume[i];
   }
   assert(n == nreal);
+#endif
   // Analysis of the distribution of vertices and edges among the processors...
   for(i=0; i<nprocs; ++i) {
     ecount = 0; bcount = 0;
@@ -296,9 +304,8 @@ void Complex::distribute(int nprocs) const
 
 double Complex::set_logical_atoms(int n)
 { 
-#ifdef DEBUG
-  assert(n > 0);
-#endif
+  if (n < 1) throw std::invalid_argument("The number of atoms must be greater than zero!");
+
   int i,j,natoms;
   double sigma,output = 0.0;
   std::set<int> cset;

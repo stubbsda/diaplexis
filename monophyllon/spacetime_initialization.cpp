@@ -385,7 +385,9 @@ void Spacetime::initialize()
     geometry->compute_squared_distances();
     skeleton->compute_simplicial_dimension();
     adjust_dimension();
+#ifdef DEBUG
     assert(skeleton->consistent());
+#endif
     skeleton->compute_parity();
     compute_lightcones();
     compute_volume();

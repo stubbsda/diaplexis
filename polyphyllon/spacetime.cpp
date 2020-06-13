@@ -157,6 +157,7 @@ bool Spacetime::advance()
   reversible = true;
 
   // Begin the hyphantic phase...
+  t1.start();
   skeleton->RND->shuffle(order,n);
 
   std::ofstream s1(hyphansis_file,std::ios::app);

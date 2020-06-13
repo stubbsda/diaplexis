@@ -7,21 +7,21 @@ CXX_FLAGS   = -Wall -std=c++14 -fopenmp -march=native -I$(SYNARMOSMA)/include -f
 # For debug mode
 DEBUG       = -g -DDEBUG
 # Optimization values for the g++ on an x86-64 platform
-OPT         = -O3 -fstrict-aliasing -ftree-vectorize -funroll-loops 
+OPT         = -O3 -fstrict-aliasing -ftree-vectorize -funroll-loops
 # Choose either the debug or optimized version of the library
-#CXX_FLAGS  += $(OPT)
-CXX_FLAGS  += $(DEBUG) 
-# Verbose output 
-CXX_FLAGS  += -DVERBOSE 
+CXX_FLAGS  += $(OPT)
+#CXX_FLAGS  += $(DEBUG)
+# Verbose output
+#CXX_FLAGS  += -DVERBOSE
 # Use the 64 bit integer versions of the vertex energy and spatial geometry?
-# If the Synarmosma library was compiled with this parameter, then so does the 
-# Diaplexis library.
+# If the Synarmosma library was compiled with this flag, then the Diaplexis 
+# library must be as well.
 #CXX_FLAGS += -DDISCRETE
 # Standard linking flags, shouldn't need to be changed
 LD_FLAGS    = -L$(SYNARMOSMA)/lib -Wall -shared -fopenmp
 # Debug or optimized version for linking...
-#LD_FLAGS   += $(OPT)
-LD_FLAGS   += $(DEBUG)
+LD_FLAGS   += $(OPT)
+#LD_FLAGS   += $(DEBUG)
 # Name of the LAPACK and BLAS libraries on this platform
 LAPACK      = -llapack -lblas
 # The Boost library on this platform

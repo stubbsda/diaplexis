@@ -284,10 +284,12 @@ void Spacetime::compute_lightcones()
 
 double Spacetime::chorogenesis()
 {
+#ifdef DEBUG
   assert(solver == Geometry_Solver::mechanical);
   assert(edge_probability > 0.3);
   assert(geometry->get_euclidean());
   assert(skeleton->connected(-1));
+#endif
   int dpopulation[1+geometry->dimension()];
   unsigned int i,j;
   std::vector<std::pair<long,int> > factors;
@@ -297,7 +299,9 @@ double Spacetime::chorogenesis()
   SYNARMOSMA::factorize(nv,factors);
   j = 1;
   for(i=0; i<factors.size(); ++i) {
+#ifdef DEBUG
     assert(factors[i].second%D == 0);
+#endif
     j *= SYNARMOSMA::ipow(factors[i].first,factors[i].second/D);
   }
   const int n = j;

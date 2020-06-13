@@ -464,6 +464,9 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps,int sheet) c
         S.insert(v);
         S.insert(w);
         qt = index_table[1].find(S);
+#ifdef DEBUG
+        assert(qt != index_table[1].end());
+#endif
         if (!simplices[1][qt->second].active(sheet)) continue;
         if (offset[w] == -1) {
           offset[w] = G->add_vertex();

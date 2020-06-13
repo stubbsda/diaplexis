@@ -218,12 +218,12 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   // We begin by eliminating the central event along with any events on this 
   // sheet that are within the a sphere of radius "size"
   geometry->get_coordinates(centre,cvertex); 
-  assert(event_deletion(centre,sheet));
+  if (!event_deletion(centre,sheet)) throw std::runtime_error("Failed event deletion in Spacetime::interplication method!");
   for(i=0; i<(signed) skeleton->events.size(); ++i) {
     if (!skeleton->events[i].active(sheet)) continue;
     l = geometry->get_squared_distance(centre,i,false);
     if (l < size) {
-      assert(event_deletion(i,sheet));
+      if (!event_deletion(i,sheet)) throw std::runtime_error("Failed event deletion in Spacetime::interplication method!");
       continue;
     }
     ambient.push_back(std::pair<int,double>(i,l - size));
@@ -242,7 +242,9 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     if (ambient[i].second > 1.5*size) break;
     bvertex.insert(ambient[i].first);
   }
+#ifdef DEBUG
   assert(bvertex.size() > 1);
+#endif
 
   // First add the central element of the knot, a D-simplex
   for(i=0; i<1+D; ++i) {
