@@ -617,13 +617,15 @@ void Spacetime::compute_obliquity()
   }
   int i,j;
   double rho,theta,alpha;
-  bool first;
   std::vector<double> vx,vy;
   std::set<int> N;
-  std::set<int>::const_iterator it;
+  std::set<int>::const_iterator it,spoint;
 
   const double A = 2.5;
 
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,j,rho,theta,alpha,N,vx,vy,it,spoint)
+#endif
   for(i=0; i<nv; ++i) {
     if (!skeleton->active_event(i)) continue;
 
@@ -635,12 +637,8 @@ void Spacetime::compute_obliquity()
     geometry->vertex_difference(i,j,vx);
 
     rho = 0.0;
-    first = true;
-    for(it=N.begin(); it!=N.end(); ++it) {
-      if (first) {
-        first = false;
-        continue;
-      }
+    spoint = std::next(N.begin(),1);
+    for(it=spoint; it!=N.end(); ++it) {
       j = *it;
       geometry->vertex_difference(i,j,vy);
       alpha = geometry->get_argument(vx,vy);
@@ -799,12 +797,14 @@ void Spacetime::compute_volume()
   double prefactor,V,l1,l2,l3;
   std::set<int> S;
   std::vector<std::set<int> > F;
-  SYNARMOSMA::UINT64 q,p = 8;
-  SYNARMOSMA::Matrix<double> A;
+  SYNARMOSMA::UINT64 q;
   SYNARMOSMA::hash_map::const_iterator qt;
 
   compute_lengths();
 
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i,l1,l2,l3,F,qt,V)
+#endif
   for(i=0; i<(signed) skeleton->simplices[2].size(); ++i) {
     // The triangles are a very simple case we can handle
     // without LAPACK thanks to Heron's formula
@@ -827,13 +827,21 @@ void Spacetime::compute_volume()
     n = (signed) skeleton->simplices[i].size();
     q = SYNARMOSMA::factorial(i);
     q *= q;
-    prefactor = 1.0/(double(p)*double(q));
+    prefactor = 1.0/(double(SYNARMOSMA::ipow(2,i))*double(q));
     prefactor *= ((i+1)%2 == 0) ? 1.0 : -1.0;
-    A.initialize(m,m);
+
+#ifdef _OPENMP
+#pragma omp parallel default(shared) private(j,k,l,vx,S,qt,V) 
+    {
+#endif
+    SYNARMOSMA::Matrix<double> A(m);
     for(j=1; j<m; ++j) {
       A.set(0,j,1.0);
       A.set(j,0,1.0);
     }
+#ifdef _OPENMP
+#pragma omp for
+#endif
     for(j=0; j<n; ++j) {
       if (!skeleton->active_simplex(i,j) || !skeleton->simplices[i][j].get_modified()) continue;
       skeleton->simplices[i][j].get_vertices(vx);
@@ -852,7 +860,9 @@ void Spacetime::compute_volume()
       skeleton->simplices[i][j].set_squared_volume(V);
       skeleton->simplices[i][j].set_modified(false);
     }
-    p *= 2;
+#ifdef _OPENMP
+    }
+#endif
   }
 }
 

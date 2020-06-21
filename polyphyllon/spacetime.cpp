@@ -498,7 +498,7 @@ bool Spacetime::global_operations()
     compute_global_topology(-1);
     for(i=0; i<(signed) codex.size(); ++i) {
       compute_global_topology(i);
-    }    
+    }
     structural_deficiency();
   }
 
