@@ -14,7 +14,7 @@ CXX_FLAGS  += $(OPT)
 # Verbose output
 #CXX_FLAGS  += -DVERBOSE
 # Use the 64 bit integer versions of the vertex energy and spatial geometry?
-# If the Synarmosma library was compiled with this flag, then the Diaplexis 
+# If the Synarmosma library was compiled with this flag, then the Diaplexis
 # library must be as well.
 #CXX_FLAGS += -DDISCRETE
 # Standard linking flags, shouldn't need to be changed

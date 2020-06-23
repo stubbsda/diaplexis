@@ -272,9 +272,8 @@ namespace DIAPLEXIS {
 
   bool Complex::edge_exists(int u,int v,int sheet) const
   {
-#ifdef DEBUG
-    assert(u != v);
-#endif
+    if (u == v || u < 0 || v < 0) throw std::invalid_argument("Illegal vertex values in the Complex::edge_exists method!");
+
     std::set<int> vx;
     vx.insert(u); vx.insert(v);
     SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx);  
@@ -290,9 +289,8 @@ namespace DIAPLEXIS {
 
   int Complex::get_edge_index(const std::set<int>& vx) const 
   {
-#ifdef DEBUG
-    assert(vx.size() == 2);
-#endif    
+    if (vx.size() != 2) throw std::invalid_argument("Illegal set cardinality in the Complex::get_edge_index method!");
+    
     SYNARMOSMA::hash_map::const_iterator qt = index_table[1].find(vx); 
     if (qt == index_table[1].end()) return -1;
     return qt->second;

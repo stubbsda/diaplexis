@@ -112,7 +112,8 @@ namespace DIAPLEXIS {
     inline void get_entwinement(std::vector<double>& x) const {x = entwinement;};
     /// This method sets the Event::entwinement property to the argument.
     inline void set_entwinement(const std::vector<double>& x) {entwinement = x;};
-    inline void set_entwinement(const double* x,int n) {entwinement.clear(); for(int i=0; i<n; ++i) {entwinement.push_back(x[i]);}};
+    /// This method sets the Event::entwinement property using a C-style array as the method's first argument, along with an integer second argument that is the array's length.
+    inline void set_entwinement(const double* x,int n);
     /// This method returns the value of the Event::obliquity property.
     inline double get_obliquity() const {return obliquity;};
     /// This method sets the value of the Event::obliquity property to the argument.
@@ -145,6 +146,16 @@ namespace DIAPLEXIS {
     friend std::ostream& operator <<(std::ostream&,const Event&);    
     friend class Complex;
   };
+
+  void Event::set_entwinement(const double* x,int n)
+  {
+    if (n < 1) throw std::invalid_argument("Illegal array length in the Event::set_entwinement method!");
+
+    entwinement.clear(); 
+    for(int i=0; i<n; ++i) {
+      entwinement.push_back(x[i]);
+    }
+  }
 
   bool Event::add_posterior(int n)
   {

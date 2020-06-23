@@ -2,7 +2,7 @@
 <Parameters>
 	<Global>
 		<!--InitialEvents>81</InitialEvents-->
-		<InitialEvents>625</InitialEvents>
+		<InitialEvents>1296</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>1</InitialSheets>
@@ -13,7 +13,7 @@
 		<BackgroundDimension>4</BackgroundDimension>
 		<MaximumIterations>25</MaximumIterations>
 		<SheetDynamics>0</SheetDynamics>
-		<RandomSeed>88</RandomSeed>
+		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>
 		<Superposable>1</Superposable>
 		<Compressible>1</Compressible>
