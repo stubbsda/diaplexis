@@ -1,18 +1,19 @@
-The Diaplexis library is roughly 23,000 lines of C++ code, in its current version, written with the
+The Diaplexis library consists of approximately 24,000 lines of C++ code, written with the
 goal of exploring the numerical dynamics of a combinatorial spacetime model based on a ramified or
 multi-sheeted simplicial complex. Compiling this library requires a modern C++ compiler as well as
-the [Synarmosma library](https://github.com/stubbsda/synarmosma). The current package includes both
+the [Synarmosma library](http://www.synarmosma.org/software/synarmosma/). The current package includes both
 the standard multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that
 assumes the entire spacetime complex exists on a single sheet (Monophyllon). This repository also
 includes an older version of the library, in the <code>old</code> directory, which uses a slower and
 significantly less robust representation of the ubiquity of the spacetime's _n_-simplices. The Diaplexis
 library also depends on various external libraries, which for the most part are also needed to build
-the Synarmosma library: the [Boost library](www.boost.org), Victor Shoup's [NTL](www.shoup.net/ntl) for
-number theory, the [GNU multiprecision library](www.gmplib.org) and an implementation of LAPACK, needed
+the Synarmosma library: the [Boost library](https://www.boost.org), Victor Shoup's [NTL](https://www.shoup.net/ntl) for
+number theory, the GNU [multiprecision library](https://www.gmplib.org) and an implementation of LAPACK, needed
 for the calculation of the eigenvales of dense matrices. The Diaplexis library also requires the
-[PugiXML library](www.pugixml.org) for XML processing, used with the parameter and log files. The
-Diaplexis library is released under the Gnu Public License version 3.0; see the <code>LICENSE.txt</code>
-file or the [Free Software Foundation](www.fsf.org/licensing) for details.
+[PugiXML library](http://www.pugixml.org) for XML processing, used with the parameter and log files, along 
+with an installation of [GraphViz](https://www.graphviz.org) for visualizing the combinatorial topology of the 
+spacetime. The Diaplexis library is released under the Gnu Public License version 3.0; see the 
+<code>LICENSE.txt</code> file or the [Free Software Foundation](https://www.fsf.org/licensing) for details.
 
 To install the Diaplexis library, enter the directory <code>diaplexis</code> and choose between the
 Monophyllon and Polyphyllon versions of the library. After descending into the appropriate directory, the
@@ -40,7 +41,7 @@ created by the normal execution of the library. The quantity of output which is 
 is however sufficiently large that users should redirect the standard output to a disk file for post-execution
 study. The source code contains OpenMP directives that are active when a C++ compiler with support for OpenMP
 is used for the compilation, assumed to be compatible with the OpenMP 3.1 standard. Both of the branches of
-the Diaplexis library are documented using [Doxygen](doxygen.nl/), for which there is a configuration
+the Diaplexis library are documented using [Doxygen](https://www.doxygen.nl/), for which there is a configuration
 file <code>docs.config</code> in the relevant directory that can be modified as needed.
 
 For any questions, comments or suggestions, please contact <info@synarmosma.org>

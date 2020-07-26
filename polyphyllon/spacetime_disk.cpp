@@ -40,8 +40,7 @@ void Spacetime::read_parameters(const std::string& filename)
         initial_state = Initial_Topology::diskfile;
       }
       else {
-        std::cout << "Unrecognized initial state " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized initial state " + value + "!");
       }
       n_is++;
     }
@@ -107,8 +106,7 @@ void Spacetime::read_parameters(const std::string& filename)
         high_memory = false;
       }
       else {
-        std::cout << "Unrecognized memory footprint " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized memory footprint " + value + "!");
       }
     }
     else if (name == "Hyphansis") {
@@ -120,8 +118,7 @@ void Spacetime::read_parameters(const std::string& filename)
         weaving = Hyphansis::dynamic;
       }
       else {
-        std::cout << "Unrecognized hyphansis method " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized hyphansis method " + value + "!");
       }
     }
     else if (name == "HyphansisScore") {
@@ -139,8 +136,7 @@ void Spacetime::read_parameters(const std::string& filename)
         skeleton->set_homology_method(SYNARMOSMA::Homology::Method::native);
       }
       else {
-        std::cout << "Unrecognized homology method " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized homology method " + value + "!");
       }
     }
     else if (name == "HomologyBase") {
@@ -155,8 +151,7 @@ void Spacetime::read_parameters(const std::string& filename)
         skeleton->set_homology_field(SYNARMOSMA::Homology::Field::mod2);
       }
       else {
-        std::cout << "Unrecognized homology base field " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized homology base field " + value + "!");
       }
     }
     else if (name == "Compressible") {
@@ -191,7 +186,10 @@ void Spacetime::read_parameters(const std::string& filename)
 
     if (name == "SolverType") {
       std::transform(value.begin(),value.end(),value.begin(),::toupper);
-      if (value == "MECHANICAL") {
+      if (value == "MINIMAL") {
+        solver = Geometry_Solver::minimal;
+      }
+      else if (value == "MECHANICAL") {
         solver = Geometry_Solver::mechanical;
       }
       else if (value == "EVOLUTIONARY") {
@@ -200,15 +198,11 @@ void Spacetime::read_parameters(const std::string& filename)
       else if (value == "ANNEALING") {
         solver = Geometry_Solver::annealing;
       }
-      else if (value == "MINIMAL") {
-        solver = Geometry_Solver::minimal;
-      }
       else if (value == "SIMPLEX") {
         solver = Geometry_Solver::simplex;
       }
       else {
-        std::cout << "Unrecognized geometry solver " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized geometry solver " + value + "!");
       }
       n_so++;
     }
@@ -245,8 +239,7 @@ void Spacetime::read_parameters(const std::string& filename)
         engine = Integrator::rk4;
       }
       else {
-        std::cout << "Unrecognized integration engine " << value << "!" << std::endl;
-        std::exit(1);
+        throw std::runtime_error("Unrecognized integration engine " + value + "!");
       }
     }
     else if (name == "StepSize") {
@@ -309,8 +302,8 @@ void Spacetime::read_parameters(const std::string& filename)
   assert(D > 0);
 
   if (weaving == Hyphansis::dynamic) {
-    assert(parity_mutation >= 0.0);
-    assert(parity_mutation <= 1.0);
+    assert(parity_mutation > -std::numeric_limits<double>::epsilon());
+    assert((parity_mutation - 1.0) < std::numeric_limits<double>::epsilon());
   }
   else {
     // Make sure the score file exists
@@ -341,17 +334,6 @@ void Spacetime::read_parameters(const std::string& filename)
   if (solver == Geometry_Solver::minimal) {
     assert(solver_its > 0);
   }
-  else if (solver == Geometry_Solver::evolutionary) {
-    assert(pool_size > 0);
-    assert(ngenerations > 0);
-    assert(njousts > 0);
-  }
-  else if (solver == Geometry_Solver::annealing) {
-    assert(annealing_steps > 0);
-    assert(thermalization > std::numeric_limits<double>::epsilon());
-    assert(thermal_variance > std::numeric_limits<double>::epsilon());
-    assert(thermal_sweep > 0);
-  }
   else if (solver == Geometry_Solver::mechanical) {
     if (!relational && !uniform) throw std::invalid_argument("Mechanical solver requires dimensional uniformity when geometry is absolute!");
     assert(step_size > std::numeric_limits<double>::epsilon() && (step_size - 1.0) < -std::numeric_limits<double>::epsilon());
@@ -364,6 +346,17 @@ void Spacetime::read_parameters(const std::string& filename)
       assert(max_LS_steps > 0);
       assert(edge_flexibility_threshold > std::numeric_limits<double>::epsilon());
     }
+  }
+  else if (solver == Geometry_Solver::evolutionary) {
+    assert(pool_size > 0);
+    assert(ngenerations > 0);
+    assert(njousts > 0);
+  }
+  else if (solver == Geometry_Solver::annealing) {
+    assert(annealing_steps > 0);
+    assert(thermalization > std::numeric_limits<double>::epsilon());
+    assert(thermal_variance > std::numeric_limits<double>::epsilon());
+    assert(thermal_sweep > 0);
   }
   else if (solver == Geometry_Solver::simplex) {
     assert(simplex_alpha > std::numeric_limits<double>::epsilon());
@@ -400,7 +393,7 @@ void Spacetime::write_log() const
   if (fcall) {
     char hostname[80];
     std::string sname[] = {"RANDOM","MONOPLEX","CARTESIAN","SINGLETON","DISKFILE"};
-    std::string hname[] = {"Minimal","Conjugate Gradient","Evolutionary","Simulated Annealing","Simplex"};
+    std::string hname[] = {"MINIMAL","MECHANICAL","EVOLUTIONARY","ANNEALING","SIMPLEX"};
 
     gethostname(hostname,80);
 
@@ -478,17 +471,6 @@ void Spacetime::write_log() const
     if (solver == Geometry_Solver::minimal) {
       s << "<SolverIterations>" << solver_its << "</SolverIterations>" << std::endl;
     }
-    else if (solver == Geometry_Solver::evolutionary) {
-      s << "<MaximumGenerations>" << ngenerations << "</MaximumGenerations>" << std::endl;
-      s << "<MaximumJousts>" << njousts << "</MaximumJousts>" << std::endl;
-      s << "<PoolSize>" << pool_size << "<</PoolSize>" << std::endl;
-    }
-    else if (solver == Geometry_Solver::annealing) {
-      s << "<ThermalVariance>" << thermal_variance << "</ThermalVariance>" << std::endl;
-      s << "<ThermalSweeps>" << thermal_sweep << "</ThermalSweeps>" << std::endl;
-      s << "<AnnealingSteps>" << annealing_steps << "</AnnealingSteps>" << std::endl;
-      s << "<ThermalizationCriterion>" << thermalization << "</ThermalizationCriterion>" << std::endl;
-    }
     else if (solver == Geometry_Solver::mechanical) {
       if (engine == Integrator::euler) {
         s << "<IntegrationEngine>EULER</IntegrationEngine>" << std::endl;
@@ -507,6 +489,17 @@ void Spacetime::write_log() const
         s << "<MaximumLineSolverSteps>" << max_LS_steps << "</MaximumLineSolverSteps>" << std::endl;
         s << "<EdgeFlexibilityThreshold>" << edge_flexibility_threshold << "</EdgeFlexibilityThreshold>" << std::endl;
       }
+    }
+    else if (solver == Geometry_Solver::evolutionary) {
+      s << "<MaximumGenerations>" << ngenerations << "</MaximumGenerations>" << std::endl;
+      s << "<MaximumJousts>" << njousts << "</MaximumJousts>" << std::endl;
+      s << "<PoolSize>" << pool_size << "<</PoolSize>" << std::endl;
+    }
+    else if (solver == Geometry_Solver::annealing) {
+      s << "<ThermalVariance>" << thermal_variance << "</ThermalVariance>" << std::endl;
+      s << "<ThermalSweeps>" << thermal_sweep << "</ThermalSweeps>" << std::endl;
+      s << "<AnnealingSteps>" << annealing_steps << "</AnnealingSteps>" << std::endl;
+      s << "<ThermalizationCriterion>" << thermalization << "</ThermalizationCriterion>" << std::endl;
     }
     else if (solver == Geometry_Solver::simplex) {
       s << "<ReflectionCoefficient>" << simplex_alpha << "</ReflectionCoefficient>" << std::endl;
@@ -1000,12 +993,7 @@ void Spacetime::read_state(const std::string& filename)
   Sheet t;
 
   std::ifstream s(filename,std::ios::in | std::ios::binary);
-  if (!s.is_open()) {
-    // File doesn't exist, print an error message and die
-    std::cerr << "The file " << filename << " cannot be found." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
-  }
+  if (!s.is_open()) throw std::invalid_argument("The file " + filename + " cannot be opened!");
 
   clear();
 
@@ -1014,73 +1002,55 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&n),sizeof(int));
   if (n != 2) {
     s.close();
-    std::cerr << "Reading in a state file for non-polyphyllon version of the Diaplexis library." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("Reading in a state file for non-polyphyllon version of the Diaplexis library!"); 
   }
 
   s.read((char*)(&n),sizeof(int));
   if (n != Complex::ND) {
     s.close();
-    std::cerr << "The compiled binary's maximum simplicial dimension " << Complex::ND << " does not match that (" << n << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's maximum simplicial dimension " + std::to_string(Complex::ND) + " does not match that (" + std::to_string(n) + ") of the data file!");
   }
 
   s.read((char*)(&n),sizeof(int));
   if (n != (signed) SYNARMOSMA::Proposition::get_clause_size()) {
     s.close();
-    std::cerr << "The compiled binary's atomic clause number " << SYNARMOSMA::Proposition::get_clause_size() << " does not match that (" << n << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's propositional clause size " + std::to_string(SYNARMOSMA::Proposition::get_clause_size()) + " does not match that (" + std::to_string(n) + ") of the data file!");
   }
 
   s.read((char*)(&n),sizeof(int));
   if (n != Complex::topological_radius) {
     s.close();
-    std::cerr << "The compiled binary's topological radius " << Complex::topological_radius << " does not match that (" << n << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::topological_radius property " + std::to_string(Complex::topological_radius) + " does not match that (" + std::to_string(n) + ") of the data file!");
   }
 
   s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::ramosity)) {
     s.close();
-    std::cerr << "The compiled binary's ramosity " << Spacetime::ramosity << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::ramosity property " + std::to_string(Spacetime::ramosity) + " does not match that (" + std::to_string(x) + ") of the data file!");
   }
 
   s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::convergence_threshold)) {
     s.close();
-    std::cerr << "The compiled binary's convergence criterion " << Spacetime::convergence_threshold << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::convergence_threshold property " + std::to_string(Spacetime::convergence_threshold) + " does not match that (" + std::to_string(x) + ") of the data file!");
   }
 
   s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::T_zero)) {
     s.close();
-    std::cerr << "The compiled binary's T_zero " << Spacetime::T_zero << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::T_zero property " + std::to_string(Spacetime::T_zero) + " does not match that (" + std::to_string(x) + ") of the data file!");
   }
 
   s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::kappa)) {
     s.close();
-    std::cerr << "The compiled binary's kappa " << Spacetime::kappa << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::kappa property " + std::to_string(Spacetime::kappa) + " does not match that (" + std::to_string(x) + ") of the data file!");
   }
 
   s.read((char*)(&x),sizeof(double));
   if (!SYNARMOSMA::double_equality(x,Spacetime::Lambda)) {
     s.close();
-    std::cerr << "The compiled binary's Lambda " << Spacetime::Lambda << " does not match that (" << x << ") of the data file." << std::endl;
-    std::cerr << "Exiting..." << std::endl;
-    std::exit(1);
+    throw std::runtime_error("The compiled binary's Spacetime::Lambda property " + std::to_string(Spacetime::Lambda) + " does not match that (" + std::to_string(x) + ") of the data file!");
   }
 
   s.read((char*)(&initial_size),sizeof(int));

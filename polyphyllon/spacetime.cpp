@@ -406,9 +406,9 @@ void Spacetime::structural_deficiency()
     rho[v1] = skeleton->events[v1].get_energy(); 
     // Sanity checks...
 #ifdef DEBUG
-    assert(!std::isnan(R[v1])); 
-    assert(!std::isnan(rho[v1])); 
-    assert(!std::isnan(length_deviation[v1]));
+    if (std::isnan(R[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1)); 
+    if (std::isnan(rho[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1)); 
+    if (std::isnan(length_deviation[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1));
 #endif
   }
 

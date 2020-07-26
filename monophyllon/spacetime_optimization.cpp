@@ -131,10 +131,7 @@ void Spacetime::mechanical_solver()
         break;
       }
       for(i=0; i<2*D*nreal; ++i) {
-        if (std::isnan(ynew[i])) {
-          std::cout << "NaN detected in mechanical solver at iteration " << its << std::endl;
-          std::exit(1);
-        }
+        if (std::isnan(ynew[i])) throw std::runtime_error("NaN detected in mechanical solver at iteration " + std::to_string(its));
       }
       y = ynew; 
       its++;
@@ -187,10 +184,7 @@ void Spacetime::mechanical_solver()
         break;
       }
       for(i=0; i<2*D*nreal; ++i) {
-        if (std::isnan(ynew[i])) {
-          std::cout << "NaN detected in mechanical solver at iteration " << its << std::endl;
-          std::exit(1);
-        }
+        if (std::isnan(ynew[i])) throw std::runtime_error("NaN detected in mechanical solver at iteration " + std::to_string(its));
       }
       y = ynew; 
       its++;
