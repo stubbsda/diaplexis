@@ -540,7 +540,7 @@ namespace DIAPLEXIS {
     ~Spacetime();
     /// This is the main public method of this class, which evolves the spacetime over a set of relaxation steps until Spacetime::converged is true or the number of steps exceeds Spacetime::max_iter. The method returns the value of Spacetime::error at completion.
     double evolve();
-    /// This method is similar to evolve(), in that it carries out a simulation of the spacetime but this time with the goal of adapting the topology to the geometric constraints (e.g. dimensionality). The spacetime is assumed to start in a state with many edges, some of which must be deleted to match the geometry and degree distribution for a regular space. The method returns the value of Spacetime::error at completion. 
+    /// This method is similar to evolve(), in that it carries out a simulation of the spacetime but in this case with the goal of adapting the topology to the geometric constraints (e.g. dimensionality). The spacetime is assumed to start in a state with many edges, some of which must be deleted to match the geometry and degree distribution for a regular space. The method returns the value of Spacetime::error at completion. 
     double chorogenesis();
     /// This method writes (using an offset to handle events and edges not belonging to the sheet) the coordinates of the spacetime's events in the first argument, an edge table (listing the two event indices) in the second argument and the third argument is a pair of integers containing the number of events and edges belonging to the sheet. The sheet index is the method's final argument.
     void export_visual_data(std::vector<float>&,std::vector<int>&,std::pair<int,int>&,int) const;
@@ -562,7 +562,7 @@ namespace DIAPLEXIS {
     inline int get_background_dimension() const {return geometry->dimension();};
     /// This method returns the value of Spacetime::state_file.
     inline std::string get_state_file() const {return state_file;};
-    /// This method calls the arclength_statistics() method with the same arguments.
+    /// This method furnishes a public version of the arclength_statistics() method, using the same arguments.
     inline void get_arclength_statistics(double* output,int sheet) const {arclength_statistics(output,sheet);};
     /// This method returns the value of Spacetime::iterations.
     inline int get_iterations() const {return iterations;};

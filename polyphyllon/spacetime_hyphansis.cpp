@@ -28,7 +28,7 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
   // I2 <=> G4 sharp*
   // E1 <=> G4
   // I1 <=> F4
-  std::string output = "NULL";
+  std::string output = "";
   parameters.clear();
   switch (key) {
     case 45:
@@ -78,7 +78,6 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
       break;
     default:
       throw std::invalid_argument("Illegal key value in implicative scale!");
-      break;
   }
   return output;
 }
@@ -104,7 +103,7 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
   // Ox <=> F3 sharp*
   // N1 <=> G3*
   // Ux1 <=> A3*
-  std::string output = "NULL";
+  std::string output = "";
   parameters.clear();
   switch (key) {
     case 37:
@@ -149,7 +148,6 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
       break;
     default:
       throw std::invalid_argument("Illegal key value in explicative scale!");
-      break;
   }
   return output;
 }
