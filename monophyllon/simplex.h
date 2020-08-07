@@ -60,43 +60,126 @@ namespace DIAPLEXIS {
     /// The overloaded assignment operator for this class, which behaves exactly like the copy constructor for this class.
     Simplex& operator =(const Simplex&);
     /// This method sets the Simplex::active property to true as well as noting that the topology has been modified.
-    inline void activate() {active = true; modified = true;};
+    void activate();
     /// This method sets the Simplex::active property to false as well as noting that the topology has been modified.
-    inline void deactivate() {active = false; modified = true;};
+    void deactivate();
     /// This method sets the inherited entourage property to the argument.
-    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    void set_entourage(const std::set<int>&);
     /// This method clears the inherited entourage property.
-    inline void clear_entourage() {entourage.clear();};
+    void clear_entourage();
     /// This method returns the value of the Simplex::parity property.
-    inline int get_parity(int,int) const {return parity;};
+    int get_parity() const;
     /// This method returns the value of the Simplex::modified property.
-    inline bool get_modified() const {return modified;};
+    bool get_modified() const;
     /// This method sets the value of the Simplex::modified property to the argument.
-    inline void set_modified(bool t) {modified = t;};
+    void set_modified(bool);
     /// This method returns the value of the Simplex::incept property.
-    inline int get_incept() const {return incept;};
+    int get_incept() const;
     /// This method sets the value of the Simplex::incept property to the argument.
-    inline void set_incept(int n) {incept = n;};
+    void set_incept(int);
     /// This method returns the value of the Simplex::energy property.
-    inline double get_energy() const {return energy;};
+    double get_energy() const;
     /// This method returns the value of the Simplex::volume property.
-    inline double get_volume() const {return volume;};
+    double get_volume() const;
     /// This method sets the value of the Simplex::sq_volume property to the argument and then also recomputes the Simplex::volume property.
-    inline void set_squared_volume(double V) {sq_volume = V; volume = std::sqrt(std::abs(V));};
+    void set_squared_volume(double);
     /// This method returns the value of the Simplex::sq_volume property.
-    inline double get_squared_volume() const {return sq_volume;};
+    double get_squared_volume() const;
     /// This method assumes the geometry is Lorentzian and returns true if the squared volume of the simplex is negative. 
-    inline bool timelike() const {return (sq_volume < -std::numeric_limits<double>::epsilon());};
+    bool timelike() const;
     /// This method assumes the geometry is Lorentzian and returns true if the squared volume of the simplex is positive. 
-    inline bool spacelike() const {return (sq_volume > std::numeric_limits<double>::epsilon());};
+    bool spacelike() const;
     /// This method assumes the geometry is Lorentzian and returns true if the simplex is neither timelike nor spacelike, so that its volume is zero.
-    inline bool lightlike() const {return (!timelike() && !spacelike());};
+    bool lightlike() const;
     /// This overloaded operator returns a simplex whose vertex set is the intersection of the vertices of its two arguments. The output's Simplex::active property is the conjunction of the same property of its arguments and the Simplex::parity of the output is the product of the same property of its arguments.
     friend Simplex operator ^(const Simplex&,const Simplex&);
     /// This method overrides the ostream operator so as to do a pretty print of an instance of the class.
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
     friend class Complex;
   };
+
+  inline void Simplex::activate() 
+  {
+    active = true; 
+    modified = true;
+  }
+
+  inline void Simplex::deactivate() 
+  {
+    active = false; 
+    modified = true;
+  }
+
+  inline void Simplex::set_entourage(const std::set<int>& N)
+  {
+    entourage = N;
+  }
+
+  inline void Simplex::clear_entourage() 
+  {
+    entourage.clear();
+  }
+
+  inline int Simplex::get_parity() const
+  {
+    return parity;
+  }
+
+  inline bool Simplex::get_modified() const
+  {
+    return modified;
+  }
+
+  inline void Simplex::set_modified(bool t)
+  {
+    modified = t;
+  }
+
+  inline int Simplex::get_incept() const
+  {
+    return incept;
+  }
+
+  inline void Simplex::set_incept(int n)
+  {
+    incept = n;
+  }
+
+  inline double Simplex::get_energy() const
+  {
+    return energy;
+  }
+
+  inline double Simplex::get_volume() const
+  {
+    return volume;
+  }
+
+  inline void Simplex::set_squared_volume(double V) 
+  {
+    sq_volume = V; 
+    volume = std::sqrt(std::abs(V));
+  }
+
+  inline double Simplex::get_squared_volume() const 
+  {
+    return sq_volume;
+  }
+
+  inline bool Simplex::timelike() const 
+  {
+    return (sq_volume < -std::numeric_limits<double>::epsilon());
+  }
+
+  inline bool Simplex::spacelike() const 
+  {
+    return (sq_volume > std::numeric_limits<double>::epsilon());
+  }
+
+  inline bool Simplex::lightlike() const 
+  {
+    return (!timelike() && !spacelike());
+  }
 }
 #endif
 

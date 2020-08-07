@@ -485,7 +485,7 @@ namespace DIAPLEXIS {
     double representational_energy(bool) const;
 
     /// This method returns a string containing a compact summary of which sheets are active (1) and which dormant (0), in the form "(0,1,1,0,...,0,1)" with length equal to the number of sheets.
-    inline std::string sheet_activity() const;
+    std::string sheet_activity() const;
     /// This method causes the sheet indicated by the argument to undergo branching, creating one to four daughter sheets (the number of new sheets is the method's return value) from the parent sheet. This method is invoked by the sheet_dynamics() method.
     int sheet_fission(int);
     /// This method is only called if Spacetime::foliodynamics is true and is responsible for spawning new sheets from existing sheets as well as modifying the Sheet::active property for these existing sheets. The method returns the number of newly created sheets.
@@ -547,9 +547,9 @@ namespace DIAPLEXIS {
     /// This method writes the coordinates (second argument), edge table (third argument) and the total number of events and edges (the pair of integers that is the fourth argument). The first argument is a vector of colours for each event with inactive events and edges set to be invisible; the final argument determines the basis for the colouring scheme, using energy or deficiency values.
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,std::pair<int,int>&,bool) const;
     /// This method sets the value of Spacetime::checkpoint_frequency to the method's argument.
-    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
+    void set_checkpoint_frequency(int);
     /// This method sets the second argument to the coordinates of the event whose index is the first argument.
-    inline void get_coordinates(int n,std::vector<double>& x) const {geometry->get_coordinates(n,x);};
+    void get_coordinates(int,std::vector<double>&) const;
     /// This method collects the coordinates of all active events in the spacetime, stored in the argument as a vector of a length equal to the product of the background dimension and the number of active events.
     void get_coordinates(std::vector<double>&) const;
     /// This method computes the maximum and minimum energy over the set of active events and sets the argument's two elements to them. 
@@ -557,34 +557,34 @@ namespace DIAPLEXIS {
     /// This method computes the maximum and minimum deficiency over the set of active events and sets the argument's two elements to them. 
     void get_deficiency_extrema(std::pair<double,double>&) const;
     /// This method returns the square of the distance between the two events that are the method's arguments. 
-    inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
+    double get_geometric_distance(int,int) const;
     /// This method returns the background dimension of the Spacetime::geometry property.
-    inline int get_background_dimension() const {return geometry->dimension();};
+    int get_background_dimension() const;
     /// This method returns the value of Spacetime::state_file.
-    inline std::string get_state_file() const {return state_file;};
+    std::string get_state_file() const;
     /// This method furnishes a public version of the arclength_statistics() method, using the same arguments.
-    inline void get_arclength_statistics(double* output,int sheet) const {arclength_statistics(output,sheet);};
+    void get_arclength_statistics(double*,int) const;
     /// This method returns the value of Spacetime::iterations.
-    inline int get_iterations() const {return iterations;};
+    int get_iterations() const;
     /// This method returns the value of Spacetime::error.
-    inline double get_error() const {return error;};
+    double get_error() const;
     /// This method returns the value of Spacetime::max_iter.
-    inline int get_maximum_iterations() const {return max_iter;};
+    int get_maximum_iterations() const;
     /// This method returns the value of Spacetime::converged.
-    inline bool is_converged() const {return converged;};
+    bool finished() const;
     /// This method accepts as its first two arguments the dimension d and index n of a d-simplex (d >= 0) and then computes a representation of its ubiquity property as a string, the final argument. This string has the form "{0,1,1,0,...,1,0,1}" where the number of elements is equal to length of Spacetime::codex.  
     void get_ubiquity(int,int,std::string&) const;
     /// This method computes a vector with two distinct parts: the first is of length equal to the number of active events multiplied by the number of sheets and contains a 0 or 1 for the sheet membership of each such event. The second part of the vector is the same layout but for the spacetime's active edges.  
     void get_ubiquity_vector(std::vector<int>&) const;
     /// This method returns the string of hyphantic operations performed for a given sheet.
-    inline std::string get_sheet_ops(int n) const {return codex[n].hyphantic_ops;};
-    /// This method returns the output of the sheet_activity() method.
-    inline std::string get_sheet_activity() const {return sheet_activity();};
+    std::string get_sheet_ops(int) const;
+    /// This method furnishes a public version of the sheet_activity() method.
+    std::string get_sheet_activity() const;
     /// This method returns the total number of sheets, active and inactive, of the spacetime at the moment it is invoked. 
-    inline int get_codex_size() const {return (signed) codex.size();};
+    int get_codex_size() const;
   };
 
-  std::string Spacetime::sheet_activity() const
+  inline std::string Spacetime::sheet_activity() const
   {
     std::string out = "(";
     for(int i=0; i<(signed) codex.size()-1; ++i) {
@@ -593,6 +593,70 @@ namespace DIAPLEXIS {
     out += boost::lexical_cast<std::string>(codex[codex.size()-1].active);
     out += ")";
     return out;
+  }
+
+  inline void Spacetime::set_checkpoint_frequency(int n) 
+  {
+    checkpoint_frequency = n;
+  }
+
+  inline void Spacetime::get_coordinates(int n,std::vector<double>& x) const 
+  {
+    geometry->get_coordinates(n,x);
+  }
+
+  inline double Spacetime::get_geometric_distance(int n,int m) const
+  {
+    return geometry->get_squared_distance(n,m,false);
+  }
+
+  inline int Spacetime::get_background_dimension() const
+  {
+    return geometry->dimension();
+  }
+
+  inline std::string Spacetime::get_state_file() const 
+  {
+    return state_file;
+  }
+
+  inline void Spacetime::get_arclength_statistics(double* output,int sheet) const 
+  {
+    arclength_statistics(output,sheet);
+  }
+
+  inline int Spacetime::get_iterations() const
+  {
+    return iterations;
+  }
+
+  inline double Spacetime::get_error() const
+  {
+    return error;
+  }
+
+  inline int Spacetime::get_maximum_iterations() const 
+  {
+    return max_iter;
+  }
+
+  inline bool Spacetime::finished() const 
+  {
+    return converged;
+  }
+
+  inline std::string Spacetime::get_sheet_ops(int n) const 
+  {
+    return codex[n].hyphantic_ops;
+  }
+
+  inline std::string Spacetime::get_sheet_activity() const {
+    return sheet_activity();
+  }
+
+  inline int Spacetime::get_codex_size() const
+  {
+    return (signed) codex.size();
   }
 }
 #endif

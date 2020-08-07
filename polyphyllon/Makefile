@@ -32,7 +32,7 @@ LIBS        = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lgmp -lm
 INSTALL_DIR = $(HOME)/fabrica/local
 # End of user-modifiable parameters!
 
-HEADERS    = event.h simplex.h sheet.h spacetime.h
+HEADERS    = event.h simplex.h complex.h spacetime.h sheet.h
 
 OBJECTS = spacetime.o spacetime_disk.o spacetime_visualization.o spacetime_optimization.o spacetime_geometry.o \
 spacetime_hyphansis.o spacetime_initialization.o spacetime_explication.o spacetime_implication.o event.o complex.o \

@@ -503,9 +503,9 @@ namespace DIAPLEXIS {
     /// This method writes the coordinates (second argument), edge table (third argument) and the total number of events and edges (the pair of integers that is the fourth argument). The first argument is a vector of colours for each event with inactive events and edges set to be invisible; the final argument determines the basis for the colouring scheme, using energy or deficiency values.
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,std::pair<int,int>&,bool) const;
     /// This method sets the value of Spacetime::checkpoint_frequency to the method's argument.
-    inline void set_checkpoint_frequency(int n) {checkpoint_frequency = n;};
+    void set_checkpoint_frequency(int);
     /// This method sets the second argument to the coordinates of the event whose index is the first argument.
-    inline void get_coordinates(int n,std::vector<double>& x) const {geometry->get_coordinates(n,x);};
+    void get_coordinates(int,std::vector<double>&) const;
     /// This method collects the coordinates of all active events in the spacetime, stored in the argument as a vector of a length equal to the product of the background dimension and the number of active events.
     void get_coordinates(std::vector<double>&) const;
     /// This method computes the maximum and minimum energy over the set of active events and sets the argument's two elements to them. 
@@ -513,24 +513,79 @@ namespace DIAPLEXIS {
     /// This method computes the maximum and minimum deficiency over the set of active events and sets the argument's two elements to them. 
     void get_deficiency_extrema(std::pair<double,double>&) const;
     /// This method returns the square of the distance between the two events that are the method's arguments. 
-    inline double get_geometric_distance(int n,int m) const {return geometry->get_squared_distance(n,m,false);};
+    double get_geometric_distance(int,int) const;
     /// This method returns the background dimension of the Spacetime::geometry property.
-    inline int get_background_dimension() const {return geometry->dimension();};
+    int get_background_dimension() const;
     /// This method returns the value of Spacetime::state_file.
-    inline std::string get_state_file() const {return state_file;};
+    std::string get_state_file() const;
     /// This method returns the value of Spacetime::hyphantic_ops.
-    inline std::string get_hyphantic_operations() const {return hyphantic_ops;};
+    std::string get_hyphantic_operations() const;
     /// This method furnishes a public version of the arclength_statistics() method, using the same argument.
-    inline void get_arclength_statistics(double* output) const {arclength_statistics(output);};
+    void get_arclength_statistics(double* output) const;
     /// This method returns the value of Spacetime::iterations.
-    inline int get_iterations() const {return iterations;};
+    int get_iterations() const;
     /// This method returns the value of Spacetime::error.
-    inline double get_error() const {return error;};
+    double get_error() const;
     /// This method returns the value of Spacetime::max_iter.
-    inline int get_maximum_iterations() const {return max_iter;};
+    int get_maximum_iterations() const;
     /// This method returns the value of Spacetime::converged.
-    inline bool is_converged() const {return converged;};
+    bool finished() const;
   };
+
+  inline void Spacetime::set_checkpoint_frequency(int n) 
+  {
+    checkpoint_frequency = n;
+  }
+
+  inline void Spacetime::get_coordinates(int n,std::vector<double>& x) const 
+  {
+    geometry->get_coordinates(n,x);
+  }
+
+  inline double Spacetime::get_geometric_distance(int n,int m) const
+  {
+    return geometry->get_squared_distance(n,m,false);
+  }
+
+  inline int Spacetime::get_background_dimension() const
+  {
+    return geometry->dimension();
+  }
+
+  inline std::string Spacetime::get_state_file() const 
+  {
+    return state_file;
+  }
+
+  inline std::string Spacetime::get_hyphantic_operations() const
+  {
+    return hyphantic_ops;
+  }
+
+  inline void Spacetime::get_arclength_statistics(double* output) const 
+  {
+    arclength_statistics(output);
+  }
+
+  inline int Spacetime::get_iterations() const
+  {
+    return iterations;
+  }
+
+  inline double Spacetime::get_error() const
+  {
+    return error;
+  }
+
+  inline int Spacetime::get_maximum_iterations() const 
+  {
+    return max_iter;
+  }
+
+  inline bool Spacetime::finished() const 
+  {
+    return converged;
+  }
 }
 #endif
 

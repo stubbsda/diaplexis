@@ -58,81 +58,103 @@ namespace DIAPLEXIS {
     /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
     int deserialize(std::ifstream&) override;
     /// This method sets the Event::active property to true as well as noting that the topology has been modified.
-    inline void activate() {active = true; topology_modified = true;};
+    void activate();
     /// This method sets the Event::active property to false as well as noting that the topology has been modified.
-    inline void deactivate() {active = false; topology_modified = true;};
+    void deactivate();
     /// This method clears the inherited posterior property.
-    inline void clear_posterior() {posterior.clear();};
+    void clear_posterior();
     /// This method sets the argument to the inherited posterior property.
-    inline void get_posterior(std::set<int>& N) const {N = posterior;};
+    void get_posterior(std::set<int>&) const;
     /// This method adds the argument to the inherited posterior property and returns true if it was not already a member of this set.
-    inline bool add_posterior(int);
+    bool add_posterior(int);
     /// This method clears the inherited anterior property.
-    inline void clear_anterior() {anterior.clear();};
+    void clear_anterior();
     /// This method sets the argument to the inherited anterior property.
-    inline void get_anterior(std::set<int>& N) const {N = anterior;};
+    void get_anterior(std::set<int>&) const;
     /// This method adds the argument to the inherited anterior property and returns true if it was not already a member of this set.
-    inline bool add_anterior(int);
+    bool add_anterior(int);
     /// This method clears the inherited entourage property.
-    inline void clear_entourage() {entourage.clear();};
-    /// This method sets the inherited entourage property to the argument.
-    inline void set_entourage(const std::set<int>& N) {entourage = N;};
+    void clear_entourage();
     /// This method sets the argument equal to the inherited entourage property.
-    inline void get_entourage(std::set<int> N) const {N = entourage;};
+    void get_entourage(std::set<int>&) const;
+    /// This method sets the inherited entourage property to the argument.
+    void set_entourage(const std::set<int>&);
     /// This method removes the argument from the inherited entourage property, returning true if the element was a member of the entourage and false otherwise.
-    inline bool drop_entourage(int);
+    bool drop_entourage(int);
     /// This method sets the argument to the inherited neighbours property.
-    inline void get_neighbours(std::set<int>& N) const {N = neighbours;};
+    void get_neighbours(std::set<int>&) const;
     /// This method sets the inherited neighbours property to the argument as well as setting Event::topology_modified to true.
-    inline void set_neighbours(const std::set<int>& N) {neighbours = N; topology_modified = true;};
+    void set_neighbours(const std::set<int>&);
     /// This method returns true if the argument is an element of the inherited neighbours property and false otherwise.
-    inline bool is_neighbour(int n) const {return (neighbours.count(n) > 0);};
+    bool is_neighbour(int) const;
     /// This method adds the argument to the inherited neighbours property and returns true if this is a new neighbour, as well as setting the Event::topology_modified property to true.
-    inline bool add_neighbour(int);
+    bool add_neighbour(int);
     /// This method deletes the argument from the inherited neighbours property and returns true if this was indeed a neighbour, as well as setting the Event::topology_modified property to true.
-    inline bool drop_neighbour(int);
+    bool drop_neighbour(int);
     /// This method returns the value of the Event::deficiency property.
-    inline double get_deficiency() const {return deficiency;};
+    double get_deficiency() const;
     /// This method sets the value of the Event::deficiency property to the argument.
-    inline void set_deficiency(double x) {deficiency = x;};
+    void set_deficiency(double);
     /// This method returns the value of the Event::entwinement property.
-    inline double get_entwinement() const {return entwinement;};
+    double get_entwinement() const;
     /// This method sets the value of the Event::entwinement property to the argument.
-    inline void set_entwinement(double x) {entwinement = x;};
+    void set_entwinement(double);
     /// This method returns the value of the Event::obliquity property.
-    inline double get_obliquity() const {return obliquity;};
+    double get_obliquity() const;
     /// This method sets the value of the Event::obliquity property to the argument.
-    inline void set_obliquity(double x) {obliquity = x;};
+    void set_obliquity(double);
     /// This method returns the value of the inherited incept property.
-    inline int get_incept() const {return incept;};
+    int get_incept() const;
     /// This method sets the value of the inherited incept property to the argument.
-    inline void set_incept(int n) {incept = n;};
+    void set_incept(int);
     /// This method returns the value of the Event::boundary property.
-    inline bool get_boundary() const {return boundary;};
+    bool get_boundary() const;
     /// This method sets the value of the Event::boundary property to the argument.
-    inline void set_boundary(bool t) {boundary = t;}; 
+    void set_boundary(bool); 
     /// This method returns the value of the Event::topology_modified property.
-    inline bool get_topology_modified() const {return topology_modified;};
+    bool get_topology_modified() const;
     /// This method sets the value of the Event::topology_modified property to the argument.
-    inline void set_topology_modified(bool t) {topology_modified = t;};
+    void set_topology_modified(bool);
     /// This method returns the value of the Event::geometry_modified property.
-    inline bool get_geometry_modified() const {return geometry_modified;};
+    bool get_geometry_modified() const;
     /// This method sets the value of the Event::geometry_modified property to the argument.
-    inline void set_geometry_modified(bool t) {geometry_modified = t;};
+    void set_geometry_modified(bool);
     /// This method returns the value of the Event::geometric_deficiency property.
-    inline double get_geometric_deficiency() const {return geometric_deficiency;};
+    double get_geometric_deficiency() const;
     /// This method sets the value of the Event::geometric_deficiency property to the argument.
-    inline void set_geometric_deficiency(double x) {geometric_deficiency = x;};
+    void set_geometric_deficiency(double);
     /// This method returns the value of the inherited topological dimension property.
-    inline int get_topological_dimension() const {return topological_dimension;};
+    int get_topological_dimension() const;
     /// This method sets the value of the inherited topological dimension property to the argument.
-    inline void set_topological_dimension(int n) {topological_dimension = n;};
+    void set_topological_dimension(int);
     /// This method overrides the ostream operator so as to do a pretty print of an instance of the class.
     friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;
   };
 
-  bool Event::add_posterior(int n)
+  inline void Event::activate() 
+  {
+    active = true; 
+    topology_modified = true;
+  }
+
+  inline void Event::deactivate() 
+  {
+    active = false; 
+    topology_modified = true;
+  }
+
+  inline void Event::clear_posterior() 
+  {
+    posterior.clear();
+  }
+
+  inline void Event::get_posterior(std::set<int>& S) const 
+  {
+    S = posterior;
+  }
+
+  inline bool Event::add_posterior(int n)
   {
     if (posterior.count(n) == 0) {
       posterior.insert(n);
@@ -141,7 +163,17 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  bool Event::add_anterior(int n)
+  inline void Event::clear_anterior() 
+  {
+    anterior.clear();
+  }
+
+  inline void Event::get_anterior(std::set<int>& S) const 
+  {
+    S = anterior;
+  }
+
+  inline bool Event::add_anterior(int n)
   {
     if (anterior.count(n) == 0) {
       anterior.insert(n);
@@ -150,7 +182,48 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  bool Event::add_neighbour(int n) 
+  inline void Event::clear_entourage() 
+  {
+    entourage.clear();
+  }
+
+  inline void Event::get_entourage(std::set<int>& S) const 
+  {
+    S = entourage;
+  }
+
+  inline void Event::set_entourage(const std::set<int>& S) 
+  {
+    entourage = S;
+  }
+
+  inline bool Event::drop_entourage(int n) 
+  {
+    std::set<int>::const_iterator it = std::find(entourage.begin(),entourage.end(),n);
+    if (it != entourage.end()) {
+      entourage.erase(it);
+      return true;
+    }
+    return false;
+  }
+
+  inline void Event::get_neighbours(std::set<int>& S) const 
+  {
+    S = neighbours;
+  }
+
+  inline void Event::set_neighbours(const std::set<int>& S) 
+  {
+    neighbours = S; 
+    topology_modified = true;
+  }
+
+  inline bool Event::is_neighbour(int n) const 
+  {
+    return (neighbours.count(n) > 0);
+  }
+
+  inline bool Event::add_neighbour(int n) 
   {
     if (neighbours.count(n) == 0) {
       neighbours.insert(n);
@@ -160,7 +233,7 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  bool Event::drop_neighbour(int n) 
+  inline bool Event::drop_neighbour(int n) 
   {
     std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
     if (it != neighbours.end()) {
@@ -171,15 +244,94 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  bool Event::drop_entourage(int n) 
+  inline double Event::get_deficiency() const 
   {
-    std::set<int>::const_iterator it = std::find(entourage.begin(),entourage.end(),n);
-    if (it != entourage.end()) {
-      entourage.erase(it);
-      return true;
-    }
-    return false;
+    return deficiency;
   }
 
+  inline void Event::set_deficiency(double x) 
+  {
+    deficiency = x;
+  }
+
+  inline double Event::get_entwinement() const 
+  {
+    return entwinement;
+  }
+
+  inline void Event::set_entwinement(double x) 
+  {
+    entwinement = x;
+  }
+
+  inline double Event::get_obliquity() const 
+  {
+    return obliquity;
+  }
+
+  inline void Event::set_obliquity(double x) 
+  {
+    obliquity = x;
+  }
+
+  inline int Event::get_incept() const 
+  {
+    return incept;
+  }
+
+  inline void Event::set_incept(int n) 
+  {
+    incept = n;
+  }
+
+  inline bool Event::get_boundary() const 
+  {
+    return boundary;
+  }
+
+  inline void Event::set_boundary(bool t) 
+  {
+    boundary = t;
+  }
+
+  inline bool Event::get_topology_modified() const 
+  {
+    return topology_modified;
+  }
+
+  inline void Event::set_topology_modified(bool t) 
+  {
+    topology_modified = t;
+  }
+
+  inline bool Event::get_geometry_modified() const 
+  {
+    return geometry_modified;
+  }
+
+  inline void Event::set_geometry_modified(bool t) 
+  {
+    geometry_modified = t;
+  }
+
+  inline double Event::get_geometric_deficiency() const 
+  {
+    return geometric_deficiency;
+  }
+
+  inline void Event::set_geometric_deficiency(double x) 
+  {
+    geometric_deficiency = x;
+  }
+
+  inline int Event::get_topological_dimension() const 
+  {
+    return topological_dimension;
+  }
+
+  inline void Event::set_topological_dimension(int n) 
+  {
+    topological_dimension = n;
+  }
 }
 #endif

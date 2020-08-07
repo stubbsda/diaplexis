@@ -94,7 +94,7 @@ namespace DIAPLEXIS {
     /// This method loops over all the 1-simplices in the simplicial complex - if a 1-simplex is active and at least one of its vertices has a non-zero energy, the corresponding element of the method's argument is given the value 1, otherwise 0. 
     void determine_flexible_edges(std::vector<int>&) const;
     /// This method returns true if there is an active edge belonging to the sheet indicated in the third argument which connects the two vertices that are the method's first two arguments.
-    inline bool edge_exists(int,int,int) const;
+    bool edge_exists(int,int,int) const;
     /// This method returns the number of active d-simplices belonging to the sheet indicated by the final argument, where d is the method's first argument.
     int cardinality(int,int) const;
     /// This method computes the 1-skeleton of the sheet indicated by the second argument, calls the method Graph::degree_distribution from the Synarmosma library and prints out the vertex degree histogram to the console. If the method's first argument is true the histogram is logarithmic and linear otherwise. 
@@ -110,11 +110,11 @@ namespace DIAPLEXIS {
     /// This method computes the \f$h\f$-vector of a given sheet (the final argument) of the simplicial complex, after first computing the \f$f\f$-vector and \f$f^*\f$-vector upon which it depends; the output is written to the method's first argument.
     void compute_hvector(std::vector<int>&,int) const;
     /// This method calls the compute_graph method after allocating the memory for the offset array and results in the calculation of the 1-skeleton corresponding to a sheet of the complex, indicated by the method's final argument.
-    inline void compute_graph(SYNARMOSMA::Graph*,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int) const;
     /// This method calls the compute_graph method and stores the offset array used to deal with the problem of inactive events, so that the 1-skeleton of a sheet (the last argument) the complex is stored in the first argument.
     void compute_graph(SYNARMOSMA::Graph*,int*,int) const;
     /// This method computes the 1-skeleton of a sheet (the third argument) of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to Complex::topological_radius.
-    inline void compute_graph(SYNARMOSMA::Graph*,int,int) const;
+    void compute_graph(SYNARMOSMA::Graph*,int,int) const;
     /// This method computes the 1-skeleton of a sheet (the fourth argument) of the simplicial complex centred on a base vertex (the second argument) and with a combinatorial distance equal to the third argument.
     void compute_graph(SYNARMOSMA::Graph*,int,int,int) const;
     /// This method computes the instance of the Synarmosma library's Nexus class corresponding to a given sheet (the second argument) of the complex.
@@ -212,65 +212,213 @@ namespace DIAPLEXIS {
     /// This method writes the deficiency property of all the active events belonging to the sheet indicated in the second argument to the method's first argument.
     void get_deficiency_values(std::vector<double>&,int) const;
     /// This method returns the inherited neighbours property of the event with index equal to the method's argument.
-    inline std::set<int> get_neighbours(int n) const {return events[n].neighbours;};
+    void get_neighbours(int,std::set<int>&) const;
     /// This method returns the homology of the complex as a compact string, the method's argument.
-    inline void get_homology(std::string& s) const {s = H->write();};
+    void get_homology(std::string&) const;
     /// This method returns a combinatorial presentation of the homotopy group of the complex as a compact string, the method's argument.
-    inline void get_homotopy(std::string& s) const {s = pi1->write();};
+    void get_homotopy(std::string&) const;
     /// This method sets the field over which the complex's homology is calculated to the argument.
-    inline void set_homology_field(SYNARMOSMA::Homology::Field F) {H->set_field(F);};
+    void set_homology_field(SYNARMOSMA::Homology::Field);
     /// This method sets the method by which the complex's homology is calculated to the argument.
-    inline void set_homology_method(SYNARMOSMA::Homology::Method M) {H->set_method(M);};
+    void set_homology_method(SYNARMOSMA::Homology::Method);
     /// This method returns the field over which the complex's homology is calculated.
-    inline SYNARMOSMA::Homology::Field get_homology_field() const {return H->get_field();};
+    SYNARMOSMA::Homology::Field get_homology_field() const;
     /// This method returns the method by which the complex's homology is calculated.
-    inline SYNARMOSMA::Homology::Method get_homology_method() const {return H->get_method();};
+    SYNARMOSMA::Homology::Method get_homology_method() const;
+    /// This method returns true if the element of Complex::events given by the method's argument is active, false otherwise.
+    bool active_event(int,int) const;
+    /// This method returns true if the element of Complex::events (for d = 0) or Complex::simplices (for d > 0) given by the method's second argument is active.
+    bool active_simplex(int,int,int) const;
     /// This method returns the output of the dimension() method for a given sheet.
-    inline int get_dimension(int sheet) const {return dimension(sheet);};
+    int get_dimension(int) const;
     /// This method returns the inherited topological_dimension of the event with index equal to the method's first argument and sheet equal to the second argument.
-    inline int get_event_dimension(int n,int sheet) const {return vertex_dimension(n,sheet);};
+    int get_event_dimension(int,int) const;
     /// This method returns the number of d-simplices belonging to the sheet indicated by the second argument.
-    inline int get_cardinality(int d,int sheet) const {return cardinality(d,sheet);};
+    int get_cardinality(int,int) const;
     /// This method sets the first argument, an array of three double precision numbers, to the maximum, minimum and average degree of the events belonging to the sheet indicated by the second argument.    
-    inline void get_vertex_degree_statistics(double* output,int sheet) const {vertex_degree_statistics(output,sheet);};
+    void get_vertex_degree_statistics(double*,int) const;
     /// This method calls the compute_fvector() method using its three arguments.     
-    inline void get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const {compute_fvector(f,fstar,sheet);};
+    void get_fvector(std::vector<int>&,std::vector<int>&,int) const;
     /// This method returns the vertices of a d-simplex (d > 0) where the arguments are the dimension and index in Complex::simplices[d], while the final argument is an integer array of length 1+d to store the vertices.
-    inline void get_simplex_vertices(int d,int n,int* vx) const {simplices[d][n].get_vertices(vx);};
+    void get_simplex_vertices(int,int,int*) const;
     /// This method returns a string of a d-simplex's vertices (where d > 0) separated by a colon in ascending order.  
-    inline std::string get_simplex_key(int d,int n) const {return SYNARMOSMA::make_key(simplices[d][n].vertices);};
+    std::string get_simplex_key(int,int) const;
     /// This method returns the index of the 1-simplex whose vertex set is the method's argument; if the edge does not exist the method returns -1. 
-    inline int get_edge_index(const std::set<int>&) const;
+    int get_edge_index(const std::set<int>&) const;
     /// This method returns the output of the cyclicity() method for a given sheet.
-    inline int get_cyclicity(int sheet) const {return cyclicity(sheet);};
+    int get_cyclicity(int) const;
     /// This method returns the output of the circuit_rank() method for a given sheet.
-    inline int get_circuit_rank(int sheet) const {return circuit_rank(sheet);};
+    int get_circuit_rank(int) const;
     /// This method returns whether or not the simplicial complex is orientable, assuming it is a combinatorial pseudomanifold.
-    inline bool is_orientable() const {return orientable;};
+    bool is_orientable() const;
     /// This method returns the Euler characteristic of a given sheet of the complex.
-    inline int get_euler_characteristic(int sheet) const {return euler_characteristic(sheet);};
+    int get_euler_characteristic(int) const;
     /// This method returns the Event::obliquity property of the event with index equal to the method's argument.
-    inline double get_event_obliquity(int n) const {return events[n].obliquity;};
+    double get_event_obliquity(int) const;
     /// This method returns the inherited energy property of the event with index equal to the method's argument.
-    inline double get_event_energy(int n) const {return events[n].get_energy();};
+    double get_event_energy(int) const;
     /// This method returns the Event::deficiency property of the event with index equal to the method's argument.
-    inline double get_event_deficiency(int n) const {return events[n].deficiency;};
+    double get_event_deficiency(int) const;
     /// This method returns the Event::entwinement property for a particular sheet (the second argument) of the event with index equal to the method's first argument.
-    inline double get_event_entwinement(int n,int sheet) const {return events[n].entwinement[sheet];};
+    double get_event_entwinement(int,int) const;
     /// This method returns the number of elements in the Complex::events vector.
-    inline int get_events() const {return (signed) events.size();};
+    int get_events() const;
     /// This method returns the output of the total_energy() method for the given sheet.
-    inline double get_total_energy(int sheet) const {return total_energy(sheet);};
+    double get_total_energy(int) const;
     /// This method returns the cardinality of the entourage property of the event (if the first argument is zero) or simplex (if it is greater than zero) whose index is specified by the second argument. 
-    inline int get_entourage_cardinality(int d,int n) const {int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); return output;}; 
+    int get_entourage_cardinality(int,int) const; 
     /// This method returns the incept property of an Event or Simplex - depending on the dimension (the first argument) - of the element of Complex::events or Complex::simplices[d] with index value equal to the second argument.
-    inline int get_incept(int d,int n) const {int output = (d == 0) ? events[n].incept : simplices[d][n].incept; return output;};
+    int get_incept(int,int) const;
     /// This method sets the first element of the argument to the Complex::pseudomanifold property and second element to the value of the Complex::boundary property.
-    inline void is_pseudomanifold(std::pair<bool,bool>&) const;
+    void is_pseudomanifold(std::pair<bool,bool>&) const;
     friend class Spacetime;
   };
 
-  bool Complex::edge_exists(int u,int v,int sheet) const
+  inline void Complex::get_neighbours(int n,std::set<int>& S) const
+  {
+    S = events[n].neighbours;
+  }
+
+  inline void Complex::get_homology(std::string& s) const 
+  {
+    s = H->write();
+  }
+
+  inline void Complex::get_homotopy(std::string& s) const 
+  {
+    s = pi1->write();
+  }
+
+  inline void Complex::set_homology_field(SYNARMOSMA::Homology::Field F) 
+  {
+    H->set_field(F);
+  }
+
+  inline void Complex::set_homology_method(SYNARMOSMA::Homology::Method M) 
+  {
+    H->set_method(M);
+  }
+
+  inline SYNARMOSMA::Homology::Field Complex::get_homology_field() const 
+  {
+    return H->get_field();
+  }
+
+  inline SYNARMOSMA::Homology::Method Complex::get_homology_method() const 
+  {
+    return H->get_method();
+  }
+
+  inline bool Complex::active_event(int n,int sheet) const 
+  {
+    return (events[n].ubiquity.count(sheet) > 0);
+  }
+
+  inline bool Complex::active_simplex(int d,int n,int sheet) const 
+  {
+    if (d == 0) return active_event(n,sheet);
+
+    return (simplices[d][n].ubiquity.count(sheet) > 0); 
+  }
+
+  inline int Complex::get_dimension(int sheet) const
+  {
+    return dimension(sheet);
+  }
+
+  inline int Complex::get_event_dimension(int n,int sheet) const
+  {
+    return vertex_dimension(n,sheet);
+  }
+
+  inline int Complex::get_cardinality(int d,int sheet) const 
+  {
+    return cardinality(d,sheet);
+  }
+
+  inline void Complex::get_vertex_degree_statistics(double* output,int sheet) const 
+  {
+    vertex_degree_statistics(output,sheet);
+  }
+
+  inline void Complex::get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const
+  {
+    compute_fvector(f,fstar,sheet);
+  }
+
+  inline void Complex::get_simplex_vertices(int d,int n,int* vx) const 
+  {
+    simplices[d][n].get_vertices(vx);
+  }
+
+  inline std::string Complex::get_simplex_key(int d,int n) const 
+  {
+    return SYNARMOSMA::make_key(simplices[d][n].vertices);
+  }
+
+  inline int Complex::get_cyclicity(int sheet) const
+  {
+    return cyclicity(sheet);
+  }
+
+  inline int Complex::get_circuit_rank(int sheet) const
+  {
+    return circuit_rank(sheet);
+  }
+
+  inline bool Complex::is_orientable() const 
+  {
+    return orientable;
+  }
+
+  inline int Complex::get_euler_characteristic(int sheet) const
+  {
+    return euler_characteristic(sheet);
+  }
+
+  inline double Complex::get_event_obliquity(int n) const 
+  {
+    return events[n].obliquity;
+  }
+
+  inline double Complex::get_event_energy(int n) const 
+  {
+    return events[n].get_energy();
+  }
+
+  inline double Complex::get_event_deficiency(int n) const 
+  {
+    return events[n].deficiency;
+  }
+
+  inline double Complex::get_event_entwinement(int n,int sheet) const 
+  {
+    return events[n].entwinement[sheet];
+  }
+
+  inline int Complex::get_events() const
+  {
+    return (signed) events.size();
+  }
+
+  inline double Complex::get_total_energy(int sheet) const 
+  {
+    return total_energy(sheet);
+  }
+
+  inline int Complex::get_entourage_cardinality(int d,int n) const
+  {
+    int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); 
+    return output;
+  }
+
+  inline int Complex::get_incept(int d,int n) const 
+  {
+    int output = (d == 0) ? events[n].incept : simplices[d][n].incept; 
+    return output;
+  }
+
+  inline bool Complex::edge_exists(int u,int v,int sheet) const
   {
     if (u == v || u < 0 || v < 0) throw std::invalid_argument("Illegal vertex values in the Complex::edge_exists method!");
 
@@ -287,7 +435,7 @@ namespace DIAPLEXIS {
     return true;
   }
 
-  int Complex::get_edge_index(const std::set<int>& vx) const 
+  inline int Complex::get_edge_index(const std::set<int>& vx) const 
   {
     if (vx.size() != 2) throw std::invalid_argument("Illegal set cardinality in the Complex::get_edge_index method!");
     
@@ -296,13 +444,13 @@ namespace DIAPLEXIS {
     return qt->second;
   }
 
-  void Complex::is_pseudomanifold(std::pair<bool,bool>& output) const 
+  inline void Complex::is_pseudomanifold(std::pair<bool,bool>& output) const 
   {
     output.first = pseudomanifold;
     output.second = boundary;
   }
 
-  void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
+  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
   {
     if (events.empty()) return;
 
@@ -310,7 +458,7 @@ namespace DIAPLEXIS {
     compute_graph(G,offset,sheet);
   }
 
-  void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
+  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
     compute_graph(G,base,Complex::topological_radius,sheet);
   }
