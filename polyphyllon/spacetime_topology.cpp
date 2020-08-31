@@ -233,7 +233,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   // Ideally the number of boundary events should be the surface area of a d-sphere
   d = g_dim;
   alpha = double(d)/2.0;
-  l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/boost::math::tgamma(1.0 + alpha);  
+  l = std::pow(M_PI,alpha)*std::pow(size,double(d - 1))/std::tgamma(1.0 + alpha);  
   d *= int(l);
   q = (signed) ambient.size();
   if (d > q) d = q;

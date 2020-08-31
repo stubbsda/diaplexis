@@ -339,7 +339,7 @@ void Spacetime::initialize()
   int i;
   std::stringstream day,month,year,pid;
 #ifdef VERBOSE
-  boost::timer::cpu_timer t1;
+  auto t1 = std::chrono::steady_clock::now();
 #endif
 
   if (!diskless) {
@@ -348,16 +348,15 @@ void Spacetime::initialize()
 
   // Get the date and the process ID so that we can construct the
   // state_file and log_file names...
-  start_time = boost::posix_time::second_clock::local_time();
-  boost::gregorian::date d = start_time.date();
-  boost::gregorian::date::ymd_type ymd = d.year_month_day();
+  start_time = std::time(NULL); 
+  tm* ltime = localtime(&start_time);
 
   day.width(2);
-  day << std::setfill('0') << ymd.day.as_number();
+  day << std::setfill('0') << ltime->tm_mday;
   month.width(2);
-  month << std::setfill('0') << ymd.month.as_number();
+  month << std::setfill('0') << 1 + ltime->tm_mon;
   year.width(4);
-  year << ymd.year;
+  year << 1900 + ltime->tm_year;
   // Using the ISO 8601 norm
   date_string = year.str() + "-" + month.str() + "-" + day.str();
 
@@ -454,7 +453,8 @@ void Spacetime::initialize()
 #endif
 
 #ifdef VERBOSE
-  t1.stop();
-  std::cout << "Spacetime initialization required " << boost::timer::format(t1.elapsed(),3,"%w") << " seconds to complete." << std::endl;
+  auto t2 = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed_seconds = t2 - t1;
+  std::cout << "Spacetime initialization required " << elapsed_seconds.count() << " seconds to complete." << std::endl;
 #endif
 }

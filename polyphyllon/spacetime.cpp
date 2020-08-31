@@ -150,14 +150,13 @@ bool Spacetime::advance()
   std::vector<int> order;
   static double htime = 0.0;
   static double gtime = 0.0;
-  boost::timer::cpu_times Z;
-  boost::timer::cpu_timer t1;
+  std::chrono::duration<double> elapsed_seconds;
 
   write_state("data/.previous_step.dat");
   reversible = true;
 
   // Begin the hyphantic phase...
-  t1.start();
+  auto t1 = std::chrono::steady_clock::now();
   skeleton->RND->shuffle(order,n);
 
   std::ofstream s1(hyphansis_file,std::ios::app);
@@ -174,19 +173,19 @@ bool Spacetime::advance()
 
   regularization(false,-1);
   condense();
-  t1.stop();
-  Z = t1.elapsed();
-  htime += std::stod(boost::timer::format(Z,3,"%w"));
+  auto t2 = std::chrono::steady_clock::now();
+  elapsed_seconds = t2 - t1;
+  htime += elapsed_seconds.count();
 
   // Start the global operations phrase...
-  t1.start();
+  t1 = std::chrono::steady_clock::now();
 #ifdef VERBOSE
   std::cout << "Calling global operations..." << std::endl;
 #endif
   bool done = global_operations();
-  t1.stop();
-  Z = t1.elapsed();
-  gtime += std::stod(boost::timer::format(Z,3,"%w"));
+  t2 = std::chrono::steady_clock::now();
+  elapsed_seconds = t2 - t1;
+  gtime += elapsed_seconds.count();
 
   // If the simulation is finished print out some timing data...
   if (done) {
@@ -209,21 +208,16 @@ double Spacetime::evolve()
 
   // A final message for the logfile: the completion time...
   std::string nvalue;
-  boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+  time_t now = std::time(NULL);
+  std:: string cdate = std::string(std::ctime(&now));
+  cdate.erase(std::remove(cdate.begin(),cdate.end(),'\n'),cdate.end());  
 
   pugi::xml_document logfile;
   pugi::xml_node rstep;
 
   logfile.load_file(log_file.c_str());
-  rstep = logfile.child("LogFile").insert_child_after("FinishDate",logfile.child("LogFile").child("StartTime"));
-  nvalue = boost::lexical_cast<std::string>(now.date());
-  rstep.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-  logfile.save_file(log_file.c_str());
-
-  logfile.load_file(log_file.c_str());
-  rstep = logfile.child("LogFile").insert_child_after("FinishTime",logfile.child("LogFile").child("FinishDate"));
-  nvalue = boost::lexical_cast<std::string>(now.time_of_day());
-  rstep.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
+  rstep = logfile.child("LogFile").insert_child_after("FinishTime",logfile.child("LogFile").child("StartTime"));
+  rstep.append_child(pugi::node_pcdata).set_value(cdate.c_str());
   logfile.save_file(log_file.c_str());
 
   logfile.load_file(log_file.c_str());

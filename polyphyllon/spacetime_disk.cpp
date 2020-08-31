@@ -306,8 +306,9 @@ void Spacetime::read_parameters(const std::string& filename)
     assert((parity_mutation - 1.0) < std::numeric_limits<double>::epsilon());
   }
   else {
-    // Make sure the score file exists
-   assert(boost::filesystem::exists(hyphansis_score));
+    // Make sure the score file exists...
+    std::ifstream f(hyphansis_score);
+    assert(f.good());
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);
@@ -397,13 +398,15 @@ void Spacetime::write_log() const
 
     gethostname(hostname,80);
 
+    std:: string cdate = std::string(std::ctime(&start_time));
+    cdate.erase(std::remove(cdate.begin(),cdate.end(),'\n'),cdate.end());
+
     std::ofstream s(log_file,std::ios::out | std::ios::trunc);
     s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     s << "<LogFile>" << std::endl;
     s << "<Library>Diaplexis</Library>" << std::endl;
     s << "<Hostname>" << hostname << "</Hostname>" << std::endl;
-    s << "<StartDate>" << start_time.date() << "</StartDate>" << std::endl;
-    s << "<StartTime>" << start_time.time_of_day() << "</StartTime>" << std::endl;
+    s << "<StartTime>" << cdate << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
     s << "<MaximumDimension>" << Complex::ND << "</MaximumDimension>" << std::endl;
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;

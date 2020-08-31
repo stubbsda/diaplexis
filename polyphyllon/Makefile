@@ -22,12 +22,8 @@ LD_FLAGS    = -L$(SYNARMOSMA)/lib -Wall -shared -fopenmp
 # Debug or optimized version for linking...
 LD_FLAGS   += $(OPT)
 #LD_FLAGS   += $(DEBUG)
-# Name of the LAPACK and BLAS libraries on this platform
-LAPACK      = -llapack -lblas
-# The Boost library on this platform
-BOOST       = -lboost_timer -lboost_filesystem -lboost_system
-# All the necessary libraries: Synarmosma, LAPACK, Boost, PugiXML and NTL
-LIBS        = -lsynarmosma $(LAPACK) $(BOOST) -lpugixml -lntl -lgmp -lm
+# All the necessary libraries: Synarmosma, PugiXML and the standard math library.
+LIBS        = -lsynarmosma -lpugixml -lm
 # Where to install the Diaplexis library
 INSTALL_DIR = $(HOME)/fabrica/local
 # End of user-modifiable parameters!

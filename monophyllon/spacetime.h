@@ -1,9 +1,6 @@
 // For XML processing...
 #include <pugixml.hpp>
 
-#include <boost/timer/timer.hpp>
-#include <boost/filesystem.hpp>
-
 #include "synarmosma/geometry.h"
 #include "synarmosma/directed_graph.h"
 
@@ -123,7 +120,7 @@ namespace DIAPLEXIS {
     /// This property stores the time (as measured in seconds since 
     /// the beginning of the Unix era on January 1, 1970) at which the 
     /// simulation started. 
-    boost::posix_time::ptime start_time;
+    time_t start_time;
     /// This property stores the date (in the format YYYYMMDD) of the 
     /// simulation's beginning, which is used in the name of the output 
     /// files for this particular simulation. 
