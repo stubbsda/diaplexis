@@ -1,37 +1,34 @@
 The Diaplexis library consists of approximately 24,000 lines of C++ code, written with the
 goal of exploring the numerical dynamics of a combinatorial spacetime model based on a ramified or
 multi-sheeted simplicial complex. Compiling this library requires a modern C++ compiler as well as
-the [Synarmosma library](http://www.synarmosma.org/software/synarmosma/). The current package includes both
+the [Synarmosma library](http://www.synarmosma.org/software/synarmosma/). The library includes both
 the standard multi-sheeted version of the library (Polyphyllon) and a simpler but faster version that
-assumes the entire spacetime complex exists on a single sheet (Monophyllon). This repository also
-includes an older version of the library, in the <code>old</code> directory, which uses a slower and
-significantly less robust representation of the ubiquity of the spacetime's _n_-simplices. The Diaplexis
-library also depends on various external libraries, which for the most part are also needed to build
-the Synarmosma library: the [Boost library](https://www.boost.org), Victor Shoup's [NTL](https://www.shoup.net/ntl) for
-number theory, the GNU [multiprecision library](https://www.gmplib.org) and an implementation of LAPACK, needed
-for the calculation of the eigenvales of dense matrices. The Diaplexis library also requires the
-[PugiXML library](http://www.pugixml.org) for XML processing, used with the parameter and log files, along 
-with an installation of [GraphViz](https://www.graphviz.org) for visualizing the combinatorial topology of the 
-spacetime. The Diaplexis library is released under the Gnu Public License version 3.0; see the 
-<code>LICENSE.txt</code> file or the [Free Software Foundation](https://www.fsf.org/licensing) for details.
+assumes the entire spacetime complex exists on a single sheet (Monophyllon). This repository comes
+with an older version of the library, in the <code>old</code> directory, which uses a slower and
+significantly less robust representation of the ubiquity of the spacetime's _n_-simplices; its interest 
+is now purely historical. The Diaplexis library requires the [PugiXML library](http://www.pugixml.org) 
+for XML processing, used for reading the parameter file and writing the log files. While not necessary 
+for the library's compilation, an installation of the [GraphViz](https://www.graphviz.org) software is 
+recommended for visualizing the combinatorial topology of the spacetime. The Diaplexis library is released 
+under the Gnu Public License version 3.0; see the <code>LICENSE.txt</code> file or the 
+[Free Software Foundation](https://www.fsf.org/licensing) for details.
 
-To install the Diaplexis library, enter the directory <code>diaplexis</code> and choose between the
-Monophyllon and Polyphyllon versions of the library. After descending into the appropriate directory, the
-command <code>make</code> will carry out the build process and <code>sudo make install</code> will
-install the Diaplexis library in its default location, <code>/usr/local/diaplexis</code>. If you do
-not have root access or do not wish to install the library in a system directory, you can modify the
-value of <code>INSTALL_DIR</code> at the beginning of the Makefile to some other directory, such as
-<code>$HOME/diaplexis</code>. The compilation of the Diaplexis library has been developed and tested
-in a Linux environment (with x86, x86-64 and ARMv6 processor architectures), using both the GNU
-and Intel C++ compilers. In principle it should also run under Windows using the Cygwin environment.
+To compile the Diaplexis library, simply type the command <code>make</code> from the current directory; the 
+command <code>make install</code> will install the library in the location which is specified by <code>INSTALL_DIR</code> 
+in the <code>Makefile.config</code> file. This same file contains other parameters for controlling the compilation 
+which you may modify if needed. The compilation of the Diaplexis library has been developed and tested in a Linux 
+environment (with x86, x86-64 and ARMv6 processor architectures), using both the GNU and Intel C++ compilers. In 
+principle it should also run under Windows using the Cygwin environment. Finally, you can use <code>make clean</code> 
+to delete all the object files.
 
 Normally the only parameters that a user should need to modify in order to build the Diaplexis library
-are located at the beginning of the Makefile, where various compiler arguments and libraries are all
+are located in the <code>Makefile.config</code> file, in which various compiler arguments and libraries are
 specified. The build variables are all described in the Makefile and in general the default values should
 be safe on most Unix-like platforms. A sample program file, <code>euplecton.cpp</code>, illustrating the
-use of the Spacetime class is also included in the current directory along with an example of an XML parameter
-file, intended for use with the Polyphyllon version of this library. Using the included makefile a simple
-test can be run to verify the installation, which writes all its output in the <code>data</code> directory.
+use of the Spacetime class is also included in the <code>examples</code> directory along with an example 
+of an XML parameter file, intended for use with the Polyphyllon version of this library. Using the included 
+<code>examples/Makefile</code> a simple test can be run to verify the installation, which writes all its 
+output in the <code>data</code> directory.
 
 The <code>VERBOSE</code> compilation flag causes the Diaplexis library to write a great deal of diagnostic
 logging information to the standard output during execution and is normally only useful for developers.
@@ -41,7 +38,10 @@ created by the normal execution of the library. The quantity of output which is 
 is however sufficiently large that users should redirect the standard output to a disk file for post-execution
 study. The source code contains OpenMP directives that are active when a C++ compiler with support for OpenMP
 is used for the compilation, assumed to be compatible with the OpenMP 3.1 standard. Both of the branches of
-the Diaplexis library are documented using [Doxygen](https://www.doxygen.nl/), for which there is a configuration
-file <code>docs.config</code> in the relevant directory that can be modified as needed.
+the Diaplexis library are documented using [Doxygen](https://www.doxygen.nl/), for which there is a pair of 
+configuration files, <code>docs-monophyllon.config</code> and <code>docs-polyphyllon.config</code>, in the 
+<code>documentation</code> directory which can be modified if desired. It is however sufficient to use the 
+command <code>doxygen docs-polyphyllon.config</code> for example to create a set of HTML documents that will 
+be installed in the <code>documentation/polyphyllon</code> directory.
 
 For any questions, comments or suggestions, please contact <info@synarmosma.org>

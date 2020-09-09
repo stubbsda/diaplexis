@@ -2,42 +2,39 @@
 
 using namespace DIAPLEXIS;
 
-bool Spacetime::stellar_deletion(int base,int sheet)
+bool Spacetime::stellar_deletion(int base)
 {
-  // If this event is already part of a d-simplex, d >= 2, then 
-  // this operation is pointless... 
-  if (skeleton->vertex_dimension(base,sheet) >= 2) return false;
+  // If this event is already part of a d-simplex, d >= 2, then
+  // this operation is pointless...
+  if (skeleton->vertex_dimension(base) >= 2) return false;
   int m,vx[2];
-  std::set<int> S,nset,locus;
+  std::set<int> S,nset;
   std::set<int>::const_iterator it;
 
-  locus.insert(sheet);
   skeleton->events[base].get_entourage(S);
   for(it=S.begin(); it!=S.end(); ++it) {
-    if (skeleton->simplices[1][*it].active(sheet)) {
+    if (skeleton->active_simplex(1,*it)) {
       skeleton->simplices[1][*it].get_vertices(vx);
       m = (vx[0] == base) ? vx[1] : vx[0];
       nset.insert(m);
     }
   }
-  if (nset.size() != 3) return false;    
-  event_deletion(base,sheet);
-  skeleton->simplex_addition(nset,locus);
-  regularization(true,sheet);
+  if (nset.size() != 3) return false;
+  event_deletion(base);
+  skeleton->simplex_addition(nset,-1);
+  regularization(true);
   return true;
 }
 
-bool Spacetime::foliation_m(int base,int sheet)
+bool Spacetime::foliation_m(int base)
 {
   int i,p,n1,n2,vx[2];
-  std::set<int> locus,candidates,s1;
+  std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::iterator qt;
   const int ne = (signed) skeleton->simplices[1].size();
 
-  locus.insert(sheet);
-
   for(i=0; i<ne; ++i) {
-    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
@@ -51,22 +48,28 @@ bool Spacetime::foliation_m(int base,int sheet)
     if (n2 != n1) break;
   } while(true);
 
-
+  // Clearly adding this edge creates at least a 2-simplex (v,n1,n2) which should be
+  // added to the spacetime complex!
   std::set<int> leaf;
   leaf.insert(base);
   leaf.insert(n1);
   leaf.insert(n2);
-  return skeleton->simplex_addition(leaf,locus);
+  if (skeleton->simplex_addition(leaf,-1)) {
+    skeleton->events[n1].set_topology_modified(true);
+    skeleton->events[n2].set_topology_modified(true);
+    return true;
+  } 
+  return false;
 }
 
-bool Spacetime::fusion_m(int base,int sheet)
+bool Spacetime::fusion_m(int base)
 {
   int i,u,vx[2];
   std::set<int> candidates;
   const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     u = (vx[0] == base) ? vx[1] : vx[0];
@@ -77,33 +80,31 @@ bool Spacetime::fusion_m(int base,int sheet)
 #ifdef VERBOSE
   std::cout << "Fusing events: " << u << " => " << base << std::endl;
 #endif
-  event_fusion(base,u,sheet);
+  event_fusion(base,u);
   return true;
 }
 
-bool Spacetime::fission(int base,double density,int sheet)
+bool Spacetime::fission(int base,double density)
 {
   int i,p,q,n,vx[2];
-  std::set<int> locus;
   const int ne = (signed) skeleton->simplices[1].size();
-
-  locus.insert(sheet);
 
   if (base >= 0) {
     n = 0;
 
-    p = event_addition(base,sheet);
+    p = event_addition(base);
 
     for(i=0; i<ne; ++i) {
-      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(1,i)) continue;
       skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       q = (vx[0] == base) ? vx[1] : vx[0];
       if (skeleton->RND->drandom() < density) {
-        if (skeleton->simplex_addition(p,q,locus)) n++;
+        skeleton->simplex_addition(q,p,-1);
+        n++;
       }
     }
-    skeleton->simplex_addition(base,p,locus);
+    skeleton->simplex_addition(base,p,-1);
 #ifdef VERBOSE
     std::cout << "Added " << 1+n << " edges to the complex after fission of " << base << " to " << p << std::endl;
 #endif
@@ -115,7 +116,7 @@ bool Spacetime::fission(int base,double density,int sheet)
     // includes between 1 and (1+d)^2 links the new d-simplex and its ancestor.
     std::set<int> nsimplex;
 
-    if (skeleton->dimension(sheet) < 1) return false;
+    if (skeleton->dimension() < 1) return false;
 
     if (skeleton->RND->drandom() < 0.5) {
       // The simplest case: we just need to add a new event, clone the antecedent
@@ -125,14 +126,14 @@ bool Spacetime::fission(int base,double density,int sheet)
 
       do {
         p = skeleton->RND->irandom(skeleton->events.size());
-        if (skeleton->events[p].active(sheet)) break;
+        if (skeleton->active_event(p)) break;
       } while(true);
-      q = event_addition(p,sheet);
+      q = event_addition(p);
       nsimplex.insert(p);
       nsimplex.insert(q);
 
       for(i=0; i<ne; ++i) {
-        if (!skeleton->simplices[1][i].active(sheet)) continue;
+        if (!skeleton->active_simplex(1,i)) continue;
         skeleton->simplices[1][i].get_vertices(vx);
         if (vx[0] != p && vx[1] != p) continue;
         n = (vx[0] == p) ? vx[1] : vx[0];
@@ -148,43 +149,43 @@ bool Spacetime::fission(int base,double density,int sheet)
         } while((signed) s1.size() < (1+d));
         nsimplex = s1;
       }
-      skeleton->simplex_addition(nsimplex,locus);
 #ifdef VERBOSE
       std::cout << "Event fission on " << p << " with new event " << q << " and simplex dimension " << d << std::endl;
 #endif
+      skeleton->simplex_addition(nsimplex,-1);
     }
     else {
       // The plot thickens: we must create a new 1-simplex out of an existing one, perhaps by forming
-      // a pair of 2-skeleton->simplices: (w1,u_new,v_new) and (w2,u_new,v_new)
+      // a pair of 2-simplices: (w1,u_new,v_new) and (w2,u_new,v_new)
       std::set<int> antecedent;
 
       do {
         n = skeleton->RND->irandom(skeleton->simplices[1].size());
-        if (skeleton->simplices[1][n].active(sheet)) break;
+        if (skeleton->active_simplex(1,n)) break;
       } while(true);
       skeleton->simplices[1][n].get_vertices(vx);
       antecedent.insert(vx[0]);
       antecedent.insert(vx[1]);
-      p = event_addition(antecedent,sheet);
+      p = event_addition(antecedent);
       antecedent.insert(p);
-      q = event_addition(antecedent,sheet);
+      q = event_addition(antecedent);
 
       nsimplex.insert(vx[0]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      skeleton->simplex_addition(nsimplex,locus);
+      skeleton->simplex_addition(nsimplex,-1);
 
       nsimplex.clear();
       nsimplex.insert(vx[1]);
       nsimplex.insert(p);
       nsimplex.insert(q);
-      skeleton->simplex_addition(nsimplex,locus);
+      skeleton->simplex_addition(nsimplex,-1);
     }
     return true;
   }
 }
 
-bool Spacetime::circumvolution(int sheet)
+bool Spacetime::circumvolution()
 {
   // This method attempts a circumvolution using boundary edges, it is
   // normally only called when the global energy reaches a critical threshold.
@@ -193,11 +194,11 @@ bool Spacetime::circumvolution(int sheet)
   std::set<int>::const_iterator it,jt;
   std::vector<std::set<int> > F;
   SYNARMOSMA::hash_map::const_iterator qt;
-  const int D = skeleton->dimension(sheet);
+  const int D = skeleton->dimension();
   int vx[D];
 
   for(i=0; i<(signed) skeleton->simplices[D].size(); ++i) {
-    if (!skeleton->simplices[D][i].active(sheet)) continue;
+    if (!skeleton->active_simplex(D,i)) continue;
     skeleton->simplices[D][i].get_faces(F);
     for(j=0; j<=D; ++j) {
       qt = skeleton->index_table[D-1].find(F[j]);
@@ -232,16 +233,16 @@ bool Spacetime::circumvolution(int sheet)
       skeleton->simplices[1][n1].get_vertices(w);
       skeleton->simplices[1][n2].get_vertices(u);
 
-      d = skeleton->combinatorial_distance(w[0],u[0],-1);
+      d = skeleton->combinatorial_distance(w[0],u[0]);
       if (d <= 2) continue;
 
-      d = skeleton->combinatorial_distance(w[1],u[0],-1);
+      d = skeleton->combinatorial_distance(w[1],u[0]);
       if (d <= 2) continue;
 
-      d = skeleton->combinatorial_distance(w[0],u[1],-1);
+      d = skeleton->combinatorial_distance(w[0],u[1]);
       if (d <= 2) continue;
 
-      d = skeleton->combinatorial_distance(w[1],u[1],-1);
+      d = skeleton->combinatorial_distance(w[1],u[1]);
       if (d <= 2) continue;
 
       candidates.push_back(n1);
@@ -255,21 +256,23 @@ bool Spacetime::circumvolution(int sheet)
   n2 = candidates[2*i+1];
   skeleton->simplices[1][n1].get_vertices(w);
   skeleton->simplices[1][n2].get_vertices(u);
+  skeleton->events[u[0]].set_topology_modified(true);
+  skeleton->events[u[1]].set_topology_modified(true);
+
   if (skeleton->RND->drandom() < 0.5) {
-    event_fusion(w[0],u[0],sheet);
-    event_fusion(w[1],u[1],sheet);
+    event_fusion(w[0],u[0]);
+    event_fusion(w[1],u[1]);
   }
   else {
-    event_fusion(w[0],u[1],sheet);
-    event_fusion(w[1],u[0],sheet);
+    event_fusion(w[0],u[1]);
+    event_fusion(w[1],u[0]);
   }
-  regularization(false,sheet);
   return true;
 }
 
-bool Spacetime::circumvolution(int base,int sheet)
+bool Spacetime::circumvolution(int base)
 {
-  // This method seeks to fuse together two d-skeleton->simplices, one of
+  // This method seeks to fuse together two d-simplices, one of
   // which contains the event base
   int i,d,nd,s1,s2;
   Simplex S;
@@ -277,23 +280,25 @@ bool Spacetime::circumvolution(int base,int sheet)
   std::vector<int> order;
 
   if (base >= 0) {
-    nd = skeleton->vertex_dimension(base,sheet);
+    nd = skeleton->vertex_dimension(base);
     if (nd < 1) return false;
     d = skeleton->RND->irandom(1,nd);
     nd = (signed) skeleton->simplices[d].size();
     for(i=0; i<nd; ++i) {
-      if (!skeleton->simplices[d][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(d,i)) continue;
       if (skeleton->simplices[d][i].contains(base)) candidates.insert(i);
     }
     s1 = skeleton->RND->irandom(candidates);
     candidates.clear();
     for(i=0; i<nd; ++i) {
-      if (!skeleton->simplices[d][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(d,i)) continue;
       if (i == s1) continue;
       S = skeleton->simplices[d][s1] ^ skeleton->simplices[d][i];
       if (S.empty()) candidates.insert(i);
     }
     if (candidates.empty()) return false;
+    // Now find which of these candidates is the closest to the d-simplex s1, where the
+    // distance between two simplices is defined to be the maximum inter-event distance
     int j,vx1[1+d],vx2[1+d];
     double D1,delta;
     std::set<int> slist;
@@ -316,9 +321,9 @@ bool Spacetime::circumvolution(int base,int sheet)
   }
   else {
     do {
-      d = skeleton->RND->irandom(1,skeleton->dimension(sheet));
+      d = skeleton->RND->irandom(1,skeleton->dimension());
       for(i=0; i<(signed) skeleton->simplices[d].size(); ++i) {
-        if (skeleton->simplices[d][i].active(sheet)) candidates.insert(i);
+        if (skeleton->active_simplex(d,i)) candidates.insert(i);
       }
       if (candidates.size() > 3) break;
     } while(true);
@@ -327,13 +332,13 @@ bool Spacetime::circumvolution(int base,int sheet)
       s2 = skeleton->RND->irandom(candidates);
       if (s1 == s2) continue;
       // Now check to make sure that the intersection of
-      // these two d-skeleton->simplices is null...
+      // these two d-simplices is null...
       S = skeleton->simplices[d][s1] ^ skeleton->simplices[d][s2];
       if (S.empty()) break;
     } while(true);
   }
 #ifdef VERBOSE
-  std::cout << "Circumvolving the " << d << "-skeleton->simplices: " << skeleton->get_simplex_key(d,s2) << " => " << skeleton->get_simplex_key(d,s1) << std::endl;
+  std::cout << "Circumvolving the " << d << "-simplices: " << skeleton->get_simplex_key(d,s2) << " => " << skeleton->get_simplex_key(d,s1) << std::endl;
 #endif
   int v1[d+1],v2[d+1];
   for(i=0; i<=d; ++i) {
@@ -344,24 +349,19 @@ bool Spacetime::circumvolution(int base,int sheet)
   skeleton->simplices[d][s2].get_vertices(v2);
 
   for(i=0; i<=d; ++i) {
-    event_fusion(v1[i],v2[order[i]],sheet);
+    event_fusion(v1[i],v2[order[i]]);
   }
   return true;
 }
 
-bool Spacetime::expansion(int base,double creativity,int sheet)
+bool Spacetime::expansion(int base,double creativity)
 {
   // Create an entirely new d-simplex
-  int i,j,d,k,nv,novum = 0;
-  bool success;
-  std::set<int> vx,locus;
-  std::set<int>::const_iterator it;
-  SYNARMOSMA::hash_map::const_iterator qt;
-
-  locus.insert(sheet);
+  int i,d,k,novum = 0;
+  std::set<int> vx;
 
   if (base >= 0) {
-    int n1 = skeleton->vertex_dimension(base,sheet);
+    int n1 = skeleton->vertex_dimension(base);
     if (n1 == Complex::ND) return false;
     int u,vtx[2],its = 0;
     std::set<int> M;
@@ -371,7 +371,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     d = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<ne; ++i) {
-      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(1,i)) continue;
       skeleton->simplices[1][i].get_vertices(vtx);
       if (vtx[0] != base && vtx[1] != base) continue;
       u = (vtx[0] == base) ? vtx[1] : vtx[0];
@@ -379,13 +379,12 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     }
     if (M.empty()) creativity = 1.0;
     vx.insert(base);
-
     do {
       its++;
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
-        k = event_addition(base,sheet);
+        k = event_addition(base);
         novum++;
       }
       else {
@@ -395,13 +394,17 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
     } while((signed) vx.size() < (1+d));
   }
   else {
-    i = skeleton->dimension(sheet);
+    int j,nv;
+    bool success;
+    std::set<int>::const_iterator it;
+
+    i = skeleton->dimension();
     d = (i <= 2) ? 3 : skeleton->RND->irandom(2,i);
     if (double(d+1)/double(skeleton->events.size()) > 0.8) creativity = 1.0;
     do {
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
-        k = event_addition(vx,sheet);
+        k = event_addition(vx);
         novum++;
       }
       else {
@@ -413,14 +416,14 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
           k = skeleton->RND->irandom(nv);
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
-            skeleton->events[k].activate(sheet);
+            skeleton->events[k].activate();
             success = true;
             break;
           }
           ++j;
         } while(j < nv);
         if (success == false) {
-          k = event_addition(vx,sheet);
+          k = event_addition(vx);
           novum++;
         }
       }
@@ -430,42 +433,42 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with " << novum << " new events." << std::endl;
 #endif
-  skeleton->simplex_addition(vx,locus);
+  skeleton->simplex_addition(vx,-1);
   return true;
 }
 
-bool Spacetime::expansion(int base,int sheet)
+bool Spacetime::expansion(int base)
 {
-  int i,u,d,m,vtx[2],n = skeleton->vertex_dimension(base,sheet);
+  int n = skeleton->vertex_dimension(base);
   if (n == Complex::ND) return false;
-  std::set<int> vx,s,N,locus;
+  int i,u,d,m,vtx[2];
+  std::set<int> vx,s,N;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
   Simplex S;
   const int ne = (signed) skeleton->simplices[1].size();
   double tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
 
-  locus.insert(sheet);
-
   d = int(double(Complex::ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
 
   vx.insert(base);
   for(i=0; i<d; ++i) {
     // Create a new event...
-    m = event_addition(base,sheet);
+    m = event_addition(base);
     vx.insert(m);
   }
 #ifdef VERBOSE
   std::cout << "Created a " << d << "-simplex with base " << base << std::endl;
 #endif
-  skeleton->simplex_addition(vx,locus);
+  skeleton->simplex_addition(vx,-1);
   for(i=0; i<ne; ++i) {
-    if (!skeleton->simplices[1][i].active(sheet)) continue;
+    if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vtx);
     if (vtx[0] != base && vtx[1] != base) continue;
     u = (vtx[0] == base) ? vtx[1] : vtx[0];
     if (skeleton->events[u].get_deficiency() < -std::numeric_limits<double>::epsilon()) N.insert(u);
   }
+
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
     m = skeleton->RND->irandom(vx);
@@ -473,13 +476,13 @@ bool Spacetime::expansion(int base,int sheet)
     s.insert(base);
     s.insert(n);
     qt = skeleton->index_table[1].find(s);
-    skeleton->simplices[1][qt->second].deactivate(sheet);
-    skeleton->simplex_addition(n,m,locus);
+    skeleton->simplices[1][qt->second].deactivate();
+    skeleton->simplex_addition(m,n,-1);
   }
   return true;
 }
 
-bool Spacetime::perforation(int base,int d,int sheet)
+bool Spacetime::perforation(int base,int d)
 {
   int i,j,k,n,nd;
   bool good,found;
@@ -488,12 +491,12 @@ bool Spacetime::perforation(int base,int d,int sheet)
 
   if (base >= 0) {
     // This call of the perforation operator is localized
-    int n1 = skeleton->vertex_dimension(base,sheet);
+    int n1 = skeleton->vertex_dimension(base);
     if (n1 < 2) return false;
     d = skeleton->RND->irandom(2,n1);
     nd = (signed) skeleton->simplices[d].size();
     for(i=0; i<nd; ++i) {
-      if (!skeleton->simplices[d][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(d,i)) continue;
       if (!skeleton->simplices[d][i].contains(base)) continue;
       // We need to check now if each of this simplex's 1+d faces is
       // also the face of another d-simplex
@@ -502,7 +505,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
       for(j=0; j<1+d; ++j) {
         found = false;
         for(k=0; k<nd; ++k) {
-          if (k == i || !skeleton->simplices[d][k].active(sheet)) continue;
+          if (k == i || !skeleton->active_simplex(d,k)) continue;
           if (skeleton->simplices[d][k].face(S[j])) {
             found = true;
             break;
@@ -521,7 +524,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
     if (skeleton->simplices[d].empty()) return false;
     nd = (signed) skeleton->simplices[d].size();
     for(i=0; i<nd; ++i) {
-      if (!skeleton->simplices[d][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(d,i)) continue;
       // We need to check now if each of this simplex's 1+d faces is
       // also the face of another d-simplex
       good = true;
@@ -529,7 +532,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
       for(j=0; j<1+d; ++j) {
         found = false;
         for(k=0; k<nd; ++k) {
-          if (k == i || !skeleton->simplices[d][k].active(sheet)) continue;
+          if (k == i || !skeleton->active_simplex(d,k)) continue;
           if (skeleton->simplices[d][k].face(S[j])) {
             found = true;
             break;
@@ -548,25 +551,22 @@ bool Spacetime::perforation(int base,int d,int sheet)
   std::cout << "Perforating a " << d << "-simplex." << std::endl;
 #endif
   n = skeleton->RND->irandom(candidates);
-  skeleton->simplex_deletion(d,n,sheet);
+  skeleton->simplex_deletion(d,n);
   return true;
 }
 
-bool Spacetime::inflation(int base,double creativity,int sheet)
+bool Spacetime::inflation(int base,double creativity)
 {
-  // Performs an inflation on the event base with colour sheet
+  // Performs an inflation on the event base 
   int i,k,n1,na,delta,its = 0;
-  bool success;
-  std::set<int> vx,locus,candidates;
-  std::set<int>::const_iterator it;
   Event vt;
+  bool success;
+  std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
-
-  vt.activate(sheet);
-  locus.insert(sheet);
+  std::set<int> vx,candidates;
 
   if (base >= 0) {
-    n1 = skeleton->vertex_dimension(base,sheet);
+    n1 = skeleton->vertex_dimension(base);
     if (n1 == Complex::ND) return false;
     int j,vtx[2];
     std::set<int>::const_iterator jt;
@@ -581,16 +581,16 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     delta = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<(signed) skeleton->simplices[n1].size(); ++i) {
-      if (!skeleton->simplices[n1][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(n1,i)) continue;
       if (skeleton->simplices[n1][i].contains(base)) candidates.insert(i);
     }
     if (candidates.empty()) return false;
 
     for(i=0; i<ne; ++i) {
-      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      if (!skeleton->active_simplex(1,i)) continue;
       skeleton->simplices[1][i].get_vertices(vtx);
       if (base != vtx[0] && base != vtx[1]) continue;
-      j = (base == vtx[0]) ? vtx[1] : vtx[0];
+      j = (vtx[0] == base) ? vtx[1] : vtx[0];
       N.insert(j);
     }
     skeleton->simplices[n1][skeleton->RND->irandom(candidates)].get_vertices(vx);
@@ -606,7 +606,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
       if (its == Complex::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
-        k = event_addition(base,sheet);
+        k = event_addition(base);
       }
       else {
         k = skeleton->RND->irandom(M);
@@ -618,17 +618,17 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 #endif
   }
   else {
-    if (skeleton->dimension(sheet) == 0) {
+    if (skeleton->dimension() == 0) {
       n1 = 0;
     }
-    else if (skeleton->dimension(sheet) < (signed) geometry->dimension()) {
+    else if (skeleton->dimension() < (signed) geometry->dimension()) {
       n1 = 1;
     }
     else {
-      n1 = 1 + skeleton->RND->irandom(skeleton->dimension(sheet));
+      n1 = 1 + skeleton->RND->irandom(skeleton->dimension());
     }
     for(i=0; i<(signed) skeleton->events.size(); ++i) {
-      if (skeleton->events[i].active(sheet)) candidates.insert(i);
+      if (skeleton->active_event(i)) candidates.insert(i);
     }
     na = (signed) candidates.size();
     if (n1 == 0) {
@@ -638,7 +638,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     else {
       candidates.clear();
       for(i=0; i<(signed) skeleton->simplices[n1].size(); ++i) {
-        if (skeleton->simplices[n1][i].active(sheet)) candidates.insert(i);
+        if (skeleton->active_simplex(n1,i)) candidates.insert(i);
       }
       if (candidates.empty()) return false;
       skeleton->simplices[n1][skeleton->RND->irandom(candidates)].get_vertices(vx);
@@ -649,7 +649,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     do {
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
-        k = event_addition(vx,sheet);
+        k = event_addition(vx);
       }
       else {
         // Grab an existing event...
@@ -659,7 +659,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
           // We should perhaps alter this to favour events that are
           // few hops away
           k = skeleton->RND->irandom(skeleton->events.size());
-          if (!skeleton->events[k].active(sheet)) continue;
+          if (!skeleton->active_event(k)) continue;
           it = std::find(vx.begin(),vx.end(),k);
           if (it == vx.end()) {
             success = true;
@@ -678,7 +678,6 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     std::cout << "Inflated a " << n1 << "-simplex into a " << delta << "-simplex" << std::endl;
 #endif
   }
-  skeleton->simplex_addition(vx,locus);
+  skeleton->simplex_addition(vx,-1);
   return true;
 }
-

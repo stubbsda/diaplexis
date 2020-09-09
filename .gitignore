@@ -1,10 +1,10 @@
-monophyllon/*.o
-monophyllon/libdiaplexis.so
-monophyllon/documentation
-polyphyllon/*.o
-polyphyllon/libdiaplexis.so
-polyphyllon/documentation
-data
-euplecton
-euplecton.o
+src/monophyllon/*.o
+src/monophyllon/libdiaplexis.so
+documentation/monophyllon
+src/polyphyllon/*.o
+src/polyphyllon/libdiaplexis.so
+documentation/polyphyllon
+examples/data
+examples/euplecton
+examples/euplecton.o
 

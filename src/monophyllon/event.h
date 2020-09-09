@@ -1,5 +1,5 @@
-#include "synarmosma/vertex.h"
-#include "synarmosma/proposition.h"
+#include <synarmosma/vertex.h>
+#include <synarmosma/proposition.h>
 
 #ifndef _eventh
 #define _eventh
@@ -7,41 +7,40 @@
 namespace DIAPLEXIS {
   /// A class representing the nodes of the spacetime complex, i.e. its event structure.
 
-  /// This class is derived from the Synarmosma library's Vertex class, 
-  /// whose documentation should therefore also be consulted for more 
-  /// details. 
+  /// This class is derived from the Synarmosma library's Vertex class,
+  /// whose documentation should therefore also be consulted for more
+  /// details.
   class Event: public SYNARMOSMA::Vertex {
    protected:
-    /// This property represents a set of logical assertions concerning the event and its 
+    /// This property represents a set of logical assertions concerning the event and its
     /// neighbourhood.
     SYNARMOSMA::Proposition theorem;
-    /// This property determines whether or not this event lies at the edge of 
+    /// This property determines whether or not this event lies at the edge of
     /// the spacetime complex.
     bool boundary = false;
-    /// This property is set to true when the event's topological structure is modified, so 
+    /// This property is set to true when the event's topological structure is modified, so
     /// that its Event::entwinement and Event::deficiency properties need to be recomputed.
     bool topology_modified = true;
-    /// This property is set to true when the event's geometry is modified, so that its 
-    /// Event::obliquity, Event::deficiency and Event::geometric_deficiency properties need 
+    /// This property is set to true when the event's geometry is modified, so that its
+    /// Event::obliquity, Event::deficiency and Event::geometric_deficiency properties need
     /// to be recomputed.
     bool geometry_modified = true;
-    /// This property represents the extent to which the geometry of this event and 
-    /// its neighbours diverge from orthogonality, like the Event::entwinement it is 
+    /// This property represents the extent to which the geometry of this event and
+    /// its neighbours diverge from orthogonality, like the Event::entwinement it is
     /// non-negative.
     double obliquity = 0.0;
-    /// This property stores the difference between the Event::obliquity and the inherited energy property of 
+    /// This property stores the difference between the Event::obliquity and the inherited energy property of
     /// this event, so it can be positive or negative.
     double geometric_deficiency = 0.0;
     /// This property is the difference between the sum of the Event::entwinement and Event::obliquity 
     /// of the event and its inherited energy property.
     double deficiency = 0.0;
     /// This property represents the degree of topological entwinement or tangledness 
-    /// of this event - it is a vector since there will be a distinct (non-negative) 
-    /// entwinement value for each sheet of the spacetime complex. 
-    std::vector<double> entwinement;
-    /// This property is a set containing the index number of each of the sheets to which this 
-    /// event belongs. 
-    std::set<int> ubiquity;
+    /// of this event and it should be non-negative. 
+    double entwinement = 0.0;
+    /// This property is true if this event is active and false if the event has been 
+    /// deleted from the spacetime complex.
+    bool active = true;
 
     /// This method clears all of the instance's extended properties and sets the scalar properties to their default value.
     void clear() override;
@@ -55,25 +54,13 @@ namespace DIAPLEXIS {
     /// The destructor which does nothing for this class.
     ~Event() override;
     /// This method writes the instance properties to a binary disk file and returns the number of bytes written to the file.
-    int serialize(std::ofstream&) const override;
+    int serialize(std::ofstream&) const override; 
     /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
     int deserialize(std::ifstream&) override;
-    /// This method returns true if this event belongs to at least one sheet of the spacetime complex and false otherwise.
-    bool active() const; 
-    /// This method returns true if this event belongs to the sheet whose index is the method's argument and false otherwise.
-    bool active(int) const;
-    /// This method removes this event from all of the spacetime's sheets and sets the Event::topology_modified property to true.
+    /// This method sets the Event::active property to true as well as noting that the topology has been modified.
+    void activate();
+    /// This method sets the Event::active property to false as well as noting that the topology has been modified.
     void deactivate();
-    /// This method adds this event to the sheet whose index is given by the argument and sets the Event::topology_modified property to true.
-    void activate(int);
-    /// This method removes this event from the sheet whose index is given by the argument and sets the Event::topology_modified property to true.
-    void deactivate(int);
-    /// This method sets the Event::ubiquity property to the method's argument and sets the Event::topology_modified property to true.
-    void set_ubiquity(const std::set<int>&);
-    /// This method sets the argument to the Event::ubiquity property.
-    void get_ubiquity(std::set<int>&) const;
-    /// This method returns the number of sheets of the spacetime complex to which this event belongs.
-    int presence() const;
     /// This method clears the inherited posterior property.
     void clear_posterior();
     /// This method sets the argument to the inherited posterior property.
@@ -108,12 +95,10 @@ namespace DIAPLEXIS {
     double get_deficiency() const;
     /// This method sets the value of the Event::deficiency property to the argument.
     void set_deficiency(double);
-    /// This method sets the argument equal to the Event::entwinement property.
-    void get_entwinement(std::vector<double>&) const;
-    /// This method sets the Event::entwinement property to the argument.
-    void set_entwinement(const std::vector<double>&);
-    /// This method sets the Event::entwinement property using a C-style array as the method's first argument, along with an integer second argument that is the array's length.
-    void set_entwinement(const double*,int);
+    /// This method returns the value of the Event::entwinement property.
+    double get_entwinement() const;
+    /// This method sets the value of the Event::entwinement property to the argument.
+    void set_entwinement(double);
     /// This method returns the value of the Event::obliquity property.
     double get_obliquity() const;
     /// This method sets the value of the Event::obliquity property to the argument.
@@ -125,7 +110,7 @@ namespace DIAPLEXIS {
     /// This method returns the value of the Event::boundary property.
     bool get_boundary() const;
     /// This method sets the value of the Event::boundary property to the argument.
-    void set_boundary(bool);
+    void set_boundary(bool); 
     /// This method returns the value of the Event::topology_modified property.
     bool get_topology_modified() const;
     /// This method sets the value of the Event::topology_modified property to the argument.
@@ -143,52 +128,20 @@ namespace DIAPLEXIS {
     /// This method sets the value of the inherited topological dimension property to the argument.
     void set_topological_dimension(int);
     /// This method overrides the ostream operator so as to do a pretty print of an instance of the class.
-    friend std::ostream& operator <<(std::ostream&,const Event&);    
+    friend std::ostream& operator <<(std::ostream&,const Event&);
     friend class Complex;
   };
 
-  inline bool Event::active() const 
+  inline void Event::activate() 
   {
-    return !ubiquity.empty();
-  } 
-
-  inline bool Event::active(int n) const 
-  {
-    return (ubiquity.count(n) > 0);
+    active = true; 
+    topology_modified = true;
   }
 
   inline void Event::deactivate() 
   {
-    ubiquity.clear(); 
+    active = false; 
     topology_modified = true;
-  }
-
-  inline void Event::activate(int n) 
-  {
-    ubiquity.insert(n); 
-    topology_modified = true;
-  }
-
-  inline void Event::deactivate(int n) 
-  {
-    ubiquity.erase(n); 
-    topology_modified = true;
-  }
-
-  inline void Event::set_ubiquity(const std::set<int>& S) 
-  {
-    ubiquity = S; 
-    topology_modified = true;
-  }
-
-  inline void Event::get_ubiquity(std::set<int>& S) const 
-  {
-    S = ubiquity;
-  }
-
-  inline int Event::presence() const 
-  {
-    return (signed) ubiquity.size();
   }
 
   inline void Event::clear_posterior() 
@@ -244,7 +197,7 @@ namespace DIAPLEXIS {
     entourage = S;
   }
 
-  inline bool Event::drop_entourage(int n)
+  inline bool Event::drop_entourage(int n) 
   {
     std::set<int>::const_iterator it = std::find(entourage.begin(),entourage.end(),n);
     if (it != entourage.end()) {
@@ -270,7 +223,7 @@ namespace DIAPLEXIS {
     return (neighbours.count(n) > 0);
   }
 
-  inline bool Event::add_neighbour(int n)
+  inline bool Event::add_neighbour(int n) 
   {
     if (neighbours.count(n) == 0) {
       neighbours.insert(n);
@@ -280,7 +233,7 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline bool Event::drop_neighbour(int n)
+  inline bool Event::drop_neighbour(int n) 
   {
     std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
     if (it != neighbours.end()) {
@@ -301,24 +254,14 @@ namespace DIAPLEXIS {
     deficiency = x;
   }
 
-  inline void Event::get_entwinement(std::vector<double>& x) const 
+  inline double Event::get_entwinement() const 
   {
-    x = entwinement;
+    return entwinement;
   }
 
-  inline void Event::set_entwinement(const std::vector<double>& x) 
+  inline void Event::set_entwinement(double x) 
   {
     entwinement = x;
-  }
-
-  inline void Event::set_entwinement(const double* x,int n)
-  {
-    if (n < 1) throw std::invalid_argument("Illegal array length in the Event::set_entwinement method!");
-
-    entwinement.clear(); 
-    for(int i=0; i<n; ++i) {
-      entwinement.push_back(x[i]);
-    }
   }
 
   inline double Event::get_obliquity() const 

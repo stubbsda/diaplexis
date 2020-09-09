@@ -2,23 +2,25 @@
 
 using namespace DIAPLEXIS;
 
-bool Spacetime::stellar_addition(int base)
+bool Spacetime::stellar_addition(int base,int sheet)
 {
-  if (skeleton->vertex_dimension(base) < 2) return false;
-  // Take one of these 2-simplices and eliminate it in favour of a 
+  if (skeleton->vertex_dimension(base,sheet) < 2) return false;
+  // Take one of these 2-skeleton->simplices and eliminate it in favour of a
   // new event
   int i,m = (signed) skeleton->simplices[2].size();
   unsigned int l;
   std::vector<int> sx;
   std::vector<double> xc,xtemp;
-  std::set<int> candidates,S;
+  std::set<int> candidates,S,locus;
   SYNARMOSMA::hash_map::const_iterator qt;
 
+  locus.insert(sheet);
+
   for(i=0; i<m; ++i) {
-    if (!skeleton->active_simplex(2,i)) continue;
+    if (!skeleton->simplices[2][i].active(sheet)) continue;
     if (skeleton->simplices[2][i].contains(base)) candidates.insert(i);
   }
-  // Choose a 2-simplex at random, get its three events and then 
+  // Choose a 2-simplex at random, get its three events and then
   // eliminate each of the three edges in succession...
   m = skeleton->RND->irandom(candidates);
   skeleton->simplices[2][m].get_vertices(sx);
@@ -26,17 +28,17 @@ bool Spacetime::stellar_addition(int base)
   S.clear();
   S.insert(sx[0]); S.insert(sx[1]);
   qt = skeleton->index_table[1].find(S);
-  skeleton->simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second,sheet);
 
   S.clear();
   S.insert(sx[0]); S.insert(sx[2]);
   qt = skeleton->index_table[1].find(S);
-  skeleton->simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second,sheet);
 
   S.clear();
   S.insert(sx[1]); S.insert(sx[2]);
   qt = skeleton->index_table[1].find(S);
-  skeleton->simplex_deletion(1,qt->second);    
+  skeleton->simplex_deletion(1,qt->second,sheet);    
   // Now add the new event and the three edges...
   for(l=0; l<geometry->dimension(); ++l) {
     xc.push_back(0.0);
@@ -50,35 +52,35 @@ bool Spacetime::stellar_addition(int base)
   for(l=0; l<geometry->dimension(); ++l) {
     xc[l] = xc[l]/3.0;
   }
-  m = event_addition(xc);
+  m = event_addition(xc,sheet);
   for(i=0; i<3; ++i) {
     S.clear();
     S.insert(m);
     S.insert(sx[i]);
-    skeleton->events[sx[i]].set_topology_modified(true);
-    skeleton->simplex_addition(S,-1);
+    skeleton->simplex_addition(S,locus);
   }
-  regularization(true);
+  regularization(true,sheet);
   return true;    
 }
 
-bool Spacetime::correction(int base)
+bool Spacetime::correction(int base,int sheet)
 {
-  // This method needs to loop over all active events and then find those which
+  // This method needs to loop over all events in a given sheet and find those which
   // are capable of adding another event at a distance of (roughly) one and which is
   // orthogonal to the event's current set of edges.
   int i,j,n,m,in1;
   unsigned int r;
   bool active,modified = false;
   double l,d1,d2,dbest;
+  std::set<int> locus,candidates;
   SYNARMOSMA::hash_map::const_iterator qt;
-  std::set<int> candidates;
-  Simplex s1;
   const int nv = (signed) skeleton->events.size();
+
+  locus.insert(sheet);
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    if (!skeleton->active_event(i)) continue;
+    if (!skeleton->events[i].active(sheet)) continue;
     if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,i,true);
     if (l < 3.8025 || l > 4.2025) continue;
@@ -96,29 +98,29 @@ bool Spacetime::correction(int base)
           dbest = l;
           in1 = j;
         }
-        if (skeleton->active_event(j)) {
+        if (skeleton->events[j].active()) {
           active = true;
           break;
         }
       }
-    }
-    if (active) continue;
-    if (in1 >= 0) {
-      if (!skeleton->active_event(in1)) {
+      if (active) continue;
+      if (in1 >= 0) {
+        if (!skeleton->events[in1].active(sheet)) {
 #ifdef VERBOSE
-        std::cout << "Restoring event " << in1 << " in orthonormal fission between " << base << "  " << i << std::endl;
+          std::cout << "Restoring event " << in1 << " in correction between " << base << "  " << i << std::endl;
 #endif
-        skeleton->events[in1].activate();
-        modified = true;
+          skeleton->events[in1].activate(sheet);
+          modified = true;
+        }
+        // Connect this event to i and j if necessary
+        modified = skeleton->simplex_addition(base,in1,locus);
+        modified = skeleton->simplex_addition(i,in1,locus);
+        continue;
       }
-      // Connect this event to v and i if necessary
-      modified = skeleton->simplex_addition(base,in1,-1);
-      modified = skeleton->simplex_addition(i,in1,-1);
-      continue;
+      candidates.insert(i);
     }
-    candidates.insert(i);
   }
-  if (modified) regularization(true);
+  if (modified) regularization(true,sheet);
   if (candidates.empty()) return false;
   n = skeleton->RND->irandom(candidates);
   std::vector<double> xc,x1,x2;
@@ -129,76 +131,87 @@ bool Spacetime::correction(int base)
     l = 0.5*(x1[r] + x2[r]);
     xc.push_back(l);
   }
-  // Add something to check here if this new event is within 0.5 of an existing event...
+  // Add something to check here if this new event is within 0.5 units of an existing event...
   for(i=0; i<nv; ++i) {
-    if (!skeleton->active_event(i)) continue;
+    if (!skeleton->events[i].active()) continue;
     if (geometry->get_squared_distance(i,xc) <= 0.5) return false;
   }
 #ifdef VERBOSE
   std::cout << "Adding event between " << base << " and " << n << std::endl;
 #endif
-  m = event_addition(xc);
-  skeleton->simplex_addition(base,m,-1);
-  skeleton->simplex_addition(n,m,-1);
+  m = event_addition(xc,sheet);
+  skeleton->simplex_addition(base,m,locus);
+  skeleton->simplex_addition(n,m,locus);
 
   return true;
 }
 
-bool Spacetime::contraction(int base,double l)
+bool Spacetime::contraction(int base,double l,int sheet)
 {
-  int i,u,vx[2];
+  int i,vx[2];
   std::set<int> pool;
   const double L2 = l*l;
   const int ne = (signed) skeleton->simplices[1].size();
 
-  for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
-    skeleton->simplices[i][i].get_vertices(vx);
-    if (vx[0] != base && vx[1] != base) continue;
-    u = (vx[0] == base) ? vx[1] : vx[0];
-    if (geometry->get_squared_distance(base,u,true) > L2) pool.insert(i);
+  if (sheet == -1) {
+    for(i=0; i<ne; ++i) {
+      if (!skeleton->simplices[1][i].active()) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
+      if (vx[0] != base && vx[1] != base) continue;
+      if (skeleton->simplices[1][i].get_squared_volume() > L2) pool.insert(i);
+    }
+  }
+  else {
+    for(i=0; i<ne; ++i) {
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
+      skeleton->simplices[1][i].get_vertices(vx);
+      if (vx[0] != base && vx[1] != base) continue;
+      if (skeleton->simplices[1][i].get_squared_volume() >= L2) pool.insert(i);
+    }
   }
   if (pool.empty()) return false;
   i = skeleton->RND->irandom(pool);
-  skeleton->simplex_deletion(1,i);
+#ifdef VERBOSE
+  std::cout << "Deleting edge with key " << skeleton->get_simplex_key(1,i) << " in contraction" << std::endl;
+#endif
+  skeleton->simplex_deletion(1,i,sheet);
   return true;
 }
 
-bool Spacetime::compensation_m(int base)
+bool Spacetime::compensation_m(int base,int sheet)
 {
   int i,j,vx[2];
   double l;
-  std::set<int> candidates,S;
+  std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) skeleton->simplices[1].size();
 
-  if (skeleton->vertex_dimension(base) < 2) return false;
-
+  if (skeleton->vertex_dimension(base,sheet) < 2) return false;
 #ifdef VERBOSE
-  std::cout << "Compensation with " << skeleton->dimension() << std::endl;
+  std::cout << "Compensation with " << skeleton->dimension(sheet) << std::endl;
 #endif
 
-  // Remove an edge from this event: ideally one that connects with a event whose degree
+  // Remove an edge from this event: ideally one that connects with an event whose degree
   // is also excessive *and* which is relatively far away (edge length >> 1)
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
-    if (skeleton->vertex_dimension(j) < 2) continue;
+    if (skeleton->vertex_dimension(j,sheet) < 2) continue;
     if (skeleton->events[j].get_deficiency() < -std::numeric_limits<double>::epsilon()) continue;
     l = geometry->get_squared_distance(base,j,true);
     if (l >= 0.81 && l <= 1.21) continue;
-    S.clear();
-    S.insert(base);
-    S.insert(j);
-    qt = skeleton->index_table[1].find(S);
+    s1.clear();
+    s1.insert(base);
+    s1.insert(j);
+    qt = skeleton->index_table[1].find(s1);
     candidates.insert(qt->second);
   }
 
   if (candidates.empty()) {
 #ifdef VERBOSE
-    std::cout << "Unable to perform dimensional compensation, no viable candidates..." << std::endl;
+    std::cout << "Unable to perform dimensional trimming, no viable candidates..." << std::endl;
 #endif
     return false;
   }
@@ -206,73 +219,94 @@ bool Spacetime::compensation_m(int base)
 #ifdef VERBOSE
   std::cout << "Deleting edge with key " << skeleton->get_simplex_key(1,j) << " to reduce the complex's dimensionality" << std::endl;
 #endif
-  skeleton->simplex_deletion(1,j);
+  skeleton->simplex_deletion(1,j,sheet);
   return true;
 }
 
-bool Spacetime::compensation_g(int base)
+bool Spacetime::compensation_g(int base,int sheet)
 {
   int i,j,vx[2];
   double l;
-  std::set<int> candidates,S;
+  std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int D = (signed) geometry->dimension();
   const int ne = (signed) skeleton->simplices[1].size();
 
   int sdegree = 0;
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     sdegree++;
   }
   if (sdegree == 2*D) return false;
+  bool up;
+  std::set<int> locus;
   const int idegree = 2*D;
   const int nv = (signed) skeleton->events.size();
 
-  bool up = (sdegree < idegree) ? true : false;
+  locus.insert(sheet);
+
+  up = (sdegree < idegree) ? true : false;
 #ifdef VERBOSE
   std::cout << "Compensation with " << base << "  " << up << "  " << sdegree - idegree << std::endl;
 #endif
   if (up) {
-    // Add an edge to the event base: ideally one that connects with a event whose degree is
+    // Add an edge to the event base: ideally one that connects with an event whose degree is
     // also too low and which is relatively close at hand. If the only candidates are distant
     // then do nothing and return false!
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      if (!skeleton->active_event(i)) continue;
-      if (skeleton->edge_exists(base,i)) continue;
+      if (!skeleton->events[i].active(sheet)) continue;
+      if (skeleton->edge_exists(base,i,sheet)) continue;
       l = geometry->get_squared_distance(base,i,true);
       if (l >= 0.81 && l <= 1.21) candidates.insert(i);
     }
 
     if (candidates.empty()) {
 #ifdef VERBOSE
-      std::cout << "Failure in positive compensation..." << std::endl;
+      std::cout << "Failure in positive compensation ..." << std::endl;
 #endif
       return false;
     }
     j = skeleton->RND->irandom(candidates);
-    skeleton->events[base].set_topology_modified(true);
-    skeleton->events[j].set_topology_modified(true);
-    skeleton->simplex_addition(base,j,-1);
+    s1.clear();
+    s1.insert(base);
+    s1.insert(j);
+    qt = skeleton->index_table[1].find(s1);
+    if (qt != skeleton->index_table[1].end()) {
+#ifdef DEBUG
+      assert(!skeleton->simplices[1][qt->second].active(sheet));
+#endif
+#ifdef VERBOSE
+      std::cout << "Restoring edge with key " << skeleton->get_simplex_key(1,qt->second) << " in positive compensation" << std::endl;
+#endif
+      skeleton->simplices[1][qt->second].activate(sheet);
+    }
+    else {
+#ifdef VERBOSE
+      std::cout << "Adding edge connecting " << base << " and " << j << " in positive compensation" << std::endl;
+#endif
+      skeleton->simplex_addition(base,j,locus);
+    }
   }
   else {
-    // Remove an edge from this event: ideally one that connects with a event whose degree
+    // Remove an edge from this event: ideally one that connects with an event whose degree
     // is also excessive *and* which is relatively far away (edge length >> 1)
     for(i=0; i<ne; ++i) {
-      if (!skeleton->active_simplex(1,i)) continue;
+      if (!skeleton->simplices[1][i].active(sheet)) continue;
       skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = geometry->get_squared_distance(base,j,true);
       if (l >= 0.81 && l <= 1.21) continue;
-      S.clear();
-      S.insert(base);
-      S.insert(j);
-      qt = skeleton->index_table[1].find(S);
+      s1.clear();
+      s1.insert(base);
+      s1.insert(j);
+      qt = skeleton->index_table[1].find(s1);
       candidates.insert(qt->second);
     }
+
     if (candidates.empty()) {
 #ifdef VERBOSE
       std::cout << "Failure in negative compensation..." << std::endl;
@@ -283,12 +317,12 @@ bool Spacetime::compensation_g(int base)
 #ifdef VERBOSE
     std::cout << "Deleting edge with key " << skeleton->get_simplex_key(1,i) << " in negative compensation" << std::endl;
 #endif
-    skeleton->simplex_deletion(1,i);
+    skeleton->simplex_deletion(1,i,sheet);
   }
   return true;
 }
 
-bool Spacetime::foliation_x(int base)
+bool Spacetime::foliation_x(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
   std::set<int> candidates,S;
@@ -296,7 +330,7 @@ bool Spacetime::foliation_x(int base)
   const int ne = (signed) skeleton->simplices[1].size();
 
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     p = (vx[0] == base) ? vx[1] : vx[0];
@@ -312,34 +346,34 @@ bool Spacetime::foliation_x(int base)
   S.insert(n1); S.insert(n2);
   qt = skeleton->index_table[1].find(S);
   if (qt == skeleton->index_table[1].end()) return false;
-  if (!skeleton->active_simplex(1,qt->second)) return false;
-  skeleton->simplex_deletion(1,qt->second);
+  if (!skeleton->simplices[1][qt->second].active(sheet)) return false;
+  skeleton->simplex_deletion(1,qt->second,sheet);
   return true;
 }
 
-bool Spacetime::deflation(int base)
+bool Spacetime::deflation(int base,int sheet)
 {
-  int d = skeleton->vertex_dimension(base);
+  int d = skeleton->vertex_dimension(base,sheet);
   if (d < 2) return false;
   int i,n,dw = 1;
   std::set<int> candidates;
   if (d > 2) dw = skeleton->RND->irandom(1,d);
   const int m = (signed) skeleton->simplices[dw].size();
   for(i=0; i<m; ++i) {
-    if (!skeleton->active_simplex(dw,i)) continue;
+    if (!skeleton->simplices[dw][i].active(sheet)) continue;
     if (skeleton->simplices[dw][i].contains(base)) candidates.insert(i);
   }
   n = skeleton->RND->irandom(candidates);
 #ifdef VERBOSE
   std::cout << "Deflating a " << d << "-simplex with base " << base << " to a " << dw << "-simplex." << std::endl;
 #endif
-  skeleton->simplex_deletion(dw,n);
+  skeleton->simplex_deletion(dw,n,sheet);
   return true;
 }
 
-bool Spacetime::reduction(int base)
+bool Spacetime::reduction(int base,int sheet)
 {
-  const int d = skeleton->vertex_dimension(base);
+  const int d = skeleton->vertex_dimension(base,sheet);
   if (d < 2) return false;
   int i,n,m,vx[1+d];
   std::set<int> candidates,s1;
@@ -349,7 +383,7 @@ bool Spacetime::reduction(int base)
   // Find which edges this event possesses are used in n-simplices (n > 1) and
   // eliminate one of them...
   for(i=0; i<N; ++i) {
-    if (!skeleton->active_simplex(d,i)) continue;
+    if (!skeleton->simplices[d][i].active(sheet)) continue;
     if (skeleton->simplices[d][i].contains(base)) candidates.insert(i);
   }
   m = skeleton->RND->irandom(candidates);
@@ -364,20 +398,20 @@ bool Spacetime::reduction(int base)
 #endif
   s1.insert(base); s1.insert(vx[n]);
   qt = skeleton->index_table[1].find(s1);
-  skeleton->simplex_deletion(1,qt->second);
+  skeleton->simplex_deletion(1,qt->second,sheet);
   return true;
 }
 
-bool Spacetime::amputation(int base,double tolerance)
+bool Spacetime::amputation(int base,double tolerance,int sheet)
 {
   int i,j,n,p,vx[2];
   std::set<int> candidates;
   const int ne = (signed) skeleton->simplices[1].size();
-  const int ulimit = skeleton->dimension();
+  const int ulimit = skeleton->dimension(sheet);
 
   if (skeleton->events[base].get_deficiency() > tolerance) candidates.insert(base);
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     n = (vx[0] == base) ? vx[1] : vx[0];
@@ -386,62 +420,61 @@ bool Spacetime::amputation(int base,double tolerance)
   
   if (candidates.empty()) return false;
   n = skeleton->RND->irandom(candidates);
- 
+
 #ifdef VERBOSE
   std::cout << "Amputating event " << n << " and all its dependent simplices" << std::endl;
 #endif
   // Delete this event and all its edges...
-  skeleton->events[n].deactivate();
-  skeleton->events[n].set_topology_modified(true);
+  skeleton->events[n].deactivate(sheet);
   for(i=ulimit; i>=1; --i) {
     p = (signed) skeleton->simplices[i].size();
     for(j=0; j<p; ++j) {
-      if (!skeleton->active_simplex(i,j)) continue;
-      if (skeleton->simplices[i][j].contains(n)) skeleton->simplex_deletion(i,j);
+      if (!skeleton->simplices[i][j].active(sheet)) continue;
+      if (skeleton->simplices[i][j].contains(n)) skeleton->simplex_deletion(i,j,sheet);
     }
   }
-  if (!skeleton->active_event(n)) {
+  if (!skeleton->events[n].active()) {
     if (!skeleton->events[n].zero_energy()) {
       skeleton->events[base].increment_energy(skeleton->events[n].get_energy());
       skeleton->events[n].nullify_energy();
     }
   }
-  
   return true;
 }
 
-bool Spacetime::fusion_x(int base,double tolerance)
+bool Spacetime::fusion_x(int base,double tolerance,int sheet)
 {
-  int i,u;
-  std::set<int> candidates;
+  int i,j;
+  std::vector<std::pair<int,int> > candidates;
   const int nv = (signed) skeleton->events.size();
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    if (!skeleton->active_event(i)) continue;
-    if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
+    if (!skeleton->events[i].active(sheet)) continue;
+    if (skeleton->events[i].get_deficiency() < std::numeric_limits<double>::epsilon()) continue;
     if (geometry->get_squared_distance(base,i,true) > tolerance) continue;
-    candidates.insert(i);
+    candidates.push_back(std::pair<int,int>(base,i));
   }
   if (candidates.empty()) return false;
-  u = skeleton->RND->irandom(candidates);
+  i = (signed) candidates.size();
+  j = skeleton->RND->irandom(i);
 #ifdef VERBOSE
-  std::cout << "Fusing deficient events: " << u << " => " << base << std::endl;
+  std::cout << "Fusing deficient events: " << candidates[j].second << " => " << candidates[j].first << std::endl;
 #endif
-  event_fusion(base,u);
+  event_fusion(candidates[j].first,candidates[j].second,sheet);
   return true;
 }
 
-bool Spacetime::germination(int base)
+bool Spacetime::germination(int base,int sheet)
 {
-  // This method constructs new neighbour events w_i for the event base which are
-  // unit distance from the base and orthogonal to the base's existing edges, if 
-  // possible.
+  // This method constructs new neighbour events w_i for the base event which are
+  // unit distance from the base event and orthogonal to the base event's existing edges, 
+  // if possible.
   if (skeleton->events[base].get_boundary()) return false;
 
   bool good,modified = false;
   double a,b,d_min,delta;
-  std::set<int> N,Dm2,Dm1,current,tset,free_dims;
+  std::set<int> N,Dm2,Dm1,locus,current,tset,free_dims;
   std::set<int>::const_iterator it,jt;
   std::vector<double> x,y,z,xc,bvector;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -450,8 +483,10 @@ bool Spacetime::germination(int base)
   const int ne = (signed) skeleton->simplices[1].size();
   const int D = (signed) geometry->dimension();
 
+  locus.insert(sheet);
+
   for(i=0; i<ne; ++i) {
-    if (!skeleton->active_simplex(1,i)) continue;
+    if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     if (base != vx[0] && base != vx[1]) continue;
     j = (vx[0] == base) ? vx[1] : vx[0];
@@ -459,7 +494,7 @@ bool Spacetime::germination(int base)
   }
   for(it=N.begin(); it!=N.end(); ++it) {
     n = *it;
-    if (skeleton->active_event(n)) break;
+    if (skeleton->events[n].active()) break;
   }
 #ifdef VERBOSE
   std::cout << "Germination with " << base << "  " << n << std::endl;
@@ -489,7 +524,7 @@ bool Spacetime::germination(int base)
   }
   if (D1 == -1) return false;
 
-  // Check the three possible locations for a event orthogonal to this edge:
+  // Check the three possible locations for an event orthogonal to this edge:
   // First, a 90 degree rotation...
   d_min = 0.5;
   in1 = -1;
@@ -505,18 +540,18 @@ bool Spacetime::germination(int base)
     }
   }
   if (in1 >= 0) {
-    if (!skeleton->active_event(in1)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      skeleton->events[in1].activate();
+      skeleton->events[in1].activate(sheet);
     }
-    modified = skeleton->simplex_addition(base,in1,-1);
+    modified = skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
-    m = event_addition(base);
+    m = event_addition(base,sheet);
     Dm1.insert(m);
     geometry->set_coordinates(m,xc);
-    skeleton->simplex_addition(base,m,-1);
+    skeleton->simplex_addition(base,m,locus);
   }
 
   // Second, a 180 degree rotation...
@@ -534,17 +569,17 @@ bool Spacetime::germination(int base)
     }
   }
   if (in1 >= 0) {
-    if (!skeleton->active_event(in1)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      skeleton->events[in1].activate();
+      skeleton->events[in1].activate(sheet);
     }
-    modified = skeleton->simplex_addition(base,in1,-1);
+    skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
-    m = event_addition(base);
+    m = event_addition(base,sheet);
     geometry->set_coordinates(m,xc);
-    skeleton->simplex_addition(base,m,-1);
+    skeleton->simplex_addition(base,m,locus);
   }
 
   // And finally the 270 degree rotation...
@@ -562,21 +597,24 @@ bool Spacetime::germination(int base)
     }
   }
   if (in1 >= 0) {
-    if (!skeleton->active_event(in1)) {
+    if (!skeleton->events[in1].active(sheet)) {
       modified = true;
-      skeleton->events[in1].activate();
+      skeleton->events[in1].activate(sheet);
     }
-    modified = skeleton->simplex_addition(base,in1,-1);
+    skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
-    m = event_addition(base);
-    geometry->set_coordinates(m,xc);
+    m = event_addition(base,sheet);
     Dm1.insert(m);
-    skeleton->simplex_addition(base,m,-1);
+    geometry->set_coordinates(m,xc);
+    skeleton->simplex_addition(base,m,locus);
   }
 
-  if (modified) regularization(false);
+  if (modified) {
+    regularization(false,sheet);
+    regularization(false,-1);
+  }
 
   // Now we use rolling cross products to branch out into higher
   // dimensions...
@@ -663,18 +701,18 @@ bool Spacetime::germination(int base)
       }
     }
     if (in1 >= 0) {
-      if (!skeleton->active_event(in1)) {
+      if (!skeleton->events[in1].active(sheet)) {
         modified = true;
-        skeleton->events[in1].activate();
+        skeleton->events[in1].activate(sheet);
       }
-      modified = skeleton->simplex_addition(base,in1,-1);
+      skeleton->simplex_addition(base,in1,locus);
     }
     else {
       modified = true;
-      m = event_addition(base);
+      m = event_addition(base,sheet);
       current.insert(m);
       geometry->set_coordinates(m,xc);
-      skeleton->simplex_addition(base,m,-1);
+      skeleton->simplex_addition(base,m,locus);
     }
 
     // Now the mirror image in a three-dimensional subspace...
@@ -693,18 +731,18 @@ bool Spacetime::germination(int base)
       }
     }
     if (in1 >= 0) {
-      if (!skeleton->active_event(in1)) {
+      if (!skeleton->events[in1].active(sheet)) {
         modified = true;
-        skeleton->events[in1].activate();
+        skeleton->events[in1].activate(sheet);
       }
-      modified = skeleton->simplex_addition(base,in1,-1);
+      skeleton->simplex_addition(base,in1,locus);
     }
     else {
       modified = true;
-      m = event_addition(base);
+      m = event_addition(base,sheet);
       current.insert(m);
       geometry->set_coordinates(m,xc);
-      skeleton->simplex_addition(base,m,-1);
+      skeleton->simplex_addition(base,m,locus);
     }
 
     for(it=free_dims.begin(); it!=free_dims.end(); ++it) {

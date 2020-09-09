@@ -1,18 +1,18 @@
-#include "synarmosma/homology.h"
-#include "synarmosma/homotopy.h"
+#include <synarmosma/homology.h>
+#include <synarmosma/homotopy.h>
 
 #ifndef _sheeth
 #define _sheeth
 
 namespace DIAPLEXIS {
-  /// A class representing one sheet of a multi-sheeted spacetime complex, akin to a Riemann surface.  
+  /// A class representing one sheet of a multi-sheeted spacetime complex, akin to a Riemann surface.
   class Sheet {
    protected:
     /// This property contains the index of this sheet in the Spacetime::codex vector.
     int index = -1;
     /// This property contains the index of this sheet's parent, if it possesses one.
     int parent = -1;
-    /// This property indicates whether or not this sheet is currently active or quiescent. 
+    /// This property indicates whether or not this sheet is currently active or quiescent.
     bool active = false;
     /// This property stores a record of the hyphantic operations that have been successfully executed on this sheet.
     std::string hyphantic_ops = "";

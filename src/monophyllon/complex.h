@@ -1,33 +1,33 @@
+#include <synarmosma/homology.h>
+#include <synarmosma/homotopy.h>
+
 #include "event.h"
 #include "simplex.h"
-
-#include "synarmosma/homology.h"
-#include "synarmosma/homotopy.h"
 
 #ifndef _complexh
 #define _complexh
 
 namespace DIAPLEXIS {
-  /// A class representing an abstract simplicial complex of finite dimension. 
+  /// A class representing an abstract simplicial complex of finite dimension.
   class Complex {
    private:
-    /// This property is true if this complex satisfies the axioms of a combinatorial 
+    /// This property is true if this complex satisfies the axioms of a combinatorial
     /// pseudomanifold.
     bool pseudomanifold = false;
-    /// This property is true if this complex satisfies the axioms of a 
+    /// This property is true if this complex satisfies the axioms of a
     /// pseudomanifold-with-boundary.
     bool boundary = false;
-    /// This property is true if this complex satisfies the axioms of an 
+    /// This property is true if this complex satisfies the axioms of an
     /// orientable pseudomanifold.
     bool orientable = false;
-    /// This property stores the 0-simplices (events) of the complex as a 
+    /// This property stores the 0-simplices (events) of the complex as a
     /// vector of type Event.
     std::vector<Event> events;
-    /// This property stores the higher-dimensional simplices, as an array of 
+    /// This property stores the higher-dimensional simplices, as an array of
     /// 1 + Complex::ND vectors of type Simplex.
     std::vector<Simplex>* simplices;
-    /// This property contains a hash map for each dimension greater than zero 
-    /// that allows a rapid lookup of a d-simplex's index in Complex::simplices[d] 
+    /// This property contains a hash map for each dimension greater than zero
+    /// that allows a rapid lookup of a d-simplex's index in Complex::simplices[d]
     /// given the simplex's vertex set.
     SYNARMOSMA::hash_map* index_table;
     /// This property stores the homology of the complex, using the 

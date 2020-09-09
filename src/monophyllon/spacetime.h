@@ -1,24 +1,23 @@
 // For XML processing...
 #include <pugixml.hpp>
 
-#include "synarmosma/geometry.h"
-#include "synarmosma/directed_graph.h"
+#include <synarmosma/geometry.h>
+#include <synarmosma/directed_graph.h>
 
-#include "sheet.h"
 #include "complex.h"
 
 #ifndef _spacetimeh
 #define _spacetimeh
 
 namespace DIAPLEXIS {
-  /// A class representing the spacetime, a combination of dynamic geometric and topological properties. 
+  /// A class representing the spacetime, a combination of dynamic geometric and topological properties.
   class Spacetime {
    protected:
     /// This enumerated class lists the five initial states for the spacetime: random (the Spacetime::edge_probability 
     /// property is used to randomly distribute edges among the events), monoplex (a d-simplex where d is the value of 
     /// the Spacetime::initial_dim property), cartesian (the initial state is an orthonormal lattice of events), singleton 
     /// (a single event and thus a sort of "Big Bang" model) and diskfile, where the initial state is read from a binary 
-    /// disk file for checkpoint-restart. 
+    /// disk file for checkpoint-restart.
     enum Initial_Topology
     {
         random,
@@ -34,7 +33,7 @@ namespace DIAPLEXIS {
     /// a conjugate gradient algorithm to reduce 1-simplex abnormality), the evolutionary solver (using an evolutionary 
     /// model with a population where each individual has a different geometry), the annealing solver (using a simulated 
     /// annealing algorithm to minimize the Spacetime::error value) and the simplex solver (using the Nelder-Mead downhill 
-    /// simplex optimization algorithm). 
+    /// simplex optimization algorithm).  
     enum Geometry_Solver
     {
         minimal,
@@ -80,9 +79,9 @@ namespace DIAPLEXIS {
     /// by the number of active events.
     double error = 0.0;
     /// This property stores the global component of the spacetime error: 
-    /// the sum of the output of representational_energy(), compute_temporal_nonlinearity() 
+    /// the sum of the output of representational_energy() and compute_temporal_nonlinearity() 
     /// and \f$2\pi\f$ times the output of Complex::euler_characteristic, less 
-    /// the sum of the energy property of all active events. 
+    /// the sum of the energy property of all active events.
     double global_deficiency = 0.0;
     /// This property contains all of the spacetime's topology, stored in a 
     /// pointer to an instance of the Complex class.
@@ -90,12 +89,10 @@ namespace DIAPLEXIS {
     /// This property contains the spacetime's geometry, stored in a pointer to 
     /// an instance of the Synarmosma library's Geometry class.
     SYNARMOSMA::Geometry* geometry;
-    /// This property stores the collection of sheets that are associated 
-    /// with this multi-sheeted spacetime, as a vector of type Sheet.
-    std::vector<Sheet> codex;
-    /// This property stores the number of active sheets in the 
-    /// spacetime complex.
-    int nactive = 1;
+    /// This property contains a list of all of the hyphantic operations 
+    /// successfully carried out on the spacetime complex since the start 
+    /// of the simulation. 
+    std::string hyphantic_ops = "";
 
     /// This property controls the sort of initial state from which the simulation 
     /// begins, including eventually from a checkpoint file. 
@@ -196,25 +193,6 @@ namespace DIAPLEXIS {
     /// control the selection of hyphantic operators that will be applied at 
     /// each relaxation step. 
     std::string hyphansis_score = "";
-    /// This property sets the number of initial sheets in the spacetime and 
-    /// should be greater than or equal to unity. If it is equal to unity and 
-    /// Spacetime::foliodynamics is false, the net result is that the simulation 
-    /// behaves in a manner identical to the Monophyllon version of this library.
-    int nt_initial = 1;
-    /// This property determines whether or not the sheets of the spacetime can 
-    /// "reproduce" by generating daughter sheets at each invocation of the 
-    /// global_operations() method. The relative fertility of the sheets is 
-    /// determined by the Spacetime::ramosity property. 
-    bool foliodynamics = false;
-    /// This property controls whether or not the ubiquity_permutation() method 
-    /// is called when the global_operations() method is invoked. If true, it is 
-    /// possible for d-simplices (d > 0) to jump from one spacetime sheet to another, 
-    /// i.e. to permute their Simplex::ubiquity property if their Simplex::energy 
-    /// property is sufficiently elevated and the "cosmic temperature" is high enough. 
-    /// As the number of relaxation steps increases this inter-cosmic jumping becomes 
-    /// less common, since the cosmic temperature cools and this causes the Boltzmann 
-    /// criterion to be satisfied less frequently. 
-    bool permutable = false;
 
     /// This property controls which optimization algorithm is used to try and 
     /// ensure the geometry meshes well with the topology and energy distribution 
@@ -343,25 +321,13 @@ namespace DIAPLEXIS {
     /// The coupling constant between the topological-geometric torsion 
     /// and the energy in the structure equation.
     static const double Lambda;
-    /// This property stores the intensity of branching in the polycosmos, 
-    /// as a floating point number between zero and unity. It is only meaningful 
-    /// if Spacetime::foliodynamics is true.
-    static const double ramosity;
-    /// This property sets the initial temperature for the process of cosmic 
-    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of simplices when Spacetime::permutable is true.
-    static const double T_zero;
-    // This property determines the rate of cooling in the process of cosmic 
-    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of simplices when Spacetime::permutable is true.
-    static const double kappa;
 
-    /// This method is called by the advance() method to carry out the hyphansis step of topological change for a given sheet (the method's unique argument); it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
-    void hyphansis(int);
-    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed. 
-    int dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
-    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
-    int musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    /// This method is called by the advance() method to carry out the hyphansis step of topological change; it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
+    void hyphansis();
+    /// This method carries out the hyphansis step according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
+    int dynamic_hyphansis(const std::vector<std::pair<int,double> >&);
+    /// This method carries out the hyphansis step according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
+    int musical_hyphansis(const std::vector<std::pair<int,double> >&);
     /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
     /// This method is used in the musical_hyphansis() method and converts a (lower-pitched) key - a musical note - into an explicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
@@ -370,73 +336,73 @@ namespace DIAPLEXIS {
     void implication(std::string&) const;
     /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
-    /// This method returns the index of an event belonging to sheet (the final argument) from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
-    int select_event(const std::vector<int>&,double,int) const;
-    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is the coordinate vector for the new event; the method returns the index of the new event. 
-    int event_addition(const std::vector<double>&,int);
-    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is a set of parent events for the new event; the method returns the index of the new event. 
-    int event_addition(const std::set<int>&,int);
-    /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the argument is the parent event for the new event; the method returns the index of the new event.     
-    int event_addition(int,int);
-    /// This method deletes the event whose index is the first argument from the sheet indicated by the last argument, by removing this sheet index from its Event::ubiquity property. The method returns false if the event was already not a member of this sheet, otherwise true.  
-    bool event_deletion(int,int);
-    /// This method fuses the second argument into the first, both interpreted as indices of events, for the sheet indicated by the final argument; it returns true if the fusion succeeded and false otherwise. 
-    bool event_fusion(int,int,int);
-    /// This method carries out an event fusion for a given sheet (the method's argument) that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
-    bool event_twist(int);
-    /// This method attempts a circumvolution using boundary edges belonging to the sheet specified by the argument; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
+    /// This method returns the index of an active event from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
+    int select_event(const std::vector<int>&,double) const;
+    /// This method adds a new event to the spacetime, where the argument is the coordinate vector for the new event; the method returns the index of the new event. 
+    int event_addition(const std::vector<double>&);
+    /// This method adds a new event to the spacetime, where the argument is a set of parent events for the new event; the method returns the index of the new event. 
+    int event_addition(const std::set<int>&);
+    /// This method adds a new event to the spacetime, where the argument is the parent event for the new event; the method returns the index of the new event.     
+    int event_addition(int);
+    /// This method deletes the event whose index is the argument, by setting its Event::active property to false. The method returns false if the event was already inactive, otherwise true. 
+    bool event_deletion(int);
+    /// This method fuses the second argument into the first, both interpreted as indices of events; it returns true if the fusion succeeded and false otherwise.
+    bool event_fusion(int,int);
+    /// This method carries out an event fusion that is designed to twist the topology of the complex and create non-orientability; it returns true if the event fusion succeeded, false otherwise.
+    bool event_twist();
+    /// This method attempts a circumvolution using active boundary edges; it is normally only called when the global energy reaches a critical threshold. The method returns true if it is successful.
+    bool circumvolution();
+    /// This method seeks to fuse together two d-simplices (d > 0), one of which contains the event whose index is the method's argument; it returns true if successful.
     bool circumvolution(int);
-    /// This method seeks to fuse together two d-simplices (d > 0) lying on a given sheet (the second argument), one of which contains the event whose index is the method's first argument; it returns true if successful.
-    bool circumvolution(int,int);
-    /// This method looks for 1-simplices belonging to a given sheet (the third argument) connected to a particular event (the method's first argument) whose length exceeds a certain threshold (the second argument); if the method finds such edges, it attempts to delete one and returns true if successful. 
-    bool contraction(int,double,int);
-    /// This method attempts to remove a 1-simplex from the event whose index is the first argument and belonging to the sheet which is the second argument, favouring edges whose length is much greater than unity and whose connecting event also has an excessive degree. The method returns true if it succeeds in deleting an edge.
-    bool compensation_m(int,int);
-    /// This method adds or removes a 1-simplex from the event whose index is the first argument and belonging to the sheet which is the second argument, depending on the event's degree which has a goal of being twice the background dimension. When choosing an edge the method favours shorter over longer edges and ensuring that the partner event has a similar degree deficiency or excess. If an edge is added or removed the method returns true. 
-    bool compensation_g(int,int);
-    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and belonging to the sheet indicated by the second argument. The method returns true if successful and creates new events for the simplex's other d vertices.
-    bool expansion(int,int);
-    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and belonging to the sheet indicated by the final argument; it returns true if successful. The second argument is the percentage of the new d-simplex's vertex-events which should be created from scratch. 
-    bool expansion(int,double,int);
-    /// This method examines all the neighbours with non-zero deficiency that are connected to the event whose index is the method's first argument and which belong to the sheet indicated by the final argument. Two such neighbours are chosen and along with the base event a 2-simplex is created; if the simplex creation is successful, the method returns true. 
-    bool foliation_m(int,int);
-    /// This method examines all the neighbours with non-zero deficiency that are connected to the event whose index is the method's first argument and which belong to the sheet indicated by the final argument. One such neighbour is chosen and the connecting 1-simplex is deleted; if the edge deletion is successful, the method returns true. 
-    bool foliation_x(int,int);
-    /// This method calculates the edges connecting the event whose index is the method's first argument, all belonging to the sheet indicated by the method's second argument, and selects one of those which is used in a d-simplex (d > 1) so that it can be deleted. If the edge deletion is successful the method returns true.
-    bool reduction(int,int);
-    /// This method deletes an event from a given sheet (the final argument) drawn from the base event (whose index is the method's first argument) and its neighbours, assuming their deficiency property exceeds the value of the second argument. The method also deletes all the higher-dimensional simplices depending on this event; it returns true if the deletion is successful.
-    bool amputation(int,double,int);
-    /// This method fuses an event with non-zero deficiency lying on a given sheet (the last argument) and which lies within a distance L (the second argument) of the base event (the first argument), to the base event. It returns true if the fusion is successful. 
-    bool fusion_x(int,double,int);
-    /// This method accepts as its first argument the index of an event belonging to a certain sheet (the second argument) and chooses at random one of the events belonging to this sheet among its neighbours and then fuses this neighbour to the original event. It returns true if this fusion is successful.
-    bool fusion_m(int,int);
-    /// This method causes an event to undergo fission into one or more events on a given sheet (the final argument), duplicating the original event's neighbour connections depending on the value of the second argument which should lie between zero and unity. If the first argument is non-negative, it is the index of the event which undergoes fission otherwise a random active event is chosen. The method returns true if the fission is successful.
-    bool fission(int,double,int);
-    /// This method inflates a d-simplex into an n-simplex, where n > d. If the first argument is non-negative, it is assumed to be the index of an event (on a given sheet, the third argument) which must belong to the d-simplex, otherwise a d-simplex belonging to the sheet is chosen at random. The second argument argument is a creativity index controlling whether or not new events are created to supply the other vertices of the n-simplex. The method returns true if it succeeds in inflating a d-simplex on this sheet.
-    bool inflation(int,double,int);
-    /// This method accepts the index of a particular event (first argument) belonging to a given sheet (second argument) and if the topological dimension of this event on this sheet is greater than unity, it deletes a d-simplex (d > 1) containing this event, thereby reducing the event's topological dimension to d-1. 
-    bool deflation(int,int);
-    /// This method attempts to create a hole or perforation in a simplex. If the first argument is non-negative the method tries to create this hole in a d-simplex (d > 1) containing the base event (the first argument), where d is the second argument, belonging to a given sheet (the third argument). If the first argument is negative, the method is global over the sheet and the second argument is ignored; it tries to find a random d-simplex (d > 1) belonging to the sheet in which to create a hole. The method returns true if it is successful in creating such a perforation in the spacetime complex. 
-    bool perforation(int,int,int);
-    /// This method needs to loop over all events belonging to a given sheet (the second argument) and then find those which are capable of adding another event at a distance of (roughly) unity from the base event (first argument) and which is orthogonal to the base event's current set of edges.
-    bool correction(int,int);
-    /// This method constructs new neighbour events w_i on a particular sheet (the last argument) for the base event whose index is the method's first argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible. It returns true if it is successful and false otherwise.
-    bool germination(int,int);
-    /// This method accepts as its first argument the index of an event and as its second a particular sheet. If this event is a member of a 2-simplex, the method carries out a Δ => Y transformation, returning true if it is successful.
-    bool stellar_addition(int,int);
-    /// This method accepts as its first argument the index of an event and as its second a particular sheet. If this event on this sheet has a degree of at least three and is not a member of a d-simplex (d > 1), the method carries out a Y => Δ transformation, returning true if it is successful.
-    bool stellar_deletion(int,int);
+    /// This method looks for active 1-simplices connected to a particular event (the method's first argument) and whose length exceeds a certain threshold (the second argument); if the method finds such edges, it attempts to delete one and returns true if successful.
+    bool contraction(int,double);
+    /// This method attempts to remove a 1-simplex from the event whose index is the argument, favouring edges whose length is much greater than unity and whose connecting event also has an excessive degree. The method returns true if it succeeds in deleting an edge.
+    bool compensation_m(int);
+    /// This method adds or removes a 1-simplex from the event whose index is the argument, depending on the event's degree which has a goal of being twice the background dimension. When choosing an edge the method favours shorter over longer edges and ensuring that the partner event has a similar degree deficiency or excess. If an edge is added or removed the method returns true. 
+    bool compensation_g(int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's argument and returning true if successful. This method creates new events for the simplex's other d vertices.
+    bool expansion(int);
+    /// This method creates a new d-simplex (d > 0) containing the event whose index is the method's first argument and returning true if successful. The second argument is the percentage of the new simplex's vertex-events which should be newly created. 
+    bool expansion(int,double);
+    /// This method examines all the active neighbours with non-zero deficiency that are connected to the event whose index is the method's argument. Two such neighbours are chosen and along with the base event a 2-simplex is created; if the simplex creation is successful, the method returns true. 
+    bool foliation_m(int);
+    /// This method examines all the active neighbours with non-zero deficiency that are connected to the event whose index is the method's argument. One such neighbour is chosen and the connecting 1-simplex is deleted; if the edge deletion is successful, the method returns true. 
+    bool foliation_x(int);
+    /// This method calculates the edges connecting the event whose index is the method's argument and selects one of those which is used in a d-simplex (d > 1) so that it can be deleted. If the edge deletion is successful the method returns true.
+    bool reduction(int);
+    /// This method deletes an event drawn from the base event whose index is the method's first argument and its neighbours, assuming their deficiency property exceeds the value of the second argument. The method also deletes all the higher-dimensional simplices depending on this event; it returns true if the deletion is successful.
+    bool amputation(int,double);
+    /// This method fuses an active event with non-zero deficiency and which lies within a distance L (the second argument) of the base event (the first argument), to the base event. It returns true if the fusion is successful. 
+    bool fusion_x(int,double);
+    /// This method accepts as its unique argument the index of an event and chooses at random one of the active events among its neighbours and then fuses this neighbour to the original event. It returns true if this fusion is successful.
+    bool fusion_m(int);
+    /// This method causes an event to undergo fission into one or more events, duplicating the original event's neighbour connections depending on the value of the second argument which should lie between zero and unity. If the first argument is non-negative, it is the index of the event which undergoes fission otherwise a random active event is chosen. The method returns true if the fission is successful.
+    bool fission(int,double);
+    /// This method inflates a d-simplex into an n-simplex, where n > d. If the first argument is non-negative, it is assumed to be the index of an event which must belong to the d-simplex, otherwise an active d-simplex is chosen at random. The second argument argument is a creativity index controlling whether or not new events are created to supply the other vertices of the n-simplex. The method returns true if it succeeds in inflating a d-simplex.
+    bool inflation(int,double);
+    /// This method accepts the index of an active event as its argument and if the topological dimension of this event is greater than unity, it deletes a d-simplex (d > 1) containing this event, thereby reducing the event's topological dimension to d-1. 
+    bool deflation(int);
+    /// This method attempts to create a hole or perforation in a simplex. If the first argument is non-negative the method tries to create this hole in a d-simplex (d > 1) containing the base event (the first argument), where d is the second argument. If the first argument is negative, the method is global and the second argument is ignored; it tries to find a random d-simplex (d > 1) in which to create a hole. The method returns true if it is successful in creating such a perforation in the spacetime complex. 
+    bool perforation(int,int);
+    /// This method needs to loop over all active events and then find those which are capable of adding another event at a distance of (roughly) unity from the base event (the argument) and which is orthogonal to the base event's current set of edges.
+    bool correction(int);
+    /// This method constructs new neighbour events w_i for the base event whose index is the method's argument and which are unit distance from the base event and orthogonal to the base event's existing edges, if possible. It returns true if it is successful and false otherwise.
+    bool germination(int);
+    /// This method accepts as its argument the index of an event and, if this event is a member of a 2-simplex, carries out a Δ => Y transformation, returning true if it is successful.
+    bool stellar_addition(int);
+    /// This method accepts as its argument the index of an event and, if this event has a degree of at least three and is not a member of a d-simplex (d > 1), carries out a Y => Δ transformation, returning true if it is successful.
+    bool stellar_deletion(int);
 
-    /// This method first deletes events in the centre of a sheet (specified by the final argument) of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in the location of these inactive events. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the third argument its dimensionality. The method returns true if it succeeds.
-    bool interplication(int,double,int,int);
+    /// This method first deletes events in the centre of the spacetime and then inserts a combinatorial black hole (i.e. a compact, highly-entwined knot) in the location of these inactive events. The first argument is the event on which the knot should be centred, the second argument the approximate radius of the knot and the final argument its dimensionality. The method returns true if it succeeds.
+    bool interplication(int,double,int);
     /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
     /// This method fuses together events whose squared distance is less than the method's argument using the event_fusion() method; the method returns the number of pairs of events fused together.
     int superposition_fusion(double);
     /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the event_fission() method.
     void superposition_fission(int);
-    /// This method ensures that a sheet - specified by the final argument - of the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the first argument is false, the Complex::simplicial_implication() method is called at the beginning of the method. 
-    void regularization(bool,int);
+    /// This method ensures that the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the argument is false, the Complex::simplicial_implication() method is called at the beginning of the method.
+    void regularization(bool);
 
     /// This method tests whether the d-simplex specified by the method's two arguments (the dimension d and index of the simplex in Complex::simplices[d]) can be realized given the geometry of the simplex's events; the method returns true if the d-simplex has a positive squared volume and false otherwise. 
     bool realizable(int,int) const;
@@ -453,7 +419,7 @@ namespace DIAPLEXIS {
     /// This method computes the gradient of the edge length abnormality with respect to the event geometry; the gradient is written to the method's first argument, while the third argument is the vector listing which edges are deemed "flexible". If the second argument is true this method computes the negative gradient.   
     void compute_geometric_gradient(std::vector<double>&,bool,const std::vector<int>&);
     /// This method computes the force on each event in the damped spring mechanical model used by the mechanical_solver() method. The method's arguments are offset mappings for distinguishing active and inactive events (the first two arguments), a vector of energy values for active events, the current event positions and finally the calculated forces on these events. 
-    void mechanical_force(const std::vector<int>&, const std::vector<int>&, const std::vector<double>&, const std::vector<double>&, double*) const;
+    void mechanical_force(const std::vector<int>&,const std::vector<int>&,const std::vector<double>&,const std::vector<double>&,double*) const;
     /// This method optimizes the spacetime geometry using a damped spring mechanical model for the 1-skeleton.
     void mechanical_solver();
     /// This method optimizes the spacetime geometry using a simulated annealing algorithm.
@@ -472,31 +438,21 @@ namespace DIAPLEXIS {
     void compute_total_lightcone(int,std::set<int>&,std::set<int>&) const;
     /// This method computes the anterior and posterior properties of the active spacetime events.
     void compute_lightcones();
-    /// This method computes a partially directed graph in which directed edges reflect timelike separation between events, with the graph based on a particular event (the method's second argument) and a particulat sheet (the method's final argument). 
-    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int,int) const;
-    /// This method computes and returns the extent to which the chrono-geometry matches the topology in the vicinity of a given event (the method's first argument) on a particular sheet (the second argument); a value of zero indicates that the geometry and topology match well, while a positive value indicates more entwinement is needed while a negative value less entwinement.   
-    double compute_temporal_vorticity(int,int) const;
+    /// This method computes a partially directed graph in which directed edges reflect timelike separation between events, with the graph based on a particular event (the method's second argument). 
+    void compute_causal_graph(SYNARMOSMA::Directed_Graph*,int) const;
+    /// This method computes and returns the extent to which the chrono-geometry matches the topology in the vicinity of a given event (the method's argument); a value of zero indicates that the geometry and topology match well, while a positive value indicates more entwinement is needed while a negative value less entwinement.  
+    double compute_temporal_vorticity(int) const;
     /// This method calls compute_total_lightcone() for each active event and then checks for temporal loops, sinks and sources as well as the cyclicity of the causal graph of this event if the event is a source or sink. The method's return value is an index of such exotic causal behaviour in the spacetime as a whole.
     double compute_temporal_nonlinearity() const;
     /// This method computes a measure of how well the spacetime's geometry corresponds to its topological 1-skeleton and returns this value. If the argument is true the spatial embedding is weighted by the absolute value of the length of the 1-simplices.  
     double representational_energy(bool) const;
 
-    /// This method returns a string containing a compact summary of which sheets are active (1) and which dormant (0), in the form "(0,1,1,0,...,0,1)" with length equal to the number of sheets.
-    std::string sheet_activity() const;
-    /// This method causes the sheet indicated by the argument to undergo branching, creating one to four daughter sheets (the number of new sheets is the method's return value) from the parent sheet. This method is invoked by the sheet_dynamics() method.
-    int sheet_fission(int);
-    /// This method is only called if Spacetime::foliodynamics is true and is responsible for spawning new sheets from existing sheets as well as modifying the Sheet::active property for these existing sheets. The method returns the number of newly created sheets.
-    int sheet_dynamics();
-    /// This method carries out the inter-cosmic jumping of d-simplices (d > 0) in the spacetime complex; it is only called if Spacetime::permutable is true and the number of active sheets is greater than unity. The method returns the amount of inter-cosmic jumping: the sum over the d-simplices of the Hamming distance between the before and after ubiquity property.
-    int ubiquity_permutation(double);
-    /// This method calculates the global topology (homology and homotopy) for a sheet of the spacetime, specified by the method's argument. If this is for the sheet of all active d-simplices the Complex::compute_global_topology method is called, otherwise the Sheet::H and Sheet::pi1 properties are used to store the output.
-    void compute_global_topology(int);
     /// This method carries out the various global operations that must be performed at each relaxation step.
     bool global_operations();
-    /// This method computes the colours to be used for the events when visualizing the spacetime; a set of three RGB 8 bit unsigned integers (lying between 0 and 255) is used for each event - the inactive events are made invisible - and the criterion used for the colouring is either sheet membership (second argument is true), event energy (third argument is true) or event deficiency property (second and third arguments are false). 
-    void compute_colours(std::vector<unsigned char>&,bool,bool) const;
-    /// This method computes the initial configuration of the spacetime based on its parameters; its argument is the ubiquity set to be used for the initial d-simplices in the spacetime complex.
-    void build_initial_state(const std::set<int>&);
+    /// This method computes the colours to be used for the events when visualizing the spacetime; a set of three RGB 8 bit unsigned integers (lying between 0 and 255) is used for each event - the inactive events are made invisible - and the criterion used for the colouring is either the energy (second argument true) or deficiency property (false) of the event. 
+    void compute_colours(std::vector<unsigned char>&,bool) const;
+    /// This method computes the initial configuration of the spacetime based on its parameters.
+    void build_initial_state();
     /// This method writes out information on the current configuration of the Spacetime instance to the log file, whose name is stored in the Spacetime::log_file property.
     void write_log() const;
     /// This method calls clear() and then reads an instance of the Spacetime class from the binary file whose name is the method's unique argument.
@@ -507,8 +463,8 @@ namespace DIAPLEXIS {
     void read_parameters(const std::string&);
     /// This method adjusts the dimension of each spacetime event according to its simplicial membership (topological dimension) and updates the value of Spacetime::system_size accordingly. It returns the output from calling the Geometry::adjust_dimension method of the Synarmosma library.
     bool adjust_dimension();
-    /// This method computes the maximum, minimum and arithmetic mean of the absolute value of the length of the spacetime's 1-simplices which belong to the sheet indicated by the last argument and writes it to the method's argument, an array with three elements. 
-    void arclength_statistics(double*,int) const;
+    /// This method computes the maximum, minimum and arithmetic mean of the absolute value of the length of the spacetime's active 1-simplices and writes it to the method's argument, an array with three elements. 
+    void arclength_statistics(double*) const;
     /// This method reduces memory pressure in the simulation by eliminating inactive events and 1-simplices from the spacetime, if the ratio of active to inactive is less than half for both categories. The method returns the maximum of the current ratios.  
     double condense();
     /// This method attributes a value to a variety of Spacetime properties and the calls the build_initial_state() method.  
@@ -539,8 +495,8 @@ namespace DIAPLEXIS {
     double evolve();
     /// This method is similar to evolve(), in that it carries out a simulation of the spacetime but in this case with the goal of adapting the topology to the geometric constraints (e.g. dimensionality). The spacetime is assumed to start in a state with many edges, some of which must be deleted to match the geometry and degree distribution for a regular space. The method returns the value of Spacetime::error at completion. 
     double chorogenesis();
-    /// This method writes (using an offset to handle events and edges not belonging to the sheet) the coordinates of the spacetime's events in the first argument, an edge table (listing the two event indices) in the second argument and the third argument is a pair of integers containing the number of events and edges belonging to the sheet. The sheet index is the method's final argument.
-    void export_visual_data(std::vector<float>&,std::vector<int>&,std::pair<int,int>&,int) const;
+    /// This method writes (using an offset to handle inactive events and edges) the coordinates of the spacetime's active events in the first argument, an edge table (listing the two event indices) in the second argument and the third argument is a pair of integers containing the number of active events and active edges.
+    void export_visual_data(std::vector<float>&,std::vector<int>&,std::pair<int,int>&) const;
     /// This method writes the coordinates (second argument), edge table (third argument) and the total number of events and edges (the pair of integers that is the fourth argument). The first argument is a vector of colours for each event with inactive events and edges set to be invisible; the final argument determines the basis for the colouring scheme, using energy or deficiency values.
     void export_visual_data(std::vector<float>&,std::vector<float>&,std::vector<int>&,std::pair<int,int>&,bool) const;
     /// This method sets the value of Spacetime::checkpoint_frequency to the method's argument.
@@ -559,8 +515,10 @@ namespace DIAPLEXIS {
     int get_background_dimension() const;
     /// This method returns the value of Spacetime::state_file.
     std::string get_state_file() const;
-    /// This method furnishes a public version of the arclength_statistics() method, using the same arguments.
-    void get_arclength_statistics(double*,int) const;
+    /// This method returns the value of Spacetime::hyphantic_ops.
+    std::string get_hyphantic_operations() const;
+    /// This method furnishes a public version of the arclength_statistics() method, using the same argument.
+    void get_arclength_statistics(double* output) const;
     /// This method returns the value of Spacetime::iterations.
     int get_iterations() const;
     /// This method returns the value of Spacetime::error.
@@ -569,28 +527,7 @@ namespace DIAPLEXIS {
     int get_maximum_iterations() const;
     /// This method returns the value of Spacetime::converged.
     bool finished() const;
-    /// This method accepts as its first two arguments the dimension d and index n of a d-simplex (d >= 0) and then computes a representation of its ubiquity property as a string, the final argument. This string has the form "{0,1,1,0,...,1,0,1}" where the number of elements is equal to length of Spacetime::codex.  
-    void get_ubiquity(int,int,std::string&) const;
-    /// This method computes a vector with two distinct parts: the first is of length equal to the number of active events multiplied by the number of sheets and contains a 0 or 1 for the sheet membership of each such event. The second part of the vector is the same layout but for the spacetime's active edges.  
-    void get_ubiquity_vector(std::vector<int>&) const;
-    /// This method returns the string of hyphantic operations performed for a given sheet.
-    std::string get_sheet_ops(int) const;
-    /// This method furnishes a public version of the sheet_activity() method.
-    std::string get_sheet_activity() const;
-    /// This method returns the total number of sheets, active and inactive, of the spacetime at the moment it is invoked. 
-    int get_codex_size() const;
   };
-
-  inline std::string Spacetime::sheet_activity() const
-  {
-    std::string out = "(";
-    for(int i=0; i<(signed) codex.size()-1; ++i) {
-      out += std::to_string(codex[i].active) + ",";
-    }
-    out += std::to_string(codex[codex.size()-1].active);
-    out += ")";
-    return out;
-  }
 
   inline void Spacetime::set_checkpoint_frequency(int n) 
   {
@@ -617,9 +554,14 @@ namespace DIAPLEXIS {
     return state_file;
   }
 
-  inline void Spacetime::get_arclength_statistics(double* output,int sheet) const 
+  inline std::string Spacetime::get_hyphantic_operations() const
   {
-    arclength_statistics(output,sheet);
+    return hyphantic_ops;
+  }
+
+  inline void Spacetime::get_arclength_statistics(double* output) const 
+  {
+    arclength_statistics(output);
   }
 
   inline int Spacetime::get_iterations() const
@@ -640,20 +582,6 @@ namespace DIAPLEXIS {
   inline bool Spacetime::finished() const 
   {
     return converged;
-  }
-
-  inline std::string Spacetime::get_sheet_ops(int n) const 
-  {
-    return codex[n].hyphantic_ops;
-  }
-
-  inline std::string Spacetime::get_sheet_activity() const {
-    return sheet_activity();
-  }
-
-  inline int Spacetime::get_codex_size() const
-  {
-    return (signed) codex.size();
   }
 }
 #endif

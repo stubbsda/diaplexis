@@ -2,7 +2,7 @@
 
 using namespace DIAPLEXIS;
 
-Simplex::Simplex() 
+Simplex::Simplex()
 {
 
 }
@@ -13,7 +13,7 @@ Simplex::Simplex(int n,const std::set<int>& locus)
     vertices.insert(i);
   }
   calculate_faces();
-  ubiquity = locus;  
+  ubiquity = locus;
 }
 
 Simplex::Simplex(int v1,int v2,const std::set<int>& locus,int d)

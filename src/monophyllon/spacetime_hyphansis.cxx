@@ -9,10 +9,10 @@ const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
 
 std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
 {
-  // This consists of twelve "notes", eight of which belong to the scale itself 
+  // This consists of twelve "notes", eight of which belong to the scale itself
   // (diatonic notes) and four chromatic notes
-  // The implicative scale is the treble clef in the F major scale, so the following 
-  // twelve piano keys in ascending pitch, 
+  // The implicative scale is the treble clef in the F major scale, so the following
+  // twelve piano keys in ascending pitch,
   // F4, G4, G4 sharp, A4, A4 sharp, C5, C5 sharp, D5, E5, F5, F5 sharp, G5
   // The four chromatic notes are G4 sharp, C5 sharp, F5 sharp and G5
   // The twelve implicative operations are Um, Om, V, P, I1, I2, E1, E2, E3, F1, F2 and F3
@@ -22,12 +22,12 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
   // F3 <=> E5
   // Om <=> D5
   // F2 <=> C5 sharp*
-  // F1 <=> C5 
+  // F1 <=> C5
   // E2 <=> A4 sharp
   // Um <=> A4
   // I2 <=> G4 sharp*
   // E1 <=> G4
-  // I1 <=> F4 
+  // I1 <=> F4
   std::string output = "";
   parameters.clear();
   switch (key) {
