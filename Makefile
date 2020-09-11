@@ -10,14 +10,14 @@ install: polyphyllon monophyllon
 	install -p -m 444 src/monophyllon/*.h $(INSTALL_DIR)/include/diaplexis/monophyllon/
 
 polyphyllon:
-	cd src/polyphyllon; make
+	cd src/polyphyllon; $(MAKE)
 
 monophyllon:
-	cd src/monophyllon; make
+	cd src/monophyllon; $(MAKE)
 
 clean:
-	cd src/polyphyllon; make clean
-	cd src/monophyllon; make clean
+	cd src/polyphyllon; $(MAKE) clean
+	cd src/monophyllon; $(MAKE) clean
 	rm -f $(INSTALL_DIR)/lib/libdiaplexis-polyphyllon.so
 	rm -f $(INSTALL_DIR)/lib/libdiaplexis-monophyllon.so
 	rm -rf $(INSTALL_DIR)/include/diaplexis

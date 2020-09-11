@@ -8,7 +8,7 @@ import sys
 import math
 
 if len(sys.argv) != 3:
-	print('Usage: ./musical_hyphansis source.xml output.txt')
+	print('Usage: ./musical_hyphansis source.musicxml output.txt')
 	exit(1)
 
 # First we need to read the musical score

@@ -1,4 +1,8 @@
-#include "diaplexis/spacetime.h"
+#ifdef POLYPHYLLON
+#include <diaplexis/polyphyllon/spacetime.h>
+#else
+#include <diaplexis/monophyllon/spacetime.h>
+#endif
 
 int main(int argc,char** argv)
 {
