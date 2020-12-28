@@ -635,12 +635,14 @@ void Spacetime::compute_obliquity()
     j = *(N.begin());
 
     geometry->vertex_difference(i,j,vx);
+    if (SYNARMOSMA::norm(vx) < std::numeric_limits<double>::epsilon()) continue;
 
     rho = 0.0;
     spoint = std::next(N.begin(),1);
     for(it=spoint; it!=N.end(); ++it) {
       j = *it;
       geometry->vertex_difference(i,j,vy);
+      if (SYNARMOSMA::norm(vy) < std::numeric_limits<double>::epsilon()) continue;
       alpha = geometry->get_argument(vx,vy);
       theta = std::acos(alpha);
       rho += A*std::sin(2.0*theta)*std::sin(2.0*theta);

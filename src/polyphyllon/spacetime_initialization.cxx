@@ -411,8 +411,10 @@ void Spacetime::initialize()
   }
   skeleton->RND->initialize_poisson(Spacetime::ramosity);
 #ifdef DEBUG
+  assert(consistent());
   assert(skeleton->energy_check());
 #endif
+
   if (diskless) return;
 
 #ifdef VERBOSE

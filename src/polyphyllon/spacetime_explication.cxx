@@ -82,7 +82,7 @@ bool Spacetime::correction(int base,int sheet)
     if (i == base) continue;
     if (!skeleton->events[i].active(sheet)) continue;
     if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
-    l = geometry->get_squared_distance(base,i,true);
+    l = std::abs(geometry->get_squared_distance(base,i,true));
     if (l < 3.8025 || l > 4.2025) continue;
     // See if there is a third event that lies between these two...
     in1 = -1;
@@ -90,8 +90,8 @@ bool Spacetime::correction(int base,int sheet)
     dbest = 100.0;
     for(j=0; j<nv; ++j) {
       if (j == base || j == i) continue;
-      d1 = geometry->get_squared_distance(base,j,true);
-      d2 = geometry->get_squared_distance(i,j,true);
+      d1 = std::abs(geometry->get_squared_distance(base,j,true));
+      d2 = std::abs(geometry->get_squared_distance(i,j,true));
       if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
         l = (d1 - 1.0)*(d1 - 1.0) + (d2 - 1.0)*(d2 - 1.0);
         if (l < dbest) {
@@ -134,7 +134,7 @@ bool Spacetime::correction(int base,int sheet)
   // Add something to check here if this new event is within 0.5 units of an existing event...
   for(i=0; i<nv; ++i) {
     if (!skeleton->events[i].active()) continue;
-    if (geometry->get_squared_distance(i,xc) <= 0.5) return false;
+    if (std::abs(geometry->get_squared_distance(i,xc)) <= 0.5) return false;
   }
 #ifdef VERBOSE
   std::cout << "Adding event between " << base << " and " << n << std::endl;
@@ -158,7 +158,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
       if (!skeleton->simplices[1][i].active()) continue;
       skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
-      if (skeleton->simplices[1][i].get_squared_volume() > L2) pool.insert(i);
+      if (std::abs(skeleton->simplices[1][i].get_squared_volume()) > L2) pool.insert(i);
     }
   }
   else {
@@ -166,7 +166,7 @@ bool Spacetime::contraction(int base,double l,int sheet)
       if (!skeleton->simplices[1][i].active(sheet)) continue;
       skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
-      if (skeleton->simplices[1][i].get_squared_volume() >= L2) pool.insert(i);
+      if (std::abs(skeleton->simplices[1][i].get_squared_volume()) >= L2) pool.insert(i);
     }
   }
   if (pool.empty()) return false;
@@ -200,7 +200,7 @@ bool Spacetime::compensation_m(int base,int sheet)
     j = (vx[0] == base) ? vx[1] : vx[0];
     if (skeleton->vertex_dimension(j,sheet) < 2) continue;
     if (skeleton->events[j].get_deficiency() < -std::numeric_limits<double>::epsilon()) continue;
-    l = geometry->get_squared_distance(base,j,true);
+    l = std::abs(geometry->get_squared_distance(base,j,true));
     if (l >= 0.81 && l <= 1.21) continue;
     s1.clear();
     s1.insert(base);
@@ -259,7 +259,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       if (i == base) continue;
       if (!skeleton->events[i].active(sheet)) continue;
       if (skeleton->edge_exists(base,i,sheet)) continue;
-      l = geometry->get_squared_distance(base,i,true);
+      l = std::abs(geometry->get_squared_distance(base,i,true));
       if (l >= 0.81 && l <= 1.21) candidates.insert(i);
     }
 
@@ -298,7 +298,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       skeleton->simplices[1][i].get_vertices(vx);
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
-      l = geometry->get_squared_distance(base,j,true);
+      l = std::abs(geometry->get_squared_distance(base,j,true));
       if (l >= 0.81 && l <= 1.21) continue;
       s1.clear();
       s1.insert(base);
@@ -452,7 +452,7 @@ bool Spacetime::fusion_x(int base,double tolerance,int sheet)
     if (i == base) continue;
     if (!skeleton->events[i].active(sheet)) continue;
     if (skeleton->events[i].get_deficiency() < std::numeric_limits<double>::epsilon()) continue;
-    if (geometry->get_squared_distance(base,i,true) > tolerance) continue;
+    if (std::abs(geometry->get_squared_distance(base,i,true)) > tolerance) continue;
     candidates.push_back(std::pair<int,int>(base,i));
   }
   if (candidates.empty()) return false;
@@ -514,13 +514,14 @@ bool Spacetime::germination(int base,int sheet)
       a = z[i];
       b = z[j];
       delta = a*a + b*b;
-      if (delta < std::numeric_limits<double>::epsilon()) continue;
+      if (delta < geometry_tolerance) continue;
+      delta = std::sqrt(delta);
       D1 = i;
       D2 = j;
-      x[D1] = a/std::sqrt(a*a+b*b);
-      x[D2] = b/std::sqrt(a*a+b*b);
-      break;
+      x[D1] = a/delta;
+      x[D2] = b/delta;
     }
+    if (D1 > -1) break;
   }
   if (D1 == -1) return false;
 
@@ -532,7 +533,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] =  x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc);
+    delta = std::abs(geometry->get_squared_distance(i,xc));
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -544,7 +545,7 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       skeleton->events[in1].activate(sheet);
     }
-    modified = skeleton->simplex_addition(base,in1,locus);
+    modified = modified || skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
@@ -561,7 +562,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] = -x[D2] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc);
+    delta = std::abs(geometry->get_squared_distance(i,xc));
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -573,7 +574,7 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       skeleton->events[in1].activate(sheet);
     }
-    skeleton->simplex_addition(base,in1,locus);
+    modified = modified || skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
@@ -589,7 +590,7 @@ bool Spacetime::germination(int base,int sheet)
   xc[D2] = -x[D1] + bvector[D2];
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
-    delta = geometry->get_squared_distance(i,xc);
+    delta = std::abs(geometry->get_squared_distance(i,xc));
     delta = std::sqrt(delta);
     if (delta < d_min) {
       in1 = i;
@@ -601,7 +602,7 @@ bool Spacetime::germination(int base,int sheet)
       modified = true;
       skeleton->events[in1].activate(sheet);
     }
-    skeleton->simplex_addition(base,in1,locus);
+    modified = modified || skeleton->simplex_addition(base,in1,locus);
   }
   else {
     modified = true;
@@ -638,19 +639,16 @@ bool Spacetime::germination(int base,int sheet)
         mi = *jt;
         x[2] = y[mi];
         delta = SYNARMOSMA::norm(x);
-        if (delta > std::numeric_limits<double>::epsilon()) {
+        if (delta > geometry_tolerance) {
           good = true;
           break;
         }
       }
+      if (good) break;
     }
-    if (good) {
-      for(i=0; i<3; ++i) {
-        x[i] = x[i]/delta;
-      }
-    }
-    else {
-      break;
+    if (!good) break;
+    for(i=0; i<3; ++i) {
+      x[i] = x[i]/delta;
     }
 
     // What is m equal to?
@@ -663,18 +661,14 @@ bool Spacetime::germination(int base,int sheet)
       y.push_back(z[D2]);
       y.push_back(z[mi]);
       delta = SYNARMOSMA::norm(y);
-      if (delta > std::numeric_limits<double>::epsilon()) {
+      if (delta > geometry_tolerance) {
         good = true;
         break;
       }
     }
-    if (good) {
-      for(i=0; i<3; ++i) {
-        y[i] = y[i]/delta;
-      }
-    }
-    else {
-      break;
+    if (!good) break;
+    for(i=0; i<3; ++i) {
+      y[i] = y[i]/delta;
     }
 
     SYNARMOSMA::cross_product(x,y,z);
@@ -693,7 +687,7 @@ bool Spacetime::germination(int base,int sheet)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_squared_distance(i,xc);
+      delta = std::abs(geometry->get_squared_distance(i,xc));
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -705,7 +699,7 @@ bool Spacetime::germination(int base,int sheet)
         modified = true;
         skeleton->events[in1].activate(sheet);
       }
-      skeleton->simplex_addition(base,in1,locus);
+      modified = modified || skeleton->simplex_addition(base,in1,locus);
     }
     else {
       modified = true;
@@ -723,7 +717,7 @@ bool Spacetime::germination(int base,int sheet)
     in1 = -1;
     for(i=0; i<nv; ++i) {
       if (i == base) continue;
-      delta = geometry->get_squared_distance(i,xc);
+      delta = std::abs(geometry->get_squared_distance(i,xc));
       delta = std::sqrt(delta);
       if (delta < d_min) {
         in1 = i;
@@ -735,7 +729,7 @@ bool Spacetime::germination(int base,int sheet)
         modified = true;
         skeleton->events[in1].activate(sheet);
       }
-      skeleton->simplex_addition(base,in1,locus);
+      modified = modified || skeleton->simplex_addition(base,in1,locus);
     }
     else {
       modified = true;

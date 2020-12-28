@@ -471,6 +471,8 @@ namespace DIAPLEXIS {
     void initialize();
     /// This method allocates the resources for the Spacetime::geometry and Spacetime::skeleton properties.
     void allocate();
+    /// This method first calls the Complex::consistent method, returning false if it does, and then checks that all the floating point properties of the Event class are sensible, returning false otherwise.
+    bool consistent() const;
     /// This method calls the clear method on the extended properties of the class and sets Spacetime::iterations to zero and Spacetime::hyphantic_ops to the empty string. 
     void clear();
     /// This method returns true if all of the spacetime's d-simplices (d >= 0) have a modified property equal to false; it will otherwise return false. 

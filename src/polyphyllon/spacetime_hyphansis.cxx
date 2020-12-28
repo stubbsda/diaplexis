@@ -219,7 +219,10 @@ void Spacetime::implication(std::string& output) const
 void Spacetime::explication(std::string& output) const
 {
   // Should return one of the explicative operators: {G,C,A,Sg,Sm,D,N,Y,R,Ox,Ux}
-  //if (skeleton->RND->drandom() < 0.1) return 'G';
+  if (skeleton->RND->drandom() < 0.1) {
+    output = "G";
+    return;
+  }
   double alpha;
   if (iterations < 50) {
     if (skeleton->RND->drandom() < (0.35 + 1.0/(1+iterations/2))) {

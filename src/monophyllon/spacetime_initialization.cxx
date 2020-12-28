@@ -396,6 +396,7 @@ void Spacetime::initialize()
     structural_deficiency();
   }
 #ifdef DEBUG
+  assert(consistent());
   assert(skeleton->energy_check());
 #endif
 

@@ -676,6 +676,9 @@ bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)
   S.insert(u); S.insert(v);
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) {
+#ifdef VERBOSE
+    std::cout << "Adding new edge with vertices " << u << " and " << v << std::endl;
+#endif
     output = true;
     Simplex s(S,locus);
     s.incept = n;
@@ -691,6 +694,9 @@ bool Complex::simplex_addition(int u,int v,const std::set<int>& locus,int n)
         output = true;
       }
     }
+#ifdef VERBOSE
+    if (output) std::cout << "Restoring edge with vertices " << u << " and " << v << std::endl;
+#endif
   }
   for(it=locus.begin(); it!=locus.end(); ++it) {
     if (!events[u].active(*it)) {

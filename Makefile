@@ -15,11 +15,14 @@ polyphyllon:
 monophyllon:
 	cd src/monophyllon; $(MAKE)
 
+docs:
+	cd documentation; $(MAKE)
+
 clean:
 	cd src/polyphyllon; $(MAKE) clean
 	cd src/monophyllon; $(MAKE) clean
+	cd documentation; $(MAKE) clean
 	rm -f $(INSTALL_DIR)/lib/libdiaplexis-polyphyllon.so
 	rm -f $(INSTALL_DIR)/lib/libdiaplexis-monophyllon.so
 	rm -rf $(INSTALL_DIR)/include/diaplexis
-
 

@@ -570,6 +570,9 @@ bool Complex::simplex_addition(int u,int v,int n)
   S.insert(u); S.insert(v);
   qt = index_table[1].find(S);
   if (qt == index_table[1].end()) {
+#ifdef VERBOSE
+    std::cout << "Adding new edge with vertices " << u << " and " << v << std::endl;
+#endif
     simplices[1].push_back(Simplex(S,n));
     index_table[1][S] = simplices[1].size() - 1;
     events[v].neighbours.insert(u);
@@ -577,6 +580,9 @@ bool Complex::simplex_addition(int u,int v,int n)
   }
   else {
     if (simplices[1][qt->second].active) return false;
+#ifdef VERBOSE
+    std::cout << "Restoring edge with vertices " << u << " and " << v << std::endl;
+#endif
     simplices[1][qt->second].activate();
   }
   events[v].active = true;

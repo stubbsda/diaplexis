@@ -47,7 +47,7 @@ is used for the compilation, assumed to be compatible with the OpenMP 3.1 standa
 the Diaplexis library are documented using [Doxygen](https://www.doxygen.nl/), for which there is a pair of
 configuration files, <code>docs-monophyllon.config</code> and <code>docs-polyphyllon.config</code>, in the
 <code>documentation</code> directory which can be modified if desired. It is however sufficient to use the
-command <code>doxygen docs-polyphyllon.config</code> for example to create a set of HTML documents that will
-be installed in the <code>documentation/polyphyllon</code> directory.
+command <code>make docs</code> to create a set of HTML documents that will be installed in the 
+<code>documentation/polyphyllon</code> and <code>documentation/monophyllon</code> directories.
 
 For any questions, comments or suggestions, please contact <info@synarmosma.org>

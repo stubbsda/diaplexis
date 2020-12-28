@@ -186,7 +186,9 @@ bool Spacetime::advance()
   t2 = std::chrono::steady_clock::now();
   elapsed_seconds = t2 - t1;
   gtime += elapsed_seconds.count();
-
+#ifdef DEBUG
+  assert(consistent());
+#endif
   // If the simulation is finished print out some timing data...
   if (done) {
     std::cout << "Time required for topological hyphansis was " << htime << " seconds." << std::endl;
@@ -423,7 +425,9 @@ void Spacetime::structural_deficiency()
     E_total += double(c)*skeleton->events[i].get_energy();
   }
   E_total = E_total/double(nt);
-
+#ifdef VERBOSE
+  if (std::isnan(E_total)) throw std::runtime_error("NaN in total energy!");
+#endif
   global_deficiency = representational_energy(false) + compute_temporal_nonlinearity() + 2.0*M_PI*double(skeleton->euler_characteristic(-1)) - E_total;
 
   error = 0.0;
@@ -437,6 +441,7 @@ void Spacetime::structural_deficiency()
   for(i=0; i<na; ++i) {
     total_error += std::abs(skeleton->events[avertices[i]].get_deficiency());
   }
+  if (std::isnan(total_error)) throw std::runtime_error("NaN in total error!");
   std::cout << "The total error is " << total_error << std::endl;
 #endif
 
@@ -879,4 +884,52 @@ int Spacetime::ubiquity_permutation(double temperature)
     }
   }
   return jz;
+}
+
+bool Spacetime::consistent() const
+{
+  if (!skeleton->consistent(-1)) return false;
+  int i,j;
+  std::vector<double> sigma;
+  const int nv = (signed) skeleton->events.size();
+  const int ns = (signed) codex.size();
+
+  for(i=0; i<nv; ++i) {
+    if (std::isnan(skeleton->events[i].get_deficiency())) {
+      std::cout << "NaN in deficiency for event " << i << std::endl;
+      return false;
+    }
+    if (std::isnan(skeleton->events[i].get_energy())) {
+      std::cout << "NaN in energy for event " << i << std::endl;
+      return false;
+    }
+    if (std::isnan(skeleton->events[i].get_geometric_deficiency())) {
+      std::cout << "NaN in geometric_deficiency for event " << i << std::endl;
+      return false;
+    }
+    if (std::isnan(skeleton->events[i].get_obliquity())) {
+      std::cout << "NaN in obliquity for event " << i << std::endl;
+      return false;
+    }
+    skeleton->events[i].get_entwinement(sigma);
+    for(j=0; j<ns; ++j) {
+      if (std::isnan(sigma[j])) {
+        std::cout << "NaN in entwinement for event " << i << " and sheet " << j << std::endl;
+        return false;
+      }
+    }
+    // Energy must be non-negative...
+    if (skeleton->events[i].get_energy() < -std::numeric_limits<double>::epsilon()) {
+      std::cout << "Negative energy for event " << i << std::endl;
+      return false;
+    }
+    // Inactive events should have zero energy...
+    if (!skeleton->active_event(i,-1)) {
+      if (skeleton->events[i].get_energy() > std::numeric_limits<double>::epsilon()) {
+        std::cout << "Positive energy for inactive event " << i << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
 }

@@ -889,7 +889,7 @@ void Spacetime::optimize()
 #endif
   if (solver == Geometry_Solver::minimal) {
     int its = 0;
-    bool found;
+    bool good;
     std::set<int> N,modified_vertices,candidates,bbarrel;
     std::set<int>::const_iterator it;
     double old_error,sigma;
@@ -898,19 +898,18 @@ void Spacetime::optimize()
 
     for(i=0; i<nv; ++i) {
       if (!skeleton->events[i].active()) continue;
-      if (std::abs(skeleton->events[i].get_geometric_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
+      if (std::abs(skeleton->events[i].get_geometric_deficiency()) < geometry_tolerance) continue;
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
-      found = false;
+      good = true;
       skeleton->events[i].get_neighbours(N);
       for(it=N.begin(); it!=N.end(); ++it) {
-        if (std::abs(skeleton->events[*it].get_geometric_deficiency()) < std::numeric_limits<double>::epsilon()) {
-          found = true;
+        if (std::abs(skeleton->events[*it].get_geometric_deficiency()) < geometry_tolerance) {
+          good = false;
           break;
         }
       }
-      if (found) continue;
-      candidates.insert(i);
+      if (good) candidates.insert(i);
     }
     if (candidates.empty() && bbarrel.empty()) return;
     if (candidates.empty()) candidates = bbarrel;
@@ -925,10 +924,12 @@ void Spacetime::optimize()
       // This is decidedly not very clever but it is quick!
       // First the geometry...
       n = skeleton->RND->irandom(candidates);
+      // It's possible that this event now has a vanishing geometric deficiency due to the 
+      // effect of an earlier iteration...
+      if (std::abs(skeleton->events[n].get_geometric_deficiency()) < geometry_tolerance) continue;
       // In fact the variance we use should grow smaller as the geometric deficiency of the
-      // vertex diminishes with 0.05 the maximum
-      sigma = 0.1*skeleton->events[n].get_geometric_deficiency();
-      if (sigma > 0.05) sigma = 0.05;
+      // event diminishes with 0.05 the maximum
+      sigma = std::min(0.05,0.1*std::abs(skeleton->events[n].get_geometric_deficiency()));
       geometry->mutation(n,true,true,sigma);
       modified_vertices.insert(n);
       skeleton->compute_dependent_simplices(modified_vertices);
