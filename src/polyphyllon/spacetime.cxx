@@ -925,7 +925,7 @@ bool Spacetime::consistent() const
     }
     // Inactive events should have zero energy...
     if (!skeleton->active_event(i,-1)) {
-      if (skeleton->events[i].get_energy() > std::numeric_limits<double>::epsilon()) {
+      if (!skeleton->events[i].zero_energy()) {
         std::cout << "Positive energy for inactive event " << i << std::endl;
         return false;
       }

@@ -795,7 +795,7 @@ bool Spacetime::event_fusion(int n1,int n2)
     }
   }
 
-  // Then recalculate the skeleton->index_table hash map..
+  // Then recalculate the index_table hash map..
   for(i=1; i<=ulimit; ++i) {
     skeleton->index_table[i].clear();
     m = (signed) skeleton->simplices[i].size();

@@ -310,7 +310,7 @@ bool Spacetime::circumvolution(int base)
       D1 = 0.0;
       for(i=0; i<=d; ++i) {
         for(j=1+i; j<=d; ++j) {
-          delta = geometry->get_squared_distance(vx1[i],vx2[j],true);
+          delta = std::abs(geometry->get_squared_distance(vx1[i],vx2[j],true));
           if (delta > D1) D1 = delta;
         }
       }

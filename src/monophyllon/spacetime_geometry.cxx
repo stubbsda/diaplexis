@@ -385,7 +385,7 @@ double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) con
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
-    d = geometry->get_squared_distance(vx[0],vx[1],false);
+    d = std::abs(geometry->get_squared_distance(vx[0],vx[1],false));
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
         d = std::sqrt(d);
@@ -416,7 +416,7 @@ double Spacetime::compute_abnormality(const std::vector<double>& x,const std::ve
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
-    d = geometry->get_squared_distance(vx[0],vx[1],false);
+    d = std::abs(geometry->get_squared_distance(vx[0],vx[1],false));
     if (flexible_edge[i] == 1) {
       if (d > sq_tolerance) {
         d = std::sqrt(d);
@@ -496,7 +496,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
       for(it=N.begin(); it!=N.end(); ++it) {
         k = *it;
         geometry->get_coordinates(k,x2);
-        l = geometry->get_squared_distance(i,k,false);
+        l = std::abs(geometry->get_squared_distance(i,k,false));
         S.clear();
         S.insert(i);
         S.insert(k);

@@ -20,7 +20,7 @@ int Spacetime::superposition_fusion(double threshold)
     if (!skeleton->events[i].active()) continue;
     for(j=1+i; j<nv; ++j) {
       if (!skeleton->events[j].active()) continue;
-      delta = geometry->get_squared_distance(i,j,false);
+      delta = std::abs(geometry-> get_squared_distance(i,j,false));
       if (delta < threshold) candidates.push_back(std::pair<int,int>(i,j));
     }
   }
@@ -42,29 +42,11 @@ int Spacetime::superposition_fusion(double threshold)
     std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
     if (event_fusion(v1,v2,-1)) nfused++;
+#ifdef DEBUG
+    assert(consistent());
+#endif
     pfusion = double(nfused)/na;
   } while(pfusion < 0.05 && nfused < nf && nfail < 20);
-
-  // Then recalculate the index_table hash map..
-  for(i=1; i<=ulimit; ++i) {
-    skeleton->index_table[i].clear();
-    m = (signed) skeleton->simplices[i].size();
-    for(j=0; j<m; ++j) {
-      skeleton->simplices[i][j].clear_entourage();
-      skeleton->simplices[i][j].get_vertices(vx);
-      skeleton->index_table[i][vx] = j;
-    }
-  }
-  for(i=0; i<nv; ++i) {
-    skeleton->events[i].clear_entourage();
-  }
-
-  // Then recalculate the entourages...
-  skeleton->compute_entourages(-1);
-  skeleton->compute_neighbours();
-#ifdef DEBUG
-  assert(skeleton->consistent(-1));
-#endif
 
   return nfused;
 }
@@ -221,7 +203,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   if (!event_deletion(centre,sheet)) throw std::runtime_error("Failed event deletion in Spacetime::interplication method!");
   for(i=0; i<(signed) skeleton->events.size(); ++i) {
     if (!skeleton->events[i].active(sheet)) continue;
-    l = geometry->get_squared_distance(centre,i,false);
+    l = std::abs(geometry->get_squared_distance(centre,i,false));
     if (l < size) {
       if (!event_deletion(i,sheet)) throw std::runtime_error("Failed event deletion in Spacetime::interplication method!");
       continue;
@@ -354,7 +336,7 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     else {
       alpha = 10.0*size;
       for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
-        l = geometry->get_squared_distance(q,*it,false);
+        l = std::abs(geometry->get_squared_distance(q,*it,false));
         if (l < alpha) {
           p = *it;
           alpha = l;
@@ -367,8 +349,8 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
     ambient.clear();
     for(it=kvertex.begin(); it!=kvertex.end(); ++it) {
       if (p == *it) continue;
-      l = geometry->get_squared_distance(q,*it,false);
-      alpha = geometry->get_squared_distance(p,*it,false);
+      l = std::abs(geometry->get_squared_distance(q,*it,false));
+      alpha = std::abs(geometry->get_squared_distance(p,*it,false));
       ambient.push_back(std::pair<int,double>(*it,l + alpha));
     }
     std::sort(ambient.begin(),ambient.end(),SYNARMOSMA::pair_predicate_dbl);
@@ -464,7 +446,7 @@ void Spacetime::regularization(bool minimal,int sheet)
       v2 = -1;
       for(j=0; j<n1; ++j) {
         for(k=0; k<n2; ++k) {
-          l = geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true);
+          l = std::abs(geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true));
           if (l < mdelta) {
             mdelta = l;
             v1 = cvertex[loc][j];
@@ -475,6 +457,9 @@ void Spacetime::regularization(bool minimal,int sheet)
 #ifdef DEBUG
       assert(v1 > -1);
       assert(v2 > -1);
+#endif
+#ifdef VERBOSE
+      std::cout << "Linking together " << v1 << " and " << v2 << " at an absolute distance of " << mdelta << std::endl;
 #endif
       j = skeleton->RND->irandom(colours);
       locus.insert(j);
@@ -496,7 +481,7 @@ void Spacetime::regularization(bool minimal,int sheet)
       v2 = -1;
       for(j=0; j<n1; ++j) {
         for(k=0; k<n2; ++k) {
-          l = geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true);
+          l = std::abs(geometry->get_squared_distance(cvertex[loc][j],cvertex[i][k],true));
           if (l < mdelta) {
             mdelta = l;
             v1 = cvertex[loc][j];
@@ -504,12 +489,12 @@ void Spacetime::regularization(bool minimal,int sheet)
           }
         }
       }
-#ifdef VERBOSE
-      std::cout << "Linking together " << v1 << " and " << v2 << " at a distance of " << mdelta << std::endl;
-#endif
 #ifdef DEBUG
       assert(v1 > -1);
       assert(v2 > -1);
+#endif
+#ifdef VERBOSE
+      std::cout << "Linking together " << v1 << " and " << v2 << " at an absolute distance of " << mdelta << std::endl;
 #endif
       skeleton->simplex_addition(v1,v2,locus);
     }
