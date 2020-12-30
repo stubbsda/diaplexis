@@ -75,13 +75,17 @@ bool Spacetime::correction(int base)
   std::set<int> candidates;
   Simplex s1;
   const int nv = (signed) skeleton->events.size();
+  const double LL = (2.0 - 0.5*abnormality_threshold)*(2.0 - 0.5*abnormality_threshold);
+  const double UL = (2.0 + 0.5*abnormality_threshold)*(2.0 + 0.5*abnormality_threshold);
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
   for(i=0; i<nv; ++i) {
     if (i == base) continue;
     if (!skeleton->active_event(i)) continue;
     if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     l = std::abs(geometry->get_squared_distance(base,i,true));
-    if (l < 3.8025 || l > 4.2025) continue;
+    if (l < LL || l > UL) continue;
     // See if there is a third event that lies between these two...
     in1 = -1;
     active = false;
@@ -90,7 +94,7 @@ bool Spacetime::correction(int base)
       if (j == base || j == i) continue;
       d1 = std::abs(geometry->get_squared_distance(base,j,true));
       d2 = std::abs(geometry->get_squared_distance(i,j,true));
-      if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+      if ((d1 > llimit && d1 < ulimit) && (d2 > llimit && d2 < ulimit)) {
         l = (d1 - 1.0)*(d1 - 1.0) + (d2 - 1.0)*(d2 - 1.0);
         if (l < dbest) {
           dbest = l;
@@ -166,13 +170,15 @@ bool Spacetime::contraction(int base,double l)
 
 bool Spacetime::compensation_m(int base)
 {
+  if (skeleton->vertex_dimension(base) < 2) return false;
+
   int i,j,vx[2];
   double l;
   std::set<int> candidates,S;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) skeleton->simplices[1].size();
-
-  if (skeleton->vertex_dimension(base) < 2) return false;
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
 #ifdef VERBOSE
   std::cout << "Compensation with " << skeleton->dimension() << std::endl;
@@ -188,7 +194,7 @@ bool Spacetime::compensation_m(int base)
     if (skeleton->vertex_dimension(j) < 2) continue;
     if (skeleton->events[j].get_deficiency() < -std::numeric_limits<double>::epsilon()) continue;
     l = std::abs(geometry->get_squared_distance(base,j,true));
-    if (l >= 0.81 && l <= 1.21) continue;
+    if (l > llimit && l < ulimit) continue;
     S.clear();
     S.insert(base);
     S.insert(j);
@@ -212,14 +218,15 @@ bool Spacetime::compensation_m(int base)
 
 bool Spacetime::compensation_g(int base)
 {
-  int i,j,vx[2];
+  int i,j,vx[2],sdegree = 0;
   double l;
   std::set<int> candidates,S;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int D = (signed) geometry->dimension();
   const int ne = (signed) skeleton->simplices[1].size();
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
-  int sdegree = 0;
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
@@ -243,7 +250,7 @@ bool Spacetime::compensation_g(int base)
       if (!skeleton->active_event(i)) continue;
       if (skeleton->edge_exists(base,i)) continue;
       l = std::abs(geometry->get_squared_distance(base,i,true));
-      if (l >= 0.81 && l <= 1.21) candidates.insert(i);
+      if (l > llimit && l < ulimit) candidates.insert(i);
     }
 
     if (candidates.empty()) {
@@ -266,7 +273,7 @@ bool Spacetime::compensation_g(int base)
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = std::abs(geometry->get_squared_distance(base,j,true));
-      if (l >= 0.81 && l <= 1.21) continue;
+      if (l > llimit && l < ulimit) continue;
       S.clear();
       S.insert(base);
       S.insert(j);

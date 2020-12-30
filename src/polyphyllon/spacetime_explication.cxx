@@ -75,6 +75,10 @@ bool Spacetime::correction(int base,int sheet)
   std::set<int> locus,candidates;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int nv = (signed) skeleton->events.size();
+  const double LL = (2.0 - 0.5*abnormality_threshold)*(2.0 - 0.5*abnormality_threshold);
+  const double UL = (2.0 + 0.5*abnormality_threshold)*(2.0 + 0.5*abnormality_threshold);
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
   locus.insert(sheet);
 
@@ -83,7 +87,7 @@ bool Spacetime::correction(int base,int sheet)
     if (!skeleton->events[i].active(sheet)) continue;
     if (std::abs(skeleton->events[i].get_deficiency()) < std::numeric_limits<double>::epsilon()) continue;
     l = std::abs(geometry->get_squared_distance(base,i,true));
-    if (l < 3.8025 || l > 4.2025) continue;
+    if (l < LL || l > UL) continue;
     // See if there is a third event that lies between these two...
     in1 = -1;
     active = false;
@@ -92,7 +96,7 @@ bool Spacetime::correction(int base,int sheet)
       if (j == base || j == i) continue;
       d1 = std::abs(geometry->get_squared_distance(base,j,true));
       d2 = std::abs(geometry->get_squared_distance(i,j,true));
-      if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+      if ((d1 > llimit && d1 < ulimit) && (d2 > llimit && d2 < ulimit)) {
         l = (d1 - 1.0)*(d1 - 1.0) + (d2 - 1.0)*(d2 - 1.0);
         if (l < dbest) {
           dbest = l;
@@ -180,13 +184,16 @@ bool Spacetime::contraction(int base,double l,int sheet)
 
 bool Spacetime::compensation_m(int base,int sheet)
 {
+  if (skeleton->vertex_dimension(base,sheet) < 2) return false;
+
   int i,j,vx[2];
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int ne = (signed) skeleton->simplices[1].size();
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
-  if (skeleton->vertex_dimension(base,sheet) < 2) return false;
 #ifdef VERBOSE
   std::cout << "Compensation with " << skeleton->dimension(sheet) << std::endl;
 #endif
@@ -201,7 +208,7 @@ bool Spacetime::compensation_m(int base,int sheet)
     if (skeleton->vertex_dimension(j,sheet) < 2) continue;
     if (skeleton->events[j].get_deficiency() < -std::numeric_limits<double>::epsilon()) continue;
     l = std::abs(geometry->get_squared_distance(base,j,true));
-    if (l >= 0.81 && l <= 1.21) continue;
+    if (l > llimit && l < ulimit) continue;
     s1.clear();
     s1.insert(base);
     s1.insert(j);
@@ -225,14 +232,15 @@ bool Spacetime::compensation_m(int base,int sheet)
 
 bool Spacetime::compensation_g(int base,int sheet)
 {
-  int i,j,vx[2];
+  int i,j,vx[2],sdegree = 0;
   double l;
   std::set<int> candidates,s1;
   SYNARMOSMA::hash_map::const_iterator qt;
   const int D = (signed) geometry->dimension();
   const int ne = (signed) skeleton->simplices[1].size();
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
 
-  int sdegree = 0;
   for(i=0; i<ne; ++i) {
     if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
@@ -260,7 +268,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       if (!skeleton->events[i].active(sheet)) continue;
       if (skeleton->edge_exists(base,i,sheet)) continue;
       l = std::abs(geometry->get_squared_distance(base,i,true));
-      if (l >= 0.81 && l <= 1.21) candidates.insert(i);
+      if (l > llimit && l < ulimit) candidates.insert(i);
     }
 
     if (candidates.empty()) {
@@ -299,7 +307,7 @@ bool Spacetime::compensation_g(int base,int sheet)
       if (vx[0] != base && vx[1] != base) continue;
       j = (vx[0] == base) ? vx[1] : vx[0];
       l = std::abs(geometry->get_squared_distance(base,j,true));
-      if (l >= 0.81 && l <= 1.21) continue;
+      if (l > llimit && l < ulimit) continue;
       s1.clear();
       s1.insert(base);
       s1.insert(j);

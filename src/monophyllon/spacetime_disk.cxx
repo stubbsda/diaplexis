@@ -73,6 +73,12 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "EdgeProbability") {
       edge_probability = std::stod(value);
     }
+    else if (name == "AbnormalityThreshold") {
+      abnormality_threshold = std::stod(value);
+    }
+    else if (name == "SuperpositionThreshold") {
+      superposition_threshold = std::stod(value);
+    }
     else if (name == "MaximumIterations") {
       max_iter = std::stoi(value);
     }
@@ -278,12 +284,14 @@ void Spacetime::read_parameters(const std::string& filename)
   // Now a series of tests to make sure that the parameters
   // aren't entirely crazy...
   assert(geometry_tolerance > std::numeric_limits<double>::epsilon());
+  assert(abnormality_threshold > std::numeric_limits<double>::epsilon());
   assert(max_iter >= 0);
   assert(initial_size > 0);
   // One and only one initial state should be chosen...
   assert(n_is == 1);
   // And similarly for the solver type...
   assert(n_so == 1);
+  if (superposable) assert(superposition_threshold > std::numeric_limits<double>::epsilon());
   // Finally for the background dimension...
   assert(D > 0);
 
@@ -405,7 +413,9 @@ void Spacetime::write_log() const
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<RandomSeed>" << skeleton->RND->get_seed() << "</RandomSeed>" << std::endl;
+    s << "<AbnormalityThreshold>" << abnormality_threshold << "</AbnormalityThreshold>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
+    if (superposable) s << "<SuperpositionThreshold>" << superposition_threshold << "</SuperpositionThreshold>" << std::endl;
     s << "<Compressible>" << bvalue[compressible] << "</Compressible>" << std::endl;
     if (initial_state == Initial_Topology::diskfile) {
       s << "<InitialState>" << sname[initial_state] << " (" << sname[original_state] << ")</InitialState>" << std::endl;
@@ -437,7 +447,8 @@ void Spacetime::write_log() const
       s << "<HomologyBase>GF2</HomologyBase>" << std::endl;
     }
     if (weaving == Hyphansis::dynamic) {
-      s << "<Hyphansis>DYNAMIC</Hyphansis>" << std::endl; 
+      s << "<Hyphansis>DYNAMIC</Hyphansis>" << std::endl;
+      s << "<ParityMutation>" << parity_mutation << "</ParityMutation>" << std::endl; 
     }
     else {
       s << "<Hyphansis>MUSICAL</Hyphansis>" << std::endl;
@@ -797,6 +808,8 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&perturb_geometry),sizeof(bool));
   s.read((char*)(&perturb_energy),sizeof(bool));
   s.read((char*)(&edge_probability),sizeof(double));
+  s.read((char*)(&abnormality_threshold),sizeof(double));
+  s.read((char*)(&superposition_threshold),sizeof(double));
   s.read((char*)(&parity_mutation),sizeof(double));
   s.read((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {
@@ -886,6 +899,8 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&perturb_geometry),sizeof(bool));
   s.write((char*)(&perturb_energy),sizeof(bool));
   s.write((char*)(&edge_probability),sizeof(double));
+  s.write((char*)(&abnormality_threshold),sizeof(double));
+  s.write((char*)(&superposition_threshold),sizeof(double));
   s.write((char*)(&parity_mutation),sizeof(double));
   s.write((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {

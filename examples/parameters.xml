@@ -16,6 +16,7 @@
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>
 		<Superposable>1</Superposable>
+		<SuperpositionThreshold>0.05</SuperpositionThreshold>
 		<Compressible>1</Compressible>
 		<Permutable>1</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
@@ -24,6 +25,7 @@
 		<!--InitialState>SINGLETON</InitialState-->
 		<!--InitialState>DISKFILE</InitialState-->
 		<EdgeProbability>0.15</EdgeProbability>
+		<AbnormalityThreshold>0.1</AbnormalityThreshold>
 		<CheckpointFrequency>5</CheckpointFrequency>
 		<InputFile>spacetime_2019-05-04_08315_10.dat</InputFile>
 		<!--HomologyMethod>GAP</HomologyMethod-->

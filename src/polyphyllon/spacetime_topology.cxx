@@ -2,16 +2,16 @@
 
 using namespace DIAPLEXIS;
 
-int Spacetime::superposition_fusion(double threshold)
+int Spacetime::superposition_fusion()
 {
-  int i,j,m,nf,v1,v2,nfail = 0,nfused = 0;
+  int i,j,nf,v1,v2,nfail = 0,nfused = 0;
   double delta,pfusion = 0.0;
   std::vector<int> modified;
   std::set<int> vx;
   std::vector<std::pair<int,int> > candidates;
-  const double na = double(skeleton->cardinality(0,-1));
   const int nv = (signed) skeleton->events.size();
-  const int ulimit = skeleton->dimension(-1);
+  const double na = double(skeleton->cardinality(0,-1));
+  const double ulimit = superposition_threshold*superposition_threshold;
 
   // Event fusion - if two events are close enough together, they
   // should coalesce.
@@ -21,7 +21,7 @@ int Spacetime::superposition_fusion(double threshold)
     for(j=1+i; j<nv; ++j) {
       if (!skeleton->events[j].active()) continue;
       delta = std::abs(geometry-> get_squared_distance(i,j,false));
-      if (delta < threshold) candidates.push_back(std::pair<int,int>(i,j));
+      if (delta < ulimit) candidates.push_back(std::pair<int,int>(i,j));
     }
   }
   if (candidates.empty()) return 0;

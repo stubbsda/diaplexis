@@ -152,6 +152,15 @@ namespace DIAPLEXIS {
     /// with which the spacetime complex's d-simplices (d > 0) have their Simplex::parity
     /// property mutated at each relaxation step. 
     double parity_mutation = 0.01;
+    /// This positive floating point property controls the degree of tolerance 
+    /// for determining the normality of inter-event distances, i.e. the extent to 
+    /// which two events have a separation whose absolute value is equal to unity.  
+    double abnormality_threshold = 0.1;
+    /// This positive floating point property is the criterion for determining if 
+    /// two events will be fused together during superposition: to be a candidate 
+    /// for such a fusion, the pair of events must have a distance such that the 
+    /// absolute value of its square is less than this cut-off.
+    double superposition_threshold = 0.05;
     /// If this property is true the simulation does not carry out any disk 
     /// I/O operations - there is no log file, no checkpoint files are created 
     /// and so forth. 
@@ -223,10 +232,12 @@ namespace DIAPLEXIS {
     /// This is the convergence threshold used for determining if a geometry solver 
     /// has succeeded and the algorithm can exit. 
     double geometry_tolerance = 0.0001;
+    // Minimal Method
     /// This property is only meaningful for the Geometry_Solver::minimal case and 
     /// controls the number of random event coordinate changes attempted before exiting 
     /// the geometry solver. This property should be positive. 
     int solver_its = 50;
+    // Evolutionary Method
     /// This property is only meaningful for the Geometry_Solver::evolutionary case and 
     /// controls the number of generations of artificial evolution that will be attempted 
     /// before exiting the geometry solver. This property should be positive.
@@ -241,7 +252,7 @@ namespace DIAPLEXIS {
     /// genetic diversity but at the price of consuming more memory. This property should 
     /// be positive.
     int pool_size = 100;
-    // Annealing
+    // Annealing Method
     /// This positive property controls the variance used in mutating the geometry of an 
     /// individual event in the simulated annealing geometry solver and so is only relevant 
     /// when Spacetime::solver is set to Geometry_Solver::annealing.
@@ -262,7 +273,7 @@ namespace DIAPLEXIS {
     /// then the spacetime geometry has reached thermal equilibrium. This property is naturally 
     /// meaningful only when Spacetime::solver is set to Geometry_Solver::annealing.
     double thermalization = 0.001;
-    // Mechanical
+    // Mechanical Method
     /// This property controls which ODE integration algorithm is used (forward Euler 
     /// or fourth order Runge-Kutta) if the Spacetime::solver property is set to 
     /// Geometry_Solver::mechanical. 
@@ -306,7 +317,7 @@ namespace DIAPLEXIS {
     /// and Spacetime::cgradient_refinement is true, in which case it controls the maximum number of 
     /// line search steps. 
     int max_LS_steps = 20;
-    // Simplex
+    // Simplex Method
     /// This positive property controls the reflection transformation used when the Spacetime::solver 
     /// property is set to Geometry_Solver::simplex.
     double simplex_alpha = 1.0;
@@ -431,9 +442,9 @@ namespace DIAPLEXIS {
     bool interplication(int,double,int,int);
     /// This method deletes 1-simplices whose length exceeds the method's argument, if it satisfies a Boltzmann criterion. If the spacetime complex is disconnected it then adds the fewest and shortest possible edges to re-connect it. The method returns the number of 1-simplices that were originally deleted.
     int compression(double);
-    /// This method fuses together events whose squared distance is less than the method's argument using the event_fusion() method; the method returns the number of pairs of events fused together.
-    int superposition_fusion(double);
-    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the event_fission() method.
+    /// This method fuses together pairs of events when the absolute value of their squared distance is less than the square of Spacetime::superposition_threshold, using the event_fusion() method; the method returns the number of pairs of events fused together.
+    int superposition_fusion();
+    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the fission() method.
     void superposition_fission(int);
     /// This method ensures that a sheet - specified by the final argument - of the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the first argument is false, the Complex::simplicial_implication() method is called at the beginning of the method. 
     void regularization(bool,int);

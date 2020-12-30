@@ -268,6 +268,10 @@ void Spacetime::structural_deficiency()
   SYNARMOSMA::Graph G;
   const int na = skeleton->cardinality(0);
   const int nv = (signed) skeleton->events.size();
+  const double LL = (2.0 - 0.5*abnormality_threshold)*(2.0 - 0.5*abnormality_threshold);
+  const double UL = (2.0 + 0.5*abnormality_threshold)*(2.0 + 0.5*abnormality_threshold);
+  const double ulimit = (1.0 + abnormality_threshold)*(1.0 + abnormality_threshold);
+  const double llimit = (1.0 - abnormality_threshold)*(1.0 - abnormality_threshold);
   double R[nv],gvalue[nv],length_deviation[nv],rho[nv];
   int avertices[na];
 
@@ -315,14 +319,14 @@ void Spacetime::structural_deficiency()
     for(j=1+i; j<na; ++j) {
       v2 = avertices[j];
       l = std::abs(geometry->get_squared_distance(v1,v2,false));
-      if (l < 3.8025 || l > 4.2025) continue;
+      if (l < LL || l > UL) continue;
       // See if there is a third event that lies between these two...
       found = false;
       for(k=0; k<i; ++k) {
         v3 = avertices[k];
         d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
         d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
-        if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+        if ((d1 > llimit && d1 < ulimit) && (d2 > llimit && d2 < ulimit)) {
           found = true;
           break;
         }
@@ -332,7 +336,7 @@ void Spacetime::structural_deficiency()
         v3 = avertices[k];
         d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
         d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
-        if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+        if ((d1 > llimit && d1 < ulimit) && (d2 > llimit && d2 < ulimit)) {
           found = true;
           break;
         }
@@ -342,7 +346,7 @@ void Spacetime::structural_deficiency()
         v3 = avertices[k];
         d1 = std::abs(geometry->get_squared_distance(v1,v3,false));
         d2 = std::abs(geometry->get_squared_distance(v2,v3,false));
-        if ((d1 > 0.81 && d1 < 1.21) && (d2 > 0.81 && d2 < 1.21)) {
+        if ((d1 > llimit && d1 < ulimit) && (d2 > llimit && d2 < ulimit)) {
           found = true;
           break;
         }
@@ -535,7 +539,7 @@ bool Spacetime::global_operations()
 
   // Eliminate any overlapping events
   if (superposable) {
-    superposition_fusion(0.1); 
+    superposition_fusion(); 
     superposition_fission(int(0.02*nv)); 
   }
 
