@@ -31,14 +31,14 @@ for i in range(0,nmeasure):
 		# power of two to multiply through by in order to ensure that all
 		# of the note durations are integral.
 		# Some example quarter lengths:
-		# Whole note         = 4.0    (4*2^0)
-		# Half note          = 2.0    (2*2^0)
-		# Quarter note       = 1.0    (1*2^0)
-		# Eighth note        = 0.5    (1*2^(-1))
-		# 16th note          = 0.25   (1*2^(-2))
-		# 32nd note          = 0.125  (1*2^(-3))
-		# Dotted eighth node = 0.75   (3*2^(-2))
-		# Dotted 16th note   = 0.375  (3*2^(-3))
+		# Whole note            = 4.0    (4*2^0)
+		# Half note             = 2.0    (2*2^0)
+		# Quarter note          = 1.0    (1*2^0)
+		# Eighth note           = 0.5    (1*2^(-1))
+		# Sixteenth note        = 0.25   (1*2^(-2))
+		# Thirty-second note    = 0.125  (1*2^(-3))
+		# Dotted eighth node    = 0.75   (3*2^(-2))
+		# Dotted sixteenth note = 0.375  (3*2^(-3))
 		n = len(cmeasure.notes)
 		lmult = 1.0
 		for inote in cmeasure.notes:

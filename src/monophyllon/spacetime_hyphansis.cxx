@@ -286,64 +286,19 @@ int Spacetime::select_event(const std::vector<int>& candidates,double intensity)
 
 int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates)
 {
-  int i,j,v,its,opcount,nsuccess = 0;
+  if (hyphantic_notes[iterations].empty()) return 0;
+
+  int i,j,v,nsuccess = 0;
   double m_width = 1.0,x_width = 1.0;
   bool success = false;
-  std::string line,temp,op,opstring;
-  std::stringstream sstream;
-  std::vector<int> key_list,m_events,x_events,neutral_events,m_keys,x_keys;
-  std::vector<std::string> elements;
+  std::string op,opstring;
+  std::vector<int> m_events,x_events,neutral_events,m_keys,x_keys,key_list = hyphantic_notes[iterations];
   std::vector<double> pvalues;
   const int nc = (signed) candidates.size();
-
-  // Open the file containing the hyphantic score 
-  std::ifstream mscore;
-  mscore.exceptions(std::ifstream::badbit);
-  try {
-    mscore.open(hyphansis_score);
-
-    // Now read the measure that corresponds to this iteration and sheet...
-    while(mscore.good()) {
-      getline(mscore,line);
-      // If the line is empty or doesn't contain a forward slash, ignore it...
-      if (line.empty()) continue;
-      if (line.find('/') == std::string::npos) continue;
-      // Tokenize the line at the forward slash...
-      elements.clear();
-      sstream.str(line);
-      while(getline(sstream,temp,'/')) { 
-        elements.push_back(temp); 
-      }
-#ifdef DEBUG
-      assert(elements.size() == 3);
-#endif
-      its = std::stoi(elements[0]) - 1;
-      if (its < iterations) continue;
-      if (its > iterations) break;
-      // So this is a line for this relaxation step, check if it is the right sheet/voice...
-      v = std::stoi(elements[1]);
-      // So, grab the piano key...
-      key_list.push_back(std::stoi(elements[2]));
-    }
-  }
-  catch (const std::ifstream::failure& e) {
-    std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
-  }
-  // Close the score file
-  mscore.close();
+  const int opcount = (signed) key_list.size();
 
   // Open the hyphantic log file
   std::ofstream s(hyphansis_file,std::ios::app);
-
-  if (key_list.empty()) {
-    // We're done!
-    s << "  </Sheet>" << std::endl;
-    s.close();
-    return 0; 
-  }
-
-  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
-  opcount = (signed) key_list.size();
 
   // This is a fairly complicated operation - we need to play the notes the in the right order, 
   // while at the same time highest pitched key above 44 is assigned to the event with the most 
@@ -378,6 +333,7 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
 
   if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
   if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
+  // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
   for(i=0; i<opcount; ++i) {
     j = key_list[i];
     if (j > 40) {
@@ -670,7 +626,7 @@ void Spacetime::hyphansis()
     return;
   }
 
-  if (candidates.size() == 1) {
+  if (candidates.size() == 1 && weaving == Hyphansis::dynamic) {
     v = candidates[0].first;
     if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
       if (!expansion(v)) throw std::runtime_error("Unable to expand singleton spacetime complex!");

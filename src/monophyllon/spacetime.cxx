@@ -26,6 +26,7 @@ Spacetime::~Spacetime()
 {
   delete skeleton;
   delete geometry;
+  if (score_allocated) delete[] hyphantic_notes;
 }
 
 void Spacetime::allocate()

@@ -300,9 +300,76 @@ void Spacetime::read_parameters(const std::string& filename)
     assert((parity_mutation - 1.0) < std::numeric_limits<double>::epsilon());
   }
   else {
-    // Make sure the score file exists...
-    std::ifstream f(hyphansis_score);
-    assert(f.good());
+    // Make sure the score file exists and has the right structure...
+    int v,n,its,mv = -1;
+    bool polyphonic = false,prolonged = false;
+    std::string line,temp,op,opstring;
+    std::vector<std::string> elements;
+    std::stringstream sstream;
+    std::set<int> voices,legal_notes;
+    std::ifstream mscore;
+
+    score_allocated = true;
+    hyphantic_notes = new std::vector<int>[max_iter+1];
+
+    // Implicative notes...
+    legal_notes.insert(45); legal_notes.insert(47); legal_notes.insert(48); legal_notes.insert(49);
+    legal_notes.insert(50); legal_notes.insert(52); legal_notes.insert(53); legal_notes.insert(54);
+    legal_notes.insert(56); legal_notes.insert(57); legal_notes.insert(58); legal_notes.insert(59);
+
+    // Explicative notes...
+    legal_notes.insert(21); legal_notes.insert(23); legal_notes.insert(25); legal_notes.insert(26);
+    legal_notes.insert(28); legal_notes.insert(29); legal_notes.insert(30); legal_notes.insert(32);
+    legal_notes.insert(33); legal_notes.insert(34); legal_notes.insert(35); legal_notes.insert(37);
+
+    // The unique neutral note...
+    legal_notes.insert(40);
+
+    mscore.exceptions(std::ifstream::badbit);
+    // Open the file containing the hyphantic score 
+    try {
+      mscore.open(hyphansis_score);
+
+      // Now read the measure that corresponds to this iteration and sheet...
+      while(mscore.good()) {
+        getline(mscore,line);
+        // If the line is empty or doesn't contain a forward slash, ignore it...
+        if (line.empty()) continue;
+        if (line.find('/') == std::string::npos) continue;
+        // Tokenize the line at the forward slash...
+        elements.clear();
+        sstream.str(line);
+        while(getline(sstream,temp,'/')) { 
+          elements.push_back(temp); 
+        }
+        assert(elements.size() == 3);
+        its = std::stoi(elements[0]) - 1;
+        if (its > max_iter) {
+          prolonged = true;
+          if (its > mv) mv = its;
+          continue;
+        }
+        // So this is a line for this relaxation step, check if it is the right sheet/voice...
+        v = std::stoi(elements[1]);
+        // There should only be one voice in the case of the Monophyllon version of this library...
+        if (v > 0) {
+          polyphonic = true;
+          voices.insert(v);
+          continue;
+        }
+        n = std::stoi(elements[2]);
+        assert(legal_notes.count(n) > 0);
+        hyphantic_notes[its].push_back(n);
+      }
+    }
+    catch (const std::ifstream::failure& e) {
+      std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
+    }
+    // Close the score file
+    mscore.close();
+
+    if (polyphonic) std::cout << "Warning: The musical score is polyphonic, with " << 1 + voices.size() << " voices, but only the first voice will be used!" << std::endl;
+    if (prolonged) std::cout << "Warning: The length of this musical score (" << mv << ") exceeds the maximum number of iterations (" << max_iter << ")!" << std::endl;
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);
@@ -813,7 +880,26 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&parity_mutation),sizeof(double));
   s.read((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {
+    int j,q;
+    std::vector<int> bar;
+
+    if (score_allocated) delete[] hyphantic_notes;
+    hyphantic_notes = new std::vector<int>[max_iter+1];
+    // Get the score file...
     s.read((char*)(&n),sizeof(int));
+    hyphansis_score.resize(n);
+    s.read((char*)(&hyphansis_score[0]),n);
+    // And now the actual notes...
+    for(i=0; i<=max_iter; ++i) {
+      s.read((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        s.read((char*)(&q),sizeof(int));
+        bar.push_back(q);
+      }
+      hyphantic_notes[i] = bar;
+      bar.clear();
+    }
+    
     hyphansis_score.resize(n);
     s.read((char*)(&hyphansis_score[0]),n);
   }
@@ -904,9 +990,17 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&parity_mutation),sizeof(double));
   s.write((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {
-    int m = (signed) hyphansis_score.size();
+    int j,m = (signed) hyphansis_score.size();
     s.write((char*)(&m),sizeof(int));
     s.write((char*)(&hyphansis_score[0]),m);
+    for(i=0; i<=max_iter; ++i) {
+      n = (signed) hyphantic_notes[i].size();
+      s.write((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        m = hyphantic_notes[i][j];
+        s.write((char*)(&m),sizeof(int));
+      }
+    }
   }
 
   // Geometric runtime constants...

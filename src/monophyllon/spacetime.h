@@ -93,6 +93,12 @@ namespace DIAPLEXIS {
     /// successfully carried out on the spacetime complex since the start 
     /// of the simulation. 
     std::string hyphantic_ops = "";
+    /// This property stores the set of notes which at each iteration will be 
+    /// used to determine the hyphantic operations that will be executed, when 
+    /// the Spacetime::weaving property is set to be musical. The score is read 
+    /// from the file specified by Spacetime::hyphansis_score and parsed by the 
+    /// read_parameters() method. 
+    std::vector<int>* hyphantic_notes;
 
     /// This property controls the sort of initial state from which the simulation 
     /// begins, including eventually from a checkpoint file. 
@@ -162,6 +168,10 @@ namespace DIAPLEXIS {
     /// I/O operations - there is no log file, no checkpoint files are created 
     /// and so forth. 
     bool diskless = false;
+    /// This property is used to signal whether or not the array Spacetime::hyphantic_notes 
+    /// has been allocated, which should only be the case when performing musical 
+    /// hyphansis.  
+    bool score_allocated = false;
     /// This property determines whether or not the spacetime complex's 
     /// initial topology is perturbed at the start of the simulation. 
     bool perturb_topology = false;
