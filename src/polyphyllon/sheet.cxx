@@ -33,13 +33,21 @@ Sheet::Sheet(const Sheet& source)
 {
   index = source.index;
   parent = source.parent;
+  voice = source.voice;
   active = source.active;
+  score_allocated = source.score_allocated;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
   pi1 = new SYNARMOSMA::Homotopy(*source.pi1);
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
+  if (score_allocated > 0) {
+    hyphantic_notes = new std::vector<int>[score_allocated];
+    for(int i=0; i<score_allocated; ++i) {
+      hyphantic_notes[i] = source.hyphantic_notes[i];
+    }
+  }
 }
 
 Sheet& Sheet::operator =(const Sheet& source)
@@ -48,16 +56,26 @@ Sheet& Sheet::operator =(const Sheet& source)
 
   delete H;
   delete pi1;
+  if (score_allocated > 0) delete[] hyphantic_notes;
 
   index = source.index;
   parent = source.parent;
+  voice = source.voice;
   active = source.active;
+  score_allocated = source.score_allocated;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
   pi1 = new SYNARMOSMA::Homotopy(*source.pi1);
   pseudomanifold = source.pseudomanifold;
   boundary = source.boundary;
   orientable = source.orientable;
+
+  if (score_allocated > 0) {
+    hyphantic_notes = new std::vector<int>[score_allocated];
+    for(int i=0; i<score_allocated; ++i) {
+      hyphantic_notes[i] = source.hyphantic_notes[i];
+    }    
+  }
 
   return *this;
 }
@@ -66,6 +84,7 @@ Sheet::~Sheet()
 {
   delete H;
   delete pi1;
+  if (score_allocated > 0) delete[] hyphantic_notes;
 }
 
 void Sheet::clear()
@@ -73,12 +92,15 @@ void Sheet::clear()
   hyphantic_ops = "";
   active = false;
   parent = -1;
+  voice = -1;
   index = -1;
   H->clear();
   pi1->clear();
   pseudomanifold = false;
   boundary = false;
-  orientable = false;  
+  orientable = false;
+  if (score_allocated > 0) delete[] hyphantic_notes;
+  score_allocated = -1;  
 }
 
 void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotopy* p,bool pm,bool bd,bool orient)
@@ -93,12 +115,46 @@ void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotop
   orientable = orient;
 }
 
+void Sheet::parse_music_score(int max_iter,std::string& filename)
+{
+  int n,v,its;
+  std::string line;
+  std::vector<std::string> elements;
+  std::ifstream mscore(filename);
+  const char delimiter = '/';
+
+  score_allocated = 1 + max_iter;
+  hyphantic_notes = new std::vector<int>[score_allocated];
+
+  // Now read the measure that corresponds to this iteration and sheet...
+  while(mscore.good()) {
+    getline(mscore,line);
+    // If the line is empty or doesn't contain a forward slash, ignore it...
+    if (line.empty()) continue;
+    if (line.find(delimiter) == std::string::npos) continue;
+    // Tokenize the line at the forward slash...
+    SYNARMOSMA::tokenize(line,delimiter,elements);
+    its = std::stoi(elements[0]) - 1;
+    if (its > max_iter) continue;
+    // So this is a line for this relaxation step, check if it is the right sheet/voice...
+    v = std::stoi(elements[1]);
+    if (v != voice) continue;
+    n = std::stoi(elements[2]);
+    hyphantic_notes[its].push_back(n);
+  }
+  
+  // Close the score file
+  mscore.close();
+}
+
 int Sheet::serialize(std::ofstream& s) const
 {
   int i,count = 0,n = (signed) hyphantic_ops.size();
 
   s.write((char*)(&index),sizeof(int)); count += sizeof(int);
   s.write((char*)(&parent),sizeof(int)); count += sizeof(int);
+  s.write((char*)(&voice),sizeof(int)); count += sizeof(int);
+  s.write((char*)(&score_allocated),sizeof(int)); count += sizeof(int);
   s.write((char*)(&active),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
@@ -110,7 +166,19 @@ int Sheet::serialize(std::ofstream& s) const
   s.write((char*)(&pseudomanifold),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
   s.write((char*)(&orientable),sizeof(bool)); count += sizeof(bool);
+  if (score_allocated > 0) {
+    int j,m;
+    
+    for(i=0; i<score_allocated; ++i) {
+      n = (signed) hyphantic_notes[i].size();
+      s.write((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        m = hyphantic_notes[i][j];
+        s.write((char*)(&m),sizeof(int));
+      }
+    }
 
+  }
   return count;
 }
 
@@ -123,6 +191,8 @@ int Sheet::deserialize(std::ifstream& s)
 
   s.read((char*)(&index),sizeof(int)); count += sizeof(int);
   s.read((char*)(&parent),sizeof(int)); count += sizeof(int);
+  s.read((char*)(&voice),sizeof(int)); count += sizeof(int);
+  s.read((char*)(&score_allocated),sizeof(int)); count += sizeof(int);
   s.read((char*)(&active),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
@@ -135,7 +205,22 @@ int Sheet::deserialize(std::ifstream& s)
   s.read((char*)(&pseudomanifold),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&boundary),sizeof(bool)); count += sizeof(bool);
   s.read((char*)(&orientable),sizeof(bool)); count += sizeof(bool);
+  if (score_allocated > 0) {
+    int j,q;
+    std::vector<int> bar;
 
+    hyphantic_notes = new std::vector<int>[score_allocated];
+
+    for(i=0; i<score_allocated; ++i) {
+      s.read((char*)(&n),sizeof(int));
+      for(j=0; j<n; ++j) {
+        s.read((char*)(&q),sizeof(int));
+        bar.push_back(q);
+      }
+      hyphantic_notes[i] = bar;
+      bar.clear();
+    }
+  }
   return count;
 }
 

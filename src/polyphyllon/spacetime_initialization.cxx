@@ -391,6 +391,16 @@ void Spacetime::initialize()
       codex.push_back(Sheet(i,skeleton->get_homology_field(),skeleton->get_homology_method()));
       locus.insert(i);
     }
+    if (weaving == Hyphansis::musical) {
+      std::set<int>::const_iterator it;
+
+      i = 0;
+      for(it=voices.begin(); it!=voices.end(); ++it) {
+        codex[i].set_voice(*it);
+        codex[i].parse_music_score(max_iter,hyphansis_score);
+        i++;
+      }
+    }
     build_initial_state(locus);
     geometry->compute_squared_distances();
     skeleton->compute_simplicial_dimension();

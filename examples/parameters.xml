@@ -11,7 +11,7 @@
 		<RelationalGeometry>0</RelationalGeometry>
 		<DimensionalUniformity>1</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
-		<MaximumIterations>25</MaximumIterations>
+		<MaximumIterations>5</MaximumIterations>
 		<SheetDynamics>0</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>
@@ -36,9 +36,9 @@
 		<PerturbTopology>1</PerturbTopology>
 		<PerturbGeometry>0</PerturbGeometry>
 		<PerturbEnergy>1</PerturbEnergy>
-		<Hyphansis>DYNAMIC</Hyphansis>
-		<!--Hyphansis>MUSICAL</Hyphansis-->
-		<!--HyphansisScore>melody.txt</HyphansisScore-->
+		<!--Hyphansis>DYNAMIC</Hyphansis-->
+		<Hyphansis>MUSICAL</Hyphansis>
+		<HyphansisScore>melody.txt</HyphansisScore>
 		<ParityMutation>0.05</ParityMutation>
 	</Global>
 	<GeometrySolver>

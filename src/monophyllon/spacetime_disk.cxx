@@ -303,11 +303,11 @@ void Spacetime::read_parameters(const std::string& filename)
     // Make sure the score file exists and has the right structure...
     int v,n,its,mv = -1;
     bool polyphonic = false,prolonged = false;
-    std::string line,temp,op,opstring;
+    std::string line;
     std::vector<std::string> elements;
-    std::stringstream sstream;
     std::set<int> voices,legal_notes;
     std::ifstream mscore;
+    const char delimiter = '/';
 
     score_allocated = true;
     hyphantic_notes = new std::vector<int>[max_iter+1];
@@ -335,13 +335,9 @@ void Spacetime::read_parameters(const std::string& filename)
         getline(mscore,line);
         // If the line is empty or doesn't contain a forward slash, ignore it...
         if (line.empty()) continue;
-        if (line.find('/') == std::string::npos) continue;
+        if (line.find(delimiter) == std::string::npos) continue;
         // Tokenize the line at the forward slash...
-        elements.clear();
-        sstream.str(line);
-        while(getline(sstream,temp,'/')) { 
-          elements.push_back(temp); 
-        }
+        SYNARMOSMA::tokenize(line,delimiter,elements);
         assert(elements.size() == 3);
         its = std::stoi(elements[0]) - 1;
         if (its > max_iter) {
@@ -349,7 +345,7 @@ void Spacetime::read_parameters(const std::string& filename)
           if (its > mv) mv = its;
           continue;
         }
-        // So this is a line for this relaxation step, check if it is the right sheet/voice...
+        // Now read the voice...
         v = std::stoi(elements[1]);
         // There should only be one voice in the case of the Monophyllon version of this library...
         if (v > 0) {
@@ -357,6 +353,7 @@ void Spacetime::read_parameters(const std::string& filename)
           voices.insert(v);
           continue;
         }
+        // Check the legality of the note...
         n = std::stoi(elements[2]);
         assert(legal_notes.count(n) > 0);
         hyphantic_notes[its].push_back(n);
@@ -899,9 +896,6 @@ void Spacetime::read_state(const std::string& filename)
       hyphantic_notes[i] = bar;
       bar.clear();
     }
-    
-    hyphansis_score.resize(n);
-    s.read((char*)(&hyphansis_score[0]),n);
   }
 
   s.read((char*)(&solver),sizeof(Geometry_Solver));

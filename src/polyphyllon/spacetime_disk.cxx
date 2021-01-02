@@ -314,9 +314,66 @@ void Spacetime::read_parameters(const std::string& filename)
     assert((parity_mutation - 1.0) < std::numeric_limits<double>::epsilon());
   }
   else {
-    // Make sure the score file exists...
-    std::ifstream f(hyphansis_score);
-    assert(f.good());
+    // Make sure the score file exists and has the right structure...
+    int n,its,mv = -1;
+    bool prolonged = false;
+    std::string line;
+    std::vector<std::string> elements;
+    std::set<int> legal_notes;
+    std::ifstream mscore;
+    const char delimiter = '/';
+
+    // Implicative notes...
+    legal_notes.insert(45); legal_notes.insert(47); legal_notes.insert(48); legal_notes.insert(49);
+    legal_notes.insert(50); legal_notes.insert(52); legal_notes.insert(53); legal_notes.insert(54);
+    legal_notes.insert(56); legal_notes.insert(57); legal_notes.insert(58); legal_notes.insert(59);
+
+    // Explicative notes...
+    legal_notes.insert(21); legal_notes.insert(23); legal_notes.insert(25); legal_notes.insert(26);
+    legal_notes.insert(28); legal_notes.insert(29); legal_notes.insert(30); legal_notes.insert(32);
+    legal_notes.insert(33); legal_notes.insert(34); legal_notes.insert(35); legal_notes.insert(37);
+
+    // The unique neutral note...
+    legal_notes.insert(40);
+
+    mscore.exceptions(std::ifstream::badbit);
+    // Open the file containing the hyphantic score 
+    try {
+      mscore.open(hyphansis_score);
+
+      // Now read the measure that corresponds to this iteration and sheet...
+      while(mscore.good()) {
+        getline(mscore,line);
+        // If the line is empty or doesn't contain a forward slash, ignore it...
+        if (line.empty()) continue;
+        if (line.find(delimiter) == std::string::npos) continue;
+        // Tokenize the line at the forward slash...
+        SYNARMOSMA::tokenize(line,delimiter,elements);
+        assert(elements.size() == 3);
+        its = std::stoi(elements[0]) - 1;
+        if (its > max_iter) {
+          prolonged = true;
+          if (its > mv) mv = its;
+          continue;
+        }
+        // Register the voice and check the legality of the note...
+        voices.insert(std::stoi(elements[1]));
+        n = std::stoi(elements[2]);
+        assert(legal_notes.count(n) > 0);
+      }
+    }
+    catch (const std::ifstream::failure& e) {
+      std::cout << "Error in opening or reading the " << hyphansis_score << " file!" << std::endl;
+    }
+    // Close the score file
+    mscore.close();
+
+    if (voices.size() == 1) std::cout << "Warning: This musical score contains only a single voice, so the spacetime complex will have only a single sheet!" << std::endl;
+    if (prolonged) std::cout << "Warning: The length of this musical score (" << mv << ") exceeds the maximum number of iterations (" << max_iter << ")!" << std::endl;
+    // When performing musical hyphansis, the number of sheets in the spacetime complex is fixed as being 
+    // equal to the number of voices in the musical score.
+    foliodynamics = false;
+    nt_initial = (signed) voices.size();
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);

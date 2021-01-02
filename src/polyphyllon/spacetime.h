@@ -93,6 +93,10 @@ namespace DIAPLEXIS {
     /// This property stores the collection of sheets that are associated 
     /// with this multi-sheeted spacetime, as a vector of type Sheet.
     std::vector<Sheet> codex;
+    /// This property stores the complete collection of voices in the musical score (Spacetime::hyphansis_score),
+    /// using the indices of this composition, and which is used to set the appropriate value for Sheet::voice for 
+    /// all of the spacetime sheets.
+    std::set<int> voices;
     /// This property stores the number of active sheets in the 
     /// spacetime complex.
     int nactive = 1;

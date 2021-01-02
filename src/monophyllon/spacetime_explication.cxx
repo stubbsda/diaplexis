@@ -157,7 +157,7 @@ bool Spacetime::contraction(int base,double l)
 
   for(i=0; i<ne; ++i) {
     if (!skeleton->active_simplex(1,i)) continue;
-    skeleton->simplices[i][i].get_vertices(vx);
+    skeleton->simplices[1][i].get_vertices(vx);
     if (vx[0] != base && vx[1] != base) continue;
     u = (vx[0] == base) ? vx[1] : vx[0];
     if (std::abs(geometry->get_squared_distance(base,u,true)) > L2) pool.insert(i);
