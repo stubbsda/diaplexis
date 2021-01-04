@@ -301,7 +301,7 @@ void Spacetime::read_parameters(const std::string& filename)
   }
   else {
     // Make sure the score file exists and has the right structure...
-    int v,n,its,mv = -1;
+    int i,v,n,its,mv = -1,nsilent = 0;
     bool polyphonic = false,prolonged = false;
     std::string line;
     std::vector<std::string> elements;
@@ -367,6 +367,11 @@ void Spacetime::read_parameters(const std::string& filename)
 
     if (polyphonic) std::cout << "Warning: The musical score is polyphonic, with " << 1 + voices.size() << " voices, but only the first voice will be used!" << std::endl;
     if (prolonged) std::cout << "Warning: The length of this musical score (" << mv << ") exceeds the maximum number of iterations (" << max_iter << ")!" << std::endl;
+    // Check for iterations during which there is no hyphansis...
+    for(i=0; i<=max_iter; ++i) {
+      if (hyphantic_notes[i].empty()) nsilent++;
+    }
+    if (nsilent > 0) std::cout << "Warning: There are " << nsilent << " relaxation steps during which there will be no hyphantic operations!" << std::endl;
   }
 
   geometry->initialize(euclidean,relational,uniform,high_memory,D);

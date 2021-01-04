@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# This program converts a MusicXML file containing a (generally polyphonic) musical score into the 
+# sort of plain text score file that can be used for musical hyphansis by the Diaplexis library. 
+
 # Use the command
 # sudo pip3 install numpy scipy matplotlib music21
 # to install the music21 module for Python 3.x.

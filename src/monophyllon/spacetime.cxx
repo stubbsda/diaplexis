@@ -157,6 +157,7 @@ bool Spacetime::advance()
   auto t1 = std::chrono::steady_clock::now();
   std::ofstream s1(hyphansis_file,std::ios::app);
   s1 << "<Iteration>" << std::endl;
+  s1 << "  <Index>" << iterations << "</Index>" << std::endl;
   s1.close();
  
   hyphansis();

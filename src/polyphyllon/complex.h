@@ -311,13 +311,15 @@ namespace DIAPLEXIS {
 
   inline bool Complex::active_event(int n,int sheet) const 
   {
+    if (sheet == -1) return (!events[n].ubiquity.empty());
+
     return (events[n].ubiquity.count(sheet) > 0);
   }
 
   inline bool Complex::active_simplex(int d,int n,int sheet) const 
   {
     if (d == 0) return active_event(n,sheet);
-
+    if (sheet == -1) return (!simplices[d][n].ubiquity.empty());
     return (simplices[d][n].ubiquity.count(sheet) > 0); 
   }
 

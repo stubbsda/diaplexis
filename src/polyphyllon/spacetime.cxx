@@ -157,16 +157,17 @@ bool Spacetime::advance()
 
   // Begin the hyphantic phase...
   auto t1 = std::chrono::steady_clock::now();
-  skeleton->RND->shuffle(order,n);
-
   std::ofstream s1(hyphansis_file,std::ios::app);
   s1 << "<Iteration>" << std::endl;
   s1 << "  <Index>" << iterations << "</Index>" << std::endl;
   s1.close();
+
+  skeleton->RND->shuffle(order,n);
   for(i=0; i<n; ++i) {
     if (!codex[order[i]].active) continue;
     hyphansis(order[i]);
   }
+
   std::ofstream s2(hyphansis_file,std::ios::app);
   s2 << "</Iteration>" << std::endl;
   s2.close();
@@ -924,13 +925,13 @@ bool Spacetime::consistent() const
     }
     // Energy must be non-negative...
     if (skeleton->events[i].get_energy() < -std::numeric_limits<double>::epsilon()) {
-      std::cout << "Negative energy for event " << i << std::endl;
+      std::cout << "Negative energy for event " << i << "  " << skeleton->events[i].get_energy() << std::endl;
       return false;
     }
     // Inactive events should have zero energy...
     if (!skeleton->active_event(i,-1)) {
       if (!skeleton->events[i].zero_energy()) {
-        std::cout << "Positive energy for inactive event " << i << std::endl;
+        std::cout << "Positive energy for inactive event " << i << "  " << skeleton->events[i].get_energy() << std::endl;
         return false;
       }
     }

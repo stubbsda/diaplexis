@@ -117,7 +117,7 @@ void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotop
 
 void Sheet::parse_music_score(int max_iter,std::string& filename)
 {
-  int n,v,its;
+  int i,n,v,its,nsilent = 0;
   std::string line;
   std::vector<std::string> elements;
   std::ifstream mscore(filename);
@@ -142,6 +142,11 @@ void Sheet::parse_music_score(int max_iter,std::string& filename)
     n = std::stoi(elements[2]);
     hyphantic_notes[its].push_back(n);
   }
+  // Check for iterations during which there is no hyphansis...
+  for(i=0; i<=max_iter; ++i) {
+    if (hyphantic_notes[i].empty()) nsilent++;
+  }
+  if (nsilent > 0) std::cout << "Warning: For sheet " << index << ", there are " << nsilent << " relaxation steps during which there will be no hyphantic operations!" << std::endl;
   
   // Close the score file
   mscore.close();
