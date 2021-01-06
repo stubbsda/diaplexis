@@ -337,7 +337,7 @@ void Spacetime::read_parameters(const std::string& filename)
         if (line.empty()) continue;
         if (line.find(delimiter) == std::string::npos) continue;
         // Tokenize the line at the forward slash...
-        SYNARMOSMA::tokenize(line,delimiter,elements);
+        SYNARMOSMA::split(line,delimiter,elements);
         assert(elements.size() == 3);
         its = std::stoi(elements[0]) - 1;
         if (its > max_iter) {

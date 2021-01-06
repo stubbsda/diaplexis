@@ -133,7 +133,7 @@ void Sheet::parse_music_score(int max_iter,std::string& filename)
     if (line.empty()) continue;
     if (line.find(delimiter) == std::string::npos) continue;
     // Tokenize the line at the forward slash...
-    SYNARMOSMA::tokenize(line,delimiter,elements);
+    SYNARMOSMA::split(line,delimiter,elements);
     its = std::stoi(elements[0]) - 1;
     if (its > max_iter) continue;
     // So this is a line for this relaxation step, check if it is the right sheet/voice...
