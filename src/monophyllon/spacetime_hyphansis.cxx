@@ -259,31 +259,6 @@ void Spacetime::explication(std::string& output) const
   }
 }
 
-int Spacetime::select_event(const std::vector<int>& candidates,double intensity) const
-{
-  if (candidates.empty()) return -1;
-  // The closer the intensity is to unity, the more we should try to choose an element 
-  // of the candidates vector which is close to the beginning
-  int i,output,n = (signed) candidates.size();
-  double cdeficit,tdeficit;
-  std::vector<int> vcandidates;
-
-  for(i=0; i<n; ++i) {
-    if (!skeleton->active_event(candidates[i])) continue;
-    vcandidates.push_back(candidates[i]);
-  }
-  if (vcandidates.empty()) return -1;
-  if (vcandidates.size() == 1) return vcandidates[0];
-  n = (signed) vcandidates.size();
-  tdeficit = std::abs(skeleton->events[vcandidates[0]].get_deficiency() - skeleton->events[vcandidates[n-1]].get_deficiency());
-  for(i=0; i<n; ++i) {
-    output = vcandidates[i];
-    cdeficit = std::abs(skeleton->events[output].get_deficiency() - skeleton->events[vcandidates[0]].get_deficiency());
-    if (intensity <= cdeficit/tdeficit) break;
-  }
-  return output;
-}
-
 void Spacetime::pitch_mapping(std::set<int>* candidates) const
 {
   int i;

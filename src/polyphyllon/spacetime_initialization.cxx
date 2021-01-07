@@ -425,6 +425,37 @@ void Spacetime::initialize()
   assert(skeleton->energy_check());
 #endif
 
+  if (weaving == Hyphansis::musical) {
+    for(int i=0; i<60; ++i) {
+      key_mapping[i] = -1;
+    }
+    key_mapping[21] = 0;
+    key_mapping[23] = 1;
+    key_mapping[25] = 2;
+    key_mapping[26] = 3;
+    key_mapping[28] = 4;
+    key_mapping[29] = 5;
+    key_mapping[30] = 6;
+    key_mapping[32] = 7;
+    key_mapping[33] = 8;
+    key_mapping[34] = 9;
+    key_mapping[35] = 10;
+    key_mapping[37] = 11;
+    key_mapping[40] = 12;
+    key_mapping[45] = 13;
+    key_mapping[47] = 14;
+    key_mapping[48] = 15;
+    key_mapping[49] = 16;
+    key_mapping[50] = 17;
+    key_mapping[52] = 18;
+    key_mapping[53] = 19;
+    key_mapping[54] = 20;
+    key_mapping[56] = 21;
+    key_mapping[57] = 22;
+    key_mapping[58] = 23;
+    key_mapping[59] = 24;
+  }
+
   if (diskless) return;
 
 #ifdef VERBOSE
@@ -451,6 +482,7 @@ void Spacetime::initialize()
   }
   skeleton->write_topology(-1);
 #endif
+
   write_state();
   write_log();
 

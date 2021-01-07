@@ -593,9 +593,9 @@ int Complex::chromatic_number(int sheet) const
   return G.chromatic_number();
 }
 
-bool Complex::edge_parity_mutation(int base,int sheet)
+bool Complex::edge_parity_mutation(int base,std::string& operands,int sheet)
 {
-  int n;
+  int n,vx[2];
   std::set<int> candidates;
   std::set<int>::const_iterator it;
 
@@ -613,14 +613,13 @@ bool Complex::edge_parity_mutation(int base,int sheet)
     simplices[1][n].parity *= -1;
   }
   recompute_parity(n);
+  simplices[1][n].get_vertices(vx);
+  operands = SYNARMOSMA::make_key(vx[0],vx[1]);
   return true;
 }
 
 bool Complex::edge_parity_mutation(int u,int v,int sheet)
 {
-  // This is the method used for dynamic hyphansis where there is a single call 
-  // to recompute the orientation of all the higher-dimensional simplices, so no 
-  // need to include one at the method's end. 
   int n;
   std::set<int> S;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -636,6 +635,7 @@ bool Complex::edge_parity_mutation(int u,int v,int sheet)
   else {
     simplices[1][n].parity *= -1;
   }
+  recompute_parity(n);
   return true;
 }
 

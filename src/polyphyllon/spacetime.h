@@ -100,6 +100,13 @@ namespace DIAPLEXIS {
     /// This property stores the number of active sheets in the 
     /// spacetime complex.
     int nactive = 1;
+    /// This property stores the indices of the hyphantic music scale's 25 notes 
+    /// by their key value, stretching from the lowest pitch (most explicative) 
+    /// value of 21 (0) to the highest pitch (most implicative) value of 59 (24).
+    /// It is used by the musical_hyphansis() method to determine from which bin 
+    /// of events to select a base event for a given hyphantic operation, the bins 
+    /// having been populated by pitch_mapping().
+    int key_mapping[60];
 
     /// This property controls the sort of initial state from which the simulation 
     /// begins, including eventually from a checkpoint file. 
@@ -373,10 +380,12 @@ namespace DIAPLEXIS {
 
     /// This method is called by the advance() method to carry out the hyphansis step of topological change for a given sheet (the method's unique argument); it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
     void hyphansis(int);
-    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed. 
-    int dynamic_hyphansis(const std::vector<std::pair<int,double> >&,int);
-    /// This method carries out the hyphansis step for a particular sheet (the second argument) according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method's first argument is a list of the index and deficiency for the spacetime's candidate events, while it returns the number of successful hyphantic operations performed.
-    int musical_hyphansis(const std::vector<std::pair<int,double> >&,int);
+    /// This method carries out the hyphansis step for a particular sheet (the method's argument) according to a purely dynamic scheme, based on the magnitude and sign of a event's deficiency. The method returns the number of successful hyphantic operations performed.
+    int dynamic_hyphansis(int);
+    /// This method carries out the hyphansis step for a particular sheet (the method's argument) according to a scheme based on a musical composition (in the Spacetime::hyphansis_score file), using a mapping between the notes and the hyphantic operators; the operators are chosen based on the magnitude and sign of a event's deficiency. The method returns the number of successful hyphantic operations performed.
+    int musical_hyphansis(int);
+    /// This method puts active events for a given sheet (the method's second argument) in an array of 25 bins (the method's first argument) according to the deficiency value of event, with the width of the bins set by the pitch intervals of the hyphantic musical scale. 
+    void pitch_mapping(std::set<int>*,int) const;
     /// This method is used in the musical_hyphansis() method and converts a (higher-pitched) key - a musical note - into an implicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
     std::string implicative_scale(int,std::vector<double>&) const;
     /// This method is used in the musical_hyphansis() method and converts a (lower-pitched) key - a musical note - into an explicative hyphantic operator (the string output) along with the parameter value for its use, if necessary (the second argument).  
@@ -385,8 +394,6 @@ namespace DIAPLEXIS {
     void implication(std::string&) const;
     /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
-    /// This method returns the index of an event belonging to sheet (the final argument) from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
-    int select_event(const std::vector<int>&,double,int) const;
     /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is the coordinate vector for the new event; the method returns the index of the new event. 
     int event_addition(const std::vector<double>&,int);
     /// This method adds a new event to a sheet of the spacetime (indicated by the last argument), where the first argument is a set of parent events for the new event; the method returns the index of the new event. 

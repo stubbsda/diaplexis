@@ -366,8 +366,6 @@ namespace DIAPLEXIS {
     void implication(std::string&) const;
     /// This method is used by the dynamic_hyphansis() method and assigns an explicative hyphantic operator to the method's unique argument, based in part on the current value of Spacetime::iterations as well as hasard, through pseudo-random numbers.
     void explication(std::string&) const;
-    /// This method returns the index of an active event from the method's first argument; if there is more than one candidate, it chooses the event whose deficiency has the greatest magnitude according to the value of the second argument which should lie between zero and unity. 
-    int select_event(const std::vector<int>&,double) const;
     /// This method adds a new event to the spacetime, where the argument is the coordinate vector for the new event; the method returns the index of the new event. 
     int event_addition(const std::vector<double>&);
     /// This method adds a new event to the spacetime, where the argument is a set of parent events for the new event; the method returns the index of the new event. 

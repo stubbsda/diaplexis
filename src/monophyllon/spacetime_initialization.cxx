@@ -400,36 +400,6 @@ void Spacetime::initialize()
   assert(skeleton->energy_check());
 #endif
 
-  if (diskless) return;
-
-#ifdef VERBOSE
-  if (skeleton->pseudomanifold) {
-    if (skeleton->orientable) {
-      if (skeleton->boundary) {
-        std::cout << "The spacetime complex is an orientable pseudomanifold with boundary." << std::endl;
-      }
-      else {
-        std::cout << "The spacetime complex is an orientable pseudomanifold." << std::endl;
-      }
-    }
-    else {
-      if (skeleton->boundary) {
-        std::cout << "The spacetime complex is a non-orientable pseudomanifold with boundary." << std::endl;
-      }
-      else {
-        std::cout << "The spacetime complex is a non-orientable pseudomanifold." << std::endl;
-      }
-    }
-  }
-  else {
-    std::cout << "The spacetime complex is not a pseudomanifold" << std::endl;
-  }
-  skeleton->write_topology();
-#endif
-
-  write_state();
-  write_log();
-
   if (weaving == Hyphansis::musical) {
     for(int i=0; i<60; ++i) {
       key_mapping[i] = -1;
@@ -460,6 +430,36 @@ void Spacetime::initialize()
     key_mapping[58] = 23;
     key_mapping[59] = 24;
   }
+
+  if (diskless) return;
+
+#ifdef VERBOSE
+  if (skeleton->pseudomanifold) {
+    if (skeleton->orientable) {
+      if (skeleton->boundary) {
+        std::cout << "The spacetime complex is an orientable pseudomanifold with boundary." << std::endl;
+      }
+      else {
+        std::cout << "The spacetime complex is an orientable pseudomanifold." << std::endl;
+      }
+    }
+    else {
+      if (skeleton->boundary) {
+        std::cout << "The spacetime complex is a non-orientable pseudomanifold with boundary." << std::endl;
+      }
+      else {
+        std::cout << "The spacetime complex is a non-orientable pseudomanifold." << std::endl;
+      }
+    }
+  }
+  else {
+    std::cout << "The spacetime complex is not a pseudomanifold" << std::endl;
+  }
+  skeleton->write_topology();
+#endif
+
+  write_state();
+  write_log();
 
   if (iterations == 0) {
     std::ofstream s(hyphansis_file,std::ios::trunc);

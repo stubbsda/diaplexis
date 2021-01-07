@@ -259,103 +259,132 @@ void Spacetime::explication(std::string& output) const
   }
 }
 
-int Spacetime::select_event(const std::vector<int>& candidates,double intensity,int sheet) const
+void Spacetime::pitch_mapping(std::set<int>* candidates,int sheet) const
 {
-  if (candidates.empty()) return -1;
-  // The closer the intensity is to unity, the more we should try to choose an element
-  // of candidates close to the beginning
-  int i,output,n = (signed) candidates.size();
-  double cdeficit,tdeficit;
-  std::vector<int> vcandidates;
+  int i;
+  double sigma,drange,min_value = 1e10,max_value=-1e10;
+  const int nv = (signed) skeleton->events.size();
 
-  for(i=0; i<n; ++i) {
-    if (!skeleton->events[candidates[i]].active(sheet)) continue;
-    vcandidates.push_back(candidates[i]);
+  // We use the negation of the structural deficiency because deficiency < 0 => implication (higher pitch)
+  // and deficiency > 0 => explication (lower pitch).
+  for(i=0; i<nv; ++i) {
+    if (!skeleton->active_event(i,sheet)) continue;
+    sigma = -skeleton->events[i].get_deficiency();
+    if (sigma < min_value) min_value = sigma;
+    if (sigma > max_value) max_value = sigma;
   }
-  if (vcandidates.empty()) return -1;
-  if (vcandidates.size() == 1) return vcandidates[0];
-  n = (signed) vcandidates.size();
-  tdeficit = std::abs(skeleton->events[vcandidates[0]].get_deficiency() - skeleton->events[vcandidates[n-1]].get_deficiency());
-  for(i=0; i<n; ++i) {
-    output = vcandidates[i];
-    cdeficit = std::abs(skeleton->events[output].get_deficiency() - skeleton->events[vcandidates[0]].get_deficiency());
-    if (intensity <= cdeficit/tdeficit) break;
+  drange = max_value - min_value;
+  for(i=0; i<nv; ++i) {
+    if (!skeleton->active_event(i,sheet)) continue;
+    sigma = 20.0 + 40.0/drange*(-skeleton->events[i].get_deficiency() - min_value);
+    if (sigma < 22.0) {
+      candidates[0].insert(i);
+    }
+    else if (sigma < 24.0) {
+      candidates[1].insert(i);
+    }
+    else if (sigma < 25.5) {
+      candidates[2].insert(i);
+    }
+    else if (sigma < 27.0) {
+      candidates[3].insert(i);
+    }
+    else if (sigma < 28.5) {
+      candidates[4].insert(i);
+    }
+    else if (sigma < 29.5) {
+      candidates[5].insert(i);
+    }
+    else if (sigma < 31.0) {
+      candidates[6].insert(i);
+    }
+    else if (sigma < 32.5) {
+      candidates[7].insert(i);
+    }
+    else if (sigma < 33.5) {
+      candidates[8].insert(i);
+    }
+    else if (sigma < 34.5) {
+      candidates[9].insert(i);
+    }
+    else if (sigma < 36.0) {
+      candidates[10].insert(i);
+    }
+    else if (sigma < 38.0) {
+      candidates[11].insert(i);
+    }
+    else if (sigma < 42.0) {
+      candidates[12].insert(i);
+    }
+    else if (sigma < 46.0) {
+      candidates[13].insert(i);
+    }
+    else if (sigma < 47.5) {
+      candidates[14].insert(i);
+    }
+    else if (sigma < 48.5) {
+      candidates[15].insert(i);
+    }
+    else if (sigma < 49.5) {
+      candidates[16].insert(i);
+    }
+    else if (sigma < 51.0) {
+      candidates[17].insert(i);
+    }
+    else if (sigma < 52.5) {
+      candidates[18].insert(i);
+    }
+    else if (sigma < 53.5) {
+      candidates[19].insert(i);
+    }
+    else if (sigma < 55.0) {
+      candidates[20].insert(i);
+    }
+    else if (sigma < 56.5) {
+      candidates[21].insert(i);
+    }
+    else if (sigma < 57.5) {
+      candidates[22].insert(i);
+    }
+    else if (sigma < 58.5) {
+      candidates[23].insert(i);
+    }
+    else {
+      candidates[24].insert(i);
+    }
   }
-  return output;
 }
 
-int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+int Spacetime::musical_hyphansis(int sheet)
 {
   int i,j,v,nsuccess = 0;
-  double alpha,m_width = 1.0,x_width = 1.0;
   bool success = false;
-  std::string op,opstring;
-  std::vector<int> m_events,x_events,neutral_events,m_keys,x_keys,key_list = codex[sheet].hyphantic_notes[iterations];
+  std::string op,tag,opstring;
+  std::vector<int> key_list = codex[sheet].hyphantic_notes[iterations];
   std::vector<double> pvalues;
-  const int nc = (signed) candidates.size();
+  std::set<int> candidates[25];
   const int opcount = (signed) key_list.size();
 
   // Open the hyphantic log file
   std::ofstream s(hyphansis_file,std::ios::app);
 
-  if (key_list.empty()) {
+  if (opcount == 0) {
     // We're done!
     s << "  </Sheet>" << std::endl;
     s.close();
     return 0;
   }
 
-  // This is a fairly complicated operation - we need to play the notes the in the right order, 
-  // while at the same time highest pitched key above 44 is assigned to the event with the most 
-  // negative deficiency, the next highest pitched key above 44 acts upon the event with the  
-  // second most negative deficiency etc.
-  // We need to create a list of the distinct explicative and implicative piano keys in this measure, 
-  // paired to the appropriate event
-  for(i=0; i<opcount; ++i) {
-#ifdef DEBUG
-    assert(key_list[i] >= 1 && key_list[i] <= 88);
-#endif
-    if (key_list[i] > 40) {
-      if (std::count(m_keys.begin(),m_keys.end(),key_list[i]) == 0) m_keys.push_back(key_list[i]);
-    }
-    else if (key_list[i] < 40) {
-      if (std::count(x_keys.begin(),x_keys.end(),key_list[i]) == 0) x_keys.push_back(key_list[i]);
-    }
-  }
-  // Now sort these piano key values in the correct order, meaning ascending 
-  // for explicative (1 to 39) and descending for implicative (88 to 41)
-  std::sort(m_keys.begin(),m_keys.end(),std::greater<int>());
-  std::sort(x_keys.begin(),x_keys.end());
+  pitch_mapping(candidates,sheet);
 
-  for(i=nc-1; i>0; --i) {
-    v = candidates[i].first;
-    if (!skeleton->events[v].active(sheet)) continue;
-    neutral_events.push_back(v);
-    alpha = skeleton->events[v].get_deficiency();
-    if (alpha < -std::numeric_limits<double>::epsilon()) {
-      m_events.push_back(v);
-    }
-    else if (alpha > std::numeric_limits<double>::epsilon()) {
-      x_events.push_back(v);
-    }
-  }
-
-  if (!m_keys.empty()) m_width = double(m_keys[0] - m_keys.back());
-  if (!x_keys.empty()) x_width = double(x_keys.back() - x_keys[0]);
   // Start "playing" the notes for this voice - our instrument is the topology of spacetime...
   for(i=0; i<opcount; ++i) {
     j = key_list[i];
-    if (j > 40) {
-      v = select_event(m_events,double(j - m_keys.back())/m_width,sheet);
-    }
-    else if (j < 40) {
-      v = select_event(x_events,double(j - x_keys[0])/x_width,sheet);
-    }
-    else {
-      // Any active event will do for a neutral operator
-      v = skeleton->RND->irandom(neutral_events);
-    }
-    if (v == -1) continue;
+    if (candidates[key_mapping[j]].empty()) continue;
+    v = skeleton->RND->irandom(candidates[key_mapping[j]]);
+    // An earlier hyphantic operation may have rendered this
+    // event inactive...
+    if (!skeleton->active_event(v,sheet)) continue;
     // Now we have the base event v, next we need to get the operator and 
     // parameters for this piano key
     if (j > 40) {
@@ -434,7 +463,8 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
       success = germination(v,sheet);
     }
     else if (op == "T") {
-      success = skeleton->edge_parity_mutation(v,sheet);
+      success = skeleton->edge_parity_mutation(v,tag,sheet);
+      if (success) opstring = "T," + tag;
     }
     if (success) {
       s << "    <Operation>" << opstring << "</Operation>" << std::endl;
@@ -455,147 +485,171 @@ int Spacetime::musical_hyphansis(const std::vector<std::pair<int,double> >& cand
   return nsuccess;
 }
 
-int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& candidates,int sheet)
+int Spacetime::dynamic_hyphansis(int sheet)
 {
   int i,v,n,vx[2],nsuccess = 0;
   double alpha;
   std::string op,opstring;
   std::set<int> r_edges;
   bool success = false;
-  const int nc = (signed) candidates.size();
+  std::vector<std::pair<int,double> > candidates;
+  const int nv = (signed) skeleton->events.size();
+
+  for(i=0; i<nv; ++i) {
+    if (!skeleton->events[i].active(sheet)) continue;
+    alpha = skeleton->events[i].get_deficiency();
+    // Eliminate events whose structural deficiency is close to zero...
+    if (std::abs(alpha) < std::numeric_limits<double>::epsilon()) continue;
+    candidates.push_back(std::pair<int,double>(i,alpha));
+  }
 
   std::ofstream s(hyphansis_file,std::ios::app);
 
-  for(i=nc-1; i>0; --i) {
-    v = candidates[i].first;
-    // An earlier hyphantic operation may have rendered this
-    // event inactive...
-    if (!skeleton->events[v].active(sheet)) continue;
-    alpha = skeleton->events[v].get_deficiency();
-    if (alpha < -std::numeric_limits<double>::epsilon()) {
-      implication(op);
-      opstring = op + "," + std::to_string(v);
-      if (op == "F") {
-        success = fission(v,0.4,sheet);
-        opstring += ",0.4";
-      }
-      else if (op == "Um") {
-        success = fusion_m(v,sheet);
-      }
-      else if (op == "Om") {
-        success = foliation_m(v,sheet);
-      }
-      else if (op == "E") {
-        success = expansion(v,0.15,sheet);
-        opstring += ",0.15";
-      }
-      else if (op == "I") {
-        success = inflation(v,0.25,sheet);
-        opstring += ",0.25";
-      }
-      else if (op == "P") {
-        success = perforation(v,0,sheet);
-        opstring += ",0";
-      }
-      else if (op == "V") {
-        success = circumvolution(v,sheet);
-      }
-      else if (op == "Δ") {
-        success = stellar_deletion(v,sheet);
-      }
-    }
-    else if (alpha > std::numeric_limits<double>::epsilon()) {
-      if (skeleton->vertex_dimension(v,sheet) > 1) {
-        if (skeleton->RND->drandom() < alpha/10.0) {
-          op = "D";
-          success = deflation(v,sheet);
-          opstring = "D," + std::to_string(v);
-        }
-        else {
-          op = "R";
-          success = reduction(v,sheet);
-          opstring = "R," + std::to_string(v);
-        }
-      }
-      else {
-        explication(op);
-        opstring = op + "," + std::to_string(v);
-        if (op == "C") {
-          success = correction(v,sheet);
-        }
-        else if (op == "N") {
-          success = contraction(v,1.2,sheet);
-          opstring += ",1.2";
-        }
-        else if (op == "Ux") {
-          success = fusion_x(v,0.5,sheet);
-          opstring += "0.5";
-        }
-        else if (op == "Sg") {
-          success = compensation_g(v,sheet);
-        }
-        else if (op == "Sm") {
-          success = compensation_m(v,sheet);
-        }
-        else if (op == "G") {
-          success = germination(v,sheet);
-        }
-        else if (op == "Y") {
-          success = stellar_addition(v,sheet);
-        }
-        else if (op == "A") {
-          success = amputation(v,10.0,sheet);
-          opstring += ",10.0";
-        }
-        if (!success && op == "R") {
-          if (skeleton->RND->irandom(2) == 0) {
-            op = "N";
-            success = contraction(v,1.2,sheet);
-            opstring = "N," + std::to_string(v) + ",1.2"; 
-          }
-          else {
-            op = "Ux";
-            success = fusion_x(v,0.5,sheet);
-            opstring = "Ux," + std::to_string(v) + ",0.5";
-          }
-        }
-        if (!success) {
-          op = "Sg";
-          success = compensation_g(v,sheet);
-          opstring = "Sg," + std::to_string(v); 
-        }
-      }
-    }
-    if (success) {
-      s << "    <Operation>" << opstring << "</Operation>" << std::endl;
+  if (candidates.size() == 1) {
+    v = candidates[0].first;
+    if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
+      if (!expansion(v,sheet)) throw std::runtime_error("Unable to expand singleton spacetime complex!");
+      codex[sheet].hyphantic_ops += 'E';
       regularization(false,sheet);
-      codex[sheet].hyphantic_ops += op;
+      s << "    <Operation>E," << v << "</Operation>" << std::endl;
       nsuccess++;
     }
-#ifdef DEBUG
-    // This is an extremely costly assertion - in one test with an optimized 
-    // version it increased the topological hyphansis time from 18.1 seconds 
-    // to 823.5 seconds (June 12, 2020). 
-    assert(skeleton->consistent(sheet));
-#endif
-    // If more than 10% of the initial candidate vertices have been successfully used in hyphantic 
-    // operations, it's time to exit - we don't want to modify the topology too profoundly in any 
-    // given relaxation step...
-    if (double(nsuccess)/nc > 0.1) break;
   }
-
+  else if (candidates.size() > 1) {
+    std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
+    const int nc = (signed) candidates.size();
+    for(i=nc-1; i>0; --i) {
+      v = candidates[i].first;
+      // An earlier hyphantic operation may have rendered this
+      // event inactive...
+      if (!skeleton->events[v].active(sheet)) continue;
+      alpha = skeleton->events[v].get_deficiency();
+      if (alpha < -std::numeric_limits<double>::epsilon()) {
+        implication(op);
+        opstring = op + "," + std::to_string(v);
+        if (op == "F") {
+          success = fission(v,0.4,sheet);
+          opstring += ",0.4";
+        }
+        else if (op == "Um") {
+          success = fusion_m(v,sheet);
+        }
+        else if (op == "Om") {
+          success = foliation_m(v,sheet);
+        }
+        else if (op == "E") {
+          success = expansion(v,0.15,sheet);
+          opstring += ",0.15";
+        }
+        else if (op == "I") {
+          success = inflation(v,0.25,sheet);
+          opstring += ",0.25";
+        }
+        else if (op == "P") {
+          success = perforation(v,0,sheet);
+          opstring += ",0";
+        }
+        else if (op == "V") {
+          success = circumvolution(v,sheet);
+        }
+        else if (op == "Δ") {
+          success = stellar_deletion(v,sheet);
+        }
+      }
+      else if (alpha > std::numeric_limits<double>::epsilon()) {
+        if (skeleton->vertex_dimension(v,sheet) > 1) {
+          if (skeleton->RND->drandom() < alpha/10.0) {
+            op = "D";
+            success = deflation(v,sheet);
+            opstring = "D," + std::to_string(v);
+          }
+          else {
+            op = "R";
+            success = reduction(v,sheet);
+            opstring = "R," + std::to_string(v);
+          }
+        }
+        else {
+          explication(op);
+          opstring = op + "," + std::to_string(v);
+          if (op == "C") {
+            success = correction(v,sheet);
+          }
+          else if (op == "N") {
+            success = contraction(v,1.2,sheet);
+            opstring += ",1.2";
+          }
+          else if (op == "Ux") {
+            success = fusion_x(v,0.5,sheet);
+            opstring += "0.5";
+          }
+          else if (op == "Sg") {
+            success = compensation_g(v,sheet);
+          }
+          else if (op == "Sm") {
+            success = compensation_m(v,sheet);
+          }
+          else if (op == "G") {
+            success = germination(v,sheet);
+          }
+          else if (op == "Y") {
+            success = stellar_addition(v,sheet);
+          }
+          else if (op == "A") {
+            success = amputation(v,10.0,sheet);
+            opstring += ",10.0";
+          }
+          if (!success && op == "R") {
+            if (skeleton->RND->irandom(2) == 0) {
+              op = "N";
+              success = contraction(v,1.2,sheet);
+              opstring = "N," + std::to_string(v) + ",1.2"; 
+            }
+            else {
+              op = "Ux";
+              success = fusion_x(v,0.5,sheet);
+              opstring = "Ux," + std::to_string(v) + ",0.5";
+            }
+          }
+          if (!success) {
+            op = "Sg";
+            success = compensation_g(v,sheet);
+            opstring = "Sg," + std::to_string(v); 
+          }
+        }
+      }
+      if (success) {
+        s << "    <Operation>" << opstring << "</Operation>" << std::endl;
+        regularization(false,sheet);
+        codex[sheet].hyphantic_ops += op;
+        nsuccess++;
+      }
+#ifdef DEBUG
+      // This is an extremely costly assertion - in one test with an optimized 
+      // version it increased the topological hyphansis time from 18.1 seconds 
+      // to 823.5 seconds (June 12, 2020). 
+      assert(skeleton->consistent(sheet));
+#endif
+      // If more than 10% of the initial candidate vertices have been successfully used in hyphantic 
+      // operations, it's time to exit - we don't want to modify the topology too profoundly in any 
+      // given relaxation step...
+      if (double(nsuccess)/nc > 0.1) break;
+    }
+  }
   n = (signed) skeleton->simplices[1].size();
   for(i=0; i<n; ++i) {
     if (!skeleton->simplices[1][i].active(sheet)) continue;
+    skeleton->simplices[1][i].get_vertices(vx);
+    alpha = 0.5*(std::abs(skeleton->events[vx[0]].get_deficiency()) + std::abs(skeleton->events[vx[1]].get_deficiency()));
+    if (alpha > 0.1) continue;
     if (skeleton->RND->drandom() < parity_mutation) {
       skeleton->simplices[1][i].get_vertices(vx);
       if (skeleton->edge_parity_mutation(vx[0],vx[1],sheet)) {
-        s << "    <Operation>T," << vx[0] << "</Operation>" << std::endl;
-        r_edges.insert(i);
+        s << "    <Operation>T," << vx[0] << ":" << vx[1] << "</Operation>" << std::endl;
+        nsuccess++;
       }
     }
   }
-  skeleton->recompute_parity(r_edges);
 
   // We're done, so close the hyphantic log file and return
   s << "  </Sheet>" << std::endl;
@@ -606,64 +660,32 @@ int Spacetime::dynamic_hyphansis(const std::vector<std::pair<int,double> >& cand
 
 void Spacetime::hyphansis(int sheet)
 {
-  int i,v;
-  double alpha;
-  std::vector<std::pair<int,double> > candidates;
-  const int nv = (signed) skeleton->events.size();
-
   codex[sheet].hyphantic_ops = "";
 
   std::ofstream s(hyphansis_file,std::ios::app);
   s << "  <Sheet>" << std::endl;
   s << "    <Index>" << sheet << "</Index>" << std::endl;
+  s.close();
 
 #ifdef VERBOSE
-  int npos = 0,nneg = 0,nze = 0;
-#endif
+  int i,npos = 0,nneg = 0,nze = 0,nv = (signed) skeleton->events.size();
+  double alpha;
   for(i=0; i<nv; ++i) {
     if (!skeleton->events[i].active(sheet)) continue;
     alpha = skeleton->events[i].get_deficiency();
-#ifdef VERBOSE
     if (!skeleton->events[i].zero_energy()) nze++;
     if (alpha > std::numeric_limits<double>::epsilon()) npos++;
     if (alpha < -std::numeric_limits<double>::epsilon()) nneg++;
-#endif
-    // Eliminate events whose structural deficiency is close to zero...
-    alpha = std::abs(alpha);
-    if (alpha < std::numeric_limits<double>::epsilon()) continue;
-    candidates.push_back(std::pair<int,double>(i,alpha));
   }
-#ifdef VERBOSE
   std::cout << "There are " << nze << " events with positive energy or " << 100.0*double(nze)/double(skeleton->cardinality(0,sheet)) << " percent of the total." << std::endl;
   std::cout << "There are " << npos << " positive events and " << nneg << " negative events in the spacetime complex." << std::endl;
 #endif
-  if (candidates.empty()) {
-    s << "  </Sheet>" << std::endl;
-    s.close();
-    return;
-  }
-
-  if (candidates.size() == 1) {
-    v = candidates[0].first;
-    if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
-      if (!expansion(v,sheet)) throw std::runtime_error("Unable to expand singleton spacetime complex!");
-      codex[sheet].hyphantic_ops += 'E';
-      regularization(false,sheet);
-      s << "    <Operation>E," << v << "</Operation>" << std::endl;
-      s << "  </Sheet>" << std::endl;
-      s.close();
-      return;
-    }
-  }
-  s.close();
-
-  std::sort(candidates.begin(),candidates.end(),SYNARMOSMA::pair_predicate_dbl);
 
   if (weaving == Hyphansis::dynamic) {
-    dynamic_hyphansis(candidates,sheet);
+    dynamic_hyphansis(sheet);
   }
-  else {
-    musical_hyphansis(candidates,sheet);
+  else if (weaving == Hyphansis::musical) {
+    musical_hyphansis(sheet);
   }
 }
 
