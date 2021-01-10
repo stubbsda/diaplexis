@@ -301,8 +301,8 @@ void Spacetime::read_parameters(const std::string& filename)
   }
   else {
     // Make sure the score file exists and has the right structure...
-    int i,v,n,its,mv = -1,nsilent = 0;
-    bool polyphonic = false,prolonged = false;
+    int i,v,n,its,voice = -1,mv = -1,nsilent = 0;
+    bool prolonged = false;
     std::string line;
     std::vector<std::string> elements;
     std::set<int> voices,legal_notes;
@@ -347,12 +347,12 @@ void Spacetime::read_parameters(const std::string& filename)
         }
         // Now read the voice...
         v = std::stoi(elements[1]);
+        if (voices.count(v) == 0) voices.insert(v);
+        // Initialize the voice variable to be the first voice we find in the score file; 
+        // note that we assume the voice indices to be non-negative...
+        if (voice < 0) voice = v;
         // There should only be one voice in the case of the Monophyllon version of this library...
-        if (v > 0) {
-          polyphonic = true;
-          voices.insert(v);
-          continue;
-        }
+        if (v != voice) continue;
         // Check the legality of the note...
         n = std::stoi(elements[2]);
         assert(legal_notes.count(n) > 0);
@@ -365,7 +365,7 @@ void Spacetime::read_parameters(const std::string& filename)
     // Close the score file
     mscore.close();
 
-    if (polyphonic) std::cout << "Warning: The musical score is polyphonic, with " << 1 + voices.size() << " voices, but only the first voice will be used!" << std::endl;
+    if (voices.size() > 1) std::cout << "Warning: The musical score is polyphonic, with " << voices.size() << " voices, but only voice " << voice << " will be used!" << std::endl;
     if (prolonged) std::cout << "Warning: The length of this musical score (" << mv << ") exceeds the maximum number of iterations (" << max_iter << ")!" << std::endl;
     // Check for iterations during which there is no hyphansis...
     for(i=0; i<=max_iter; ++i) {
