@@ -133,7 +133,7 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "HomologyMethod") {
       std::transform(value.begin(),value.end(),value.begin(),::toupper);
       if (value == "GAP") {
-        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::gap); 
+        skeleton->set_homology_method(SYNARMOSMA::Homology::Method::gap);
       }
       else if (value == "NATIVE") {
         skeleton->set_homology_method(SYNARMOSMA::Homology::Method::native);
