@@ -25,16 +25,21 @@ Normally the only parameters that a user should need to modify in order to build
 are located in the <code>Makefile.config</code> file, in which various compiler arguments and libraries are
 specified. The build variables are all described in the Makefile and in general the default values should
 be safe on most Unix-like platforms. A sample program file, <code>euplecton.cxx</code>, illustrating the
-use of the Spacetime class is also included in the <code>examples</code> directory along with an example
-of an XML parameter file, intended for use with the Polyphyllon version of this library. Using the included
-<code>examples/Makefile</code>, a binary can be compiled for either version of the Diaplexis library by
-means of the command <code>make TYPE=MONOPHYLLON</code> or <code>make TYPE=POLYPHYLLON</code> (the default).
-Running <code>./euplecton parameters.xml</code> represents a simple test to verify the installation, which
+use of the Spacetime class is also included in the <code>examples</code> directory along with two examples
+of an XML parameter file, the first for restarting the program from a binary diskfile and the second for 
+general use with the Polyphyllon version of this library. Using the included <code>examples/Makefile</code>, 
+a binary can be compiled for either version of the Diaplexis library by means of the command 
+<code>make TYPE=MONOPHYLLON</code> or <code>make TYPE=POLYPHYLLON</code> (the default). Running 
+<code>./euplecton parameters.xml</code> represents a simple test to verify the installation, which
 writes all its output in the <code>data</code> directory. The environment variable <code>OMP_NUM_THREADS</code>
 can be set to a value greater than one to test the parallel performance of the library. The <code>examples</code>
-directory also contains a Python 3 file, <code>musical_hyphansis.py</code>, which uses the
+directory also contains two Python 3 files, one named <code>musical_hyphansis.py</code> which uses the
 [music21](http://web.mit.edu/music21/) module to convert a score file in the [MusicXML](https://en.wikipedia.org/wiki/MusicXML)
-format into one whose structure can be parsed by the Diaplexis library.
+format into a plain text file whose structure is adapted for use by the Diaplexis library and can be used 
+in the parameter <code>HyphansisScore</code>. The second Python file, <code>editor.py</code>, provides a 
+portable graphical interface based on [Tkinter](https://en.wikipedia.org/wiki/Tkinter) for editing the XML 
+parameter files used by the Diaplexis library, which has the advantage of making clear which parameters are 
+relevant given choices for values like the <code>InitialState</code> and <code>SolverType</code>.
 
 The <code>VERBOSE</code> compilation flag causes the Diaplexis library to write a great deal of diagnostic
 logging information to the standard output during execution and is normally only useful for developers.

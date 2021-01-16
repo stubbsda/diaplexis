@@ -391,10 +391,12 @@ void Spacetime::read_parameters(const std::string& filename)
     }
   }
   else if (initial_state == Initial_Topology::monoplex) {
+    assert(initial_dim > 0);
     assert(initial_dim <= Complex::ND);
+    initial_size = 1 + initial_dim;
   }
   else if (initial_state == Initial_Topology::singleton) {
-    assert(initial_size == 1);
+    initial_size = 1;
   }
 
   if (solver == Geometry_Solver::minimal) {

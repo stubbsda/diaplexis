@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" ?>
 <Parameters>
 	<Global>
 		<!--InitialEvents>81</InitialEvents-->
@@ -11,7 +11,7 @@
 		<RelationalGeometry>0</RelationalGeometry>
 		<DimensionalUniformity>1</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
-		<MaximumIterations>25</MaximumIterations>
+		<MaximumIterations>10</MaximumIterations>
 		<SheetDynamics>0</SheetDynamics>
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>

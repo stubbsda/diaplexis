@@ -844,7 +844,7 @@ void Spacetime::simplex_solver()
         }
       }
     }
-    // Now resort the simplex vertices...
+    // Now sort the simplex vertices again...
     std::sort(fitness.begin(),fitness.end(),SYNARMOSMA::pair_predicate_dbl);
 #ifdef VERBOSE
     std::cout << "At simplex transformation step " << ntrans << " the error is " << fitness[0].second << std::endl;

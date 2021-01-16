@@ -8,10 +8,12 @@ from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 import os
 import math
-import lxml
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as MD
 
 # One point to note is that this GUI must be run on a monitor with
-# resolution at least 800 x 675 for proper viewing of the complete interface. 
+# resolution at least 800 x 900 for proper viewing of the complete 
+# interface. 
 
 class euplecton:
     def __init__(self,master=None):
@@ -29,7 +31,6 @@ class euplecton:
         self.perturbe = tkinter.BooleanVar()
         self.dim_uniformity = tkinter.BooleanVar()
         self.relational = tkinter.BooleanVar()
-        self.high_memory_footprint = tkinter.BooleanVar()
         self.cg_refinement = tkinter.BooleanVar()
 
         self.initial_state = tkinter.StringVar()
@@ -42,6 +43,7 @@ class euplecton:
         self.input_filename = tkinter.StringVar()
         self.hyphansis_score = tkinter.StringVar()
         self.int_engine = tkinter.StringVar()
+        self.memory_footprint = tkinter.StringVar()
 
         self.initial_events = tkinter.IntVar()
         self.max_iterations = tkinter.IntVar()
@@ -94,15 +96,16 @@ class euplecton:
         signatures = ['Euclidean','Lorentzian']
         solvers = ['Minimal','Evolutionary','Annealing','Mechanical','Simplex']
         engines = ['Euler','RK4']
+        memory_consumption = ['High','Low']
 
         self.label1 = tkinter.Label(global_group,text='Number of Initial Events:',wraplength=250,justify=tkinter.LEFT)
         label2 = tkinter.Label(global_group,text='Maximum Number of Relaxation Steps:',wraplength=250,justify=tkinter.LEFT)
-        self.label3 = tkinter.Label(global_group,text='Initial Dimension:',wraplength=250,justify=tkinter.LEFT)
+        self.label3 = tkinter.Label(global_group,text='Initial Dimension:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         label4 = tkinter.Label(global_group,text='Initial State:',wraplength=250,justify=tkinter.LEFT)
         initial_state = tkinter.OptionMenu(global_group,self.initial_state,*initial_states,command=self.istate_change)
         self.sheet_check = tkinter.Checkbutton(global_group,text='Sheet Dynamics',variable=self.sheet_dynamics)
         self.label6 = tkinter.Label(global_group,text='Number of Initial Sheets:',wraplength=250,justify=tkinter.LEFT)
-        superposition_check = tkinter.Checkbutton(global_group,text='Superposable',variable=self.superposable)
+        superposition_check = tkinter.Checkbutton(global_group,text='Superposable',variable=self.superposable,command=self.superposition_change)
         compression_check = tkinter.Checkbutton(global_group,text='Compressible',variable=self.compressible)
         permutation_check = tkinter.Checkbutton(global_group,text='Permutable',variable=self.permutable)
         label9 = tkinter.Label(global_group,text='Checkpoint Frequency:',wraplength=250,justify=tkinter.LEFT)
@@ -114,7 +117,7 @@ class euplecton:
         self.label12 = tkinter.Label(global_group,text='Edge Probability:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         label13 = tkinter.Label(global_group,text='Abnormality Threshold:',wraplength=250,justify=tkinter.LEFT)
         self.label14 = tkinter.Label(global_group,text='Parity Mutation Probability:',wraplength=250,justify=tkinter.LEFT)
-        label15 = tkinter.Label(global_group,text='Superposition Threshold:',wraplength=250,justify=tkinter.LEFT)
+        self.label15 = tkinter.Label(global_group,text='Superposition Threshold:',wraplength=250,justify=tkinter.LEFT)
         label17 = tkinter.Label(global_group,text='Homology Method:',wraplength=250,justify=tkinter.LEFT)
         homology_method = tkinter.OptionMenu(global_group,self.homology_method,*homology_methods)
         label18 = tkinter.Label(global_group,text='Homology Field:',wraplength=250,justify=tkinter.LEFT)
@@ -122,7 +125,8 @@ class euplecton:
         label20 = tkinter.Label(global_group,text='Random Number Generator Seed:',wraplength=250,justify=tkinter.LEFT)
         label21 = tkinter.Label(global_group,text='Spacetime Signature:',wraplength=250,justify=tkinter.LEFT)
         signature = tkinter.OptionMenu(global_group,self.signature,*signatures)
-        footprint_check = tkinter.Checkbutton(global_group,text='Large Memory Footprint',variable=self.high_memory_footprint)
+        label22 = tkinter.Label(global_group,text='Memory Consumption:',wraplength=250,justify=tkinter.LEFT)
+        footprint_size = tkinter.OptionMenu(global_group,self.memory_footprint,*memory_consumption)
         uniformity_check = tkinter.Checkbutton(global_group,text='Dimensional Uniformity',variable=self.dim_uniformity)
         relational_check = tkinter.Checkbutton(global_group,text='Relational Geometry',variable=self.relational)
         label25 = tkinter.Label(global_group,text='Background Dimension:',wraplength=250,justify=tkinter.LEFT)
@@ -158,13 +162,13 @@ class euplecton:
        
         self.entry1 = tkinter.Entry(global_group,width=7,textvariable=self.initial_events)
         entry2 = tkinter.Entry(global_group,width=7,textvariable=self.max_iterations)
-        self.entry3 = tkinter.Entry(global_group,width=7,textvariable=self.initial_dimension)
+        self.entry3 = tkinter.Entry(global_group,width=7,textvariable=self.initial_dimension,state=tkinter.DISABLED)
         self.entry6 = tkinter.Entry(global_group,width=7,textvariable=self.initial_sheets)
         entry9 = tkinter.Entry(global_group,width=7,textvariable=self.chkpt_frequency)
         self.entry12 = tkinter.Entry(global_group,width=7,textvariable=self.edge_probability,state=tkinter.DISABLED)
         entry13 = tkinter.Entry(global_group,width=7,textvariable=self.abnormality_threshold)
         self.entry14 = tkinter.Entry(global_group,width=7,textvariable=self.parity_probability)
-        entry15 = tkinter.Entry(global_group,width=7,textvariable=self.superposition_threshold)
+        self.entry15 = tkinter.Entry(global_group,width=7,textvariable=self.superposition_threshold)
         entry20 = tkinter.Entry(global_group,width=7,textvariable=self.random_seed)
         entry25 = tkinter.Entry(global_group,width=7,textvariable=self.background_dim)
         self.entry26 = tkinter.Entry(global_group,width=18,textvariable=self.hyphansis_score,state=tkinter.DISABLED)
@@ -229,13 +233,14 @@ class euplecton:
         self.entry12.grid(row=4,column=4,sticky=tkinter.W)
         self.label14.grid(row=5,column=3,sticky=tkinter.W)
         self.entry14.grid(row=5,column=4,sticky=tkinter.W)
-        label15.grid(row=6,column=3,sticky=tkinter.W)
-        entry15.grid(row=6,column=4,sticky=tkinter.W)
+        self.label15.grid(row=6,column=3,sticky=tkinter.W)
+        self.entry15.grid(row=6,column=4,sticky=tkinter.W)
         label21.grid(row=7,column=3,sticky=tkinter.W)
         signature.grid(row=7,column=4,sticky=tkinter.W)
         relational_check.grid(row=8,column=3,sticky=tkinter.W)
         uniformity_check.grid(row=9,column=3,sticky=tkinter.W)
-        footprint_check.grid(row=10,column=3,sticky=tkinter.W)
+        label22.grid(row=10,column=3,sticky=tkinter.W)
+        footprint_size.grid(row=10,column=4,sticky=tkinter.W)
         label25.grid(row=11,column=3,sticky=tkinter.W)
         entry25.grid(row=11,column=4,sticky=tkinter.W)
 
@@ -295,6 +300,14 @@ class euplecton:
         label19.grid(row=2,column=0)
         entry19.grid(row=2,column=1)
 
+    def superposition_change(self,*args):
+        if self.superposable.get():
+           self.label15.config(state=tkinter.NORMAL)
+           self.entry15.config(state=tkinter.NORMAL)
+        else:
+           self.label15.config(state=tkinter.DISABLED)
+           self.entry15.config(state=tkinter.DISABLED)
+
     def htype_change(self,*args):
         if self.hyphansis.get() == 'Dynamic':
            self.sheet_check.config(state=tkinter.NORMAL)
@@ -317,8 +330,8 @@ class euplecton:
         if self.initial_state.get() == 'Cartesian':
            self.label1.config(state=tkinter.NORMAL)
            self.entry1.config(state=tkinter.NORMAL)
-           self.label3.config(state=tkinter.NORMAL)
-           self.entry3.config(state=tkinter.NORMAL)
+           self.label3.config(state=tkinter.DISABLED)
+           self.entry3.config(state=tkinter.DISABLED)
            self.label12.config(state=tkinter.DISABLED)
            self.entry12.config(state=tkinter.DISABLED)
         elif self.initial_state.get() == 'Singleton':
@@ -338,11 +351,10 @@ class euplecton:
         elif self.initial_state.get() == 'Random':
            self.label1.config(state=tkinter.NORMAL)
            self.entry1.config(state=tkinter.NORMAL)
-           self.label3.config(state=tkinter.NORMAL)
-           self.entry3.config(state=tkinter.NORMAL)
+           self.label3.config(state=tkinter.DISABLED)
+           self.entry3.config(state=tkinter.DISABLED)
            self.label12.config(state=tkinter.NORMAL)
            self.entry12.config(state=tkinter.NORMAL)
-        self.adjust_parameters()
 
     def disable_geometry(self):
         self.label32.config(state=tkinter.DISABLED)
@@ -468,7 +480,6 @@ class euplecton:
         self.perturbe.set(True)
         self.dim_uniformity.set(True)
         self.relational.set(False)
-        self.high_memory_footprint.set(True)
         self.cg_refinement.set(True)
 
         self.initial_state.set('Cartesian')
@@ -478,6 +489,7 @@ class euplecton:
         self.signature.set('Lorentzian')
         self.solver_type.set('Minimal')
         self.int_engine.set('RK4')
+        self.memory_footprint.set('High')
 
         self.initial_events.set(1296)
         self.max_iterations.set(25)
@@ -509,57 +521,437 @@ class euplecton:
         self.repulsion.set(1.0)
         self.edge_flexibility.set(2.0)
         self.reflection.set(0.9)
-        self.contraction.set(2.2)
-        self.expansion.set(0.75)
+        self.expansion.set(2.2)
+        self.contraction.set(0.75)
         self.shrinkage.set(0.45)
-        
-    def convert_boolean(self,bvalue):
-        if bvalue == 0:
-            return "No"
+
+    def convert_boolean(self,tvalue):
+        if tvalue == True:
+           return '1'
         else:
-            return "Yes"
-
-    def convert_string(self,val):
-        val.upper()
-        if val == "YES":
-            return 1
-        else:
-            return 0
-
-    def adjust_parameters(self):
-        if self.initial_state.get() == 'Cartesian':
-            self.initial_events.set(1296)
-            self.initial_dimension.set(4)
-        if self.initial_state.get() == 'Singleton':
-            self.initial_events.set(1)
-            self.initial_dimension.set(0)
-        elif self.initial_state.get() == 'Monoplex':
-            self.initial_events.set(5)
-            self.initial_dimension.set(4)
-        elif self.initial_state.get() == 'Random':
-            self.initial_events.set(1000)
-            self.initial_dimension.set(4)
-
-    def initial_event_change(self,*args):
-        if self.initial_state.get() == 'Cartesian':
-            n = self.initial_events.get()
-            d = self.initial_dimension.get()
-            self.initial_events.set(int(math.pow(n,1.0/double(d))))
-
-    def initial_dimension_change(self,*args):
-        if self.initial_state.get() == 'Cartesian':
-            n = self.initial_events.get()
-            d = self.initial_dimension.get()
-            self.initial_events.set(int(math.pow(n,1.0/double(d))))
-        elif self.initial_state.get() == 'Monoplex':
-            self.initial_events.set(1+self.initial_dimension.get())
+           return '0'
 
     def read_parameters(self):
         parameter_filename = self.parameter_filename.get()
+        tree = ET.parse(parameter_filename)
+        root = tree.getroot()
+        for child in root.iter():
+            name = child.tag.strip()
+            value = child.text.strip()
+            if name in ['Parameters','Global','GeometrySolver']:
+               continue
+            if name == 'InitialState':
+               value = value.upper()
+               if value == 'CARTESIAN':
+                  self.initial_state.set('Cartesian')
+               elif value == 'SINGLETON':
+                  self.initial_state.set('Singleton')
+               elif value == 'MONOPLEX':
+                  self.initial_state.set('Monoplex')
+               elif value == 'RANDOM':
+                  self.initial_state.set('Random')
+            elif name == 'RandomSeed':
+               self.random_seed.set(int(value))
+            elif name == 'CheckpointFrequency':
+               self.chkpt_frequency.set(int(value))
+            elif name == 'Compressible':
+               self.compressible.set(value)
+            elif name == 'Permutable':
+               self.permutable.set(value)
+            elif name == 'Superposable':
+               self.superposable.set(value)
+            elif name == 'SuperpositionThreshold':
+               self.superposition_threshold.set(float(value))
+            elif name == 'MaximumIterations':
+               self.max_iterations.set(int(value))
+            elif name == 'ParityMutation':
+               self.parity_probability.set(float(value))
+            elif name == 'InitialDimension':
+               self.initial_dimension.set(int(value))
+            elif name == 'InitialSheets':
+               self.initial_sheets.set(int(value))
+            elif name == 'BackgroundDimension':
+               self.background_dim.set(int(value))
+            elif name == 'AbnormalityThreshold':
+               self.abnormality_threshold.set(float(value))
+            elif name == 'HomologyMethod':
+               value = value.upper()
+               if value == 'GAP':
+                  self.homology_method.set(value)
+               elif value == 'NATIVE':
+                  self.homology_method.set('Native')
+            elif name == 'HomologyField':
+               self.homology_field.set(value)
+            elif name == 'PerturbTopology':
+               self.perturbt.set(value)
+            elif name == 'PerturbGeometry':
+               self.perturbg.set(value)
+            elif name == 'PerturbEnergy':
+               self.perturbe.set(value)
+            elif name == 'Hyphansis':
+               value = value.upper()
+               if value == 'DYNAMIC':
+                  self.hyphansis.set('Dynamic')
+               elif value == 'MUSICAL':
+                  self.hyphansis.set('Musical')
+            elif name == 'HyphansisScore':
+               self.hyphansis_score.set(value)
+            elif name == 'MemoryFootprint':
+               value = value.upper()
+               if value == 'HIGH':
+                  self.memory_footprint.set('High')
+               elif value == 'LOW':
+                  self.memory_footprint.set('Low')
+            elif name == 'RelationalGeometry':
+               self.relational.set(value)
+            elif name == 'DimensionalUniformity':
+               self.dim_uniformity.set(value)
+            elif name == 'EuclideanGeometry':
+               if value == '1':
+                  self.signature.set('Euclidean')
+               else:
+                  self.signature.set('Lorentzian')
+            elif name == 'SolverType':
+               value = value.upper()
+               if value == 'MINIMAL':
+                  self.solver_type.set('Minimal')
+               elif value == 'EVOLUTIONARY':
+                  self.solver_type.set('Evolutionary')
+               elif value == 'ANNEALING':
+                  self.solver_type.set('Annealing')
+               elif value == 'MECHANICAL':
+                  self.solver_type.set('Mechanical')
+               elif value == 'SIMPLEX':
+                  self.solver_type.set('Simplex')
+            elif name == 'GeometryTolerance':
+               self.geometry_threshold.set(float(value))
+            elif name == 'SolverIterations':
+               self.solver_iterations.set(int(value))
+            elif name == 'MaximumGenerations':
+               self.max_generations.set(int(value))
+            elif name == 'PoolSize':
+               self.pool_size.set(int(value))
+            elif name == 'MaximumJousts':
+               self.max_jousts.set(int(value))
+            elif name == 'ThermalSweeps':
+               self.thermal_sweeps.set(int(value))
+            elif name == 'AnnealingSteps':
+               self.annealing_steps.set(int(value))
+            elif name == 'ThermalVariance':
+               self.thermal_variance.set(float(value))
+            elif name == 'ThermalizationCriterion':
+               self.thermalization_criterion.set(float(value))
+            elif name == 'ReflectionCoefficient':
+               self.reflection.set(float(value))
+            elif name == 'ExpansionCoefficient':
+               self.expansion.set(float(value))
+            elif name == 'ContractionCoefficient':
+               self.contraction.set(float(value))
+            elif name == 'ShrinkageCoefficient':
+               self.shrinkage.set(float(value))
+            elif name == 'StepSize':
+               self.step_size.set(float(value))
+            elif name == 'DampingConstant':
+               self.damping.set(float(value))
+            elif name == 'SpringConstant':
+               self.spring.set(float(value))
+            elif name == 'RepulsionConstant':
+               self.repulsion.set(float(value))
+            elif name == 'MaximumIntegrationSteps':
+               self.max_int_steps.set(int(value))
+            elif name == 'MaximumConjugateGradientSteps':
+               self.max_cg_steps.set(int(value))
+            elif name == 'MaximumLineSolverSteps':
+               self.max_ls_steps.set(int(value))
+            elif name == 'ConjugateGradientRefinement':
+               self.superposable.set(value)
+            elif name == 'IntegrationEngine':
+               value = value.upper()
+               if value == 'EULER':
+                  self.int_engine.set('Euler')
+               elif value == 'RK4':
+                  self.int_engine.set('RK4')
+        self.istate_change()
+        self.htype_change()
+        self.superposition_change()
+        self.gsolver_change()
 
     def write_parameters(self):
+        # Perform a variety of sanity checks, starting with the global parameters...
+        if not(self.geometry_threshold.get() > 0.0):
+            messagebox.showerror("Illegal Value","The geometry tolerance must be positive!")
+            return
+        if self.initial_events.get() < 1:
+            messagebox.showerror("Illegal Value","The number of events must be positive!")
+            return
+        if self.max_iterations.get() < 0:
+            messagebox.showerror("Illegal Value","The number of relaxation steps must be non-negative!")
+            return
+        if self.background_dim.get() < 1:
+            messagebox.showerror("Illegal Value","The background dimension must be positive!")
+            return
+        if self.initial_sheets.get() < 1:
+            messagebox.showerror("Illegal Value","The number of initial sheets must be positive!")
+            return
+        if not(self.abnormality_threshold.get() > 0.0):
+            messagebox.showerror("Illegal Value","The abnormality threshold must be positive!")
+            return
+        if self.superposable.get():
+            if not(self.superposition_threshold.get() > 0.0):
+               messagebox.showerror("Illegal Value","The superposition threshold must be positive!")
+               return
+        if self.hyphansis.get() == 'Dynamic':
+            if self.parity_probability.get() < 0.0 or self.parity_probability.get() > 1.0:
+               messagebox.showerror("Illegal Value","The parity probability must lie between 0 and 1!")
+               return
+        else:
+            if self.hyphansis_score.get() is None:
+               messagebox.showerror("Illegal Value","The hyphansis score cannot be empty!")
+               return
+        if self.initial_state.get() == 'Cartesian':
+            n = self.initial_events.get()
+            d = self.background_dim.get()
+            events_per_dim = math.pow(float(n),1.0/float(d))
+            if not(events_per_dim.is_integer()):
+               messagebox.showerror("Illegal Value","There must be an integral number of events per dimension!")
+               return
+        elif self.initial_state.get() == 'Monoplex':
+            if self.initial_dimension.get() < 1:
+               messagebox.showerror("Illegal Value","The initial dimension must be positive!")
+               return
+        elif self.initial_state.get() == 'Random':
+            if self.edge_probability.get() < 0.0 or self.edge_probability.get() > 1.0:
+               messagebox.showerror("Illegal Value","The edge probability must lie between 0 and 1!")
+               return
+
+        # Next sanity checks for the geometry solver parameters...
+        if self.solver_type.get() == 'Minimal':
+            if self.solver_iterations.get() < 1:
+               messagebox.showerror("Illegal Value","The solver iterations parameter must be positive!")
+               return
+        elif self.solver_type.get() == 'Evolutionary':
+            if self.max_generations.get() < 1:
+               messagebox.showerror("Illegal Value","The maximum number of generations must be positive!")
+               return
+            if self.max_jousts.get() < 1:
+               messagebox.showerror("Illegal Value","The maximum number of jousts must be positive!")
+               return
+            if self.pool_size.get() < 1:
+               messagebox.showerror("Illegal Value","The population pool size must be positive!")
+               return
+        elif self.solver_type.get() == 'Annealing':
+            if self.thermal_sweeps.get() < 1:
+               messagebox.showerror("Illegal Value","The number of thermal sweeps must be positive!")
+               return
+            if self.annealing_steps.get() < 1:
+               messagebox.showerror("Illegal Value","The number of annealing steps must be positive!")
+               return
+            if not(self.thermalization_criterion.get() > 0.0):
+               messagebox.showerror("Illegal Value","The thermalization criterion must be positive!")
+               return
+            if not(self.thermal_variance.get() > 0.0):
+               messagebox.showerror("Illegal Value","The thermal variance must be positive!")
+               return
+        elif self.solver_type.get() == 'Mechanical':
+            if not(self.step_size.get() > 0.0) and not(self.step_size.get() < 1.0):
+               messagebox.showerror("Illegal Value","The step size must be greater than zero and less than one!")
+               return
+            if not(self.damping.get() > 0.0):
+               messagebox.showerror("Illegal Value","The damping constant must be positive!")
+               return
+            if not(self.repulsion.get() > 0.0):
+               messagebox.showerror("Illegal Value","The repulsion constant must be positive!")
+               return
+            if not(self.spring.get() < 0.0):
+               messagebox.showerror("Illegal Value","The spring constant must be negative!")
+               return
+            if self.max_int_steps.get() < 1:
+               messagebox.showerror("Illegal Value","The maximum number of integration steps must be positive!")
+               return
+            if self.cg_refinement.get():
+               if self.max_cg_steps.get() < 1:
+                  messagebox.showerror("Illegal Value","The maximum number of conjugate gradient steps must be positive!")
+                  return
+               if self.max_ls_steps.get() < 1:
+                  messagebox.showerror("Illegal Value","The maximim number of line search steps must be positive!")
+                  return
+               if not(self.edge_flexibility.get() > 0.0):
+                  messagebox.showerror("Illegal Value","The edge flexibility must be positive!")
+                  return
+        else:
+            if not(self.reflection.get() > 0.0):
+               messagebox.showerror("Illegal Value","The simplex reflection coefficient must be positive!")
+               return
+            if not(self.expansion.get() > 1.0):
+               messagebox.showerror("Illegal Value","The simplex expansion coefficient must be greater than one!")
+               return
+            if not(self.expansion.get() > self.reflection.get()):
+               messagebox.showerror("Illegal Value","The simplex expansion coefficient must be greater than the reflection coefficient!")
+               return
+            if not(self.contraction.get() > 0.0) and not(self.contraction.get() < 1.0):
+               messagebox.showerror("Illegal Value","The simplex contraction coefficient must be greater than zero and less than one!")
+               return
+            if not(self.shrinkage.get() > 0.0) and not(self.shrinkage.get() < 1.0):
+               messagebox.showerror("Illegal Value","The simplex shrinkage coefficient must be greater than zero and less than one!")
+               return
+
+        # Now at last get around to writing out the values to the XML file...
+        content = ET.Element('Parameters')
+        global_params = ET.SubElement(content,'Global')
+        if self.initial_state.get() == 'Cartesian':
+           ptype = ET.SubElement(global_params,'InitialState')
+           ptype.text = 'CARTESIAN'
+           ptype = ET.SubElement(global_params,'InitialEvents')
+           ptype.text = str(self.initial_events.get())
+        elif self.initial_state.get() == 'Singleton':
+           ptype = ET.SubElement(global_params,'InitialState')
+           ptype.text = 'SINGLETON'
+        elif self.initial_state.get() == 'Monoplex':
+           ptype = ET.SubElement(global_params,'InitialState')
+           ptype.text = 'MONOPLEX'
+           ptype = ET.SubElement(global_params,'InitialDimension')
+           ptype.text = str(self.initial_dimension.get())
+        else:
+           ptype = ET.SubElement(global_params,'InitialState')
+           ptype.text = 'RANDOM'
+           ptype = ET.SubElement(global_params,'InitialEvents')
+           ptype.text = str(self.initial_events.get())
+           ptype = ET.SubElement(global_params,'EdgeProbability')
+           ptype.text = str(self.edge_probability.get())
+
+        if self.hyphansis.get() == 'Dynamic':
+           ptype = ET.SubElement(global_params,'Hyphansis')
+           ptype.text = 'DYNAMIC'
+           ptype = ET.SubElement(global_params,'ParityMutation')
+           ptype.text = str(self.parity_probability.get())
+           ptype = ET.SubElement(global_params,'InitialSheets')
+           ptype.text = str(self.initial_sheets.get())
+           ptype = ET.SubElement(global_params,'SheetDynamics')
+           ptype.text = self.convert_boolean(self.sheet_dynamics.get())
+        else:
+           ptype = ET.SubElement(global_params,'Hyphansis')
+           ptype.text = 'MUSICAL'
+           ptype = ET.SubElement(global_params,'HyphansisScore')
+           ptype.text = self.hyphansis_score.get()
+        ptype = ET.SubElement(global_params,'RandomSeed')
+        ptype.text = str(self.random_seed.get())
+        ptype = ET.SubElement(global_params,'CheckpointFrequency')
+        ptype.text = str(self.chkpt_frequency.get())
+        ptype = ET.SubElement(global_params,'AbnormalityThreshold')
+        ptype.text = str(self.abnormality_threshold.get())
+        ptype = ET.SubElement(global_params,'HomologyMethod')
+        ptype.text = (self.homology_method.get()).upper()
+        ptype = ET.SubElement(global_params,'HomologyBase')
+        ptype.text = (self.homology_field.get()).upper()
+        ptype = ET.SubElement(global_params,'BackgroundDimension')
+        ptype.text = str(self.background_dim.get())
+        ptype = ET.SubElement(global_params,'MaximumIterations')
+        ptype.text = str(self.max_iterations.get())
+        if self.superposable.get():
+           ptype = ET.SubElement(global_params,'Superposable')
+           ptype.text = '1'
+           ptype = ET.SubElement(global_params,'SuperpositionThreshold')
+           ptype.text = str(self.superposition_threshold.get())
+        else:
+           ptype = ET.SubElement(global_params,'Superposable')
+           ptype.text = '0'
+        ptype = ET.SubElement(global_params,'Compressible')
+        ptype.text = self.convert_boolean(self.compressible.get())
+        ptype = ET.SubElement(global_params,'Permutable')
+        ptype.text = self.convert_boolean(self.permutable.get())
+        ptype = ET.SubElement(global_params,'PerturbTopology')
+        ptype.text = self.convert_boolean(self.perturbt.get())
+        ptype = ET.SubElement(global_params,'PerturbGeometry')
+        ptype.text = self.convert_boolean(self.perturbg.get())
+        ptype = ET.SubElement(global_params,'PerturbEnergy')
+        ptype.text = self.convert_boolean(self.perturbe.get())
+        if self.signature.get() == 'Euclidean':
+           ptype = ET.SubElement(global_params,'EuclideanGeometry')
+           ptype.text = '1'
+        else:
+           ptype = ET.SubElement(global_params,'EuclideanGeometry')
+           ptype.text = '0'
+        ptype = ET.SubElement(global_params,'DimensionalUniformity')
+        ptype.text = self.convert_boolean(self.dim_uniformity.get())
+        ptype = ET.SubElement(global_params,'RelationalGeometry')
+        ptype.text = self.convert_boolean(self.relational.get())
+        ptype = ET.SubElement(global_params,'MemoryFootprint')
+        ptype.text = (self.memory_footprint.get()).upper()
+
+        geo_params = ET.SubElement(content,'GeometrySolver')
+        ptype = ET.SubElement(geo_params,'GeometryTolerance')
+        ptype.text = str(self.geometry_threshold.get())
+        if self.solver_type.get() == 'Minimal':
+           ptype = ET.SubElement(geo_params,'SolverType')
+           ptype.text = 'MINIMAL'
+           ptype = ET.SubElement(geo_params,'SolverIterations')
+           ptype.text = str(self.solver_iterations.get())
+        elif self.solver_type.get() == 'Evolutionary':
+           ptype = ET.SubElement(geo_params,'SolverType')
+           ptype.text = 'EVOLUTIONARY'
+           ptype = ET.SubElement(geo_params,'PoolSize')
+           ptype.text = str(self.pool_size.get())
+           ptype = ET.SubElement(geo_params,'MaximumJousts')
+           ptype.text = str(self.max_jousts.get())
+           ptype = ET.SubElement(geo_params,'MaximumGenerations')
+           ptype.text = str(self.max_generations.get())
+        elif self.solver_type.get() == 'Annealing':
+           ptype = ET.SubElement(geo_params,'SolverType')
+           ptype.text = 'ANNEALING'
+           ptype = ET.SubElement(geo_params,'ThermalVariance')
+           ptype.text = str(self.thermal_variance.get())
+           ptype = ET.SubElement(geo_params,'ThermalSweeps')
+           ptype.text = str(self.thermal_sweeps.get())
+           ptype = ET.SubElement(geo_params,'AnnealingSteps')
+           ptype.text = str(self.annealing_steps.get())
+           ptype = ET.SubElement(geo_params,'ThermalizationCriterion')
+           ptype.text = str(self.thermalization_criterion.get())
+        elif self.solver_type.get() == 'Mechanical':
+           ptype = ET.SubElement(geo_params,'SolverType')
+           ptype.text = 'MECHANICAL'
+           if self.int_engine.get() == 'Euler':
+              ptype = ET.SubElement(geo_params,'IntegrationEngine')
+              ptype.text = 'EULER'
+           else:
+              ptype = ET.SubElement(geo_params,'IntegrationEngine')
+              ptype.text = 'RK4'              
+           ptype = ET.SubElement(geo_params,'StepSize')
+           ptype.text = str(self.step_size.get())
+           ptype = ET.SubElement(geo_params,'MaximumIntegrationSteps')
+           ptype.text = str(self.max_int_steps.get())
+           ptype = ET.SubElement(geo_params,'DampingConstant')
+           ptype.text = str(self.damping.get())
+           ptype = ET.SubElement(geo_params,'SpringConstant')
+           ptype.text = str(self.spring.get())
+           ptype = ET.SubElement(geo_params,'RepulsionConstant')
+           ptype.text = str(self.repulsion.get())
+           if self.cg_refinement.get():
+              ptype = ET.SubElement(geo_params,'ConjugateGradientRefinement')
+              ptype.text = '1'
+              ptype = ET.SubElement(geo_params,'MaximumConjugateGradientSteps')
+              ptype.text = str(self.max_cg_steps.get())
+              ptype = ET.SubElement(geo_params,'MaximumLineSolverSteps')
+              ptype.text = str(self.max_ls_steps.get())
+           else:
+              ptype = ET.SubElement(geo_params,'ConjugateGradientRefinement')
+              ptype.text = '0'
+        else:
+           ptype = ET.SubElement(geo_params,'SolverType')
+           ptype.text = 'SIMPLEX'
+           ptype = ET.SubElement(geo_params,'ReflectionCoefficient')
+           ptype.text = str(self.reflection.get())
+           ptype = ET.SubElement(geo_params,'ExpansionCoefficient')
+           ptype.text = str(self.expansion.get())
+           ptype = ET.SubElement(geo_params,'ContractionCoefficient')
+           ptype.text = str(self.contraction.get())
+           ptype = ET.SubElement(geo_params,'ShrinkageCoefficient')
+           ptype.text = str(self.shrinkage.get())
         parameter_filename = self.parameter_filename.get()
-        
+        body = MD.parseString(ET.tostring(content,'utf-8')).toprettyxml(indent="\t")
+        fhandle = open(parameter_filename, "w")
+        fhandle.write(body)
+        fhandle.close()
+
 root = tkinter.Tk()
 gui = euplecton(root)
 root.mainloop()

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<Parameters>
+	<Global>
+		<InitialState>DISKFILE</InitialState>
+		<InputFile>data/spacetime_2019-05-04_08315_10.dat</InputFile>
+	</Global>
+</Parameters>
