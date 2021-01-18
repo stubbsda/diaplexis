@@ -18,7 +18,7 @@ import xml.dom.minidom as MD
 class euplecton:
     def __init__(self,master=None):
         self.master = master
-        self.master.title('Euplecton')
+        self.master.title('Parameter File Editor')
         self.master.geometry('730x850')
         self.master.resizable(0,0)
 
@@ -195,7 +195,7 @@ class euplecton:
         self.entry52 = tkinter.Entry(geometry_group,width=7,textvariable=self.shrinkage,state=tkinter.DISABLED)
 
         label19 = tkinter.Label(button_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
-        entry19 = tkinter.Entry(button_group,width=18,textvariable=self.parameter_filename)
+        entry19 = tkinter.Entry(button_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
         button1 = tkinter.Button(button_group,text='Save Parameters',command=self.save_parameters)
         button2 = tkinter.Button(button_group,text='Exit',command=root.quit)
         button3 = tkinter.Button(button_group,text='Load Parameters',command=self.load_parameters)
@@ -490,6 +490,7 @@ class euplecton:
         self.solver_type.set('Minimal')
         self.int_engine.set('RK4')
         self.memory_footprint.set('High')
+        self.parameter_filename.set('')
 
         self.initial_events.set(1296)
         self.max_iterations.set(25)
@@ -689,6 +690,9 @@ class euplecton:
             return
         if self.background_dim.get() < 1:
             messagebox.showerror("Illegal Value","The background dimension must be positive!")
+            return
+        if self.random_seed.get() < 0:
+            messagebox.showerror("Illegal Value","The random number seed must be non-negative!")
             return
         if self.initial_sheets.get() < 1:
             messagebox.showerror("Illegal Value","The number of initial sheets must be positive!")

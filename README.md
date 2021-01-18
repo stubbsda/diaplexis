@@ -36,7 +36,7 @@ can be set to a value greater than one to test the parallel performance of the l
 directory also contains two Python 3 files, one named <code>musical_hyphansis.py</code> which uses the
 [music21](http://web.mit.edu/music21/) module to convert a score file in the [MusicXML](https://en.wikipedia.org/wiki/MusicXML)
 format into a plain text file whose structure is adapted for use by the Diaplexis library and can be used 
-in the parameter <code>HyphansisScore</code>. The second Python file, <code>editor.py</code>, provides a 
+in the parameter <code>HyphansisScore</code>. The second Python script, <code>editor.py</code>, provides a 
 portable graphical interface based on [Tkinter](https://en.wikipedia.org/wiki/Tkinter) for editing the XML 
 parameter files used by the Diaplexis library, which has the advantage of making clear which parameters are 
 relevant given choices for values like the <code>InitialState</code> and <code>SolverType</code>.
