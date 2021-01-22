@@ -36,8 +36,8 @@
 		<PerturbTopology>1</PerturbTopology>
 		<PerturbGeometry>0</PerturbGeometry>
 		<PerturbEnergy>1</PerturbEnergy>
-		<Hyphansis>DYNAMIC</Hyphansis>
-		<!--Hyphansis>MUSICAL</Hyphansis-->
+		<!--Hyphansis>DYNAMIC</Hyphansis-->
+		<Hyphansis>MUSICAL</Hyphansis>
 		<HyphansisScore>melody.txt</HyphansisScore>
 		<ParityMutation>0.05</ParityMutation>
 	</Global>

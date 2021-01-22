@@ -593,31 +593,6 @@ int Complex::chromatic_number(int sheet) const
   return G.chromatic_number();
 }
 
-bool Complex::edge_parity_mutation(int base,std::string& operands,int sheet)
-{
-  int n,vx[2];
-  std::set<int> candidates;
-  std::set<int>::const_iterator it;
-
-  for(it=events[base].entourage.begin(); it!=events[base].entourage.end(); ++it) {
-    if (simplices[1][*it].active(sheet)) {
-      candidates.insert(*it);
-    }
-  }
-  if (candidates.empty()) return false;      
-  n = RND->irandom(candidates);
-  if (simplices[1][n].parity == 0) {
-    simplices[1][n].parity = (RND->irandom(2) == 0) ? 1 : -1;
-  }
-  else {
-    simplices[1][n].parity *= -1;
-  }
-  recompute_parity(n);
-  simplices[1][n].get_vertices(vx);
-  operands = SYNARMOSMA::make_key(vx[0],vx[1]);
-  return true;
-}
-
 bool Complex::edge_parity_mutation(int u,int v,int sheet)
 {
   int n;

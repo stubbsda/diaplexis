@@ -28,7 +28,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     const int n = j;
     const int nd = SYNARMOSMA::ipow(n,D-1);
     const int nm1 = n - 1;
-    const int nperturbed = 10 + int(0.01*skeleton->RND->irandom(initial_size));
+    const int nperturbed = std::max(1,int(0.01*skeleton->RND->irandom(initial_size)));
     const double dx = 1.0;
     int k,l,r,rvalue;
     SYNARMOSMA::hash_map::const_iterator qt;
@@ -121,7 +121,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     delete[] arrangement;
     v.clear();
     // We need to see about introducing an initial perturbation...
-    if (perturb_topology) {
+    if (perturb_topology || perturb_geometry || perturb_energy) {  
       k = int(double(n)/2.0);
       for(i=0; i<nperturbed; ++i) {
         j = 0;
@@ -130,48 +130,33 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         }
         if (j < 0) j = skeleton->RND->irandom(initial_size,v);
         v.push_back(j);
-        // Now add some edges among the neighbours of this
-        // event
-        N.insert(v[i]);
-        j = skeleton->RND->irandom(2,5);
-        for(l=0; l<j; ++l) {
-          N.insert(skeleton->events.size());
-          v.push_back(skeleton->events.size());
-          geometry->vertex_addition(v[i]);
-          skeleton->events.push_back(vt);
-        }
-        skeleton->simplex_addition(N,locus,0);
-        N.clear();
       }
-    }
-    if (perturb_geometry) {
-      // No changes to the spacetime topology, merely the geometry of some
-      // existing events are altered...
-      if (v.empty()) {  
-        for(i=0; i<nperturbed; ++i) {
-          j = skeleton->RND->irandom(initial_size,v);
-          v.push_back(j);
+      if (perturb_topology) {
+        for(m=0; m<nperturbed; ++m) {    
+          // Now add some edges among the neighbours of this
+          // event
+          N.insert(v[m]);
+          j = skeleton->RND->irandom(1,D);
+          for(l=0; l<j; ++l) {
+            N.insert(skeleton->events.size());
+            v.push_back(skeleton->events.size());
+            geometry->vertex_addition(v[m]);
+            skeleton->events.push_back(vt);
+          }
+          skeleton->simplex_addition(N,locus,0);
+          N.clear();
         }
       }
-      for(m=0; m<(signed) v.size(); ++m) {
-        geometry->mutation(v[m],true,false,0.5);
-      }
-    }
-    if (perturb_energy) {
-      if (v.empty()) {
-        // In this particular case I will simply alter the energy value of a single event
-        // near the centre of the Cartesian network...
-        j = 0;
-        k = int(double(n)/2.0);
-        for(m=0; m<D; ++m) {
-          j += SYNARMOSMA::ipow(n,D-1-m)*skeleton->RND->irandom(k-2,k+2);
+      if (perturb_geometry) {
+        // No changes to the spacetime topology, merely the geometry of some
+        // existing events are altered...
+        for(m=0; m<nperturbed; ++m) {
+          geometry->mutation(v[m],true,false,0.5);
         }
-        if (j < 0) j = skeleton->RND->irandom(initial_size);
-        skeleton->events[j].set_energy(1000.0*(0.5 + skeleton->RND->drandom()/2.0));
       }
-      else {
-        for(m=0; m<(signed) v.size(); ++m) {
-          skeleton->events[v[m]].set_energy(5.0*skeleton->RND->drandom());
+      if (perturb_energy) {
+        for(m=0; m<nperturbed; ++m) {
+          skeleton->events[v[m]].set_energy(500.0 + 2000.0/double(nperturbed)*skeleton->RND->drandom());
         }
       }
     }
@@ -186,7 +171,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     else {
       geometry->vertex_addition(svalue);
     }
-    vt.set_energy(5000.0*(0.5 + skeleton->RND->drandom()/2.0));
+    if (perturb_energy) vt.set_energy(500.0 + 2000.0*skeleton->RND->drandom());
     skeleton->events.push_back(vt);
   }
   else if (initial_state == Initial_Topology::monoplex) {
@@ -195,7 +180,6 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
     geometry_type = "MONOPLEX";
     int ulimit = D;
     if (initial_dim > D) ulimit = initial_dim;
-    if (perturb_energy) vt.set_energy(500.0 + (2000.0/double(initial_dim))*skeleton->RND->drandom());
 
     if (!relational) {
       svalue.clear();
@@ -204,6 +188,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
       }
       geometry->vertex_addition(svalue);
     }
+    if (perturb_energy) vt.set_energy(500.0 + 2000.0/(1.0 + double(initial_dim))*skeleton->RND->drandom());
     skeleton->events.push_back(vt);
     vx.insert(0);
 
@@ -213,6 +198,7 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
         geometry->vertex_addition(svalue);
         svalue[m-1] = 0.0;
       }
+      if (perturb_energy) vt.set_energy(500.0 + 2000.0/(1.0 + double(initial_dim))*skeleton->RND->drandom());
       skeleton->events.push_back(vt);
       vx.insert(m);
     }
@@ -488,7 +474,7 @@ void Spacetime::initialize()
 
   if (iterations == 0) {
     std::ofstream s(hyphansis_file,std::ios::trunc);
-    s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    s << "<?xml version=\"1.0\" ?>" << std::endl;
     s.close();
   }
 #ifdef VERBOSE

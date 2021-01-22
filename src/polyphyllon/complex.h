@@ -81,9 +81,7 @@ namespace DIAPLEXIS {
     void compute_simplex_energy(int,int);
     /// This method computes the parity of a d-simplex where the first argument is the dimension and the second is the index of the simplex in Complex::simplices[d]. The parity is defined to be the product of the parity of its (1+d)*d/2 edges.
     void compute_simplex_parity(int,int);
-    /// This method accepts as its first argument the index of an event; it then randomly selects one of the 1-simplices belonging to the sheet indicated by the method's final argument that connects this event and alters its parity (changing it to +1 or -1 with equal probability if it is zero and multiplying it by -1 otherwise). The method then calls recompute_parity() and returns true if an edge's parity is changed and false otherwise; the method also writes the key of the 1-simplex which had its parity changed to the method's second argument.
-    bool edge_parity_mutation(int,std::string&,int);
-    /// This method seeks to change the parity of the edge joining together the two events specified by the method's first two arguments, existing on the sheet indicated by its third argument. If such an edge exists, the method alters its parity (changing it to +1 or -1 with equal probability if it is zero and multiplying it by -1 otherwise), calls recompute_parity() and returns true.
+    /// This method seeks to change the parity of the edge joining together the two events specified by the method's first two arguments, existing on the sheet indicated by its third argument. Assuming the edge exists, the method alters its parity (changing it to +1 or -1 with equal probability if it is zero and multiplying it by -1 otherwise), calls recompute_parity() and returns true.
     bool edge_parity_mutation(int,int,int);
     /// This method accepts the index of a 1-simplex in the complex and then recomputes the parity of all the higher-dimensional simplices which contain this edge.
     void recompute_parity(int);

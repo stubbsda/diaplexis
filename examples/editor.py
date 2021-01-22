@@ -19,7 +19,7 @@ class euplecton:
     def __init__(self,master=None):
         self.master = master
         self.master.title('Parameter File Editor')
-        self.master.geometry('730x850')
+        self.master.geometry('700x900')
         self.master.resizable(0,0)
 
         self.sheet_dynamics = tkinter.BooleanVar()
@@ -109,9 +109,9 @@ class euplecton:
         compression_check = tkinter.Checkbutton(global_group,text='Compressible',variable=self.compressible)
         permutation_check = tkinter.Checkbutton(global_group,text='Permutable',variable=self.permutable)
         label9 = tkinter.Label(global_group,text='Checkpoint Frequency:',wraplength=250,justify=tkinter.LEFT)
-        perturb_geometry = tkinter.Checkbutton(global_group,text='Perturb Geometry',variable=self.perturbg)
-        perturb_topology = tkinter.Checkbutton(global_group,text='Perturb Topology',variable=self.perturbt)
-        perturb_energy = tkinter.Checkbutton(global_group,text='Perturb Energy',variable=self.perturbe)
+        self.perturb_geometry = tkinter.Checkbutton(global_group,text='Perturb Geometry',variable=self.perturbg)
+        self.perturb_topology = tkinter.Checkbutton(global_group,text='Perturb Topology',variable=self.perturbt)
+        self.perturb_energy = tkinter.Checkbutton(global_group,text='Perturb Energy',variable=self.perturbe)
         label11 = tkinter.Label(global_group,text='Hyphansis Type:',wraplength=250,justify=tkinter.LEFT)
         hyphansis_type = tkinter.OptionMenu(global_group,self.hyphansis,*hyphansis_types,command=self.htype_change)
         self.label12 = tkinter.Label(global_group,text='Edge Probability:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
@@ -222,8 +222,10 @@ class euplecton:
         entry20.grid(row=9,column=1,sticky=tkinter.W)
         label9.grid(row=10,column=0,sticky=tkinter.W)
         entry9.grid(row=10,column=1,sticky=tkinter.W)
-        self.label26.grid(row=11,column=0,sticky=tkinter.W)
-        self.entry26.grid(row=11,column=1,sticky=tkinter.W)
+        self.perturb_topology.grid(row=11,column=0,sticky=tkinter.W)
+        self.perturb_geometry.grid(row=12,column=0,sticky=tkinter.W)
+        self.perturb_energy.grid(row=13,column=0,sticky=tkinter.W)
+
         superposition_check.grid(row=0,column=3,sticky=tkinter.W)
         compression_check.grid(row=1,column=3,sticky=tkinter.W)
         permutation_check.grid(row=2,column=3,sticky=tkinter.W)
@@ -243,6 +245,8 @@ class euplecton:
         footprint_size.grid(row=10,column=4,sticky=tkinter.W)
         label25.grid(row=11,column=3,sticky=tkinter.W)
         entry25.grid(row=11,column=4,sticky=tkinter.W)
+        self.label26.grid(row=12,column=3,sticky=tkinter.W)
+        self.entry26.grid(row=12,column=4,sticky=tkinter.W)
 
         label30.grid(row=0,column=0,sticky=tkinter.W)
         solver_type.grid(row=0,column=1,sticky=tkinter.W)
@@ -334,6 +338,9 @@ class euplecton:
            self.entry3.config(state=tkinter.DISABLED)
            self.label12.config(state=tkinter.DISABLED)
            self.entry12.config(state=tkinter.DISABLED)
+           self.perturb_topology.config(state=tkinter.NORMAL)
+           self.perturb_geometry.config(state=tkinter.NORMAL)
+           self.perturb_energy.config(state=tkinter.NORMAL)
         elif self.initial_state.get() == 'Singleton':
            self.label1.config(state=tkinter.DISABLED)
            self.entry1.config(state=tkinter.DISABLED)
@@ -341,6 +348,9 @@ class euplecton:
            self.entry3.config(state=tkinter.DISABLED)
            self.label12.config(state=tkinter.DISABLED)
            self.entry12.config(state=tkinter.DISABLED)
+           self.perturb_topology.config(state=tkinter.DISABLED)
+           self.perturb_geometry.config(state=tkinter.DISABLED)
+           self.perturb_energy.config(state=tkinter.NORMAL)
         elif self.initial_state.get() == 'Monoplex':
            self.label1.config(state=tkinter.DISABLED)
            self.entry1.config(state=tkinter.DISABLED)
@@ -348,6 +358,9 @@ class euplecton:
            self.entry3.config(state=tkinter.NORMAL)
            self.label12.config(state=tkinter.DISABLED)
            self.entry12.config(state=tkinter.DISABLED)
+           self.perturb_topology.config(state=tkinter.DISABLED)
+           self.perturb_geometry.config(state=tkinter.DISABLED)
+           self.perturb_energy.config(state=tkinter.NORMAL)
         elif self.initial_state.get() == 'Random':
            self.label1.config(state=tkinter.NORMAL)
            self.entry1.config(state=tkinter.NORMAL)
@@ -355,6 +368,9 @@ class euplecton:
            self.entry3.config(state=tkinter.DISABLED)
            self.label12.config(state=tkinter.NORMAL)
            self.entry12.config(state=tkinter.NORMAL)
+           self.perturb_topology.config(state=tkinter.DISABLED)
+           self.perturb_geometry.config(state=tkinter.DISABLED)
+           self.perturb_energy.config(state=tkinter.DISABLED)
 
     def disable_geometry(self):
         self.label32.config(state=tkinter.DISABLED)
@@ -688,6 +704,9 @@ class euplecton:
         if self.max_iterations.get() < 0:
             messagebox.showerror("Illegal Value","The number of relaxation steps must be non-negative!")
             return
+        if self.chkpt_frequency.get() < 1:
+            messagebox.showerror("Illegal Value","The checkpoint frequency must be positive!")
+            return
         if self.background_dim.get() < 1:
             messagebox.showerror("Illegal Value","The background dimension must be positive!")
             return
@@ -807,14 +826,24 @@ class euplecton:
            ptype.text = 'CARTESIAN'
            ptype = ET.SubElement(global_params,'InitialEvents')
            ptype.text = str(self.initial_events.get())
+           ptype = ET.SubElement(global_params,'PerturbTopology')
+           ptype.text = self.convert_boolean(self.perturbt.get())
+           ptype = ET.SubElement(global_params,'PerturbGeometry')
+           ptype.text = self.convert_boolean(self.perturbg.get())
+           ptype = ET.SubElement(global_params,'PerturbEnergy')
+           ptype.text = self.convert_boolean(self.perturbe.get())
         elif self.initial_state.get() == 'Singleton':
            ptype = ET.SubElement(global_params,'InitialState')
            ptype.text = 'SINGLETON'
+           ptype = ET.SubElement(global_params,'PerturbEnergy')
+           ptype.text = self.convert_boolean(self.perturbe.get())
         elif self.initial_state.get() == 'Monoplex':
            ptype = ET.SubElement(global_params,'InitialState')
            ptype.text = 'MONOPLEX'
            ptype = ET.SubElement(global_params,'InitialDimension')
            ptype.text = str(self.initial_dimension.get())
+           ptype = ET.SubElement(global_params,'PerturbEnergy')
+           ptype.text = self.convert_boolean(self.perturbe.get())
         else:
            ptype = ET.SubElement(global_params,'InitialState')
            ptype.text = 'RANDOM'
@@ -863,12 +892,6 @@ class euplecton:
         ptype.text = self.convert_boolean(self.compressible.get())
         ptype = ET.SubElement(global_params,'Permutable')
         ptype.text = self.convert_boolean(self.permutable.get())
-        ptype = ET.SubElement(global_params,'PerturbTopology')
-        ptype.text = self.convert_boolean(self.perturbt.get())
-        ptype = ET.SubElement(global_params,'PerturbGeometry')
-        ptype.text = self.convert_boolean(self.perturbg.get())
-        ptype = ET.SubElement(global_params,'PerturbEnergy')
-        ptype.text = self.convert_boolean(self.perturbe.get())
         if self.signature.get() == 'Euclidean':
            ptype = ET.SubElement(global_params,'EuclideanGeometry')
            ptype.text = '1'

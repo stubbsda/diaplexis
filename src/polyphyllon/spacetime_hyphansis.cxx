@@ -357,7 +357,7 @@ void Spacetime::pitch_mapping(std::set<int>* candidates,int sheet) const
 
 int Spacetime::musical_hyphansis(int sheet)
 {
-  int i,j,v,nsuccess = 0;
+  int i,j,v,w,nsuccess = 0;
   bool success = false;
   std::string op,tag,opstring;
   std::vector<int> key_list = codex[sheet].hyphantic_notes[iterations];
@@ -381,22 +381,38 @@ int Spacetime::musical_hyphansis(int sheet)
   for(i=0; i<opcount; ++i) {
     j = key_list[i];
     if (candidates[key_mapping[j]].empty()) continue;
+    if (j == 40) {
+      // Edge reorientation for this neutral key, which requires 
+      // two distinct vertices since it operates on an edge...
+      if (candidates[key_mapping[40]].size() < 2) continue;
+      v = skeleton->RND->irandom(candidates[key_mapping[40]]);
+      do {
+        w = skeleton->RND->irandom(candidates[key_mapping[40]]);
+        if (w != v) break; 
+      } while(true);
+      if (!skeleton->active_event(v,sheet) || !skeleton->active_event(w,sheet)) continue;
+      success = skeleton->edge_parity_mutation(v,w,sheet);
+      if (success) {
+        s << "  <Operation>T," << v << ":" << w << "</Operation>" << std::endl;
+        regularization(false,sheet);
+        codex[sheet].hyphantic_ops += "T";
+        nsuccess++;
+        candidates[key_mapping[40]].erase(v);
+        candidates[key_mapping[40]].erase(w);
+      }
+#ifdef DEBUG
+      // A very costly assertion...
+      assert(skeleton->consistent(sheet));
+#endif
+      continue;
+    }
     v = skeleton->RND->irandom(candidates[key_mapping[j]]);
     // An earlier hyphantic operation may have rendered this
     // event inactive...
     if (!skeleton->active_event(v,sheet)) continue;
     // Now we have the base event v, next we need to get the operator and 
     // parameters for this piano key
-    if (j > 40) {
-      op = implicative_scale(j,pvalues);
-    }
-    else if (j < 40) {
-      op = explicative_scale(j,pvalues);
-    }
-    else {
-      // Edge reorientation
-      op = "T";
-    }
+    op = (j > 40) ? implicative_scale(j,pvalues) : explicative_scale(j,pvalues);
     opstring = op + "," + std::to_string(v);
     if (op == "F") {
       success = fission(v,pvalues[0],sheet);
@@ -461,10 +477,6 @@ int Spacetime::musical_hyphansis(int sheet)
     }
     else if (op == "G") {
       success = germination(v,sheet);
-    }
-    else if (op == "T") {
-      success = skeleton->edge_parity_mutation(v,tag,sheet);
-      if (success) opstring = "T," + tag;
     }
     if (success) {
       s << "    <Operation>" << opstring << "</Operation>" << std::endl;
@@ -641,11 +653,12 @@ int Spacetime::dynamic_hyphansis(int sheet)
     if (!skeleton->simplices[1][i].active(sheet)) continue;
     skeleton->simplices[1][i].get_vertices(vx);
     alpha = 0.5*(std::abs(skeleton->events[vx[0]].get_deficiency()) + std::abs(skeleton->events[vx[1]].get_deficiency()));
-    if (alpha > 0.1) continue;
+    if (alpha > std::numeric_limits<double>::epsilon()) continue;
     if (skeleton->RND->drandom() < parity_mutation) {
       skeleton->simplices[1][i].get_vertices(vx);
       if (skeleton->edge_parity_mutation(vx[0],vx[1],sheet)) {
         s << "    <Operation>T," << vx[0] << ":" << vx[1] << "</Operation>" << std::endl;
+        codex[sheet].hyphantic_ops += "T";
         nsuccess++;
       }
     }

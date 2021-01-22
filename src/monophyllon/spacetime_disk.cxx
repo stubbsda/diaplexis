@@ -287,6 +287,7 @@ void Spacetime::read_parameters(const std::string& filename)
   assert(abnormality_threshold > std::numeric_limits<double>::epsilon());
   assert(max_iter >= 0);
   assert(initial_size > 0);
+  assert(checkpoint_frequency > 0);
   // One and only one initial state should be chosen...
   assert(n_is == 1);
   // And similarly for the solver type...
@@ -463,7 +464,7 @@ void Spacetime::write_log() const
     cdate.erase(std::remove(cdate.begin(),cdate.end(),'\n'),cdate.end());
 
     std::ofstream s(log_file,std::ios::out | std::ios::trunc);
-    s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    s << "<?xml version=\"1.0\" ?>" << std::endl;
     s << "<LogFile>" << std::endl;
     s << "<Library>Diaplexis</Library>" << std::endl;
     s << "<Hostname>" << hostname << "</Hostname>" << std::endl;
@@ -477,7 +478,7 @@ void Spacetime::write_log() const
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
     s << "<Global>" << std::endl;
-    if (initial_state != Initial_Topology::singleton) s << "<InitialEvents>" << initial_size << "</InitialEvents>" << std::endl;
+    if (initial_state != Initial_Topology::singleton && initial_state != Initial_Topology::monoplex) s << "<InitialEvents>" << initial_size << "</InitialEvents>" << std::endl;
     s << "<MaximumIterations>" << max_iter << "</MaximumIterations>" << std::endl;
     s << "<EuclideanGeometry>" << bvalue[geometry->get_euclidean()] << "</EuclideanGeometry>" << std::endl;
     s << "<RelationalGeometry>" << bvalue[geometry->get_relational()] << "</RelationalGeometry>" << std::endl;
@@ -496,12 +497,13 @@ void Spacetime::write_log() const
       s << "<InitialState>" << sname[initial_state] << "</InitialState>" << std::endl;
     }
     if (initial_state == Initial_Topology::random) s << "<EdgeProbability>" << edge_probability << "</EdgeProbability>" << std::endl;
+    if (initial_state == Initial_Topology::monoplex) s << "<InitialDimension>" << initial_dim << "</InitialDimension>" << std::endl;
     s << "<CheckpointFrequency>" << checkpoint_frequency << "</CheckpointFrequency>" << std::endl;
     if (initial_state == Initial_Topology::cartesian) {
       s << "<PerturbTopology>" << bvalue[perturb_topology] << "</PerturbTopology>" << std::endl;
       s << "<PerturbGeometry>" << bvalue[perturb_geometry] << "</PerturbGeometry>" << std::endl;
-      s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     }
+    if (initial_state != Initial_Topology::random) s << "<PerturbEnergy>" << bvalue[perturb_energy] << "</PerturbEnergy>" << std::endl;
     if (skeleton->get_homology_method() == SYNARMOSMA::Homology::Method::gap) {
       s << "<HomologyMethod>GAP</HomologyMethod>" << std::endl;
     }
