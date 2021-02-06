@@ -67,6 +67,15 @@ void Spacetime::read_parameters(const std::string& filename)
       if (rs == 0) rs = (unsigned) std::time(nullptr);
       skeleton->RND->set_seed(rs);
     }
+    else if (name == "ConvergenceThreshold") {
+      convergence_threshold = std::stod(value);
+    }
+    else if (name == "CouplingConstant") {
+      coupling_constant = std::stod(value);
+    }
+    else if (name == "TopologicalRadius") {
+      skeleton->topological_radius = std::stoi(value);
+    }
     else if (name == "BackgroundDimension") {
       D = std::stoi(value);
     }
@@ -276,17 +285,15 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "ShrinkageCoefficient") {
       simplex_sigma = std::stod(value);
     }
-    else if (name == "GeometryTolerance") {
-      geometry_tolerance = std::stod(value);
-    }
   }
 
   // Now a series of tests to make sure that the parameters
   // aren't entirely crazy...
-  assert(geometry_tolerance > std::numeric_limits<double>::epsilon());
+  assert(convergence_threshold > std::numeric_limits<double>::epsilon());
+  assert(coupling_constant > std::numeric_limits<double>::epsilon());
   assert(abnormality_threshold > std::numeric_limits<double>::epsilon());
   assert(max_iter >= 0);
-  assert(initial_size > 0);
+  assert(skeleton->topological_radius > 0);
   assert(checkpoint_frequency > 0);
   // One and only one initial state should be chosen...
   assert(n_is == 1);
@@ -382,6 +389,7 @@ void Spacetime::read_parameters(const std::string& filename)
     assert(initial_size > 1);
   }
   else if (initial_state == Initial_Topology::cartesian) {
+    assert(initial_size > 1);
     // If initial_size != n^dimension, n \in Z+, we have a problem
     std::vector<std::pair<long,int> > factors;
     SYNARMOSMA::factorize(initial_size,factors);
@@ -470,11 +478,8 @@ void Spacetime::write_log() const
     s << "<Hostname>" << hostname << "</Hostname>" << std::endl;
     s << "<StartTime>" << cdate << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
-    s << "<MaximumDimension>" << Complex::ND << "</MaximumDimension>" << std::endl;
+    s << "<MaximumSimplicialDimension>" << Complex::ND << "</MaximumSimplicialDimension>" << std::endl;
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
-    s << "<TopologicalRadius>" << Complex::topological_radius << "</TopologicalRadius>" << std::endl;
-    s << "<ConvergenceThreshold>" << Spacetime::convergence_threshold << "</ConvergenceThreshold>" << std::endl;
-    s << "<EnergyCouplingConstant>" << Spacetime::Lambda << "</EnergyCouplingConstant>" << std::endl;
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
     s << "<Global>" << std::endl;
@@ -485,6 +490,9 @@ void Spacetime::write_log() const
     s << "<DimensionalUniformity>" << bvalue[geometry->get_uniform()] << "</DimensionalUniformity>" << std::endl;
     s << "<BackgroundDimension>" << geometry->dimension() << "</BackgroundDimension>" << std::endl;
     s << "<RandomSeed>" << skeleton->RND->get_seed() << "</RandomSeed>" << std::endl;
+    s << "<ConvergenceThreshold>" << convergence_threshold << "</ConvergenceThreshold>" << std::endl;
+    s << "<CouplingConstant>" << coupling_constant << "</CouplingConstant>" << std::endl;
+    s << "<TopologicalRadius>" << skeleton->topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<AbnormalityThreshold>" << abnormality_threshold << "</AbnormalityThreshold>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
     if (superposable) s << "<SuperpositionThreshold>" << superposition_threshold << "</SuperpositionThreshold>" << std::endl;
@@ -529,7 +537,6 @@ void Spacetime::write_log() const
     }
     s << "</Global>" << std::endl;
     s << "<Geometry>" << std::endl;
-    s << "<GeometryTolerance>" << geometry_tolerance << "</GeometryTolerance>" << std::endl;
     s << "<SolverType>" << hname[solver] << "</SolverType>" << std::endl;
     if (solver == Geometry_Solver::minimal) {
       s << "<SolverIterations>" << solver_its << "</SolverIterations>" << std::endl;
@@ -822,7 +829,6 @@ void Spacetime::read_state(const std::string& filename)
 {
   int i,n;
   char c;
-  double x;
   std::string cmodel,fmodel;
 
   std::ifstream s(filename,std::ios::in | std::ios::binary);
@@ -850,28 +856,12 @@ void Spacetime::read_state(const std::string& filename)
     throw std::runtime_error("The compiled binary's propositional clause size " + std::to_string(SYNARMOSMA::Proposition::get_clause_size()) + " does not match that (" + std::to_string(n) + ") of the data file!");
   }
 
-  s.read((char*)(&n),sizeof(int));
-  if (n != Complex::topological_radius) {
-    s.close();
-    throw std::runtime_error("The compiled binary's Spacetime::topological_radius property " + std::to_string(Complex::topological_radius) + " does not match that (" + std::to_string(n) + ") of the data file!");
-  }
-
-  s.read((char*)(&x),sizeof(double));
-  if (!SYNARMOSMA::double_equality(x,Spacetime::convergence_threshold)) {
-    s.close();
-    throw std::runtime_error("The compiled binary's Spacetime::convergence_threshold property " + std::to_string(Spacetime::convergence_threshold) + " does not match that (" + std::to_string(x) + ") of the data file!");
-  }
-
-  s.read((char*)(&x),sizeof(double));
-  if (!SYNARMOSMA::double_equality(x,Spacetime::Lambda)) {
-    s.close();
-    throw std::runtime_error("The compiled binary's Spacetime::Lambda property " + std::to_string(Spacetime::Lambda) + " does not match that (" + std::to_string(x) + ") of the data file!");
-  }
-
   s.read((char*)(&initial_size),sizeof(int));
   s.read((char*)(&initial_dim),sizeof(int));
   s.read((char*)(&max_iter),sizeof(int));
   s.read((char*)(&checkpoint_frequency),sizeof(int));
+  s.read((char*)(&n),sizeof(int));
+  skeleton->topological_radius = n;
   // Skip changing the initial_state as it should remain DISKFILE...
   s.read((char*)(&original_state),sizeof(Initial_Topology));
   s.read((char*)(&high_memory),sizeof(bool));
@@ -909,7 +899,8 @@ void Spacetime::read_state(const std::string& filename)
 
   s.read((char*)(&solver),sizeof(Geometry_Solver));
   s.read((char*)(&engine),sizeof(Integrator));
-  s.read((char*)(&geometry_tolerance),sizeof(double));
+  s.read((char*)(&convergence_threshold),sizeof(double));
+  s.read((char*)(&coupling_constant),sizeof(double));
   s.read((char*)(&solver_its),sizeof(int));
   s.read((char*)(&ngenerations),sizeof(int));
   s.read((char*)(&pool_size),sizeof(int));
@@ -970,9 +961,6 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&ftype),sizeof(int));
   s.write((char*)(&Complex::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
-  s.write((char*)(&Complex::topological_radius),sizeof(int));
-  s.write((char*)(&Spacetime::convergence_threshold),sizeof(double));
-  s.write((char*)(&Spacetime::Lambda),sizeof(double));
 
   // Now the global runtime parameters specific to the
   // single Spacetime instance...
@@ -980,6 +968,8 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&initial_dim),sizeof(int));
   s.write((char*)(&max_iter),sizeof(int));
   s.write((char*)(&checkpoint_frequency),sizeof(int));
+  n = skeleton->topological_radius;
+  s.write((char*)(&n),sizeof(int));
   s.write((char*)(&initial_state),sizeof(Initial_Topology));
   s.write((char*)(&high_memory),sizeof(bool));
   s.write((char*)(&superposable),sizeof(bool));
@@ -1009,7 +999,8 @@ void Spacetime::write_state(const std::string& filename) const
   // Geometric runtime constants...
   s.write((char*)(&solver),sizeof(Geometry_Solver));
   s.write((char*)(&engine),sizeof(Integrator));
-  s.write((char*)(&geometry_tolerance),sizeof(double));
+  s.write((char*)(&convergence_threshold),sizeof(double));
+  s.write((char*)(&coupling_constant),sizeof(double));
   s.write((char*)(&solver_its),sizeof(int));
   s.write((char*)(&ngenerations),sizeof(int));
   s.write((char*)(&pool_size),sizeof(int));

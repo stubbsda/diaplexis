@@ -127,6 +127,14 @@ namespace DIAPLEXIS {
     /// This property stores the maximum number of relaxation steps 
     /// that will be carried out in the simulation.
     int max_iter = 50;
+    /// This property stores the error tolerance for the 
+    /// convergence of the relaxation process and geometry 
+    /// solvers.
+    double convergence_threshold = 0.00001;
+    /// The coupling constant between the topological-geometric torsion 
+    /// and the energy in the structure equation.
+    double coupling_constant = 0.2;
+
     /// This property is the initial topological dimension of the 
     /// spacetime complex, i.e. the output of the Complex::dimension() 
     /// method.
@@ -224,7 +232,7 @@ namespace DIAPLEXIS {
     /// This property determines whether or not the sheets of the spacetime can 
     /// "reproduce" by generating daughter sheets at each invocation of the 
     /// global_operations() method. The relative fertility of the sheets is 
-    /// determined by the Spacetime::ramosity property. 
+    /// determined by the Sheet::fertility property. 
     bool foliodynamics = false;
     /// This property controls whether or not the ubiquity_permutation() method 
     /// is called when the global_operations() method is invoked. If true, it is 
@@ -235,14 +243,24 @@ namespace DIAPLEXIS {
     /// less common, since the cosmic temperature cools and this causes the Boltzmann 
     /// criterion to be satisfied less frequently. 
     bool permutable = false;
+    /// This positive integer property determines the maximum number of direct offspring 
+    /// that any sheet can generate and is thus only of importance when Spacetime::foliodynamics 
+    /// is true. 
+    int max_children = 5;
+    /// This positive integer property establishes the maximum number of sheets that can 
+    /// be exist over the course of the program's execution, so that no more than Spacetime::max_sheets 
+    /// less Spacetime::nt_initial can be created dynamically, assuming Spacetime::foliodynamics 
+    /// is true. 
+    int max_sheets = 128;
+    /// This positive integer property controls the maximum number of relaxation steps 
+    /// during which a sheet can remain quiescent and is only relevant when Spacetime::foliodynamics 
+    /// is true. 
+    int max_hibernation = 2;
 
     /// This property controls which optimization algorithm is used to try and 
     /// ensure the geometry meshes well with the topology and energy distribution 
     /// at a given relaxation step. 
     Geometry_Solver solver = Geometry_Solver::minimal;
-    /// This is the convergence threshold used for determining if a geometry solver 
-    /// has succeeded and the algorithm can exit. 
-    double geometry_tolerance = 0.0001;
     // Minimal Method
     /// This property is only meaningful for the Geometry_Solver::minimal case and 
     /// controls the number of random event coordinate changes attempted before exiting 
@@ -358,25 +376,6 @@ namespace DIAPLEXIS {
     /// log file for hyphansis as well as the Spacetime::hyphantic_ops 
     /// property.
     static const std::string IMP_OP[N_IMP];
-
-    /// This property stores the error tolerance for the 
-    /// convergence of the relaxation process.
-    static const double convergence_threshold;
-    /// The coupling constant between the topological-geometric torsion 
-    /// and the energy in the structure equation.
-    static const double Lambda;
-    /// This property stores the intensity of branching in the polycosmos, 
-    /// as a floating point number between zero and unity. It is only meaningful 
-    /// if Spacetime::foliodynamics is true.
-    static const double ramosity;
-    /// This property sets the initial temperature for the process of cosmic 
-    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of simplices when Spacetime::permutable is true.
-    static const double T_zero;
-    // This property determines the rate of cooling in the process of cosmic 
-    /// annealing used by the ubiquity_permutation() method to handle inter-cosmic 
-    /// jumping of simplices when Spacetime::permutable is true.
-    static const double kappa;
 
     /// This method is called by the advance() method to carry out the hyphansis step of topological change for a given sheet (the method's unique argument); it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
     void hyphansis(int);
@@ -609,9 +608,9 @@ namespace DIAPLEXIS {
   {
     std::string out = "(";
     for(int i=0; i<(signed) codex.size()-1; ++i) {
-      out += std::to_string(codex[i].active) + ",";
+      out += (codex[i].sleep > 0) ? "0," : "1,";
     }
-    out += std::to_string(codex[codex.size()-1].active);
+    out += (codex[codex.size()-1].sleep > 0) ? "0" : "1";
     out += ")";
     return out;
   }

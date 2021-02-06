@@ -2,9 +2,6 @@
 
 using namespace DIAPLEXIS;
 
-const double Spacetime::convergence_threshold = 0.00001;
-const double Spacetime::Lambda = 0.2;
-
 Spacetime::Spacetime(bool no_disk)
 {
   allocate();
@@ -406,7 +403,7 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     alpha = skeleton->events[v1].get_obliquity() + length_deviation[v1];
     skeleton->events[v1].set_geometric_deficiency(alpha);
-    skeleton->events[v1].set_deficiency(R[v1] + alpha - Spacetime::Lambda*rho[v1]);
+    skeleton->events[v1].set_deficiency(R[v1] + alpha - coupling_constant*rho[v1]);
   }
 
   // Now the chromatic energy sum...
@@ -485,7 +482,7 @@ bool Spacetime::global_operations()
   skeleton->compute_global_topology(geometry->get_memory_type());
   structural_deficiency();
 
-  skeleton->energy_diffusion(Spacetime::Lambda);
+  skeleton->energy_diffusion(coupling_constant,convergence_threshold);
   for(i=1; i<=skeleton->dimension(); ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
       skeleton->compute_simplex_energy(i,j);

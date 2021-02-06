@@ -522,7 +522,7 @@ bool Spacetime::germination(int base,int sheet)
       a = z[i];
       b = z[j];
       delta = a*a + b*b;
-      if (delta < geometry_tolerance) continue;
+      if (delta < convergence_threshold) continue;
       delta = std::sqrt(delta);
       D1 = i;
       D2 = j;
@@ -647,7 +647,7 @@ bool Spacetime::germination(int base,int sheet)
         mi = *jt;
         x[2] = y[mi];
         delta = SYNARMOSMA::norm(x);
-        if (delta > geometry_tolerance) {
+        if (delta > convergence_threshold) {
           good = true;
           break;
         }
@@ -669,7 +669,7 @@ bool Spacetime::germination(int base,int sheet)
       y.push_back(z[D2]);
       y.push_back(z[mi]);
       delta = SYNARMOSMA::norm(y);
-      if (delta > geometry_tolerance) {
+      if (delta > convergence_threshold) {
         good = true;
         break;
       }

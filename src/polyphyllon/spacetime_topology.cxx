@@ -38,10 +38,12 @@ int Spacetime::superposition_fusion()
     }
     modified[v1] = 1;
     modified[v2] = 1;
+    if (event_fusion(v1,v2,-1)) {
 #ifdef VERBOSE
-    std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
+      std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
-    if (event_fusion(v1,v2,-1)) nfused++;
+      nfused++;
+    }
 #ifdef DEBUG
     assert(consistent());
 #endif
@@ -64,7 +66,15 @@ void Spacetime::superposition_fission(int ulimit)
     if (skeleton->RND->drandom() > 0.01) continue;
     skeleton->events[n].get_ubiquity(locus);
     sheet = skeleton->RND->irandom(locus);
-    if (fission(n,1.0,sheet)) nc++;
+    if (fission(n,1.0,sheet)) {
+#ifdef VERBOSE
+      std::cout << "Event " << n << " undergoing spontaneous fission during superposition." << std::endl;
+#endif
+      nc++;
+    }
+#ifdef DEBUG
+    assert(consistent());
+#endif
   } while(nc < ulimit);
 }
 
@@ -389,7 +399,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
-    if (codex[i].active) colours.insert(i);
+    if (codex[i].sleep == 0) colours.insert(i);
   }
   nc = skeleton->component_analysis(component,sheet);
 #ifdef VERBOSE
@@ -429,7 +439,12 @@ void Spacetime::regularization(bool minimal,int sheet)
 #ifdef VERBOSE
         std::cout << "Eliminating isolated vertex " << cvertex[i][0] << std::endl;
 #endif
-        skeleton->events[cvertex[i][0]].deactivate();
+        if (sheet == -1) {
+          skeleton->events[cvertex[i][0]].deactivate();
+        }
+        else {
+          skeleton->events[cvertex[i][0]].deactivate(sheet);
+        }
         cvertex[i].erase(cvertex[i].begin());
       }
     }

@@ -2,12 +2,6 @@
 
 using namespace DIAPLEXIS;
 
-const double Spacetime::ramosity = 0.15;
-const double Spacetime::convergence_threshold = 0.00001;
-const double Spacetime::T_zero = 500.0;
-const double Spacetime::kappa = 1.35;
-const double Spacetime::Lambda = 0.2;
-
 Spacetime::Spacetime(bool no_disk)
 {
   allocate();
@@ -164,7 +158,7 @@ bool Spacetime::advance()
 
   skeleton->RND->shuffle(order,n);
   for(i=0; i<n; ++i) {
-    if (!codex[order[i]].active) continue;
+    if (codex[order[i]].sleep > 0) continue;
     hyphansis(order[i]);
   }
 
@@ -418,7 +412,7 @@ void Spacetime::structural_deficiency()
     v1 = avertices[i];
     alpha = skeleton->events[v1].get_obliquity() + length_deviation[v1];
     skeleton->events[v1].set_geometric_deficiency(alpha);
-    skeleton->events[v1].set_deficiency(R[v1] + alpha - Spacetime::Lambda*rho[v1]);
+    skeleton->events[v1].set_deficiency(R[v1] + alpha - coupling_constant*rho[v1]);
   }
 
   // Now the chromatic energy sum...
@@ -506,7 +500,7 @@ bool Spacetime::global_operations()
     structural_deficiency();
   }
 
-  skeleton->energy_diffusion(Spacetime::Lambda);
+  skeleton->energy_diffusion(coupling_constant,convergence_threshold);
   for(i=1; i<skeleton->dimension(-1); ++i) {
     for(j=0; j<(signed) skeleton->simplices[i].size(); ++j) {
       skeleton->compute_simplex_energy(i,j);
@@ -586,7 +580,8 @@ bool Spacetime::global_operations()
   }
 
   if (permutable && nactive > 1) {
-    // Take care of any inter-cosmic jumping...
+    // Take care of any inter-sheet jumping...
+    double t = double(iterations)/double(max_iter);
     for(i=1; i<nd; ++i) {
       n = (signed) skeleton->simplices[i].size();
       for(j=0; j<n; ++j) {
@@ -594,11 +589,12 @@ bool Spacetime::global_operations()
         skeleton->compute_simplex_energy(i,j);
       }
     }
-    delta = Spacetime::T_zero/std::sqrt(Spacetime::kappa*double(1+iterations));
-    n = ubiquity_permutation(delta);
+    double temperature = 100.0*(1.0 - std::pow(t,4));
+    n = ubiquity_permutation(temperature);
 #ifdef VERBOSE
-    std::cout << "The inter-cosmic jump for this iteration is " << n << std::endl;
+    std::cout << "The inter-sheet jump for this iteration is " << n << std::endl;
 #endif
+    //if (n > 0) skeleton->regularization();
   }
 
   if (superposable || compressible || permutable) {
@@ -640,7 +636,7 @@ bool Spacetime::global_operations()
     }
     nactive = (signed) codex.size();
     for(i=0; i<nactive; ++i) {
-      codex[i].active = true;
+      codex[i].sleep = 0;
     }
   }
   else {
@@ -674,9 +670,16 @@ bool Spacetime::global_operations()
 
 int Spacetime::sheet_fission(int parent)
 {
-  int i,j,n,l,offspring = skeleton->RND->irandom(1,4);
+  int i,j,n,l,offspring = 0;
   const int nt = (signed) codex.size();
   const int nv = (signed) skeleton->events.size();
+  double alpha = skeleton->RND->drandom();
+
+  if (alpha < codex[parent].fertility) {
+    offspring = 1 + int((codex[parent].fertility - alpha)*double(max_children - 1)*std::sin(M_PI/2.0*codex[parent].fertility));
+    codex[parent].fertility = 0.0;
+    if ((nt + offspring) > max_sheets) offspring = max_sheets - nt;
+  }
 
 #ifdef VERBOSE
   std::cout << "Sheet " << parent << " spawning " << offspring << " daughter sheet(s)..." << std::endl;
@@ -702,27 +705,49 @@ int Spacetime::sheet_fission(int parent)
 
 int Spacetime::sheet_dynamics()
 {
-  // How best to handle the issue of spinning of new sheets from existing ones according to a
-  // Poisson process?
-  int i,parent,nspawn = 0;
+  int i,nc = 0;
+  double alpha;
   const int nt = (signed) codex.size();
-  std::set<int> candidates;
-  std::set<int>::const_iterator it;
 
-  nactive = 0;
+#ifdef VERBOSE
+  std::cout << "At relaxation step " << iterations << " the sheet parameters are: " << std::endl;
   for(i=0; i<nt; ++i) {
-    if (skeleton->RND->drandom() < 0.15) codex[i].active = !codex[i].active;
-    if (codex[i].active) {
-      nactive++;
-      candidates.insert(i);
+    std::cout << "   Sheet " << i << " has sleep = " << codex[i].sleep << ",  fertility = " << codex[i].fertility << " and drowsiness = " << codex[i].drowsiness << std::endl; 
+  }
+#endif
+
+  // First handle reproduction...
+  if (nt < max_sheets) {
+    for(i=0; i<nt; ++i) {
+      if (codex[i].sleep > 0) continue;
+      nc += sheet_fission(i);
     }
   }
-  for(it=candidates.begin(); it!=candidates.end(); ++it) {
-    parent = *it;
-    if (skeleton->RND->poisson_variate()) nspawn += sheet_fission(parent);
+
+  // Now hibernation...
+  for(i=0; i<nt; ++i) {
+    if (codex[i].sleep > 0) {
+      codex[i].sleep -= 1;
+      if (codex[i].sleep == 0) {
+        // This sheet has just been recalled to life ...
+#ifdef VERBOSE
+        std::cout << "Sheet " << i << " has become active again." << std::endl;
+#endif
+        codex[i].drowsiness = 0.1*skeleton->RND->drandom();
+        codex[i].fertility = (1.0 - double(nt + nc)/double(max_sheets))*skeleton->RND->drandom();
+      }
+    }
+    else {
+      alpha = skeleton->RND->drandom();
+      if (alpha < codex[i].drowsiness) {
+        codex[i].sleep = 1 + int((codex[i].drowsiness - alpha)*double(skeleton->RND->irandom(max_hibernation)));
+#ifdef VERBOSE
+        std::cout << "Sheet " << i << " becoming inactive for " << codex[i].sleep << " relaxation steps." << std::endl;
+#endif
+      }
+    }
   }
-  nactive += nspawn;
-  return nspawn;
+  return nc;
 }
 
 void Spacetime::compute_global_topology(int sheet)
@@ -816,17 +841,18 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
 int Spacetime::ubiquity_permutation(double temperature)
 {
   int i,j,k,n,m,nd,vx[2],delta,hdistance,jz = 0;
-  std::set<int> S,ubiquity,mutated;
+  double E,alpha;
+  std::set<int> S,ubiquity,mutated,next,current;
   std::set<int>::const_iterator it;
   std::vector<std::set<int> > F;
   SYNARMOSMA::hash_map::const_iterator qt;
-  double E,alpha;
+
   // This parameter must be greater than zero and determines the
-  // thermo-energy scale at which intercosmic jumps become common...
+  // thermo-energy scale at which inter-sheet jumping becomes common...
   const int nv = (signed) skeleton->events.size();
   const int nt = (signed) codex.size();
   const int d = skeleton->dimension(-1);
-  const int jlimit = nv/5;
+  const int jlimit = skeleton->cardinality(0,-1)/nt;
 
   for(i=0; i<2*nv; ++i) {
     n = skeleton->RND->irandom(1,d+1);
@@ -839,7 +865,7 @@ int Spacetime::ubiquity_permutation(double temperature)
     alpha = std::exp(-temperature*E);
     hdistance = 0;
     for(j=0; j<nt; ++j) {
-      if (!codex[j].active) continue;
+      if (codex[j].sleep > 0) continue;
       if (skeleton->RND->drandom() > alpha) {
         if (ubiquity.count(j) > 0) {
           mutated.erase(j);
@@ -855,14 +881,29 @@ int Spacetime::ubiquity_permutation(double temperature)
       skeleton->simplices[n][m].get_vertices(S);
       for(it=S.begin(); it!=S.end(); ++it) {
         skeleton->events[*it].set_topology_modified(true);
+        skeleton->events[*it].set_ubiquity(mutated);
       }
       skeleton->simplices[n][m].set_ubiquity(mutated);
+      current.clear(); next.clear();
+      current.insert(m);
+      for(j=n; j>=2; --j) {
+        for(it=current.begin(); it!=current.end(); ++it) {
+          skeleton->simplices[j][*it].get_faces(F);
+          for(k=0; k<1+j; ++k) {
+            qt = skeleton->index_table[j-1].find(F[k]);
+            next.insert(qt->second);
+            skeleton->simplices[j-1][qt->second].set_ubiquity(mutated);
+          }
+        }
+        current = next;
+        next.clear();
+      }
     }
     jz += delta;
     if (jz >= jlimit) break;
   }
   if (jz == 0) return 0;
-  // Now regularize...
+  // Now ensure the entailment property is respected...
   for(i=Complex::ND; i>1; i--) {
     if (skeleton->simplices[i].empty()) continue;
     nd = (signed) skeleton->simplices[i].size();

@@ -22,9 +22,21 @@ namespace DIAPLEXIS {
     /// hyphansis. A value of -1 indicates that this array has not been allocated, while 
     /// a positive value indicates the size of the array. 
     int score_allocated = -1;
-    /// This property indicates whether or not this sheet is currently active 
-    /// or quiescent.
-    bool active = false;
+    /// This property indicates whether or not this sheet is currently active, when it is zero, 
+    /// or quiescent, when it is greater than zero, indicating how many more relaxation steps 
+    /// the sheet will remain quiescent. 
+    int sleep = 0;
+    /// This floating point property influences the number of child threads that will be created 
+    /// by this sheet. It must lie between 0 and 1, with 0 corresponding to sterility. This property 
+    /// is reset after each period of quiescence of the sheet, declining as the total number of 
+    /// existing sheets grows. 
+    double fertility = 0.0;
+    /// This floating point property controls whether this sheet will sleep and if so, the number 
+    /// of relaxation steps during which it will remain quiescent. It must lie between 0 and 1, with 
+    /// 0 corresponding to a sheet which will never sleep. It is reset after each hyphansis stage 
+    /// and period of quiescence; in the former case the drowsiness is increased in proportion to 
+    /// the number of successful hyphantic operations. 
+    double drowsiness = 0.0;
     /// This property stores a record of the hyphantic operations that have been successfully 
     /// executed on this sheet.
     std::string hyphantic_ops = "";

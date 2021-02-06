@@ -2,17 +2,23 @@
 <Parameters>
 	<Global>
 		<!--InitialEvents>81</InitialEvents-->
-		<InitialEvents>1296</InitialEvents>
+		<InitialEvents>256</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
-		<InitialSheets>1</InitialSheets>
+		<InitialSheets>3</InitialSheets>
 		<InitialDimension>4</InitialDimension>
+		<ConvergenceThreshold>0.00005</ConvergenceThreshold>
+		<CouplingConstant>0.2</CouplingConstant>
 		<EuclideanGeometry>1</EuclideanGeometry>
 		<RelationalGeometry>0</RelationalGeometry>
 		<DimensionalUniformity>1</DimensionalUniformity>
 		<BackgroundDimension>4</BackgroundDimension>
+		<TopologicalRadius>4</TopologicalRadius>
 		<MaximumIterations>10</MaximumIterations>
-		<SheetDynamics>0</SheetDynamics>
+		<SheetDynamics>1</SheetDynamics>
+		<MaximumSheetCount>128</MaximumSheetCount>
+  		<MaximumChildCount>6</MaximumChildCount>
+		<MaximumQuiescence>3</MaximumQuiescence>		
 		<RandomSeed>0</RandomSeed>
 		<MemoryFootprint>HIGH</MemoryFootprint>
 		<Superposable>1</Superposable>
@@ -36,8 +42,8 @@
 		<PerturbTopology>1</PerturbTopology>
 		<PerturbGeometry>0</PerturbGeometry>
 		<PerturbEnergy>1</PerturbEnergy>
-		<!--Hyphansis>DYNAMIC</Hyphansis-->
-		<Hyphansis>MUSICAL</Hyphansis>
+		<Hyphansis>DYNAMIC</Hyphansis>
+		<!--Hyphansis>MUSICAL</Hyphansis-->
 		<HyphansisScore>melody.txt</HyphansisScore>
 		<ParityMutation>0.05</ParityMutation>
 	</Global>
@@ -48,7 +54,6 @@
 		<!--SolverType>MECHANICAL</SolverType-->
 		<!--SolverType>SIMPLEX</SolverType-->
 		<SolverIterations>100</SolverIterations>
-		<GeometryTolerance>0.00005</GeometryTolerance>
 		<MaximumGenerations>100</MaximumGenerations>
 		<PoolSize>50</PoolSize>
 		<MaximumJousts>20</MaximumJousts>

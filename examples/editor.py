@@ -19,7 +19,7 @@ class euplecton:
     def __init__(self,master=None):
         self.master = master
         self.master.title('Parameter File Editor')
-        self.master.geometry('700x900')
+        self.master.geometry('700x880')
         self.master.resizable(0,0)
 
         self.sheet_dynamics = tkinter.BooleanVar()
@@ -44,11 +44,15 @@ class euplecton:
         self.hyphansis_score = tkinter.StringVar()
         self.int_engine = tkinter.StringVar()
         self.memory_footprint = tkinter.StringVar()
+        self.library_type = tkinter.StringVar()
 
         self.initial_events = tkinter.IntVar()
         self.max_iterations = tkinter.IntVar()
         self.initial_dimension = tkinter.IntVar()
         self.initial_sheets = tkinter.IntVar()
+        self.max_child_count = tkinter.IntVar()
+        self.max_quiescence = tkinter.IntVar()
+        self.max_sheet_count = tkinter.IntVar()
         self.chkpt_frequency = tkinter.IntVar()
         self.background_dim = tkinter.IntVar()
         self.random_seed = tkinter.IntVar()
@@ -97,17 +101,20 @@ class euplecton:
         solvers = ['Minimal','Evolutionary','Annealing','Mechanical','Simplex']
         engines = ['Euler','RK4']
         memory_consumption = ['High','Low']
+        library_types = ['Monophyllon','Polyphyllon']
 
+        label0 = tkinter.Label(global_group,text='Diaplexis Library Type:',wraplength=250,justify=tkinter.LEFT)
+        self.library = tkinter.OptionMenu(global_group,self.library_type,*library_types,command=self.library_change)
         self.label1 = tkinter.Label(global_group,text='Number of Initial Events:',wraplength=250,justify=tkinter.LEFT)
-        label2 = tkinter.Label(global_group,text='Maximum Number of Relaxation Steps:',wraplength=250,justify=tkinter.LEFT)
+        label2 = tkinter.Label(global_group,text='Maximum Relaxation Steps:',wraplength=250,justify=tkinter.LEFT)
         self.label3 = tkinter.Label(global_group,text='Initial Dimension:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         label4 = tkinter.Label(global_group,text='Initial State:',wraplength=250,justify=tkinter.LEFT)
         initial_state = tkinter.OptionMenu(global_group,self.initial_state,*initial_states,command=self.istate_change)
-        self.sheet_check = tkinter.Checkbutton(global_group,text='Sheet Dynamics',variable=self.sheet_dynamics)
+        self.sheet_check = tkinter.Checkbutton(global_group,text='Sheet Dynamics',variable=self.sheet_dynamics,command=self.sdynamics_change)
         self.label6 = tkinter.Label(global_group,text='Number of Initial Sheets:',wraplength=250,justify=tkinter.LEFT)
         superposition_check = tkinter.Checkbutton(global_group,text='Superposable',variable=self.superposable,command=self.superposition_change)
         compression_check = tkinter.Checkbutton(global_group,text='Compressible',variable=self.compressible)
-        permutation_check = tkinter.Checkbutton(global_group,text='Permutable',variable=self.permutable)
+        self.permutation_check = tkinter.Checkbutton(global_group,text='Permutable',variable=self.permutable)
         label9 = tkinter.Label(global_group,text='Checkpoint Frequency:',wraplength=250,justify=tkinter.LEFT)
         self.perturb_geometry = tkinter.Checkbutton(global_group,text='Perturb Geometry',variable=self.perturbg)
         self.perturb_topology = tkinter.Checkbutton(global_group,text='Perturb Topology',variable=self.perturbt)
@@ -131,6 +138,9 @@ class euplecton:
         relational_check = tkinter.Checkbutton(global_group,text='Relational Geometry',variable=self.relational)
         label25 = tkinter.Label(global_group,text='Background Dimension:',wraplength=250,justify=tkinter.LEFT)
         self.label26 = tkinter.Label(global_group,text='Hyphansis Score:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label27 = tkinter.Label(global_group,text='Maximum Number of Sheets:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label28 = tkinter.Label(global_group,text='Maximum Children per Sheet:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label29 = tkinter.Label(global_group,text='Maximum Sheet Quiescence:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
 
         label30 = tkinter.Label(geometry_group,text='Solver Type:',wraplength=250,justify=tkinter.LEFT)
         solver_type = tkinter.OptionMenu(geometry_group,self.solver_type,*solvers,command=self.gsolver_change)
@@ -147,13 +157,13 @@ class euplecton:
         self.engine = tkinter.OptionMenu(geometry_group,self.int_engine,*engines)
         self.engine.config(state=tkinter.DISABLED)
         self.label41 = tkinter.Label(geometry_group,text='Step Size:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
-        self.label42 = tkinter.Label(geometry_group,text='Maximum Number of Integration Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label42 = tkinter.Label(geometry_group,text='Maximum Integration Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label43 = tkinter.Label(geometry_group,text='Damping Constant:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label44 = tkinter.Label(geometry_group,text='Spring Constant:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label45 = tkinter.Label(geometry_group,text='Repulsion Constant:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.cg_check = tkinter.Checkbutton(geometry_group,text='Conjugate Gradient Refinement',variable=self.cg_refinement,state=tkinter.DISABLED)
-        self.label46 = tkinter.Label(geometry_group,text='Maximum Number of Conjugate Gradient Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
-        self.label47 = tkinter.Label(geometry_group,text='Maximum Number of Line Solver Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label46 = tkinter.Label(geometry_group,text='Maximum Conjugate Gradient Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label47 = tkinter.Label(geometry_group,text='Maximum Line Solver Steps:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label48 = tkinter.Label(geometry_group,text='Edge Flexibility Threshold:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label49 = tkinter.Label(geometry_group,text='Simplex Reflection Coefficient:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label50 = tkinter.Label(geometry_group,text='Simplex Expansion Coefficient:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
@@ -172,6 +182,9 @@ class euplecton:
         entry20 = tkinter.Entry(global_group,width=7,textvariable=self.random_seed)
         entry25 = tkinter.Entry(global_group,width=7,textvariable=self.background_dim)
         self.entry26 = tkinter.Entry(global_group,width=18,textvariable=self.hyphansis_score,state=tkinter.DISABLED)
+        self.entry27 = tkinter.Entry(global_group,width=7,textvariable=self.max_sheet_count,state=tkinter.DISABLED)
+        self.entry28 = tkinter.Entry(global_group,width=7,textvariable=self.max_child_count,state=tkinter.DISABLED)
+        self.entry29 = tkinter.Entry(global_group,width=7,textvariable=self.max_quiescence,state=tkinter.DISABLED)
         entry31 = tkinter.Entry(geometry_group,width=7,textvariable=self.geometry_threshold)
         self.entry32 = tkinter.Entry(geometry_group,width=7,textvariable=self.solver_iterations)
         self.entry33 = tkinter.Entry(geometry_group,width=7,textvariable=self.max_generations,state=tkinter.DISABLED)
@@ -201,52 +214,60 @@ class euplecton:
         button3 = tkinter.Button(button_group,text='Load Parameters',command=self.load_parameters)
         button4 = tkinter.Button(button_group,text='Restore Default Values',command=self.clear_parameters)
 
-        self.label1.grid(row=0,column=0,sticky=tkinter.W)
-        self.entry1.grid(row=0,column=1,sticky=tkinter.W)
-        label2.grid(row=1,column=0,sticky=tkinter.W)
-        entry2.grid(row=1,column=1,sticky=tkinter.W)
-        self.label3.grid(row=2,column=0,sticky=tkinter.W)
-        self.entry3.grid(row=2,column=1,sticky=tkinter.W)
-        self.label6.grid(row=3,column=0,sticky=tkinter.W)
-        self.entry6.grid(row=3,column=1,sticky=tkinter.W)
-        self.sheet_check.grid(row=4,column=0,sticky=tkinter.W)
-        label4.grid(row=5,column=0,sticky=tkinter.W)
-        initial_state.grid(row=5,column=1,sticky=tkinter.W)
-        label13.grid(row=6,column=0,sticky=tkinter.W)
-        entry13.grid(row=6,column=1,sticky=tkinter.W)
-        label17.grid(row=7,column=0,sticky=tkinter.W)
-        homology_method.grid(row=7,column=1,sticky=tkinter.W)
-        label18.grid(row=8,column=0,sticky=tkinter.W)
-        homology_field.grid(row=8,column=1,sticky=tkinter.W)
-        label20.grid(row=9,column=0,sticky=tkinter.W)
-        entry20.grid(row=9,column=1,sticky=tkinter.W)
-        label9.grid(row=10,column=0,sticky=tkinter.W)
-        entry9.grid(row=10,column=1,sticky=tkinter.W)
-        self.perturb_topology.grid(row=11,column=0,sticky=tkinter.W)
-        self.perturb_geometry.grid(row=12,column=0,sticky=tkinter.W)
-        self.perturb_energy.grid(row=13,column=0,sticky=tkinter.W)
+        label0.grid(row=0,column=0,sticky=tkinter.W)
+        self.library.grid(row=0,column=1,sticky=tkinter.W)
+        self.label1.grid(row=1,column=0,sticky=tkinter.W)
+        self.entry1.grid(row=1,column=1,sticky=tkinter.W)
+        label2.grid(row=2,column=0,sticky=tkinter.W)
+        entry2.grid(row=2,column=1,sticky=tkinter.W)
+        self.label3.grid(row=3,column=0,sticky=tkinter.W)
+        self.entry3.grid(row=3,column=1,sticky=tkinter.W)
+        self.label6.grid(row=4,column=0,sticky=tkinter.W)
+        self.entry6.grid(row=4,column=1,sticky=tkinter.W)
+        self.sheet_check.grid(row=5,column=0,sticky=tkinter.W)
+        self.label27.grid(row=6,column=0,sticky=tkinter.W)
+        self.entry27.grid(row=6,column=1,sticky=tkinter.W)
+        self.label28.grid(row=7,column=0,sticky=tkinter.W)
+        self.entry28.grid(row=7,column=1,sticky=tkinter.W)
+        self.label29.grid(row=8,column=0,sticky=tkinter.W)
+        self.entry29.grid(row=8,column=1,sticky=tkinter.W)
+        label4.grid(row=9,column=0,sticky=tkinter.W)
+        initial_state.grid(row=9,column=1,sticky=tkinter.W)
+        label13.grid(row=10,column=0,sticky=tkinter.W)
+        entry13.grid(row=10,column=1,sticky=tkinter.W)
+        label20.grid(row=11,column=0,sticky=tkinter.W)
+        entry20.grid(row=11,column=1,sticky=tkinter.W)
+        label9.grid(row=12,column=0,sticky=tkinter.W)
+        entry9.grid(row=12,column=1,sticky=tkinter.W)
+        label17.grid(row=13,column=0,sticky=tkinter.W)
+        homology_method.grid(row=13,column=1,sticky=tkinter.W)
+        label18.grid(row=14,column=0,sticky=tkinter.W)
+        homology_field.grid(row=14,column=1,sticky=tkinter.W)
 
         superposition_check.grid(row=0,column=3,sticky=tkinter.W)
-        compression_check.grid(row=1,column=3,sticky=tkinter.W)
-        permutation_check.grid(row=2,column=3,sticky=tkinter.W)
-        label11.grid(row=3,column=3,sticky=tkinter.W)
-        hyphansis_type.grid(row=3,column=4,sticky=tkinter.W)
-        self.label12.grid(row=4,column=3,sticky=tkinter.W) 
-        self.entry12.grid(row=4,column=4,sticky=tkinter.W)
-        self.label14.grid(row=5,column=3,sticky=tkinter.W)
-        self.entry14.grid(row=5,column=4,sticky=tkinter.W)
-        self.label15.grid(row=6,column=3,sticky=tkinter.W)
-        self.entry15.grid(row=6,column=4,sticky=tkinter.W)
-        label21.grid(row=7,column=3,sticky=tkinter.W)
-        signature.grid(row=7,column=4,sticky=tkinter.W)
-        relational_check.grid(row=8,column=3,sticky=tkinter.W)
-        uniformity_check.grid(row=9,column=3,sticky=tkinter.W)
-        label22.grid(row=10,column=3,sticky=tkinter.W)
-        footprint_size.grid(row=10,column=4,sticky=tkinter.W)
-        label25.grid(row=11,column=3,sticky=tkinter.W)
-        entry25.grid(row=11,column=4,sticky=tkinter.W)
-        self.label26.grid(row=12,column=3,sticky=tkinter.W)
-        self.entry26.grid(row=12,column=4,sticky=tkinter.W)
+        compression_check.grid(row=0,column=4,sticky=tkinter.W)
+        self.permutation_check.grid(row=1,column=3,sticky=tkinter.W)
+        label11.grid(row=2,column=3,sticky=tkinter.W)
+        hyphansis_type.grid(row=2,column=4,sticky=tkinter.W)
+        self.label12.grid(row=3,column=3,sticky=tkinter.W) 
+        self.entry12.grid(row=3,column=4,sticky=tkinter.W)
+        self.label14.grid(row=4,column=3,sticky=tkinter.W)
+        self.entry14.grid(row=4,column=4,sticky=tkinter.W)
+        self.label15.grid(row=5,column=3,sticky=tkinter.W)
+        self.entry15.grid(row=5,column=4,sticky=tkinter.W)
+        label21.grid(row=6,column=3,sticky=tkinter.W)
+        signature.grid(row=6,column=4,sticky=tkinter.W)
+        relational_check.grid(row=7,column=3,sticky=tkinter.W)
+        uniformity_check.grid(row=8,column=3,sticky=tkinter.W)
+        label22.grid(row=9,column=3,sticky=tkinter.W)
+        footprint_size.grid(row=9,column=4,sticky=tkinter.W)
+        label25.grid(row=10,column=3,sticky=tkinter.W)
+        entry25.grid(row=10,column=4,sticky=tkinter.W)
+        self.label26.grid(row=11,column=3,sticky=tkinter.W)
+        self.entry26.grid(row=11,column=4,sticky=tkinter.W)
+        self.perturb_topology.grid(row=12,column=3,sticky=tkinter.W)
+        self.perturb_geometry.grid(row=13,column=3,sticky=tkinter.W)
+        self.perturb_energy.grid(row=14,column=3,sticky=tkinter.W)
 
         label30.grid(row=0,column=0,sticky=tkinter.W)
         solver_type.grid(row=0,column=1,sticky=tkinter.W)
@@ -304,6 +325,31 @@ class euplecton:
         label19.grid(row=2,column=0)
         entry19.grid(row=2,column=1)
 
+    def library_change(self,*args):
+        if self.library_type.get() == 'Monophyllon':
+           self.sheet_check.config(state=tkinter.DISABLED)
+           self.permutation_check.config(state=tkinter.DISABLED)
+           self.label6.config(state=tkinter.DISABLED)
+           self.entry6.config(state=tkinter.DISABLED)
+           self.label27.config(state=tkinter.DISABLED)
+           self.entry27.config(state=tkinter.DISABLED)
+           self.label28.config(state=tkinter.DISABLED)
+           self.entry28.config(state=tkinter.DISABLED)
+           self.label29.config(state=tkinter.DISABLED)
+           self.entry29.config(state=tkinter.DISABLED)
+        else:
+           self.sheet_check.config(state=tkinter.NORMAL)
+           self.permutation_check.config(state=tkinter.NORMAL)
+           self.label6.config(state=tkinter.NORMAL)
+           self.entry6.config(state=tkinter.NORMAL)
+           if self.sheet_dynamics.get():
+              self.label27.config(state=tkinter.NORMAL)
+              self.entry27.config(state=tkinter.NORMAL)
+              self.label28.config(state=tkinter.NORMAL)
+              self.entry28.config(state=tkinter.NORMAL)
+              self.label29.config(state=tkinter.NORMAL)
+              self.entry29.config(state=tkinter.NORMAL)
+
     def superposition_change(self,*args):
         if self.superposable.get():
            self.label15.config(state=tkinter.NORMAL)
@@ -312,21 +358,52 @@ class euplecton:
            self.label15.config(state=tkinter.DISABLED)
            self.entry15.config(state=tkinter.DISABLED)
 
+    def sdynamics_change(self,*args):
+        if self.sheet_dynamics.get():
+           self.label27.config(state=tkinter.NORMAL)
+           self.entry27.config(state=tkinter.NORMAL)
+           self.label28.config(state=tkinter.NORMAL)
+           self.entry28.config(state=tkinter.NORMAL)
+           self.label29.config(state=tkinter.NORMAL)
+           self.entry29.config(state=tkinter.NORMAL)
+        else:
+           self.label27.config(state=tkinter.DISABLED)
+           self.entry27.config(state=tkinter.DISABLED)
+           self.label28.config(state=tkinter.DISABLED)
+           self.entry28.config(state=tkinter.DISABLED)
+           self.label29.config(state=tkinter.DISABLED)
+           self.entry29.config(state=tkinter.DISABLED)
+
     def htype_change(self,*args):
         if self.hyphansis.get() == 'Dynamic':
-           self.sheet_check.config(state=tkinter.NORMAL)
-           self.label6.config(state=tkinter.NORMAL)
-           self.entry6.config(state=tkinter.NORMAL)
-           self.label14.config(state=tkinter.NORMAL)
-           self.entry14.config(state=tkinter.NORMAL)
            self.label26.config(state=tkinter.DISABLED)
            self.entry26.config(state=tkinter.DISABLED)
+           if self.library_type.get() == 'Polyphyllon':
+              self.sheet_check.config(state=tkinter.NORMAL)
+              self.label6.config(state=tkinter.NORMAL)
+              self.entry6.config(state=tkinter.NORMAL)
+              self.label14.config(state=tkinter.NORMAL)
+              self.entry14.config(state=tkinter.NORMAL)
+              if self.sheet_dynamics.get():
+                 self.label27.config(state=tkinter.NORMAL)
+                 self.entry27.config(state=tkinter.NORMAL)
+                 self.label28.config(state=tkinter.NORMAL)
+                 self.entry28.config(state=tkinter.NORMAL)
+                 self.label29.config(state=tkinter.NORMAL)
+                 self.entry29.config(state=tkinter.NORMAL)
+
         else:
            self.sheet_check.config(state=tkinter.DISABLED)
            self.label6.config(state=tkinter.DISABLED)
            self.entry6.config(state=tkinter.DISABLED)
            self.label14.config(state=tkinter.DISABLED)
            self.entry14.config(state=tkinter.DISABLED)
+           self.label27.config(state=tkinter.DISABLED)
+           self.entry27.config(state=tkinter.DISABLED)
+           self.label28.config(state=tkinter.DISABLED)
+           self.entry28.config(state=tkinter.DISABLED)
+           self.label29.config(state=tkinter.DISABLED)
+           self.entry29.config(state=tkinter.DISABLED)
            self.label26.config(state=tkinter.NORMAL)
            self.entry26.config(state=tkinter.NORMAL)
 
@@ -506,12 +583,16 @@ class euplecton:
         self.solver_type.set('Minimal')
         self.int_engine.set('RK4')
         self.memory_footprint.set('High')
+        self.library_type.set('Polyphyllon')
         self.parameter_filename.set('')
 
         self.initial_events.set(1296)
         self.max_iterations.set(25)
         self.initial_dimension.set(4)
         self.initial_sheets.set(1)
+        self.max_child_count.set(10)
+        self.max_sheet_count.set(128)
+        self.max_quiescence.set(3)
         self.chkpt_frequency.set(5)
         self.background_dim.set(4)
         self.random_seed.set(0)
@@ -549,6 +630,7 @@ class euplecton:
            return '0'
 
     def read_parameters(self):
+        multi_sheeted = False
         parameter_filename = self.parameter_filename.get()
         tree = ET.parse(parameter_filename)
         root = tree.getroot()
@@ -574,6 +656,7 @@ class euplecton:
             elif name == 'Compressible':
                self.compressible.set(value)
             elif name == 'Permutable':
+               multi_sheeted = True
                self.permutable.set(value)
             elif name == 'Superposable':
                self.superposable.set(value)
@@ -586,7 +669,20 @@ class euplecton:
             elif name == 'InitialDimension':
                self.initial_dimension.set(int(value))
             elif name == 'InitialSheets':
+               multi_sheeted = True
                self.initial_sheets.set(int(value))
+            elif name == 'SheetDynamics':
+               multi_sheeted = True
+               self.sheet_dynamics.set(value)
+            elif name == 'MaximumSheetCount':
+               multi_sheeted = True
+               self.max_sheet_count.set(int(value))
+            elif name == 'MaximumChildCount':
+               multi_sheeted = True
+               self.max_child_count.set(int(value))
+            elif name == 'MaximumQuiescence':
+               multi_sheeted = True
+               self.max_quiescence.set(int(value))
             elif name == 'BackgroundDimension':
                self.background_dim.set(int(value))
             elif name == 'AbnormalityThreshold':
@@ -688,7 +784,12 @@ class euplecton:
                   self.int_engine.set('Euler')
                elif value == 'RK4':
                   self.int_engine.set('RK4')
+        if multi_sheeted:
+           self.library_type.set('Polyphyllon')
+        else:
+           self.library_type.set('Monophyllon')
         self.istate_change()
+        self.library_change()
         self.htype_change()
         self.superposition_change()
         self.gsolver_change()
@@ -713,9 +814,6 @@ class euplecton:
         if self.random_seed.get() < 0:
             messagebox.showerror("Illegal Value","The random number seed must be non-negative!")
             return
-        if self.initial_sheets.get() < 1:
-            messagebox.showerror("Illegal Value","The number of initial sheets must be positive!")
-            return
         if not(self.abnormality_threshold.get() > 0.0):
             messagebox.showerror("Illegal Value","The abnormality threshold must be positive!")
             return
@@ -727,6 +825,20 @@ class euplecton:
             if self.parity_probability.get() < 0.0 or self.parity_probability.get() > 1.0:
                messagebox.showerror("Illegal Value","The parity probability must lie between 0 and 1!")
                return
+            if self.library_type.get() == 'Polyphyllon':
+               if self.initial_sheets.get() < 1:
+                  messagebox.showerror("Illegal Value","The number of initial sheets must be positive!")
+                  return
+               if self.sheet_dynamics.get():
+                  if self.max_child_count.get() < 1:
+                     messagebox.showerror("Illegal Value","The maximum number of children per sheet must be positive!")
+                     return
+                  if self.max_sheet_count.get() <= self.initial_sheets.get():
+                     messagebox.showerror("Illegal Value","The maximum number of sheets must be greater than the number of initial sheets!")
+                     return 
+                  if self.max_quiescence.get() < 0:
+                     messagebox.showerror("Illegal Value","The maximum quiescence duration must be non-negative!")
+                     return
         else:
             if self.hyphansis_score.get() is None:
                messagebox.showerror("Illegal Value","The hyphansis score cannot be empty!")
@@ -857,15 +969,24 @@ class euplecton:
            ptype.text = 'DYNAMIC'
            ptype = ET.SubElement(global_params,'ParityMutation')
            ptype.text = str(self.parity_probability.get())
-           ptype = ET.SubElement(global_params,'InitialSheets')
-           ptype.text = str(self.initial_sheets.get())
-           ptype = ET.SubElement(global_params,'SheetDynamics')
-           ptype.text = self.convert_boolean(self.sheet_dynamics.get())
+           if self.library_type.get() == 'Polyphyllon':
+              ptype = ET.SubElement(global_params,'InitialSheets')
+              ptype.text = str(self.initial_sheets.get())
+              ptype = ET.SubElement(global_params,'SheetDynamics')
+              ptype.text = self.convert_boolean(self.sheet_dynamics.get())
+              if self.sheet_dynamics.get():
+                 ptype = ET.SubElement(global_params,'MaximumSheetCount')
+                 ptype.text = str(self.max_sheet_count.get())
+                 ptype = ET.SubElement(global_params,'MaximumChildCount')
+                 ptype.text = str(self.max_child_count.get())
+                 ptype = ET.SubElement(global_params,'MaximumQuiescence')
+                 ptype.text = str(self.max_quiescence.get())
         else:
            ptype = ET.SubElement(global_params,'Hyphansis')
            ptype.text = 'MUSICAL'
            ptype = ET.SubElement(global_params,'HyphansisScore')
            ptype.text = self.hyphansis_score.get()
+
         ptype = ET.SubElement(global_params,'RandomSeed')
         ptype.text = str(self.random_seed.get())
         ptype = ET.SubElement(global_params,'CheckpointFrequency')
@@ -890,8 +1011,9 @@ class euplecton:
            ptype.text = '0'
         ptype = ET.SubElement(global_params,'Compressible')
         ptype.text = self.convert_boolean(self.compressible.get())
-        ptype = ET.SubElement(global_params,'Permutable')
-        ptype.text = self.convert_boolean(self.permutable.get())
+        if self.library_type.get() == 'Polyphyllon':
+           ptype = ET.SubElement(global_params,'Permutable')
+           ptype.text = self.convert_boolean(self.permutable.get())
         if self.signature.get() == 'Euclidean':
            ptype = ET.SubElement(global_params,'EuclideanGeometry')
            ptype.text = '1'

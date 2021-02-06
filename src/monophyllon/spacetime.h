@@ -126,6 +126,14 @@ namespace DIAPLEXIS {
     /// This property stores the maximum number of relaxation steps 
     /// that will be carried out in the simulation.
     int max_iter = 50;
+    /// This property stores the error tolerance for the 
+    /// convergence of the relaxation process and geometry 
+    /// solvers.
+    double convergence_threshold = 0.00001;
+    /// The coupling constant between the topological-geometric torsion 
+    /// and the energy in the structure equation.
+    double coupling_constant = 0.2;
+
     /// This property is the initial topological dimension of the 
     /// spacetime complex, i.e. the output of the Complex::dimension() 
     /// method.
@@ -224,9 +232,6 @@ namespace DIAPLEXIS {
     /// ensure the geometry meshes well with the topology and energy distribution 
     /// at a given relaxation step. 
     Geometry_Solver solver = Geometry_Solver::minimal;
-    /// This is the convergence threshold used for determining if a geometry solver 
-    /// has succeeded and the algorithm can exit. 
-    double geometry_tolerance = 0.0001;
     // Minimal Method
     /// This property is only meaningful for the Geometry_Solver::minimal case and 
     /// controls the number of random event coordinate changes attempted before exiting 
@@ -342,13 +347,6 @@ namespace DIAPLEXIS {
     /// log file for hyphansis as well as the Spacetime::hyphantic_ops 
     /// property.
     static const std::string IMP_OP[N_IMP];
-
-    /// This property stores the error tolerance for the 
-    /// convergence of the relaxation process.
-    static const double convergence_threshold;
-    /// The coupling constant between the topological-geometric torsion 
-    /// and the energy in the structure equation.
-    static const double Lambda;
 
     /// This method is called by the advance() method to carry out the hyphansis step of topological change; it assembles a list of active events and their deficiency and then calls either dynamic_hyphansis() or musical_hyphansis().
     void hyphansis();

@@ -472,7 +472,7 @@ void Complex::energy_diffusion(int nchip)
   } 
 }
 
-void Complex::energy_diffusion(double Lambda)
+void Complex::energy_diffusion(double Lambda,double cutoff)
 {
   const int nv = (signed) events.size();
   int i,j,v,n,m,nc; 
@@ -654,9 +654,7 @@ void Complex::energy_diffusion(double Lambda)
       Esum2 += events[i].get_energy();
     }
   }
-  // Use the float epsilon because the double epsilon is much too sensitive given the likelihood of round-off
-  // error from the various multiplications and divisions carried out in the diffusion algorithm.
-  if (std::abs(Esum2 - Esum1) > std::numeric_limits<float>::epsilon()) throw std::runtime_error("Energy conservation error!");
+  if (std::abs(Esum2 - Esum1) > cutoff) {std::cout << std::abs(Esum2 - Esum1) << std::endl; throw std::runtime_error("Energy conservation error!");}
 #endif
   for(i=0; i<nv; ++i) {
     if (Enew[i] > std::numeric_limits<double>::epsilon()) events[i].set_energy(Enew[i]);

@@ -847,7 +847,7 @@ void Complex::compute_modified_events()
       current = next;
       nhop++;
       next.clear();
-    } while(nhop < Complex::topological_radius);
+    } while(nhop < topological_radius);
     current.clear();
     next.clear();
     for(i=0; i<nv; ++i) {

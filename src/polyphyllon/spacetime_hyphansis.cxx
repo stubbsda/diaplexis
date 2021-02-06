@@ -694,11 +694,16 @@ void Spacetime::hyphansis(int sheet)
   std::cout << "There are " << npos << " positive events and " << nneg << " negative events in the spacetime complex." << std::endl;
 #endif
 
-  if (weaving == Hyphansis::dynamic) {
-    dynamic_hyphansis(sheet);
-  }
-  else if (weaving == Hyphansis::musical) {
-    musical_hyphansis(sheet);
+  int ns = (weaving == Hyphansis::dynamic) ? dynamic_hyphansis(sheet) : musical_hyphansis(sheet);
+
+  if (ns > 0 && foliodynamics) { 
+    double alpha = codex[sheet].drowsiness;
+    if (alpha < std::numeric_limits<double>::epsilon()) {
+      codex[sheet].drowsiness = 0.01*skeleton->RND->drandom();
+    }
+    else {
+      codex[sheet].drowsiness = std::min(1.0,alpha*(1.0 + 2.0/M_PI*std::atan(ns)));
+    }
   }
 }
 

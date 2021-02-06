@@ -405,7 +405,6 @@ void Spacetime::initialize()
     }
     structural_deficiency();
   }
-  skeleton->RND->initialize_poisson(Spacetime::ramosity);
 #ifdef DEBUG
   assert(consistent());
   assert(skeleton->energy_check());

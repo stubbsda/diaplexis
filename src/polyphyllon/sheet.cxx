@@ -6,8 +6,6 @@ Sheet::Sheet()
 {
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi1 = new SYNARMOSMA::Homotopy;
-
-  active = true;
 }
 
 Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
@@ -15,7 +13,6 @@ Sheet::Sheet(int n,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Method m)
   H = new SYNARMOSMA::Homology(f,m);
   pi1 = new SYNARMOSMA::Homotopy;
 
-  active = true;
   index = n;
 }
 
@@ -24,7 +21,6 @@ Sheet::Sheet(int n,int p,SYNARMOSMA::Homology::Field f,SYNARMOSMA::Homology::Met
   H = new SYNARMOSMA::Homology(f,m);
   pi1 = new SYNARMOSMA::Homotopy;
 
-  active = true;
   index = n;
   parent = p;
 }
@@ -34,7 +30,9 @@ Sheet::Sheet(const Sheet& source)
   index = source.index;
   parent = source.parent;
   voice = source.voice;
-  active = source.active;
+  sleep = source.sleep;
+  fertility = source.fertility;
+  drowsiness = source.drowsiness;
   score_allocated = source.score_allocated;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
@@ -61,7 +59,9 @@ Sheet& Sheet::operator =(const Sheet& source)
   index = source.index;
   parent = source.parent;
   voice = source.voice;
-  active = source.active;
+  sleep = source.sleep;
+  fertility = source.fertility;
+  drowsiness = source.drowsiness;
   score_allocated = source.score_allocated;
   hyphantic_ops = source.hyphantic_ops;
   H = new SYNARMOSMA::Homology(*source.H);
@@ -90,10 +90,12 @@ Sheet::~Sheet()
 void Sheet::clear()
 {
   hyphantic_ops = "";
-  active = false;
+  sleep = 0;
   parent = -1;
   voice = -1;
   index = -1;
+  fertility = 0.0;
+  drowsiness = 0.0;
   H->clear();
   pi1->clear();
   pseudomanifold = false;
@@ -160,7 +162,9 @@ int Sheet::serialize(std::ofstream& s) const
   s.write((char*)(&parent),sizeof(int)); count += sizeof(int);
   s.write((char*)(&voice),sizeof(int)); count += sizeof(int);
   s.write((char*)(&score_allocated),sizeof(int)); count += sizeof(int);
-  s.write((char*)(&active),sizeof(bool)); count += sizeof(bool);
+  s.write((char*)(&sleep),sizeof(int)); count += sizeof(int);
+  s.write((char*)(&fertility),sizeof(double)); count += sizeof(double);
+  s.write((char*)(&drowsiness),sizeof(double)); count += sizeof(double);
   s.write((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
     s.write((char*)(&hyphantic_ops[i]),sizeof(char)); count += sizeof(char);
@@ -198,7 +202,9 @@ int Sheet::deserialize(std::ifstream& s)
   s.read((char*)(&parent),sizeof(int)); count += sizeof(int);
   s.read((char*)(&voice),sizeof(int)); count += sizeof(int);
   s.read((char*)(&score_allocated),sizeof(int)); count += sizeof(int);
-  s.read((char*)(&active),sizeof(bool)); count += sizeof(bool);
+  s.read((char*)(&sleep),sizeof(int)); count += sizeof(int);
+  s.read((char*)(&fertility),sizeof(double)); count += sizeof(double);
+  s.read((char*)(&drowsiness),sizeof(double)); count += sizeof(double);
   s.read((char*)(&n),sizeof(int)); count += sizeof(int);
   for(i=0; i<n; ++i) {
     s.read((char*)(&c),sizeof(char)); count += sizeof(char);

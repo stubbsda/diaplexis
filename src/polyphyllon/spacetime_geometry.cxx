@@ -490,7 +490,7 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
     const double B = compute_abnormality(flexible_edge);
 
     for(i=0; i<system_size; ++i) {
-      geometry->add(i,geometry_tolerance);
+      geometry->add(i,convergence_threshold);
       geometry->get_implied_vertices(i,current);
       skeleton->compute_dependent_simplices(current);
       vmodified = last;
@@ -500,9 +500,9 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
       geometry->compute_squared_distances(vmodified);
       compute_volume();
       E = compute_abnormality(flexible_edge);
-      alpha = (E - B)/geometry_tolerance;
+      alpha = (E - B)/convergence_threshold;
       df[i] = alpha;
-      geometry->add(i,-geometry_tolerance);
+      geometry->add(i,-convergence_threshold);
       last = current;
       current.clear();
     }

@@ -38,10 +38,12 @@ int Spacetime::superposition_fusion()
     }
     modified[v1] = 1;
     modified[v2] = 1;
+    if (event_fusion(v1,v2)) {
 #ifdef VERBOSE
-    std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
+      std::cout << "Fusing events: " << v2 << " => " << v1 << " via superposition" << std::endl;
 #endif
-    if (event_fusion(v1,v2)) nfused++;
+      nfused++;
+    }
 #ifdef DEBUG
     assert(consistent());
 #endif
@@ -61,7 +63,15 @@ void Spacetime::superposition_fission(int ulimit)
     n = skeleton->RND->irandom(skeleton->events.size());
     if (!skeleton->active_event(n)) continue;
     if (skeleton->RND->drandom() > 0.01) continue;
-    if (fission(n,1.0)) nc++;
+    if (fission(n,1.0)) {
+#ifdef VERBOSE
+      std::cout << "Event " << n << " undergoing spontaneous fission during superposition." << std::endl;
+#endif
+      nc++;
+    }
+#ifdef DEBUG
+    assert(consistent());
+#endif
   } while(nc < ulimit);
 }
 

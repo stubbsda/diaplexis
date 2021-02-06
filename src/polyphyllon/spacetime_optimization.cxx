@@ -112,7 +112,7 @@ void Spacetime::mechanical_solver()
         vnorm += ynew[i]*ynew[i];
       }
       vnorm = std::sqrt(vnorm);
-      if (vnorm < geometry_tolerance) {
+      if (vnorm < convergence_threshold) {
 #ifdef VERBOSE
         std::cout << "Mechanical solver converged, exiting loop..." << std::endl;
 #endif
@@ -167,7 +167,7 @@ void Spacetime::mechanical_solver()
         vnorm += ynew[i]*ynew[i];
       }
       vnorm = std::sqrt(vnorm);
-      if (vnorm < geometry_tolerance) {
+      if (vnorm < convergence_threshold) {
 #ifdef VERBOSE
         std::cout << "Mechanical solver converged, exiting loop..." << std::endl;
 #endif
@@ -311,7 +311,7 @@ void Spacetime::mechanical_solver()
     for(j=0; j<system_size; ++j) {
       x[j] = geometry->get_element(j);
     }
-    if (E < geometry_tolerance) break;
+    if (E < convergence_threshold) break;
   }
   if (E > E_initial) {
 #ifdef VERBOSE
@@ -850,7 +850,7 @@ void Spacetime::simplex_solver()
 #ifdef VERBOSE
     std::cout << "At simplex transformation step " << ntrans << " the error is " << fitness[0].second << std::endl;
 #endif
-  } while(ntrans <= 10*system_size && fitness[0].second > geometry_tolerance);
+  } while(ntrans <= 10*system_size && fitness[0].second > convergence_threshold);
   if (fitness[0].first < initial_error) {
 #ifdef VERBOSE
     std::cout << "Loading optimized geometry with " << 100.0*(initial_error - fitness[0].first)/initial_error << " percent improvement" << std::endl;
@@ -898,13 +898,13 @@ void Spacetime::optimize()
 
     for(i=0; i<nv; ++i) {
       if (!skeleton->events[i].active()) continue;
-      if (std::abs(skeleton->events[i].get_geometric_deficiency()) < geometry_tolerance) continue;
+      if (std::abs(skeleton->events[i].get_geometric_deficiency()) < convergence_threshold) continue;
       bbarrel.insert(i);
       // Now check to see if all of this vertex's neighbours have a geometric deficiency > 0
       good = true;
       skeleton->events[i].get_neighbours(N);
       for(it=N.begin(); it!=N.end(); ++it) {
-        if (std::abs(skeleton->events[*it].get_geometric_deficiency()) < geometry_tolerance) {
+        if (std::abs(skeleton->events[*it].get_geometric_deficiency()) < convergence_threshold) {
           good = false;
           break;
         }
@@ -926,7 +926,7 @@ void Spacetime::optimize()
       n = skeleton->RND->irandom(candidates);
       // It's possible that this event now has a vanishing geometric deficiency due to the 
       // effect of an earlier iteration...
-      if (std::abs(skeleton->events[n].get_geometric_deficiency()) < geometry_tolerance) continue;
+      if (std::abs(skeleton->events[n].get_geometric_deficiency()) < convergence_threshold) continue;
       // In fact the variance we use should grow smaller as the geometric deficiency of the
       // event diminishes with 0.05 the maximum
       sigma = std::min(0.05,0.1*std::abs(skeleton->events[n].get_geometric_deficiency()));

@@ -2,7 +2,6 @@
 
 using namespace DIAPLEXIS;
 
-const int Complex::topological_radius;
 const int Complex::ND;
 
 Complex::Complex()

@@ -20,6 +20,9 @@ namespace DIAPLEXIS {
     /// This property is true if this complex satisfies the axioms of an
     /// orientable pseudomanifold.
     bool orientable = false;
+    /// The combinatorial size of the subgraph which is used to compute the Event::entwinement 
+    /// property.
+    int topological_radius = 4;
     /// This property stores the 0-simplices (events) of the complex as a
     /// vector of type Event.
     std::vector<Event> events;
@@ -43,9 +46,6 @@ namespace DIAPLEXIS {
     /// The maximum dimension of the complex and thus size of the Complex::simplices and 
     /// Complex::index_table arrays.
     static const int ND = 10;
-    /// The combinatorial size of the subgraph which is used to compute the Event::entwinement 
-    /// property.
-    static const int topological_radius = 4;
 
     /// This method allocates the memory for the properties Complex::simplices, Complex::index_table, Complex::pi1, Complex::H and Complex::RND.
     void allocate();
@@ -175,8 +175,8 @@ namespace DIAPLEXIS {
     bool energy_check() const;
     /// This method returns the sum of the energy property for every event belonging to the sheet whose index is the method's argument.
     double total_energy(int) const;
-    /// This method carries out the energy diffusion among neighbouring active events in the complex - the method's argument is a parameter that controls the rate of energy transfer.
-    void energy_diffusion(double);
+    /// This method carries out the energy diffusion among neighbouring active events in the complex - the method's first argument is a parameter that controls the rate of energy transfer, the second is a threshold for distinguishing energy conservation during diffusion.
+    void energy_diffusion(double,double);
     /// This method carries out the energy diffusion among the complex's events using a chip-firing game algorithm, with the method's argument equal to the number of chips to be distributed among the active events.
     void energy_diffusion(int);
     /// This method computes the extent to which a given d-simplex (d is the first argument while the second is the simplex's index in Complex::simplices[d]) can be embedded in Euclidean space by calculating the number of non-zero eigenvalues of a matrix derived from the simplex's edge lengths. The simplex can only be embedded if it is entirely timelike or spacelike, otherwise the method returns -1.
