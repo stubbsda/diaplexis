@@ -608,9 +608,9 @@ namespace DIAPLEXIS {
   {
     std::string out = "(";
     for(int i=0; i<(signed) codex.size()-1; ++i) {
-      out += (codex[i].sleep > 0) ? "0," : "1,";
+      out += (codex[i].get_sleep() > 0) ? "0," : "1,";
     }
-    out += (codex[codex.size()-1].sleep > 0) ? "0" : "1";
+    out += (codex[codex.size()-1].get_sleep() > 0) ? "0" : "1";
     out += ")";
     return out;
   }
@@ -667,7 +667,7 @@ namespace DIAPLEXIS {
 
   inline std::string Spacetime::get_sheet_ops(int n) const 
   {
-    return codex[n].hyphantic_ops;
+    return codex[n].get_hyphantic_operations();
   }
 
   inline std::string Spacetime::get_sheet_activity() const {

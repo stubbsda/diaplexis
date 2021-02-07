@@ -158,7 +158,7 @@ bool Spacetime::advance()
 
   skeleton->RND->shuffle(order,n);
   for(i=0; i<n; ++i) {
-    if (codex[order[i]].sleep > 0) continue;
+    if (codex[order[i]].get_sleep() > 0) continue;
     hyphansis(order[i]);
   }
 
@@ -636,7 +636,7 @@ bool Spacetime::global_operations()
     }
     nactive = (signed) codex.size();
     for(i=0; i<nactive; ++i) {
-      codex[i].sleep = 0;
+      codex[i].set_sleep(0);
     }
   }
   else {
@@ -675,11 +675,8 @@ int Spacetime::sheet_fission(int parent)
   const int nv = (signed) skeleton->events.size();
   double alpha = skeleton->RND->drandom();
 
-  if (alpha < codex[parent].fertility) {
-    offspring = 1 + int((codex[parent].fertility - alpha)*double(max_children - 1)*std::sin(M_PI/2.0*codex[parent].fertility));
-    codex[parent].fertility = 0.0;
-    if ((nt + offspring) > max_sheets) offspring = max_sheets - nt;
-  }
+  offspring = codex[parent].reproduction(alpha,max_children);
+  if ((nt + offspring) > max_sheets) offspring = max_sheets - nt;
 
 #ifdef VERBOSE
   std::cout << "Sheet " << parent << " spawning " << offspring << " daughter sheet(s)..." << std::endl;
@@ -706,43 +703,44 @@ int Spacetime::sheet_fission(int parent)
 int Spacetime::sheet_dynamics()
 {
   int i,nc = 0;
-  double alpha;
   const int nt = (signed) codex.size();
 
 #ifdef VERBOSE
   std::cout << "At relaxation step " << iterations << " the sheet parameters are: " << std::endl;
   for(i=0; i<nt; ++i) {
-    std::cout << "   Sheet " << i << " has sleep = " << codex[i].sleep << ",  fertility = " << codex[i].fertility << " and drowsiness = " << codex[i].drowsiness << std::endl; 
+    codex[i].write_parameters(true);
   }
 #endif
 
   // First handle reproduction...
   if (nt < max_sheets) {
     for(i=0; i<nt; ++i) {
-      if (codex[i].sleep > 0) continue;
+      if (codex[i].get_sleep() > 0) continue;
       nc += sheet_fission(i);
     }
   }
 
   // Now hibernation...
   for(i=0; i<nt; ++i) {
-    if (codex[i].sleep > 0) {
-      codex[i].sleep -= 1;
-      if (codex[i].sleep == 0) {
-        // This sheet has just been recalled to life ...
+    if (codex[i].get_sleep() > 0) {
+      codex[i].hibernate();
+      if (codex[i].get_sleep() == 0) {
+      // This sheet has just been recalled to life ...
 #ifdef VERBOSE
-        std::cout << "Sheet " << i << " has become active again." << std::endl;
+        std::cout << "Sheet " << i+1 << " has become active again." << std::endl;
 #endif
-        codex[i].drowsiness = 0.1*skeleton->RND->drandom();
-        codex[i].fertility = (1.0 - double(nt + nc)/double(max_sheets))*skeleton->RND->drandom();
+        codex[i].set_drowsiness(0.1*skeleton->RND->drandom());
+        codex[i].set_fertility((1.0 - double(nt + nc)/double(max_sheets))*skeleton->RND->drandom());
       }
     }
     else {
-      alpha = skeleton->RND->drandom();
-      if (alpha < codex[i].drowsiness) {
-        codex[i].sleep = 1 + int((codex[i].drowsiness - alpha)*double(skeleton->RND->irandom(max_hibernation)));
+      double alpha = skeleton->RND->drandom(),d = codex[i].get_drowsiness();
+    
+      if (alpha < d) {
+        int n = 1 + int((d - alpha)*double(skeleton->RND->irandom(max_hibernation)));
+        codex[i].set_sleep(n);
 #ifdef VERBOSE
-        std::cout << "Sheet " << i << " becoming inactive for " << codex[i].sleep << " relaxation steps." << std::endl;
+        std::cout << "Sheet " << i+1 << " becoming inactive for " << n << " relaxation steps." << std::endl;
 #endif
       }
     }
@@ -762,14 +760,8 @@ void Spacetime::compute_global_topology(int sheet)
   }
   else {
     SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
-    bool bdry;
-
     skeleton->compute_global_nexus(NX,sheet);
-    codex[sheet].H->compute(NX);
-    if (high_memory) codex[sheet].pi1->compute(NX);
-    codex[sheet].pseudomanifold = NX->pseudomanifold(&bdry);
-    codex[sheet].boundary = bdry;
-    if (codex[sheet].pseudomanifold) codex[sheet].orientable = NX->orientable();
+    codex[sheet].compute_topology(NX,high_memory);
     delete NX;
   }
 }
@@ -865,7 +857,7 @@ int Spacetime::ubiquity_permutation(double temperature)
     alpha = std::exp(-temperature*E);
     hdistance = 0;
     for(j=0; j<nt; ++j) {
-      if (codex[j].sleep > 0) continue;
+      if (codex[j].get_sleep() > 0) continue;
       if (skeleton->RND->drandom() > alpha) {
         if (ubiquity.count(j) > 0) {
           mutated.erase(j);

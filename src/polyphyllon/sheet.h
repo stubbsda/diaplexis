@@ -62,18 +62,6 @@ namespace DIAPLEXIS {
     /// parse_music_score() method. 
     std::vector<int>* hyphantic_notes;
 
-    /// This method calls clear on the Sheet::H and Sheet::pi1 properties and restores the other properties of the class to their default value.
-    void clear();
-    /// This method sets all of the global topological properties for this sheet: Sheet::H, Sheet::pi1, Sheet::pseudomanifold, Sheet::boundary and Sheet::orientable.
-    void set_topology(const SYNARMOSMA::Homology*,const SYNARMOSMA::Homotopy*,bool,bool,bool);
-    /// This method writes the instance properties to a binary disk file and returns the number of bytes written to the file.
-    int serialize(std::ofstream&) const;
-    /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
-    int deserialize(std::ifstream&);
-    /// This method accepts as its arguments the maximum number of relaxation steps (Spacetime::max_iter) and the filename of the musical score (Spacetime::hyphansis_score). The method parses this file and selects those notes corresponding to its value of Sheet::voice to fill the array Sheet::hyphantic_notes, used by the Spacetime::musical_hyphansis method for the topological weaving of the spacetime complex.
-    void parse_music_score(int,std::string&);
-    /// This method sets the value of the Sheet::voice property to the method's argument.
-    inline void set_voice(int);
    public:
     /// The default constructor which allocates the memory for the Sheet::H and Sheet::pi1 properties and sets Sheet::active to true.
     Sheet();
@@ -87,12 +75,141 @@ namespace DIAPLEXIS {
     Sheet& operator =(const Sheet&);
     /// The destructor which frees the memory from the Sheet::H and Sheet::pi1 properties.
     ~Sheet();
-    friend class Spacetime;
+    /// This method calls clear on the Sheet::H and Sheet::pi1 properties and restores the other properties of the class to their default value.
+    void clear();
+    /// This method computes the values of the Sheet::H and (if the second argument is true) Sheet::pi1 properties from the abstract simplicial complex that is its first argument. The method then also computes the Sheet::pseudomanifold, Sheet::boundary and Sheet::orientable properties. 
+    void compute_topology(const SYNARMOSMA::Nexus*,bool);
+    /// This method sets all of the global topological properties for this sheet: Sheet::H, Sheet::pi1, Sheet::pseudomanifold, Sheet::boundary and Sheet::orientable.
+    void set_topology(const SYNARMOSMA::Homology*,const SYNARMOSMA::Homotopy*,bool,bool,bool);
+    /// This method writes the instance properties to a binary disk file and returns the number of bytes written to the file.
+    int serialize(std::ofstream&) const;
+    /// This method calls the clear() method on the instance and then reads the properties from a binary disk file and returns the number of bytes read.
+    int deserialize(std::ifstream&);
+    /// This method accepts as its arguments the maximum number of relaxation steps (Spacetime::max_iter) and the filename of the musical score (Spacetime::hyphansis_score). The method parses this file and selects those notes corresponding to its value of Sheet::voice to fill the array Sheet::hyphantic_notes, used by the Spacetime::musical_hyphansis method for the topological weaving of the spacetime complex.
+    void parse_music_score(int,std::string&);
+    /// This method writes to the screen the values of the Sheet::index and Sheet::parent properties; if the argument is true it also writes the value of Sheet::fertility, Sheet::drowsiness and Sheet::sleep, otherwise Sheet::voice.
+    void write_parameters(bool) const;
+    /// This method determines the number of offspring to be generated at this step, based on a uniform random variate between zero and one (the first argument) and the value of Spacetime::max_children (the second argument); the method returns the number of offspring given the current Sheet::fertility value.
+    int reproduction(double,int);
+    /// This method writes the output of calling the write method of the Sheet::H property to the method's argument.
+    inline void write_homology(std::string&) const;
+    /// This method writes the output of calling the write method of the Sheet::pi1 property to the method's argument.
+    inline void write_homotopy(std::string&) const;
+    /// This method sets the value of the Sheet::hyphantic_ops property to its default (empty) value.
+    inline void clear_hyphansis();
+    /// This method appends its argument to the Sheet::hyphantic_ops property.
+    inline void append_operation(const std::string&);
+    /// This method decrements the value of Sheet::sleep by one. 
+    inline void hibernate();
+    /// This method sets the value of the Sheet::voice property to the method's argument.
+    inline void set_voice(int);
+    /// This method sets the value of the Sheet::sleep property to the method's argument.
+    inline void set_sleep(int);
+    /// This method sets the value of the Sheet::drowsiness property to the method's argument.
+    inline void set_drowsiness(double);
+    /// This method sets the value of the Sheet::fertility property to the method's argument.
+    inline void set_fertility(double);
+    /// This method returns the current value of the Sheet::voice property. 
+    inline int get_voice() const;
+    /// This method writes to its first argument the vector of notes in Sheet::hyphantic_notes for the element corresponding to the method's second argument. 
+    inline void get_notes(std::vector<int>&,int) const;
+    /// This method returns the current value of the Sheet::sleep property. 
+    inline int get_sleep() const;
+    /// This method returns the current value of the Sheet::pseudomanifold property. 
+    inline bool get_pseudomanifold() const;
+    /// This method returns the current value of the Sheet::orientable property. 
+    inline bool get_orientable() const;
+    /// This method returns the current value of the Sheet::boundary property. 
+    inline bool get_boundary() const;
+    /// This method returns the current value of the Sheet::drowsiness property. 
+    inline double get_drowsiness() const;
+    /// This method returns the current value of the Sheet::hyphantic_ops property. 
+    inline std::string get_hyphantic_operations() const;
   };
+
+  void Sheet::clear_hyphansis()
+  {
+    hyphantic_ops = "";
+  }
+
+  void Sheet::write_homotopy(std::string& output) const
+  {
+    output = pi1->write();
+  }
+
+  void Sheet::write_homology(std::string& output) const
+  {
+    output = H->write();
+  }
+
+  void Sheet::append_operation(const std::string& op)
+  {
+    hyphantic_ops += op;
+  }
+
+  void Sheet::hibernate()
+  {
+    sleep -= 1;
+  }
 
   void Sheet::set_voice(int n)
   {
     voice = n;
+  }
+
+  void Sheet::set_sleep(int n)
+  {
+    sleep = n;
+  }
+
+  void Sheet::set_drowsiness(double x)
+  {
+    drowsiness = x;
+  }
+
+  void Sheet::set_fertility(double x)
+  {
+    fertility = x;
+  }
+
+  bool Sheet::get_pseudomanifold() const
+  {
+    return pseudomanifold;
+  }
+
+  bool Sheet::get_boundary() const
+  {
+    return boundary;
+  }
+
+  bool Sheet::get_orientable() const
+  {
+    return orientable;
+  }
+
+  int Sheet::get_voice() const
+  {
+    return voice;
+  }
+
+  void Sheet::get_notes(std::vector<int>& melody,int n) const
+  {
+    melody = hyphantic_notes[n];
+  }
+
+  int Sheet::get_sleep() const
+  {
+    return sleep;
+  }
+
+  double Sheet::get_drowsiness() const
+  {
+    return drowsiness;
+  }
+
+  std::string Sheet::get_hyphantic_operations() const
+  {
+    return hyphantic_ops;
   }
 }
 #endif

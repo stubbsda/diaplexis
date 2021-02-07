@@ -836,12 +836,12 @@ void Spacetime::write_log() const
 
     if (weaving == Hyphansis::musical) {
       atom = sheet.append_child("Voice");
-      nvalue = std::to_string(codex[i].voice);
+      nvalue = std::to_string(codex[i].get_voice());
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
 
     atom = sheet.append_child("State");
-    sstate = (codex[i].sleep > 0) ? false : true;
+    sstate = (codex[i].get_sleep() > 0) ? false : true;
     atom.append_child(pugi::node_pcdata).set_value(bvalue[sstate].c_str());
 
     nn = skeleton->cardinality(0,i);
@@ -941,17 +941,18 @@ void Spacetime::write_log() const
       }
     }
 
+    sstate = codex[i].get_pseudomanifold();
     atom = sheet.append_child("Pseudomanifold");
-    nvalue = (codex[i].pseudomanifold) ? "True" : "False";
+    nvalue = (sstate) ? "True" : "False";
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
-    if (codex[i].pseudomanifold) {
+    if (sstate) {
       atom = sheet.append_child("Boundary");
-      nvalue = (codex[i].boundary) ? "True" : "False";
+      nvalue = (codex[i].get_boundary()) ? "True" : "False";
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
       atom = sheet.append_child("Orientable");
-      nvalue = (codex[i].orientable) ? "True" : "False";
+      nvalue = (codex[i].get_orientable()) ? "True" : "False";
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
     else {
@@ -963,12 +964,12 @@ void Spacetime::write_log() const
     }
 
     atom = sheet.append_child("Homology");
-    nvalue = codex[i].H->write();
+    codex[i].write_homology(nvalue);
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     if (high_memory) {
       atom = sheet.append_child("Homotopy");
-      nvalue = codex[i].pi1->write();
+      codex[i].write_homotopy(nvalue);
       atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
 
@@ -1073,11 +1074,12 @@ void Spacetime::write_log() const
     atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
 
     atom = sheet.append_child("HyphanticSequence");
-    if (codex[i].hyphantic_ops == "") {
+    nvalue = codex[i].get_hyphantic_operations();
+    if (nvalue == "") {
       atom.append_child(pugi::node_pcdata).set_value("NULL");
     }
     else {
-      atom.append_child(pugi::node_pcdata).set_value(codex[i].hyphantic_ops.c_str());
+      atom.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
     }
   }
   logfile.save_file(log_file.c_str());
@@ -1183,7 +1185,7 @@ void Spacetime::read_state(const std::string& filename)
   nactive = 0;
   for(i=0; i<j; ++i) {
     codex[i].deserialize(s);
-    if (codex[i].sleep == 0) nactive++;
+    if (codex[i].get_sleep() == 0) nactive++;
   }
 
   s.close();

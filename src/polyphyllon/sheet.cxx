@@ -117,6 +117,17 @@ void Sheet::set_topology(const SYNARMOSMA::Homology* K,const SYNARMOSMA::Homotop
   orientable = orient;
 }
 
+void Sheet::compute_topology(const SYNARMOSMA::Nexus* NX,bool high_memory)
+{
+  bool bdry;
+
+  H->compute(NX);
+  if (high_memory) pi1->compute(NX);
+  pseudomanifold = NX->pseudomanifold(&bdry);
+  boundary = bdry;
+  if (pseudomanifold) orientable = NX->orientable();
+}
+
 void Sheet::parse_music_score(int max_iter,std::string& filename)
 {
   int i,n,v,its,nsilent = 0;
@@ -152,6 +163,31 @@ void Sheet::parse_music_score(int max_iter,std::string& filename)
   
   // Close the score file
   mscore.close();
+}
+
+void Sheet::write_parameters(bool dynamic) const
+{
+  std::cout << "   Sheet " << index << " has the parameters:" << std::endl;
+  std::cout << "      Parent = " << parent << std::endl;
+  if (dynamic) {
+    std::cout << "      Fertility = " << fertility << std::endl;
+    std::cout << "      Drowsiness = " << drowsiness << std::endl;
+    std::cout << "      Sleep = " << sleep << std::endl;
+  }
+  else {
+    std::cout << "      Voice = " << voice << std::endl;
+  }
+}
+
+int Sheet::reproduction(double alpha,int max_children)
+{
+  int offspring = 0;
+
+  if (alpha < fertility) {
+    offspring = 1 + int((fertility - alpha)*double(max_children - 1)*std::sin(M_PI/2.0*fertility));
+    fertility = 0.0;
+  }
+  return offspring;
 }
 
 int Sheet::serialize(std::ofstream& s) const

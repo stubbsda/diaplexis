@@ -360,10 +360,12 @@ int Spacetime::musical_hyphansis(int sheet)
   int i,j,v,w,nsuccess = 0;
   bool success = false;
   std::string op,tag,opstring;
-  std::vector<int> key_list = codex[sheet].hyphantic_notes[iterations];
+  std::vector<int> key_list;
   std::vector<double> pvalues;
   std::set<int> candidates[25];
   const int opcount = (signed) key_list.size();
+
+  codex[sheet].get_notes(key_list,iterations);
 
   // Open the hyphantic log file
   std::ofstream s(hyphansis_file,std::ios::app);
@@ -395,7 +397,7 @@ int Spacetime::musical_hyphansis(int sheet)
       if (success) {
         s << "  <Operation>T," << v << ":" << w << "</Operation>" << std::endl;
         regularization(false,sheet);
-        codex[sheet].hyphantic_ops += "T";
+        codex[sheet].append_operation("T");
         nsuccess++;
         candidates[key_mapping[40]].erase(v);
         candidates[key_mapping[40]].erase(w);
@@ -481,7 +483,7 @@ int Spacetime::musical_hyphansis(int sheet)
     if (success) {
       s << "    <Operation>" << opstring << "</Operation>" << std::endl;
       regularization(false,sheet);
-      codex[sheet].hyphantic_ops += op;
+      codex[sheet].append_operation(op);
       nsuccess++;
     }
 #ifdef DEBUG
@@ -521,7 +523,7 @@ int Spacetime::dynamic_hyphansis(int sheet)
     v = candidates[0].first;
     if (skeleton->events[v].get_deficiency() < -std::numeric_limits<double>::epsilon()) {
       if (!expansion(v,sheet)) throw std::runtime_error("Unable to expand singleton spacetime complex!");
-      codex[sheet].hyphantic_ops += 'E';
+      codex[sheet].append_operation("E");
       regularization(false,sheet);
       s << "    <Operation>E," << v << "</Operation>" << std::endl;
       nsuccess++;
@@ -633,7 +635,7 @@ int Spacetime::dynamic_hyphansis(int sheet)
       if (success) {
         s << "    <Operation>" << opstring << "</Operation>" << std::endl;
         regularization(false,sheet);
-        codex[sheet].hyphantic_ops += op;
+        codex[sheet].append_operation(op);
         nsuccess++;
       }
 #ifdef DEBUG
@@ -658,7 +660,7 @@ int Spacetime::dynamic_hyphansis(int sheet)
       skeleton->simplices[1][i].get_vertices(vx);
       if (skeleton->edge_parity_mutation(vx[0],vx[1],sheet)) {
         s << "    <Operation>T," << vx[0] << ":" << vx[1] << "</Operation>" << std::endl;
-        codex[sheet].hyphantic_ops += "T";
+        codex[sheet].append_operation("T");
         nsuccess++;
       }
     }
@@ -673,7 +675,7 @@ int Spacetime::dynamic_hyphansis(int sheet)
 
 void Spacetime::hyphansis(int sheet)
 {
-  codex[sheet].hyphantic_ops = "";
+  codex[sheet].clear_hyphansis();
 
   std::ofstream s(hyphansis_file,std::ios::app);
   s << "  <Sheet>" << std::endl;
@@ -697,12 +699,12 @@ void Spacetime::hyphansis(int sheet)
   int ns = (weaving == Hyphansis::dynamic) ? dynamic_hyphansis(sheet) : musical_hyphansis(sheet);
 
   if (ns > 0 && foliodynamics) { 
-    double alpha = codex[sheet].drowsiness;
+    double alpha = codex[sheet].get_drowsiness();
     if (alpha < std::numeric_limits<double>::epsilon()) {
-      codex[sheet].drowsiness = 0.01*skeleton->RND->drandom();
+      codex[sheet].set_drowsiness(0.01*skeleton->RND->drandom());
     }
     else {
-      codex[sheet].drowsiness = std::min(1.0,alpha*(1.0 + 2.0/M_PI*std::atan(ns)));
+      codex[sheet].set_drowsiness(std::min(1.0,alpha*(1.0 + 2.0/M_PI*std::atan(ns))));
     }
   }
 }

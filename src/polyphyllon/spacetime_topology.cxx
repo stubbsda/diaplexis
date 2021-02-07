@@ -399,7 +399,7 @@ void Spacetime::regularization(bool minimal,int sheet)
   const int nt = (signed) codex.size();
 
   for(i=0; i<nt; ++i) {
-    if (codex[i].sleep == 0) colours.insert(i);
+    if (codex[i].get_sleep() == 0) colours.insert(i);
   }
   nc = skeleton->component_analysis(component,sheet);
 #ifdef VERBOSE

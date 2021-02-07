@@ -19,7 +19,7 @@ class euplecton:
     def __init__(self,master=None):
         self.master = master
         self.master.title('Parameter File Editor')
-        self.master.geometry('700x880')
+        self.master.geometry('700x935')
         self.master.resizable(0,0)
 
         self.sheet_dynamics = tkinter.BooleanVar()
@@ -49,6 +49,7 @@ class euplecton:
         self.initial_events = tkinter.IntVar()
         self.max_iterations = tkinter.IntVar()
         self.initial_dimension = tkinter.IntVar()
+        self.topological_radius = tkinter.IntVar()
         self.initial_sheets = tkinter.IntVar()
         self.max_child_count = tkinter.IntVar()
         self.max_quiescence = tkinter.IntVar()
@@ -66,11 +67,12 @@ class euplecton:
         self.max_cg_steps = tkinter.IntVar()
         self.max_ls_steps = tkinter.IntVar()
 
+        self.convergence_criterion = tkinter.DoubleVar()
+        self.coupling_constant = tkinter.DoubleVar()
         self.edge_probability = tkinter.DoubleVar()
         self.abnormality_threshold = tkinter.DoubleVar()
         self.superposition_threshold = tkinter.DoubleVar()
         self.parity_probability = tkinter.DoubleVar()
-        self.geometry_threshold = tkinter.DoubleVar()
         self.thermal_variance = tkinter.DoubleVar()
         self.thermalization_criterion = tkinter.DoubleVar()
         self.step_size = tkinter.DoubleVar()
@@ -112,6 +114,9 @@ class euplecton:
         initial_state = tkinter.OptionMenu(global_group,self.initial_state,*initial_states,command=self.istate_change)
         self.sheet_check = tkinter.Checkbutton(global_group,text='Sheet Dynamics',variable=self.sheet_dynamics,command=self.sdynamics_change)
         self.label6 = tkinter.Label(global_group,text='Number of Initial Sheets:',wraplength=250,justify=tkinter.LEFT)
+        label7 = tkinter.Label(global_group,text='Convergence Threshold:',wraplength=250,justify=tkinter.LEFT)
+        label8 = tkinter.Label(global_group,text='Coupling Constant:',wraplength=250,justify=tkinter.LEFT)
+        label10 = tkinter.Label(global_group,text='Topological Capture Radius:',wraplength=250,justify=tkinter.LEFT)
         superposition_check = tkinter.Checkbutton(global_group,text='Superposable',variable=self.superposable,command=self.superposition_change)
         compression_check = tkinter.Checkbutton(global_group,text='Compressible',variable=self.compressible)
         self.permutation_check = tkinter.Checkbutton(global_group,text='Permutable',variable=self.permutable)
@@ -144,7 +149,6 @@ class euplecton:
 
         label30 = tkinter.Label(geometry_group,text='Solver Type:',wraplength=250,justify=tkinter.LEFT)
         solver_type = tkinter.OptionMenu(geometry_group,self.solver_type,*solvers,command=self.gsolver_change)
-        label31 = tkinter.Label(geometry_group,text='Geometry Tolerance:',wraplength=250,justify=tkinter.LEFT)
         self.label32 = tkinter.Label(geometry_group,text='Solver Iterations:',wraplength=250,justify=tkinter.LEFT)
         self.label33 = tkinter.Label(geometry_group,text='Maximum Number of Generations:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label34 = tkinter.Label(geometry_group,text='Population Pool Size:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
@@ -174,7 +178,10 @@ class euplecton:
         entry2 = tkinter.Entry(global_group,width=7,textvariable=self.max_iterations)
         self.entry3 = tkinter.Entry(global_group,width=7,textvariable=self.initial_dimension,state=tkinter.DISABLED)
         self.entry6 = tkinter.Entry(global_group,width=7,textvariable=self.initial_sheets)
+        entry7 = tkinter.Entry(global_group,width=7,textvariable=self.convergence_criterion)
+        entry8 = tkinter.Entry(global_group,width=7,textvariable=self.coupling_constant)
         entry9 = tkinter.Entry(global_group,width=7,textvariable=self.chkpt_frequency)
+        entry10 = tkinter.Entry(global_group,width=7,textvariable=self.topological_radius)
         self.entry12 = tkinter.Entry(global_group,width=7,textvariable=self.edge_probability,state=tkinter.DISABLED)
         entry13 = tkinter.Entry(global_group,width=7,textvariable=self.abnormality_threshold)
         self.entry14 = tkinter.Entry(global_group,width=7,textvariable=self.parity_probability)
@@ -185,7 +192,6 @@ class euplecton:
         self.entry27 = tkinter.Entry(global_group,width=7,textvariable=self.max_sheet_count,state=tkinter.DISABLED)
         self.entry28 = tkinter.Entry(global_group,width=7,textvariable=self.max_child_count,state=tkinter.DISABLED)
         self.entry29 = tkinter.Entry(global_group,width=7,textvariable=self.max_quiescence,state=tkinter.DISABLED)
-        entry31 = tkinter.Entry(geometry_group,width=7,textvariable=self.geometry_threshold)
         self.entry32 = tkinter.Entry(geometry_group,width=7,textvariable=self.solver_iterations)
         self.entry33 = tkinter.Entry(geometry_group,width=7,textvariable=self.max_generations,state=tkinter.DISABLED)
         self.entry34 = tkinter.Entry(geometry_group,width=7,textvariable=self.pool_size,state=tkinter.DISABLED)
@@ -220,29 +226,33 @@ class euplecton:
         self.entry1.grid(row=1,column=1,sticky=tkinter.W)
         label2.grid(row=2,column=0,sticky=tkinter.W)
         entry2.grid(row=2,column=1,sticky=tkinter.W)
-        self.label3.grid(row=3,column=0,sticky=tkinter.W)
-        self.entry3.grid(row=3,column=1,sticky=tkinter.W)
-        self.label6.grid(row=4,column=0,sticky=tkinter.W)
-        self.entry6.grid(row=4,column=1,sticky=tkinter.W)
-        self.sheet_check.grid(row=5,column=0,sticky=tkinter.W)
-        self.label27.grid(row=6,column=0,sticky=tkinter.W)
-        self.entry27.grid(row=6,column=1,sticky=tkinter.W)
-        self.label28.grid(row=7,column=0,sticky=tkinter.W)
-        self.entry28.grid(row=7,column=1,sticky=tkinter.W)
-        self.label29.grid(row=8,column=0,sticky=tkinter.W)
-        self.entry29.grid(row=8,column=1,sticky=tkinter.W)
-        label4.grid(row=9,column=0,sticky=tkinter.W)
-        initial_state.grid(row=9,column=1,sticky=tkinter.W)
-        label13.grid(row=10,column=0,sticky=tkinter.W)
-        entry13.grid(row=10,column=1,sticky=tkinter.W)
-        label20.grid(row=11,column=0,sticky=tkinter.W)
-        entry20.grid(row=11,column=1,sticky=tkinter.W)
-        label9.grid(row=12,column=0,sticky=tkinter.W)
-        entry9.grid(row=12,column=1,sticky=tkinter.W)
-        label17.grid(row=13,column=0,sticky=tkinter.W)
-        homology_method.grid(row=13,column=1,sticky=tkinter.W)
-        label18.grid(row=14,column=0,sticky=tkinter.W)
-        homology_field.grid(row=14,column=1,sticky=tkinter.W)
+        label7.grid(row=3,column=0,sticky=tkinter.W)
+        entry7.grid(row=3,column=1,sticky=tkinter.W)
+        label8.grid(row=4,column=0,sticky=tkinter.W)
+        entry8.grid(row=4,column=1,sticky=tkinter.W)
+        self.label3.grid(row=5,column=0,sticky=tkinter.W)
+        self.entry3.grid(row=5,column=1,sticky=tkinter.W)
+        self.label6.grid(row=6,column=0,sticky=tkinter.W)
+        self.entry6.grid(row=6,column=1,sticky=tkinter.W)
+        self.sheet_check.grid(row=7,column=0,sticky=tkinter.W)
+        self.label27.grid(row=8,column=0,sticky=tkinter.W)
+        self.entry27.grid(row=8,column=1,sticky=tkinter.W)
+        self.label28.grid(row=9,column=0,sticky=tkinter.W)
+        self.entry28.grid(row=9,column=1,sticky=tkinter.W)
+        self.label29.grid(row=10,column=0,sticky=tkinter.W)
+        self.entry29.grid(row=10,column=1,sticky=tkinter.W)
+        label4.grid(row=11,column=0,sticky=tkinter.W)
+        initial_state.grid(row=11,column=1,sticky=tkinter.W)
+        label13.grid(row=12,column=0,sticky=tkinter.W)
+        entry13.grid(row=12,column=1,sticky=tkinter.W)
+        label20.grid(row=13,column=0,sticky=tkinter.W)
+        entry20.grid(row=13,column=1,sticky=tkinter.W)
+        label9.grid(row=14,column=0,sticky=tkinter.W)
+        entry9.grid(row=14,column=1,sticky=tkinter.W)
+        label17.grid(row=15,column=0,sticky=tkinter.W)
+        homology_method.grid(row=15,column=1,sticky=tkinter.W)
+        label18.grid(row=16,column=0,sticky=tkinter.W)
+        homology_field.grid(row=16,column=1,sticky=tkinter.W)
 
         superposition_check.grid(row=0,column=3,sticky=tkinter.W)
         compression_check.grid(row=0,column=4,sticky=tkinter.W)
@@ -268,11 +278,11 @@ class euplecton:
         self.perturb_topology.grid(row=12,column=3,sticky=tkinter.W)
         self.perturb_geometry.grid(row=13,column=3,sticky=tkinter.W)
         self.perturb_energy.grid(row=14,column=3,sticky=tkinter.W)
+        label10.grid(row=15,column=3,sticky=tkinter.W)
+        entry10.grid(row=15,column=4,sticky=tkinter.W)
 
         label30.grid(row=0,column=0,sticky=tkinter.W)
         solver_type.grid(row=0,column=1,sticky=tkinter.W)
-        label31.grid(row=1,column=0,sticky=tkinter.W)
-        entry31.grid(row=1,column=1,sticky=tkinter.W)
         self.label40.grid(row=2,column=0,sticky=tkinter.W)
         self.engine.grid(row=2,column=1,sticky=tkinter.W)
         self.label41.grid(row=3,column=0,sticky=tkinter.W)
@@ -589,6 +599,7 @@ class euplecton:
         self.initial_events.set(1296)
         self.max_iterations.set(25)
         self.initial_dimension.set(4)
+        self.topological_radius.set(4)
         self.initial_sheets.set(1)
         self.max_child_count.set(10)
         self.max_sheet_count.set(128)
@@ -606,11 +617,12 @@ class euplecton:
         self.max_cg_steps.set(20)
         self.max_ls_steps.set(10)
 
+        self.convergence_criterion.set(0.00001)
+        self.coupling_constant.set(0.2)
         self.edge_probability.set(0.15)
         self.abnormality_threshold.set(0.1)
         self.superposition_threshold.set(0.05)
         self.parity_probability.set(0.05)
-        self.geometry_threshold.set(0.00005)
         self.thermal_variance.set(0.5)
         self.thermalization_criterion.set(0.001)
         self.step_size.set(0.05)
@@ -653,6 +665,12 @@ class euplecton:
                self.random_seed.set(int(value))
             elif name == 'CheckpointFrequency':
                self.chkpt_frequency.set(int(value))
+            elif name == 'ConvergenceThreshold':
+               self.convergence_criterion.set(float(value))
+            elif name == 'CouplingConstant':
+               self.coupling_constant.set(float(value))
+            elif name == 'TopologicalRadius':
+               self.topological_radius.set(int(value))
             elif name == 'Compressible':
                self.compressible.set(value)
             elif name == 'Permutable':
@@ -736,8 +754,6 @@ class euplecton:
                   self.solver_type.set('Mechanical')
                elif value == 'SIMPLEX':
                   self.solver_type.set('Simplex')
-            elif name == 'GeometryTolerance':
-               self.geometry_threshold.set(float(value))
             elif name == 'SolverIterations':
                self.solver_iterations.set(int(value))
             elif name == 'MaximumGenerations':
@@ -796,9 +812,6 @@ class euplecton:
 
     def write_parameters(self):
         # Perform a variety of sanity checks, starting with the global parameters...
-        if not(self.geometry_threshold.get() > 0.0):
-            messagebox.showerror("Illegal Value","The geometry tolerance must be positive!")
-            return
         if self.initial_events.get() < 1:
             messagebox.showerror("Illegal Value","The number of events must be positive!")
             return
@@ -807,6 +820,15 @@ class euplecton:
             return
         if self.chkpt_frequency.get() < 1:
             messagebox.showerror("Illegal Value","The checkpoint frequency must be positive!")
+            return
+        if not(self.convergence_criterion.get() > 0.0):
+            messagebox.showerror("Illegal Value","The convergence threshold must be positive!")
+            return
+        if not(self.coupling_constant.get() > 0.0):
+            messagebox.showerror("Illegal Value","The coupling constant must be positive!")
+            return
+        if self.topological_radius.get() < 1:
+            messagebox.showerror("Illegal Value","The topological capture radius must be positive!")
             return
         if self.background_dim.get() < 1:
             messagebox.showerror("Illegal Value","The background dimension must be positive!")
@@ -991,6 +1013,12 @@ class euplecton:
         ptype.text = str(self.random_seed.get())
         ptype = ET.SubElement(global_params,'CheckpointFrequency')
         ptype.text = str(self.chkpt_frequency.get())
+        ptype = ET.SubElement(global_params,'ConvergenceThreshold')
+        ptype.text = str(self.convergence_criterion.get())
+        ptype = ET.SubElement(global_params,'CouplingConstant')
+        ptype.text = str(self.coupling_constant.get())
+        ptype = ET.SubElement(global_params,'TopologicalRadius')
+        ptype.text = str(self.topological_radius.get())
         ptype = ET.SubElement(global_params,'AbnormalityThreshold')
         ptype.text = str(self.abnormality_threshold.get())
         ptype = ET.SubElement(global_params,'HomologyMethod')
@@ -1027,9 +1055,7 @@ class euplecton:
         ptype = ET.SubElement(global_params,'MemoryFootprint')
         ptype.text = (self.memory_footprint.get()).upper()
 
-        geo_params = ET.SubElement(content,'GeometrySolver')
-        ptype = ET.SubElement(geo_params,'GeometryTolerance')
-        ptype.text = str(self.geometry_threshold.get())
+        geo_params = ET.SubElement(content,'GeometrySolver') 
         if self.solver_type.get() == 'Minimal':
            ptype = ET.SubElement(geo_params,'SolverType')
            ptype.text = 'MINIMAL'
