@@ -179,6 +179,11 @@ namespace DIAPLEXIS {
     /// for such a fusion, the pair of events must have a distance such that the 
     /// absolute value of its square is less than this cut-off.
     double superposition_threshold = 0.05;
+    /// This property controls the number of attempts made at event fission by the 
+    /// event_fission() method, as a percentage of the total number of active events 
+    /// in the spacetime complex and for that reason it must lie between zero and 
+    /// and one. 
+    double event_fission_percentage = 0.1;
     /// If this property is true the simulation does not carry out any disk 
     /// I/O operations - there is no log file, no checkpoint files are created 
     /// and so forth. 
@@ -425,8 +430,8 @@ namespace DIAPLEXIS {
     int compression(double);
     /// This method fuses together pairs of events when the absolute value of their squared distance is less than the square of Spacetime::superposition_threshold, using the event_fusion() method; the method returns the number of pairs of events fused together.
     int superposition_fusion();
-    /// This method does the opposite of superposition_fusion() - it randomly selects up to N (the method's argument) active events which undergo fission using the fission() method.
-    void superposition_fission(int);
+    /// This method does the opposite of superposition_fusion() - it randomly selects N active events, where N is equal to product of Spacetime::event_fission_percentage and the total number of active events. These events must then satisfy a Boltzmann criterion with a temperature equal to 100, after which they undergo fission using the fission() method.
+    int event_fission();
     /// This method ensures that the spacetime complex is connected, consistent and that it satisfies the entailment axiom of simplicial complexes. If the argument is false, the Complex::simplicial_implication() method is called at the beginning of the method.
     void regularization(bool);
 

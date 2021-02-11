@@ -557,7 +557,7 @@ bool Spacetime::global_operations()
   // Eliminate any overlapping vertices
   if (superposable) {
     superposition_fusion();
-    superposition_fission(int(0.02*nv));
+    event_fission();
   }
 
   if (compressible) {
@@ -594,7 +594,6 @@ bool Spacetime::global_operations()
 #ifdef VERBOSE
     std::cout << "The inter-sheet jump for this iteration is " << n << std::endl;
 #endif
-    //if (n > 0) skeleton->regularization();
   }
 
   if (superposable || compressible || permutable) {
@@ -612,7 +611,7 @@ bool Spacetime::global_operations()
   compute_volume();
   compute_obliquity();
 #ifdef DEBUG
-  assert(skeleton->consistent(-1));
+  assert(consistent());
 #endif
 
   compute_lightcones();
@@ -833,7 +832,7 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
 int Spacetime::ubiquity_permutation(double temperature)
 {
   int i,j,k,n,m,nd,vx[2],delta,hdistance,jz = 0;
-  double E,alpha;
+  double E;
   std::set<int> S,ubiquity,mutated,next,current;
   std::set<int>::const_iterator it;
   std::vector<std::set<int> > F;
@@ -851,14 +850,12 @@ int Spacetime::ubiquity_permutation(double temperature)
     m = skeleton->RND->irandom(0,skeleton->simplices[d].size());
     if (!skeleton->simplices[n][m].active()) continue;
     E = skeleton->simplices[n][m].get_energy();
-    if (E < std::numeric_limits<double>::epsilon()) continue;
+    if (skeleton->RND->drandom() < std::exp(-temperature*E)) continue;
     skeleton->simplices[n][m].get_ubiquity(ubiquity);
     mutated = ubiquity;
-    alpha = std::exp(-temperature*E);
     hdistance = 0;
     for(j=0; j<nt; ++j) {
-      if (codex[j].get_sleep() > 0) continue;
-      if (skeleton->RND->drandom() > alpha) {
+      if (skeleton->RND->irandom(2) == 0) {
         if (ubiquity.count(j) > 0) {
           mutated.erase(j);
         }
@@ -868,6 +865,19 @@ int Spacetime::ubiquity_permutation(double temperature)
         hdistance++;
       }
     }
+    if (mutated.empty()) {
+      j = skeleton->RND->irandom(nt);
+      if (ubiquity.count(j) == 0) {
+        hdistance++;
+      }
+      else {
+        hdistance--;
+      }
+      mutated.insert(j);
+    }
+#ifdef DEBUG
+    assert(hdistance >= 0);
+#endif
     delta = n*hdistance;
     if (delta > 0) {
       skeleton->simplices[n][m].get_vertices(S);

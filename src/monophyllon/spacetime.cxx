@@ -539,7 +539,7 @@ bool Spacetime::global_operations()
   // Eliminate any overlapping events
   if (superposable) {
     superposition_fusion(); 
-    superposition_fission(int(0.02*nv)); 
+    event_fission(); 
   }
 
   if (compressible) {
@@ -576,7 +576,7 @@ bool Spacetime::global_operations()
   compute_volume();
   compute_obliquity();
 #ifdef DEBUG
-  assert(skeleton->consistent());
+  assert(consistent());
 #endif
 
   compute_lightcones();

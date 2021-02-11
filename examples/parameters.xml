@@ -2,7 +2,7 @@
 <Parameters>
 	<Global>
 		<!--InitialEvents>81</InitialEvents-->
-		<InitialEvents>256</InitialEvents>
+		<InitialEvents>1296</InitialEvents>
 		<!--InitialEvents>4096</InitialEvents-->
 		<!--InitialEvents>1048576</InitialEvents-->    
 		<InitialSheets>3</InitialSheets>
@@ -23,6 +23,7 @@
 		<MemoryFootprint>HIGH</MemoryFootprint>
 		<Superposable>1</Superposable>
 		<SuperpositionThreshold>0.05</SuperpositionThreshold>
+		<EventFissionPercentage>0.075</EventFissionPercentage>
 		<Compressible>1</Compressible>
 		<Permutable>1</Permutable>
 		<!--InitialState>RANDOM</InitialState-->
@@ -42,8 +43,8 @@
 		<PerturbTopology>1</PerturbTopology>
 		<PerturbGeometry>0</PerturbGeometry>
 		<PerturbEnergy>1</PerturbEnergy>
-		<Hyphansis>DYNAMIC</Hyphansis>
-		<!--Hyphansis>MUSICAL</Hyphansis-->
+		<!--Hyphansis>DYNAMIC</Hyphansis-->
+		<Hyphansis>MUSICAL</Hyphansis>
 		<HyphansisScore>melody.txt</HyphansisScore>
 		<ParityMutation>0.05</ParityMutation>
 	</Global>

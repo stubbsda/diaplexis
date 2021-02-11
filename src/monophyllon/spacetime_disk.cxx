@@ -88,6 +88,9 @@ void Spacetime::read_parameters(const std::string& filename)
     else if (name == "SuperpositionThreshold") {
       superposition_threshold = std::stod(value);
     }
+    else if (name == "EventFissionPercentage") {
+      event_fission_percentage = std::stod(value);
+    }
     else if (name == "MaximumIterations") {
       max_iter = std::stoi(value);
     }
@@ -299,7 +302,11 @@ void Spacetime::read_parameters(const std::string& filename)
   assert(n_is == 1);
   // And similarly for the solver type...
   assert(n_so == 1);
-  if (superposable) assert(superposition_threshold > std::numeric_limits<double>::epsilon());
+  if (superposable) {
+    assert(superposition_threshold > std::numeric_limits<double>::epsilon());
+    assert(event_fission_percentage > -std::numeric_limits<double>::epsilon());
+    assert((event_fission_percentage - 1.0) < std::numeric_limits<double>::epsilon());
+  }
   // Finally for the background dimension...
   assert(D > 0);
 
@@ -495,7 +502,10 @@ void Spacetime::write_log() const
     s << "<TopologicalRadius>" << skeleton->topological_radius << "</TopologicalRadius>" << std::endl;
     s << "<AbnormalityThreshold>" << abnormality_threshold << "</AbnormalityThreshold>" << std::endl;
     s << "<Superposable>" << bvalue[superposable] << "</Superposable>" << std::endl;
-    if (superposable) s << "<SuperpositionThreshold>" << superposition_threshold << "</SuperpositionThreshold>" << std::endl;
+    if (superposable) {
+      s << "<SuperpositionThreshold>" << superposition_threshold << "</SuperpositionThreshold>" << std::endl;
+      s << "<EventFissionPercentage>" << event_fission_percentage << "</EventFissionPercentage>" << std::endl;
+    }
     s << "<Compressible>" << bvalue[compressible] << "</Compressible>" << std::endl;
     if (initial_state == Initial_Topology::diskfile) {
       s << "<InitialState>" << sname[initial_state] << " (" << sname[original_state] << ")</InitialState>" << std::endl;
@@ -873,6 +883,7 @@ void Spacetime::read_state(const std::string& filename)
   s.read((char*)(&edge_probability),sizeof(double));
   s.read((char*)(&abnormality_threshold),sizeof(double));
   s.read((char*)(&superposition_threshold),sizeof(double));
+  s.read((char*)(&event_fission_percentage),sizeof(double));
   s.read((char*)(&parity_mutation),sizeof(double));
   s.read((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {
@@ -980,6 +991,7 @@ void Spacetime::write_state(const std::string& filename) const
   s.write((char*)(&edge_probability),sizeof(double));
   s.write((char*)(&abnormality_threshold),sizeof(double));
   s.write((char*)(&superposition_threshold),sizeof(double));
+  s.write((char*)(&event_fission_percentage),sizeof(double));
   s.write((char*)(&parity_mutation),sizeof(double));
   s.write((char*)(&weaving),sizeof(Hyphansis));
   if (weaving == Hyphansis::musical) {

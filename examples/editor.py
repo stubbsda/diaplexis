@@ -72,6 +72,7 @@ class euplecton:
         self.edge_probability = tkinter.DoubleVar()
         self.abnormality_threshold = tkinter.DoubleVar()
         self.superposition_threshold = tkinter.DoubleVar()
+        self.event_fission_percentage = tkinter.DoubleVar()
         self.parity_probability = tkinter.DoubleVar()
         self.thermal_variance = tkinter.DoubleVar()
         self.thermalization_criterion = tkinter.DoubleVar()
@@ -146,6 +147,7 @@ class euplecton:
         self.label27 = tkinter.Label(global_group,text='Maximum Number of Sheets:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label28 = tkinter.Label(global_group,text='Maximum Children per Sheet:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
         self.label29 = tkinter.Label(global_group,text='Maximum Sheet Quiescence:',wraplength=250,justify=tkinter.LEFT,state=tkinter.DISABLED)
+        self.label60 = tkinter.Label(global_group,text='Event Fission Percentage',wraplength=250,justify=tkinter.LEFT)
 
         label30 = tkinter.Label(geometry_group,text='Solver Type:',wraplength=250,justify=tkinter.LEFT)
         solver_type = tkinter.OptionMenu(geometry_group,self.solver_type,*solvers,command=self.gsolver_change)
@@ -212,6 +214,7 @@ class euplecton:
         self.entry50 = tkinter.Entry(geometry_group,width=7,textvariable=self.expansion,state=tkinter.DISABLED)
         self.entry51 = tkinter.Entry(geometry_group,width=7,textvariable=self.contraction,state=tkinter.DISABLED)
         self.entry52 = tkinter.Entry(geometry_group,width=7,textvariable=self.shrinkage,state=tkinter.DISABLED)
+        self.entry60 = tkinter.Entry(global_group,width=7,textvariable=self.event_fission_percentage)
 
         label19 = tkinter.Label(button_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
         entry19 = tkinter.Entry(button_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
@@ -280,9 +283,13 @@ class euplecton:
         self.perturb_energy.grid(row=14,column=3,sticky=tkinter.W)
         label10.grid(row=15,column=3,sticky=tkinter.W)
         entry10.grid(row=15,column=4,sticky=tkinter.W)
+        self.label60.grid(row=16,column=3,sticky=tkinter.W)
+        self.entry60.grid(row=16,column=4,sticky=tkinter.W)
 
         label30.grid(row=0,column=0,sticky=tkinter.W)
         solver_type.grid(row=0,column=1,sticky=tkinter.W)
+        self.label32.grid(row=1,column=0,sticky=tkinter.W)
+        self.entry32.grid(row=1,column=1,sticky=tkinter.W)
         self.label40.grid(row=2,column=0,sticky=tkinter.W)
         self.engine.grid(row=2,column=1,sticky=tkinter.W)
         self.label41.grid(row=3,column=0,sticky=tkinter.W)
@@ -303,8 +310,6 @@ class euplecton:
         self.label48.grid(row=11,column=0,sticky=tkinter.W)
         self.entry48.grid(row=11,column=1,sticky=tkinter.W)
 
-        self.label32.grid(row=0,column=3,sticky=tkinter.W)
-        self.entry32.grid(row=0,column=4,sticky=tkinter.W)
         self.label33.grid(row=1,column=3,sticky=tkinter.W)
         self.entry33.grid(row=1,column=4,sticky=tkinter.W)
         self.label34.grid(row=2,column=3,sticky=tkinter.W)
@@ -364,9 +369,13 @@ class euplecton:
         if self.superposable.get():
            self.label15.config(state=tkinter.NORMAL)
            self.entry15.config(state=tkinter.NORMAL)
+           self.label60.config(state=tkinter.NORMAL)
+           self.entry60.config(state=tkinter.NORMAL)
         else:
            self.label15.config(state=tkinter.DISABLED)
            self.entry15.config(state=tkinter.DISABLED)
+           self.label60.config(state=tkinter.DISABLED)
+           self.entry60.config(state=tkinter.DISABLED)
 
     def sdynamics_change(self,*args):
         if self.sheet_dynamics.get():
@@ -622,6 +631,7 @@ class euplecton:
         self.edge_probability.set(0.15)
         self.abnormality_threshold.set(0.1)
         self.superposition_threshold.set(0.05)
+        self.event_fission_percentage.set(10.0)
         self.parity_probability.set(0.05)
         self.thermal_variance.set(0.5)
         self.thermalization_criterion.set(0.001)
@@ -680,6 +690,8 @@ class euplecton:
                self.superposable.set(value)
             elif name == 'SuperpositionThreshold':
                self.superposition_threshold.set(float(value))
+            elif name == 'EventFissionPercentage':
+               self.event_fission_percentage.set(100.0*float(value))
             elif name == 'MaximumIterations':
                self.max_iterations.set(int(value))
             elif name == 'ParityMutation':
@@ -842,6 +854,9 @@ class euplecton:
         if self.superposable.get():
             if not(self.superposition_threshold.get() > 0.0):
                messagebox.showerror("Illegal Value","The superposition threshold must be positive!")
+               return
+            if self.event_fission_percentage.get() < 0.0 or self.event_fission_percentage.get() > 100.0:
+               messagebox.showerror("Illegal Value","The event fission percentage must lie between 0 and 100!")
                return
         if self.hyphansis.get() == 'Dynamic':
             if self.parity_probability.get() < 0.0 or self.parity_probability.get() > 1.0:
@@ -1034,6 +1049,8 @@ class euplecton:
            ptype.text = '1'
            ptype = ET.SubElement(global_params,'SuperpositionThreshold')
            ptype.text = str(self.superposition_threshold.get())
+           ptype = ET.SubElement(global_params,'EventFissionPercentage')
+           ptype.text = str(self.event_fission_percentage.get()/100.0)
         else:
            ptype = ET.SubElement(global_params,'Superposable')
            ptype.text = '0'

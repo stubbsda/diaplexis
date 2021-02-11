@@ -53,17 +53,22 @@ int Spacetime::superposition_fusion()
   return nfused;
 }
 
-void Spacetime::superposition_fission(int ulimit)
+int Spacetime::event_fission()
 {
-  int n,sheet,nc = 0;
+  int i,n,sheet,nc = 0,ulimit = int(event_fission_percentage*double(skeleton->cardinality(0,-1)));
+  double alpha;
   std::set<int> locus;
+  const int nv = (signed) skeleton->events.size();
 
-  // Finally, the opposite possibility - that a given event might undergo
-  // spontaneous fission, creating a new event in its immediate vicinity...
-  do {
-    n = skeleton->RND->irandom(skeleton->events.size());
-    if (!skeleton->events[n].active()) continue;
-    if (skeleton->RND->drandom() > 0.01) continue;
+  for(i=0; i<ulimit; ++i) {
+    // First obtain an active event at random...
+    do {
+      n = skeleton->RND->irandom(nv);
+      if (skeleton->events[n].active()) break;
+    } while(true);
+    // A Boltzmann criterion: low energy events rarely undergo spontaneous fission...
+    alpha = skeleton->RND->drandom();
+    if (alpha < std::exp(-0.01*skeleton->events[n].get_energy())) continue;
     skeleton->events[n].get_ubiquity(locus);
     sheet = skeleton->RND->irandom(locus);
     if (fission(n,1.0,sheet)) {
@@ -75,7 +80,9 @@ void Spacetime::superposition_fission(int ulimit)
 #ifdef DEBUG
     assert(consistent());
 #endif
-  } while(nc < ulimit);
+  }
+
+  return nc;
 }
 
 int Spacetime::compression(double threshold)
