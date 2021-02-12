@@ -850,7 +850,7 @@ int Spacetime::ubiquity_permutation(double temperature)
     m = skeleton->RND->irandom(0,skeleton->simplices[d].size());
     if (!skeleton->simplices[n][m].active()) continue;
     E = skeleton->simplices[n][m].get_energy();
-    if (skeleton->RND->drandom() < std::exp(-temperature*E)) continue;
+    if (skeleton->RND->drandom() < std::exp(-E/temperature)) continue;
     skeleton->simplices[n][m].get_ubiquity(ubiquity);
     mutated = ubiquity;
     hdistance = 0;
