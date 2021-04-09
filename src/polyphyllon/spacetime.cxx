@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-Spacetime::Spacetime(bool no_disk)
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::Spacetime(bool no_disk)
 {
   allocate();
   diskless = no_disk;
@@ -10,7 +11,8 @@ Spacetime::Spacetime(bool no_disk)
   initialize();
 }
 
-Spacetime::Spacetime(const std::string& filename,bool no_disk)
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::Spacetime(const std::string& filename,bool no_disk)
 {
   allocate();
   read_parameters(filename);
@@ -19,7 +21,8 @@ Spacetime::Spacetime(const std::string& filename,bool no_disk)
   initialize();
 }
 
-Spacetime::~Spacetime()
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::~Spacetime()
 {
   codex.clear();
 
@@ -27,15 +30,17 @@ Spacetime::~Spacetime()
   delete skeleton;
 }
 
-void Spacetime::allocate()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::allocate()
 {
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
-  geometry = new SYNARMOSMA::Geometry;
-  skeleton = new Complex;
+  geometry = new SYNARMOSMA::Geometry<kind2>;
+  skeleton = new Complex<kind1>;
 }
 
-void Spacetime::restart(const std::string& filename,bool save_seed)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::restart(const std::string& filename,bool save_seed)
 {
   if (save_seed) {
     unsigned long n = skeleton->RND->get_seed();
@@ -50,7 +55,8 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
   initialize();
 }
 
-void Spacetime::clear()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::clear()
 {
   skeleton->clear();
   geometry->clear();
@@ -58,7 +64,8 @@ void Spacetime::clear()
   codex.clear();
 }
 
-double Spacetime::condense()
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::condense()
 {
   // First check how many ghost events and edges there are in this spacetime....
   int n = skeleton->cardinality(0,-1),m = skeleton->cardinality(1,-1);
@@ -75,7 +82,7 @@ double Spacetime::condense()
   int i,j,offset[nv];
   std::set<int> N,S,vx,locus;
   std::set<int>::const_iterator it;
-  std::vector<Event> nevents;
+  std::vector<Event<kind1> > nevents;
   std::vector<Simplex> nsimplices;
 
   n = 0;
@@ -96,7 +103,7 @@ double Spacetime::condense()
     skeleton->events[i].clear_entourage();
     vx.clear();
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind1>::ND; ++i) {
     m = (signed) skeleton->simplices[i].size();
     skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
@@ -117,13 +124,14 @@ double Spacetime::condense()
   return 1.0;
 }
 
-bool Spacetime::clean() const
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::clean() const
 {
   unsigned int i;
   for(i=0; i<skeleton->events.size(); ++i) {
     if (skeleton->events[i].get_topology_modified()) return false;
   }
-  for(int d=1; d<=Complex::ND; ++d) {
+  for(int d=1; d<=Complex<kind1>::ND; ++d) {
     for(i=0; i<skeleton->simplices[d].size(); ++i) {
       if (skeleton->simplices[d][i].get_modified()) return false;
     }
@@ -131,14 +139,16 @@ bool Spacetime::clean() const
   return true;
 }
 
-void Spacetime::fallback()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::fallback()
 {
   if (!reversible) return;
   read_state("data/.previous_step.dat");
   reversible = false;
 }
 
-bool Spacetime::advance()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::advance()
 {
   int i,n = (signed) codex.size();
   std::vector<int> order;
@@ -192,7 +202,8 @@ bool Spacetime::advance()
   return done;
 }
 
-double Spacetime::evolve()
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::evolve()
 {
   for(int i=0; i<max_iter; ++i) {
     if (advance()) break;
@@ -226,7 +237,8 @@ double Spacetime::evolve()
   return error;
 }
 
-bool Spacetime::correctness()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::correctness()
 {
   unsigned int i,j;
   double delta,original_error;
@@ -241,7 +253,7 @@ bool Spacetime::correctness()
     skeleton->events[i].set_topology_modified(true);
     skeleton->events[i].set_geometry_modified(true);
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind1>::ND; ++i) {
     for(j=0; j<skeleton->simplices[i].size(); ++j) {
       skeleton->simplices[i][j].set_modified(true);
     }
@@ -258,7 +270,8 @@ bool Spacetime::correctness()
   return false;
 }
 
-void Spacetime::structural_deficiency()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::structural_deficiency()
 {
   int i,j,k,v1,v2,v3,c = 0;
   bool found;
@@ -455,7 +468,8 @@ void Spacetime::structural_deficiency()
 #endif
 }
 
-bool Spacetime::global_operations()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::global_operations()
 {
   int i,j,n,k = 0;
   bool output = false;
@@ -475,7 +489,7 @@ bool Spacetime::global_operations()
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].get_incept() == -1) skeleton->events[i].set_incept(iterations);
   }
-  for(i=0; i<=Complex::ND; ++i) {
+  for(i=0; i<=Complex<kind1>::ND; ++i) {
     n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
       if (skeleton->simplices[i][j].get_incept() == -1) skeleton->simplices[i][j].set_incept(iterations);
@@ -525,8 +539,8 @@ bool Spacetime::global_operations()
   std::cout << "Standard deviation of vertex energy is " << sigma << std::endl;
 
   // Analyze the distribution of vertex dimensionalities...
-  int histogram[1 + Complex::ND],histo2[1 + Complex::ND];
-  for(i=0; i<=Complex::ND; ++i) {
+  int histogram[1 + Complex<kind1>::ND],histo2[1 + Complex<kind1>::ND];
+  for(i=0; i<=Complex<kind1>::ND; ++i) {
     histogram[i] = 0;
     histo2[i] = 0;
   }
@@ -536,7 +550,7 @@ bool Spacetime::global_operations()
     if (skeleton->events[i].zero_energy()) continue;
     histogram[skeleton->vertex_dimension(i,-1)] += 1;
   }
-  for(i=0; i<=Complex::ND; ++i) {
+  for(i=0; i<=Complex<kind1>::ND; ++i) {
     std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional vertices." << std::endl;
   }
 #endif
@@ -667,7 +681,8 @@ bool Spacetime::global_operations()
   return output;
 }
 
-int Spacetime::sheet_fission(int parent)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::sheet_fission(int parent)
 {
   int i,j,n,l,offspring = 0;
   const int nt = (signed) codex.size();
@@ -689,7 +704,7 @@ int Spacetime::sheet_fission(int parent)
         skeleton->events[i].set_topology_modified(true);
       }
     }
-    for(i=1; i<=Complex::ND; ++i) {
+    for(i=1; i<=Complex<kind1>::ND; ++i) {
       n = (signed) skeleton->simplices[i].size();
       for(j=0; j<n; ++j) {
         if (skeleton->simplices[i][j].active(parent)) skeleton->simplices[i][j].activate(nt+l);
@@ -699,7 +714,8 @@ int Spacetime::sheet_fission(int parent)
   return offspring;
 }
 
-int Spacetime::sheet_dynamics()
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::sheet_dynamics()
 {
   int i,nc = 0;
   const int nt = (signed) codex.size();
@@ -747,7 +763,8 @@ int Spacetime::sheet_dynamics()
   return nc;
 }
 
-void Spacetime::compute_global_topology(int sheet)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_global_topology(int sheet)
 {
   // To calculate the global deficiency, we need to compute the Betti numbers and
   // the fundamental group, for the total spacetime, operations that are serial...
@@ -765,7 +782,8 @@ void Spacetime::compute_global_topology(int sheet)
   }
 }
 
-void Spacetime::get_ubiquity(int d,int n,std::string& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::get_ubiquity(int d,int n,std::string& output) const
 {
   const int nt = (signed) codex.size();
 
@@ -804,7 +822,8 @@ void Spacetime::get_ubiquity(int d,int n,std::string& output) const
   }
 }
 
-void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::get_ubiquity_vector(std::vector<int>& output) const
 {
   int i,j,n;
   const int nv = (signed) skeleton->events.size();
@@ -829,7 +848,8 @@ void Spacetime::get_ubiquity_vector(std::vector<int>& output) const
   }
 }
 
-int Spacetime::ubiquity_permutation(double temperature)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::ubiquity_permutation(double temperature)
 {
   int i,j,k,n,m,nd,vx[2],delta,hdistance,jz = 0;
   double E;
@@ -906,7 +926,7 @@ int Spacetime::ubiquity_permutation(double temperature)
   }
   if (jz == 0) return 0;
   // Now ensure the entailment property is respected...
-  for(i=Complex::ND; i>1; i--) {
+  for(i=Complex<kind1>::ND; i>1; i--) {
     if (skeleton->simplices[i].empty()) continue;
     nd = (signed) skeleton->simplices[i].size();
     for(j=0; j<nd; ++j) {
@@ -934,7 +954,8 @@ int Spacetime::ubiquity_permutation(double temperature)
   return jz;
 }
 
-bool Spacetime::consistent() const
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::consistent() const
 {
   if (!skeleton->consistent(-1)) return false;
   int i,j;

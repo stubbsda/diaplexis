@@ -2,12 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-const int Spacetime::N_EXP;
-const int Spacetime::N_IMP;
-const std::string Spacetime::EXP_OP[] = {"D","Ux","Ox","R","C","N","A","G","Sg","Sm","Y"};
-const std::string Spacetime::IMP_OP[] = {"I","Um","Om","E","F","P","V","Δ"};
-
-std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters) const
+template<class kind1,class kind2>
+std::string Spacetime<kind1,kind2>::implicative_scale(int key,std::vector<double>& parameters) const
 {
   // This consists of twelve "notes", eight of which belong to the scale itself
   // (diatonic notes) and four chromatic notes
@@ -82,7 +78,8 @@ std::string Spacetime::implicative_scale(int key,std::vector<double>& parameters
   return output;
 }
 
-std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters) const
+template<class kind1,class kind2>
+std::string Spacetime<kind1,kind2>::explicative_scale(int key,std::vector<double>& parameters) const
 {
   // This consists of twelve "notes", eight of which belong to the scale itself 
   // (diatonic notes) and four chromatic notes
@@ -152,7 +149,8 @@ std::string Spacetime::explicative_scale(int key,std::vector<double>& parameters
   return output;
 }
 
-void Spacetime::implication(std::string& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::implication(std::string& output) const
 {
   // Should return one of the implicative operators: {F,Um,Om,E,I,P,V,Δ}
   double alpha;
@@ -216,7 +214,8 @@ void Spacetime::implication(std::string& output) const
   }
 }
 
-void Spacetime::explication(std::string& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::explication(std::string& output) const
 {
   // Should return one of the explicative operators: {G,C,A,Sg,Sm,D,N,Y,R,Ox,Ux}
   if (skeleton->RND->drandom() < 0.1) {
@@ -259,7 +258,8 @@ void Spacetime::explication(std::string& output) const
   }
 }
 
-void Spacetime::pitch_mapping(std::set<int>* candidates) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::pitch_mapping(std::set<int>* candidates) const
 {
   int i;
   double sigma,drange,min_value = 1e10,max_value=-1e10;
@@ -355,7 +355,8 @@ void Spacetime::pitch_mapping(std::set<int>* candidates) const
   }
 }
 
-int Spacetime::musical_hyphansis()
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::musical_hyphansis()
 {
   if (hyphantic_notes[iterations].empty()) return 0;
 
@@ -492,7 +493,8 @@ int Spacetime::musical_hyphansis()
   return nsuccess;
 }
 
-int Spacetime::dynamic_hyphansis()
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::dynamic_hyphansis()
 {
   int i,v,n,vx[2],nsuccess = 0;
   double alpha;
@@ -660,7 +662,8 @@ int Spacetime::dynamic_hyphansis()
   return nsuccess;
 }
 
-void Spacetime::hyphansis()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::hyphansis()
 {
   hyphantic_ops = "";
 
@@ -686,7 +689,8 @@ void Spacetime::hyphansis()
   }
 }
 
-bool Spacetime::event_fusion(int n1,int n2)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::event_fusion(int n1,int n2)
 {
   int i,j,l,k,m,n,im1,in1;
   std::set<int> S,vx,duplicate;
@@ -809,7 +813,8 @@ bool Spacetime::event_fusion(int n1,int n2)
   return true;
 }
 
-bool Spacetime::event_twist()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::event_twist()
 {
   // This method will fuse two 0-simplices with each other, so as to twist the
   // complex's topology, creating non-orientability and torsion groups in the
@@ -870,7 +875,8 @@ bool Spacetime::event_twist()
   return true;
 }
 
-bool Spacetime::event_deletion(int n)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::event_deletion(int n)
 {
   if (!skeleton->active_event(n)) return false;
   int i,vx[2],ne = (signed) skeleton->simplices[1].size();
@@ -883,10 +889,11 @@ bool Spacetime::event_deletion(int n)
   return true;  
 }
 
-int Spacetime::event_addition(const std::vector<double>& xc)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::event_addition(const std::vector<double>& xc)
 {
   int n = (signed) skeleton->events.size();
-  Event vt;
+  Event<kind1> vt;
 
   geometry->vertex_addition(xc);
   skeleton->events.push_back(vt);
@@ -894,10 +901,11 @@ int Spacetime::event_addition(const std::vector<double>& xc)
   return n;
 }
 
-int Spacetime::event_addition(const std::set<int>& antecedents)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::event_addition(const std::set<int>& antecedents)
 {
   int n = (signed) skeleton->events.size();
-  Event vt;
+  Event<kind1> vt;
 
   geometry->vertex_addition(antecedents);
   skeleton->events.push_back(vt);
@@ -905,10 +913,11 @@ int Spacetime::event_addition(const std::set<int>& antecedents)
   return n;
 }
 
-int Spacetime::event_addition(int base)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::event_addition(int base)
 {
   int n = (signed) skeleton->events.size();
-  Event vt;
+  Event<kind1> vt;
 
   if (skeleton->events[base].zero_energy()) {
     geometry->vertex_addition(base);

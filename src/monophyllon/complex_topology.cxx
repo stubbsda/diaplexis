@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Complex::compute_simplicial_dimension()
+template<class kind>
+void Complex<kind>::compute_simplicial_dimension()
 {
   unsigned int i;
   const unsigned int nv = events.size();
@@ -13,7 +14,8 @@ void Complex::compute_simplicial_dimension()
   }
 }
 
-void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
+template<class kind>
+void Complex<kind>::get_edge_topology(std::vector<std::set<int> >& vx) const
 {
   unsigned int i;
   const unsigned int nv = events.size();
@@ -25,7 +27,8 @@ void Complex::get_edge_topology(std::vector<std::set<int> >& vx) const
   }
 }
 
-void Complex::compute_degree_distribution(bool logarithmic) const
+template<class kind>
+void Complex<kind>::compute_degree_distribution(bool logarithmic) const
 {
   std::vector<double> histogram;
   SYNARMOSMA::Graph G;
@@ -40,7 +43,8 @@ void Complex::compute_degree_distribution(bool logarithmic) const
   }
 }
 
-void Complex::compute_connectivity_distribution(bool direct) const
+template<class kind>
+void Complex<kind>::compute_connectivity_distribution(bool direct) const
 {
   int i,j,m = 0,l = cardinality(0);
   std::vector<int> pcount;
@@ -99,7 +103,8 @@ void Complex::compute_connectivity_distribution(bool direct) const
   }
 }
 
-std::pair<double,double> Complex::random_walk() const
+template<class kind>
+std::pair<double,double> Complex<kind>::random_walk() const
 {
   std::pair<double,double> output;
   SYNARMOSMA::Graph G;
@@ -113,7 +118,8 @@ std::pair<double,double> Complex::random_walk() const
   return output;
 }
 
-void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
+template<class kind>
+void Complex<kind>::compute_dependent_simplices(const std::set<int>& modified_events)
 {
   // A method that takes a set of vertices whose coordinates have
   // been modified and determines which simplices will have their
@@ -127,7 +133,7 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
   std::cout << "There are " << modified_events.size() << " events directly implicated." << std::endl;
 #endif
 
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       simplices[i][j].modified = false;
@@ -138,7 +144,7 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
   for(it=modified_events.begin(); it!=modified_events.end(); ++it) {
     n = *it;
     current = events[n].entourage;
-    for(i=1; i<=Complex::ND; ++i) {
+    for(i=1; i<=Complex<kind>::ND; ++i) {
       for(jt=current.begin(); jt!=current.end(); ++jt) {
         m = *jt;
         simplices[i][m].modified = true;
@@ -153,7 +159,8 @@ void Complex::compute_dependent_simplices(const std::set<int>& modified_events)
   }
 }
 
-double Complex::dimensional_stress(int v) const
+template<class kind>
+double Complex<kind>::dimensional_stress(int v) const
 {
   // This method should sum the dimensional stress associated with
   // each d-simplex (d > 0) that is active and contains the vertex v.
@@ -173,7 +180,8 @@ double Complex::dimensional_stress(int v) const
   return sum;
 }
 
-double Complex::dimensional_stress(int d,int n) const
+template<class kind>
+double Complex<kind>::dimensional_stress(int d,int n) const
 {
   // This method measures the standard deviation of the
   // simplicial dimensions of the vertices of a given
@@ -198,7 +206,8 @@ double Complex::dimensional_stress(int d,int n) const
   return sigma;
 }
 
-void Complex::recompute_parity(int n) 
+template<class kind>
+void Complex<kind>::recompute_parity(int n) 
 {
   // The edge n has had its orientation changed, so now we need to recompute 
   // the orientation of the higher-dimensional simplices that depend on it.
@@ -208,7 +217,8 @@ void Complex::recompute_parity(int n)
   recompute_parity(temp);
 }
 
-void Complex::recompute_parity(const std::set<int>& edges) 
+template<class kind>
+void Complex<kind>::recompute_parity(const std::set<int>& edges) 
 {
   // The 1-simplices in the argument have had their orientation changed, so now 
   // we need to recompute the orientation of the higher-dimensional simplices that 
@@ -235,7 +245,8 @@ void Complex::recompute_parity(const std::set<int>& edges)
   } while(true);
 }
 
-void Complex::compute_parity()
+template<class kind>
+void Complex<kind>::compute_parity()
 {
   int i,j;
   const int d = dimension();
@@ -248,7 +259,8 @@ void Complex::compute_parity()
   }
 }
 
-void Complex::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) const
+template<class kind>
+void Complex<kind>::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) const
 {
   int i,j,s = 0;
   const int D = dimension();
@@ -276,7 +288,8 @@ void Complex::compute_fvector(std::vector<int>& f,std::vector<int>& fstar) const
   fstar.push_back(f[D]);
 }
 
-void Complex::compute_hvector(std::vector<int>& h) const
+template<class kind>
+void Complex<kind>::compute_hvector(std::vector<int>& h) const
 {
   int i,j,sum;
   std::vector<int> f,fstar;
@@ -294,7 +307,8 @@ void Complex::compute_hvector(std::vector<int>& h) const
   }
 }
 
-void Complex::vertex_degree_statistics(double* output) const
+template<class kind>
+void Complex<kind>::vertex_degree_statistics(double* output) const
 {
   SYNARMOSMA::Graph G;  
 
@@ -304,7 +318,8 @@ void Complex::vertex_degree_statistics(double* output) const
   output[2] = G.average_degree();
 }
 
-int Complex::cyclicity() const
+template<class kind>
+int Complex<kind>::cyclicity() const
 {
   // This method should calculate the number of cyclic edges in the complex
   // associated with the sheet, assuming the complex is connected.
@@ -315,7 +330,8 @@ int Complex::cyclicity() const
   return (G.size() - G.bridge_count());
 }
 
-void Complex::compute_simplex_parity(int d,int n)
+template<class kind>
+void Complex<kind>::compute_simplex_parity(int d,int n)
 {
   if (d < 2) return;
   int i,j,vx[1+d];
@@ -336,13 +352,14 @@ void Complex::compute_simplex_parity(int d,int n)
   }
 }
 
-void Complex::simplex_membership(int v,std::vector<int>& output) const
+template<class kind>
+void Complex<kind>::simplex_membership(int v,std::vector<int>& output) const
 {
   int i,k = 0;
   unsigned int j,m;
 
   output.clear();
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     m = simplices[i].size();
     for(j=0; j<m; ++j) {
       if (!simplices[i][j].active) continue;
@@ -353,7 +370,8 @@ void Complex::simplex_membership(int v,std::vector<int>& output) const
   }
 }
 
-void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
+template<class kind>
+void Complex<kind>::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
 {
   int i,vx[2];
   const int nv = (signed) events.size();
@@ -376,7 +394,8 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int* offset) const
   }
 }
 
-void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
+template<class kind>
+void Complex<kind>::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
 {
   int i,v,w,hop = 1;
   const int nv = (signed) events.size();
@@ -420,7 +439,8 @@ void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int steps) const
   } while(true);
 }
 
-void Complex::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
+template<class kind>
+void Complex<kind>::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
 {
   int i,j;
   std::vector<int> offset;
@@ -454,7 +474,8 @@ void Complex::compute_global_nexus(SYNARMOSMA::Nexus* NX) const
   NX->regularization();
 }
 
-void Complex::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
+template<class kind>
+void Complex<kind>::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
 {
   int i,j;
   std::vector<int> offset;
@@ -485,7 +506,8 @@ void Complex::compute_local_nexus(SYNARMOSMA::Nexus* NX,int base) const
   NX->regularization();
 }
 
-int Complex::chromatic_number() const
+template<class kind>
+int Complex<kind>::chromatic_number() const
 {
   // Computes the chromatic number chi of the graph associated with the
   // colour "p"; we already know that 1 <= chi <= max_degree+1.  
@@ -498,7 +520,8 @@ int Complex::chromatic_number() const
   return G.chromatic_number();
 }
 
-bool Complex::edge_parity_mutation(int u,int v)
+template<class kind>
+bool Complex<kind>::edge_parity_mutation(int u,int v)
 {
   int n;
   std::set<int> S;
@@ -519,7 +542,8 @@ bool Complex::edge_parity_mutation(int u,int v)
   return true;
 }
 
-bool Complex::simplex_deletion(int d,int n)
+template<class kind>
+bool Complex<kind>::simplex_deletion(int d,int n)
 {
   std::set<int>::const_iterator it;
   std::set<int> parents;
@@ -536,7 +560,8 @@ bool Complex::simplex_deletion(int d,int n)
   return true;
 }
 
-bool Complex::simplex_addition(int u,int v,int n)
+template<class kind>
+bool Complex<kind>::simplex_addition(int u,int v,int n)
 {
   std::set<int> S;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -567,7 +592,8 @@ bool Complex::simplex_addition(int u,int v,int n)
   return true;
 }
 
-bool Complex::simplex_addition(const std::set<int>& S,int n)
+template<class kind>
+bool Complex<kind>::simplex_addition(const std::set<int>& S,int n)
 {
   int i,j;
   std::set<int> fc;
@@ -642,7 +668,8 @@ bool Complex::simplex_addition(const std::set<int>& S,int n)
   return true;
 }
 
-void Complex::compute_modified_events()
+template<class kind>
+void Complex<kind>::compute_modified_events()
 {
   int i,j,n,m,l,nhop;
   std::set<int> S,vx,current,next;
@@ -656,7 +683,7 @@ void Complex::compute_modified_events()
     if (events[i].topology_modified) S.insert(i);
   }
 
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].modified) continue;
@@ -711,7 +738,8 @@ void Complex::compute_modified_events()
 #endif
 }
 
-void Complex::simplicial_implication()
+template<class kind>
+void Complex<kind>::simplicial_implication()
 {
   int i,j,k,n,m,vx[2];
   const int ulimit = dimension();
@@ -747,7 +775,8 @@ void Complex::simplicial_implication()
   }
 }
 
-void Complex::simplicial_implication(int base) const
+template<class kind>
+void Complex<kind>::simplicial_implication(int base) const
 {
   // This method will calculate all of the n-simplices (n > 1) that are "implied" by
   // the base event and its neighbours (via their mutual edges) and list them, as well
@@ -829,14 +858,15 @@ void Complex::simplicial_implication(int base) const
   delete[] implied_simplex;
 }
 
-int Complex::entourage(int base) const
+template<class kind>
+int Complex<kind>::entourage(int base) const
 {
   if (!events[base].active) return -1;
   // Calculates a measure of this event's integration/implication in its
   // spacetime neighbourhood
   int i,j,n,m,output = 0;
 
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     n = 0;
     m = (signed) simplices[i].size();
     for(j=0; j<m; ++j) {
@@ -848,7 +878,8 @@ int Complex::entourage(int base) const
   return output;
 }
 
-int Complex::max_degree() const
+template<class kind>
+int Complex<kind>::max_degree() const
 {
   int i,n,output = 0;
   for(i=0; i<(signed) events.size(); ++i) {
@@ -859,7 +890,8 @@ int Complex::max_degree() const
   return output;
 }
 
-double Complex::entwinement() const
+template<class kind>
+double Complex<kind>::entwinement() const
 {
   // This method produces a real number between 0 and 1 that measures the
   // degree of "labyrinthicity" of the graph
@@ -868,14 +900,16 @@ double Complex::entwinement() const
   return G.entwinement();
 }
 
-double Complex::cyclic_resistance() const
+template<class kind>
+double Complex<kind>::cyclic_resistance() const
 {
   SYNARMOSMA::Graph G;
   compute_graph(&G);
   return G.cyclic_resistance();
 }
 
-int Complex::combinatorial_distance(int v1,int v2) const
+template<class kind>
+int Complex<kind>::combinatorial_distance(int v1,int v2) const
 {
   // A method to calculate the topological distance
   // between the two vertices v1 and v2
@@ -893,7 +927,8 @@ int Complex::combinatorial_distance(int v1,int v2) const
   return d;
 }
 
-int Complex::cardinality(int d) const
+template<class kind>
+int Complex<kind>::cardinality(int d) const
 {
   if (d < 0) return 0;
   unsigned int i;
@@ -913,12 +948,13 @@ int Complex::cardinality(int d) const
   return n;
 }
 
-int Complex::weighted_entourage(int n1,int n2) const
+template<class kind>
+int Complex<kind>::weighted_entourage(int n1,int n2) const
 {
   int i,nfound,output = 0;
   unsigned j,n;
 
-  for(i=2; i<=Complex::ND; ++i) {
+  for(i=2; i<=Complex<kind>::ND; ++i) {
     nfound = 0;
     n = simplices[i].size();
     for(j=0; j<n; ++j) {
@@ -930,7 +966,8 @@ int Complex::weighted_entourage(int n1,int n2) const
   return output;
 }
 
-int Complex::vertex_valence(int v) const
+template<class kind>
+int Complex<kind>::vertex_valence(int v) const
 {
   int nd = 0;
   std::set<int>::const_iterator it;
@@ -940,14 +977,15 @@ int Complex::vertex_valence(int v) const
   return nd;
 }
 
-int Complex::vertex_dimension(int v) const
+template<class kind>
+int Complex<kind>::vertex_dimension(int v) const
 {
   int i,j,n;
   if (v < 0 || v >= (signed) events.size()) return -1;
 
   if (!events[v].active) return -1;
 
-  for(i=Complex::ND; i>=1; i--) {
+  for(i=Complex<kind>::ND; i>=1; i--) {
     n = (signed) simplices[i].size();
     for(j=0; j<n; ++j) {
       if (!simplices[i][j].active) continue;
@@ -957,7 +995,8 @@ int Complex::vertex_dimension(int v) const
   return 0;
 }
 
-double Complex::dimensional_frontier(int D) const
+template<class kind>
+double Complex<kind>::dimensional_frontier(int D) const
 {
   unsigned int i,s = 0,ne = 0;
   int vx[2];
@@ -966,8 +1005,8 @@ double Complex::dimensional_frontier(int D) const
   for(i=0; i<n; ++i) {
     if (!simplices[1][i].active) continue;
     simplices[1][i].get_vertices(vx);
-    vx[0] = std::max(vertex_dimension(vx[0]),D); //(vx[0] < D) ? D : vx[0];
-    vx[1] = std::max(vertex_dimension(vx[1]),D); //(vx[1] < D) ? D : vx[1];
+    vx[0] = std::max(vertex_dimension(vx[0]),D); 
+    vx[1] = std::max(vertex_dimension(vx[1]),D); 
     if (vx[0] != vx[1]) s++;
     ne++;
   }
@@ -976,7 +1015,8 @@ double Complex::dimensional_frontier(int D) const
   return double(s)/double(ne);
 }
 
-double Complex::dimensional_uniformity(int geometric_dimension) const
+template<class kind>
+double Complex<kind>::dimensional_uniformity(int geometric_dimension) const
 {
   int i,d,nv = 0,sdimension = dimension(),sum = 0;
   if (sdimension < geometric_dimension) sdimension = geometric_dimension;
@@ -985,7 +1025,7 @@ double Complex::dimensional_uniformity(int geometric_dimension) const
   for(i=0; i<n; ++i) {
     if (!events[i].active) continue;
     d = vertex_dimension(i);
-    d = std::max(d,geometric_dimension); //(d < geometric_dimension) ? geometric_dimension : d;
+    d = std::max(d,geometric_dimension); 
     sum += d - sdimension;
     nv++;
   }
@@ -994,7 +1034,8 @@ double Complex::dimensional_uniformity(int geometric_dimension) const
   return double(sum)/double(nv);
 }
 
-bool Complex::connected() const
+template<class kind>
+bool Complex<kind>::connected() const
 {
   // For this method we calculate the 1-skeleton of the simplicial complex and then,
   // as a graph, determine its connectedness.

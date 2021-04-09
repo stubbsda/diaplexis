@@ -2,14 +2,14 @@
 
 using namespace DIAPLEXIS;
 
-const int Complex::ND;
-
-Complex::Complex()
+template<class kind>
+Complex<kind>::Complex()
 {
   allocate();
 }
 
-Complex::~Complex()
+template<class kind>
+Complex<kind>::~Complex()
 {
   delete[] simplices;
   delete[] index_table;
@@ -18,27 +18,30 @@ Complex::~Complex()
   delete RND;
 }
 
-void Complex::allocate()
+template<class kind>
+void Complex<kind>::allocate()
 {
   H = new SYNARMOSMA::Homology(SYNARMOSMA::Homology::Field::mod2,SYNARMOSMA::Homology::Method::native);
   pi1 = new SYNARMOSMA::Homotopy;
-  simplices = new std::vector<Simplex>[1+Complex::ND];
-  index_table = new SYNARMOSMA::hash_map[1+Complex::ND];
+  simplices = new std::vector<Simplex>[1+Complex<kind>::ND];
+  index_table = new SYNARMOSMA::hash_map[1+Complex<kind>::ND];
   RND = new SYNARMOSMA::Random;
 }
 
-void Complex::clear()
+template<class kind>
+void Complex<kind>::clear()
 {
   H->clear();
   pi1->clear();
   events.clear();
-  for(int i=1; i<=Complex::ND; ++i) {
+  for(int i=1; i<=Complex<kind>::ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
   }
 }
 
-void Complex::compute_entourages(int sheet)
+template<class kind>
+void Complex<kind>::compute_entourages(int sheet)
 {
   int i,j,k,ns,vx[2];
   std::set<int> s;
@@ -49,7 +52,7 @@ void Complex::compute_entourages(int sheet)
 
   // What about removing items from the entourage of a d-simplex, when this item has
   // changed its ubiquity?
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     for(j=0; j<(signed) simplices[i].size(); ++j) {
       if (!simplices[i][j].active()) continue;
       for(it=simplices[i][j].entourage.begin(); it!=simplices[i][j].entourage.end(); ++it) {
@@ -132,7 +135,8 @@ void Complex::compute_entourages(int sheet)
   }
 }
 
-void Complex::compute_neighbours()
+template<class kind>
+void Complex<kind>::compute_neighbours()
 {
   int i,vx[2];
   std::set<int> empty;
@@ -148,7 +152,8 @@ void Complex::compute_neighbours()
   }
 }
 
-bool Complex::consistent(int sheet) const
+template<class kind>
+bool Complex<kind>::consistent(int sheet) const
 {
   int i,j,k,l,n,m,vx[2];
   bool found;
@@ -388,7 +393,8 @@ bool Complex::consistent(int sheet) const
   return true;
 }
 
-int Complex::circuit_rank(int sheet) const
+template<class kind>
+int Complex<kind>::circuit_rank(int sheet) const
 {
   int output = cardinality(1,sheet) - cardinality(0,sheet);
   if (connected(sheet)) {
@@ -399,7 +405,8 @@ int Complex::circuit_rank(int sheet) const
   return n + output;
 }
 
-int Complex::euler_characteristic(int sheet) const
+template<class kind>
+int Complex<kind>::euler_characteristic(int sheet) const
 {
   int i,pf = 1,chi = 0;
   const int D = dimension(sheet);
@@ -410,7 +417,8 @@ int Complex::euler_characteristic(int sheet) const
   return chi;
 }
 
-int Complex::dimension(int sheet) const
+template<class kind>
+int Complex<kind>::dimension(int sheet) const
 {
   int i,j;
 
@@ -437,7 +445,8 @@ int Complex::dimension(int sheet) const
   return -1;
 }
 
-int Complex::total_dimension(int sheet) const
+template<class kind>
+int Complex<kind>::total_dimension(int sheet) const
 {
   int i,d,sum = 0;
 
@@ -448,7 +457,8 @@ int Complex::total_dimension(int sheet) const
   return sum;
 }
 
-int Complex::structural_index(int sheet) const
+template<class kind>
+int Complex<kind>::structural_index(int sheet) const
 {
   int i,l,sum = 0;
   unsigned int j,n = events.size();
@@ -483,7 +493,8 @@ int Complex::structural_index(int sheet) const
   return sum;
 }
 
-int Complex::component_analysis(std::vector<int>& component,int sheet) const
+template<class kind>
+int Complex<kind>::component_analysis(std::vector<int>& component,int sheet) const
 {
   int i,n,ct = 0;
   std::vector<int> cvalue;
@@ -516,7 +527,8 @@ int Complex::component_analysis(std::vector<int>& component,int sheet) const
   return n;
 }
 
-void Complex::compute_global_topology(bool high_memory)
+template<class kind>
+void Complex<kind>::compute_global_topology(bool high_memory)
 {
   SYNARMOSMA::Nexus* NX = new SYNARMOSMA::Nexus;
   compute_global_nexus(NX,-1);
@@ -528,7 +540,8 @@ void Complex::compute_global_topology(bool high_memory)
   delete NX;
 }
 
-void Complex::write_topology(int sheet) const
+template<class kind>
+void Complex<kind>::write_topology(int sheet) const
 {
   int i,j,n;
   std::vector<int> vx;
@@ -576,7 +589,8 @@ void Complex::write_topology(int sheet) const
   std::cout << "The Euler characteristic is " << euler_characteristic(sheet) << std::endl;
 }
 
-void Complex::write_incastrature(const std::string& filename,int sheet) const
+template<class kind>
+void Complex<kind>::write_incastrature(const std::string& filename,int sheet) const
 {
   // A method that generates the Hasse diagram corresponding to the
   // complex's simplicial structure, with the diagram stored in the
@@ -621,7 +635,8 @@ void Complex::write_incastrature(const std::string& filename,int sheet) const
   s.close();
 }
 
-bool Complex::energy_check() const
+template<class kind>
+bool Complex<kind>::energy_check() const
 {
   bool output = true;
   const int nv = (signed) events.size();
@@ -639,7 +654,8 @@ bool Complex::energy_check() const
   return output;
 }
 
-void Complex::get_energy_values(std::vector<double>& output,int sheet) const
+template<class kind>
+void Complex<kind>::get_energy_values(std::vector<double>& output,int sheet) const
 {
   int i;
   const int nv = (signed) events.size();
@@ -660,7 +676,8 @@ void Complex::get_energy_values(std::vector<double>& output,int sheet) const
   }
 }
 
-void Complex::get_deficiency_values(std::vector<double>& output,int sheet) const
+template<class kind>
+void Complex<kind>::get_deficiency_values(std::vector<double>& output,int sheet) const
 {
   int i;
   const int nv = (signed) events.size();
@@ -681,7 +698,8 @@ void Complex::get_deficiency_values(std::vector<double>& output,int sheet) const
   }
 }
 
-void Complex::write_event_data(int v) const
+template<class kind>
+void Complex<kind>::write_event_data(int v) const
 {
   if (v < 0 || v >= (signed) events.size()) return;
   std::cout << "For vertex " << v << " we have:" << std::endl;
@@ -692,7 +710,8 @@ void Complex::write_event_data(int v) const
   std::cout << std::endl;
 }
 
-void Complex::write_graph(const std::string& filename,int sheet) const
+template<class kind>
+void Complex<kind>::write_graph(const std::string& filename,int sheet) const
 {
   int i,j,vx[2],N1 = 0;
   double E;
@@ -750,7 +769,8 @@ void Complex::write_graph(const std::string& filename,int sheet) const
   s.close();
 }
 
-int Complex::serialize(std::ofstream& s) const
+template<class kind>
+int Complex<kind>::serialize(std::ofstream& s) const
 {
   int i,j,n,output = 0;
   unsigned long q = RND->get_seed();
@@ -782,11 +802,12 @@ int Complex::serialize(std::ofstream& s) const
   return output;
 }
 
-int Complex::deserialize(std::ifstream& s)
+template<class kind>
+int Complex<kind>::deserialize(std::ifstream& s)
 {
   int i,j,n,output = 0;
   unsigned long q;
-  Event v;
+  Event<kind> v;
   Simplex S;
 
   clear();
@@ -826,7 +847,8 @@ int Complex::deserialize(std::ifstream& s)
   return output;
 }
 
-double Complex::total_energy(int sheet) const
+template<class kind>
+double Complex<kind>::total_energy(int sheet) const
 {
   const int nv = (signed) events.size();
   double sum = 0.0;
@@ -844,7 +866,8 @@ double Complex::total_energy(int sheet) const
   return sum;
 }
 
-int Complex::simplex_embedding(int d,int n) const
+template<class kind>
+int Complex<kind>::simplex_embedding(int d,int n) const
 {
 #ifdef DEBUG
   assert(d > 1);
@@ -921,7 +944,8 @@ int Complex::simplex_embedding(int d,int n) const
   return p;
 }
 
-void Complex::determine_flexible_edges(std::vector<int>& flexible_edge) const
+template<class kind>
+void Complex<kind>::determine_flexible_edges(std::vector<int>& flexible_edge) const
 {
   int i,n,vx[2];
   bool e_neighbour;

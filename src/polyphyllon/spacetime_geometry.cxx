@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::get_coordinates(std::vector<double>& x) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::get_coordinates(std::vector<double>& x) const
 {
   int i;
   unsigned int j;
@@ -19,7 +20,8 @@ void Spacetime::get_coordinates(std::vector<double>& x) const
   }
 }
 
-void Spacetime::arclength_statistics(double* output,int sheet) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::arclength_statistics(double* output,int sheet) const
 {
   unsigned int i;
   double wm,avg_length = 0.0,max_length = 0.0,min_length = std::numeric_limits<double>::infinity();
@@ -56,7 +58,8 @@ void Spacetime::arclength_statistics(double* output,int sheet) const
   }
 }
 
-bool Spacetime::adjust_dimension()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::adjust_dimension()
 {
   // This method handles the geometry and energy changes to
   // minimize the structural deficiency...
@@ -95,7 +98,8 @@ bool Spacetime::adjust_dimension()
   return modified;
 }
 
-void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int sheet) const
 {
   int i,j,l,v;
   std::set<int> S,N;
@@ -165,7 +169,8 @@ void Spacetime::compute_causal_graph(SYNARMOSMA::Directed_Graph* G,int base,int 
   }
 }
 
-void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<int>& future_cone) const
 {
   // This method assumes that the compute_lightcones method has already been called to fill 
   // the anterior and posterior properties of the skeleton->events!
@@ -217,7 +222,8 @@ void Spacetime::compute_total_lightcone(int v,std::set<int>& past_cone,std::set<
   } while(true);
 }
 
-double Spacetime::compute_temporal_nonlinearity() const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::compute_temporal_nonlinearity() const
 {
   if (skeleton->cardinality(0,-1) < 2) return 0.0;
 
@@ -255,7 +261,8 @@ double Spacetime::compute_temporal_nonlinearity() const
   return output;
 }
 
-void Spacetime::compute_lightcones()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_lightcones()
 {
   // This method only makes sense for the entire polycosmic spacetime complex, i.e. 
   // sheet = -1
@@ -282,7 +289,8 @@ void Spacetime::compute_lightcones()
   }
 }
 
-double Spacetime::chorogenesis()
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::chorogenesis()
 {
 #ifdef DEBUG
   assert(solver == Geometry_Solver::mechanical);
@@ -418,7 +426,8 @@ double Spacetime::chorogenesis()
   return error;
 }
 
-double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::compute_abnormality(const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -444,7 +453,8 @@ double Spacetime::compute_abnormality(const std::vector<int>& flexible_edge) con
   return output;
 }
 
-double Spacetime::compute_abnormality(const std::vector<double>& x,const std::vector<int>& flexible_edge) const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::compute_abnormality(const std::vector<double>& x,const std::vector<int>& flexible_edge) const
 {
   int i,vx[2];
   double d,ell,output = 0.0;
@@ -475,7 +485,8 @@ double Spacetime::compute_abnormality(const std::vector<double>& x,const std::ve
   return output;
 }
 
-void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,const std::vector<int>& flexible_edge)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_geometric_gradient(std::vector<double>& df,bool negate,const std::vector<int>& flexible_edge)
 {
   int i;
   std::set<int>::const_iterator it;
@@ -573,7 +584,8 @@ void Spacetime::compute_geometric_gradient(std::vector<double>& df,bool negate,c
   }
 }
 
-double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<int>& S2,int* vx) const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::minimize_lengths(const std::vector<int>& S1,const std::vector<int>& S2,int* vx) const
 {
   int v1,v2;
   unsigned int i,j;
@@ -599,7 +611,8 @@ double Spacetime::minimize_lengths(const std::vector<int>& S1,const std::vector<
   return mdelta;
 }
 
-double Spacetime::compute_temporal_vorticity(int v,int sheet) const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::compute_temporal_vorticity(int v,int sheet) const
 {
   // A value near zero means that the current topology is in accord with the chronogeometry
   // whereas a large positive value means much more topological entwinement is needed and a
@@ -695,7 +708,8 @@ double Spacetime::compute_temporal_vorticity(int v,int sheet) const
   return vorticity;
 }
 
-void Spacetime::compute_obliquity()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_obliquity()
 {
   const int nv = (signed) skeleton->events.size();
   if (geometry->get_relational()) {
@@ -742,7 +756,8 @@ void Spacetime::compute_obliquity()
   }
 }
 
-double Spacetime::representational_energy(bool weighted) const
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::representational_energy(bool weighted) const
 {
   // A routine that follows the algorithm outlined in C. Godsil and G. Royle, "Algebraic
   // Graph Theory" (Springer, 2001), Section 13.3 (pp. 284--286)
@@ -822,7 +837,8 @@ double Spacetime::representational_energy(bool weighted) const
   return E;
 }
 
-bool Spacetime::realizable(int d,int n) const
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::realizable(int d,int n) const
 {
   // Can the d*(d+1)/2 edge lengths lead to a geometrically
   // realizable d-simplex, i.e. one whose volume is positive?
@@ -882,9 +898,10 @@ bool Spacetime::realizable(int d,int n) const
   return false;
 }
 
-void Spacetime::compute_volume()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_volume()
 {
-  int i,j,k,l,n,m,vx[Complex::ND+3];
+  int i,j,k,l,n,m,vx[Complex<kind1>::ND+3];
   double prefactor,V,l1,l2,l3;
   std::set<int> S;
   std::vector<std::set<int> > F;
@@ -913,7 +930,7 @@ void Spacetime::compute_volume()
     skeleton->simplices[2][i].set_modified(false);
   }
 
-  for(i=3; i<=Complex::ND; ++i) {
+  for(i=3; i<=Complex<kind1>::ND; ++i) {
     if (skeleton->simplices[i].empty()) continue;
     m = i + 2;
     n = (signed) skeleton->simplices[i].size();
@@ -958,7 +975,8 @@ void Spacetime::compute_volume()
   }
 }
 
-void Spacetime::compute_lengths()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_lengths()
 {
   int i,vx[2];
   double delta;

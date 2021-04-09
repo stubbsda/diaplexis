@@ -5,12 +5,22 @@
 #define _eventh
 
 namespace DIAPLEXIS {
+  template<class kind>
+  class Event;
+
+  template<class kind>
+  std::ostream& operator <<(std::ostream&,const Event<kind>&);
+
+  template<class kind>
+  class Complex;
+
   /// A class representing the nodes of the spacetime complex, i.e. its event structure.
 
   /// This class is derived from the Synarmosma library's Vertex class,
   /// whose documentation should therefore also be consulted for more
   /// details.
-  class Event: public SYNARMOSMA::Vertex {
+  template<class kind>
+  class Event: public SYNARMOSMA::Vertex<kind> {
    protected:
     /// This property represents a set of logical assertions concerning the event and its
     /// neighbourhood.
@@ -41,6 +51,13 @@ namespace DIAPLEXIS {
     /// This property is true if this event is active and false if the event has been 
     /// deleted from the spacetime complex.
     bool active = true;
+    using SYNARMOSMA::Vertex<kind>::energy;
+    using SYNARMOSMA::Vertex<kind>::incept;
+    using SYNARMOSMA::Vertex<kind>::topological_dimension;
+    using SYNARMOSMA::Vertex<kind>::anterior;
+    using SYNARMOSMA::Vertex<kind>::posterior;
+    using SYNARMOSMA::Vertex<kind>::neighbours;
+    using SYNARMOSMA::Vertex<kind>::entourage;
 
     /// This method clears all of the instance's extended properties and sets the scalar properties to their default value.
     void clear() override;
@@ -48,9 +65,9 @@ namespace DIAPLEXIS {
     /// The default constructor which does nothing.
     Event();
     /// The standard copy constructor that copies over the properties from the source instance of this class.
-    Event(const Event&);
+    Event(const Event<kind>&);
     /// The overloaded assignment operator for this class, which behaves exactly like the copy constructor for this class.
-    Event& operator =(const Event&);
+    Event<kind>& operator =(const Event<kind>&);
     /// The destructor which does nothing for this class.
     ~Event() override;
     /// This method writes the instance properties to a binary disk file and returns the number of bytes written to the file.
@@ -128,33 +145,38 @@ namespace DIAPLEXIS {
     /// This method sets the value of the inherited topological dimension property to the argument.
     void set_topological_dimension(int);
     /// This method overrides the ostream operator so as to do a pretty print of an instance of the class.
-    friend std::ostream& operator <<(std::ostream&,const Event&);
-    friend class Complex;
+    friend std::ostream& operator << <>(std::ostream&,const Event<kind>&);
+    friend class Complex<kind>;
   };
 
-  inline void Event::activate() 
+  template<class kind>
+  inline void Event<kind>::activate() 
   {
     active = true; 
     topology_modified = true;
   }
 
-  inline void Event::deactivate() 
+  template<class kind>
+  inline void Event<kind>::deactivate() 
   {
     active = false; 
     topology_modified = true;
   }
 
-  inline void Event::clear_posterior() 
+  template<class kind>
+  inline void Event<kind>::clear_posterior() 
   {
     posterior.clear();
   }
 
-  inline void Event::get_posterior(std::set<int>& S) const 
+  template<class kind>
+  inline void Event<kind>::get_posterior(std::set<int>& S) const 
   {
     S = posterior;
   }
 
-  inline bool Event::add_posterior(int n)
+  template<class kind>
+  inline bool Event<kind>::add_posterior(int n)
   {
     if (posterior.count(n) == 0) {
       posterior.insert(n);
@@ -163,17 +185,20 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline void Event::clear_anterior() 
+  template<class kind>
+  inline void Event<kind>::clear_anterior() 
   {
     anterior.clear();
   }
 
-  inline void Event::get_anterior(std::set<int>& S) const 
+  template<class kind>
+  inline void Event<kind>::get_anterior(std::set<int>& S) const 
   {
     S = anterior;
   }
 
-  inline bool Event::add_anterior(int n)
+  template<class kind>
+  inline bool Event<kind>::add_anterior(int n)
   {
     if (anterior.count(n) == 0) {
       anterior.insert(n);
@@ -182,22 +207,26 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline void Event::clear_entourage() 
+  template<class kind>
+  inline void Event<kind>::clear_entourage() 
   {
     entourage.clear();
   }
 
-  inline void Event::get_entourage(std::set<int>& S) const 
+  template<class kind>
+  inline void Event<kind>::get_entourage(std::set<int>& S) const 
   {
     S = entourage;
   }
 
-  inline void Event::set_entourage(const std::set<int>& S) 
+  template<class kind>
+  inline void Event<kind>::set_entourage(const std::set<int>& S) 
   {
     entourage = S;
   }
 
-  inline bool Event::drop_entourage(int n) 
+  template<class kind>
+  inline bool Event<kind>::drop_entourage(int n) 
   {
     std::set<int>::const_iterator it = std::find(entourage.begin(),entourage.end(),n);
     if (it != entourage.end()) {
@@ -207,23 +236,27 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline void Event::get_neighbours(std::set<int>& S) const 
+  template<class kind>
+  inline void Event<kind>::get_neighbours(std::set<int>& S) const 
   {
     S = neighbours;
   }
 
-  inline void Event::set_neighbours(const std::set<int>& S) 
+  template<class kind>
+  inline void Event<kind>::set_neighbours(const std::set<int>& S) 
   {
     neighbours = S; 
     topology_modified = true;
   }
 
-  inline bool Event::is_neighbour(int n) const 
+  template<class kind>
+  inline bool Event<kind>::is_neighbour(int n) const 
   {
     return (neighbours.count(n) > 0);
   }
 
-  inline bool Event::add_neighbour(int n) 
+  template<class kind>
+  inline bool Event<kind>::add_neighbour(int n) 
   {
     if (neighbours.count(n) == 0) {
       neighbours.insert(n);
@@ -233,7 +266,8 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline bool Event::drop_neighbour(int n) 
+  template<class kind>
+  inline bool Event<kind>::drop_neighbour(int n) 
   {
     std::set<int>::const_iterator it = std::find(neighbours.begin(),neighbours.end(),n);
     if (it != neighbours.end()) {
@@ -244,92 +278,110 @@ namespace DIAPLEXIS {
     return false;
   }
 
-  inline double Event::get_deficiency() const 
+  template<class kind>
+  inline double Event<kind>::get_deficiency() const 
   {
     return deficiency;
   }
 
-  inline void Event::set_deficiency(double x) 
+  template<class kind>
+  inline void Event<kind>::set_deficiency(double x) 
   {
     deficiency = x;
   }
 
-  inline double Event::get_entwinement() const 
+  template<class kind>
+  inline double Event<kind>::get_entwinement() const 
   {
     return entwinement;
   }
 
-  inline void Event::set_entwinement(double x) 
+  template<class kind>
+  inline void Event<kind>::set_entwinement(double x) 
   {
     entwinement = x;
   }
 
-  inline double Event::get_obliquity() const 
+  template<class kind>
+  inline double Event<kind>::get_obliquity() const 
   {
     return obliquity;
   }
 
-  inline void Event::set_obliquity(double x) 
+  template<class kind>
+  inline void Event<kind>::set_obliquity(double x) 
   {
     obliquity = x;
   }
 
-  inline int Event::get_incept() const 
+  template<class kind>
+  inline int Event<kind>::get_incept() const 
   {
     return incept;
   }
 
-  inline void Event::set_incept(int n) 
+  template<class kind>
+  inline void Event<kind>::set_incept(int n) 
   {
     incept = n;
   }
 
-  inline bool Event::get_boundary() const 
+  template<class kind>
+  inline bool Event<kind>::get_boundary() const 
   {
     return boundary;
   }
 
-  inline void Event::set_boundary(bool t) 
+  template<class kind>
+  inline void Event<kind>::set_boundary(bool t) 
   {
     boundary = t;
   }
 
-  inline bool Event::get_topology_modified() const 
+  template<class kind>
+  inline bool Event<kind>::get_topology_modified() const 
   {
     return topology_modified;
   }
 
-  inline void Event::set_topology_modified(bool t) 
+  template<class kind>
+  inline void Event<kind>::set_topology_modified(bool t) 
   {
     topology_modified = t;
   }
 
-  inline bool Event::get_geometry_modified() const 
+  template<class kind>
+  inline bool Event<kind>::get_geometry_modified() const 
   {
     return geometry_modified;
   }
 
-  inline void Event::set_geometry_modified(bool t) 
+  template<class kind>
+  inline void Event<kind>::set_geometry_modified(bool t) 
   {
     geometry_modified = t;
   }
 
-  inline double Event::get_geometric_deficiency() const 
+  template<class kind>
+  inline double Event<kind>::get_geometric_deficiency() const 
   {
     return geometric_deficiency;
   }
 
-  inline void Event::set_geometric_deficiency(double x) 
+  template<class kind>
+  inline void Event<kind>::set_geometric_deficiency(double x) 
   {
     geometric_deficiency = x;
   }
 
-  inline int Event::get_topological_dimension() const 
+  template<class kind>
+  inline int Event<kind>::get_topological_dimension() const 
   {
     return topological_dimension;
   }
 
-  inline void Event::set_topological_dimension(int n) 
+  template<class kind>
+  inline void Event<kind>::set_topological_dimension(int n) 
   {
     topological_dimension = n;
   }

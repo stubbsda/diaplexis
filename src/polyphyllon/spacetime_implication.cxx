@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-bool Spacetime::stellar_deletion(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::stellar_deletion(int base,int sheet)
 {
   // If this event is already part of a d-simplex, d >= 2, then
   // this operation is pointless...
@@ -27,7 +28,8 @@ bool Spacetime::stellar_deletion(int base,int sheet)
   return true;
 }
 
-bool Spacetime::foliation_m(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::foliation_m(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
   std::set<int> locus,candidates,s1;
@@ -59,7 +61,8 @@ bool Spacetime::foliation_m(int base,int sheet)
   return skeleton->simplex_addition(leaf,locus);
 }
 
-bool Spacetime::fusion_m(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::fusion_m(int base,int sheet)
 {
   int i,u,vx[2];
   std::set<int> candidates;
@@ -81,7 +84,8 @@ bool Spacetime::fusion_m(int base,int sheet)
   return true;
 }
 
-bool Spacetime::fission(int base,double density,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::fission(int base,double density,int sheet)
 {
   int i,p,q,n,vx[2];
   std::set<int> locus;
@@ -139,9 +143,9 @@ bool Spacetime::fission(int base,double density,int sheet)
         nsimplex.insert(n);
       }
       d = (signed) nsimplex.size() - 1;
-      if (d >= Complex::ND) {
+      if (d >= Complex<kind1>::ND) {
         std::set<int> s1;
-        d = skeleton->RND->irandom(2,Complex::ND);
+        d = skeleton->RND->irandom(2,Complex<kind1>::ND);
         do {
           n = skeleton->RND->irandom(nsimplex);
           s1.insert(n);
@@ -184,7 +188,8 @@ bool Spacetime::fission(int base,double density,int sheet)
   }
 }
 
-bool Spacetime::circumvolution(int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::circumvolution(int sheet)
 {
   // This method attempts a circumvolution using boundary edges, it is
   // normally only called when the global energy reaches a critical threshold.
@@ -267,7 +272,8 @@ bool Spacetime::circumvolution(int sheet)
   return true;
 }
 
-bool Spacetime::circumvolution(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::circumvolution(int base,int sheet)
 {
   // This method seeks to fuse together two d-skeleton->simplices, one of
   // which contains the event base
@@ -349,7 +355,8 @@ bool Spacetime::circumvolution(int base,int sheet)
   return true;
 }
 
-bool Spacetime::expansion(int base,double creativity,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::expansion(int base,double creativity,int sheet)
 {
   // Create an entirely new d-simplex
   int i,j,d,k,nv,novum = 0;
@@ -362,13 +369,13 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 
   if (base >= 0) {
     int n1 = skeleton->vertex_dimension(base,sheet);
-    if (n1 == Complex::ND) return false;
+    if (n1 == Complex<kind1>::ND) return false;
     int u,vtx[2],its = 0;
     std::set<int> M;
     double tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
     const int ne = (signed) skeleton->simplices[1].size();
 
-    d = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
+    d = int(double(Complex<kind1>::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<ne; ++i) {
       if (!skeleton->simplices[1][i].active(sheet)) continue;
@@ -382,7 +389,7 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
 
     do {
       its++;
-      if (its == Complex::ND) creativity = 1.0;
+      if (its == Complex<kind1>::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
         k = event_addition(base,sheet);
@@ -434,10 +441,11 @@ bool Spacetime::expansion(int base,double creativity,int sheet)
   return true;
 }
 
-bool Spacetime::expansion(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::expansion(int base,int sheet)
 {
   int i,u,d,m,vtx[2],n = skeleton->vertex_dimension(base,sheet);
-  if (n == Complex::ND) return false;
+  if (n == Complex<kind1>::ND) return false;
   std::set<int> vx,s,N,locus;
   std::set<int>::const_iterator it;
   SYNARMOSMA::hash_map::const_iterator qt;
@@ -447,7 +455,7 @@ bool Spacetime::expansion(int base,int sheet)
 
   locus.insert(sheet);
 
-  d = int(double(Complex::ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
+  d = int(double(Complex<kind1>::ND-1-n)*1.0/(1.0 + std::exp(tau)) + double(1 + n));
 
   vx.insert(base);
   for(i=0; i<d; ++i) {
@@ -479,7 +487,8 @@ bool Spacetime::expansion(int base,int sheet)
   return true;
 }
 
-bool Spacetime::perforation(int base,int d,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::perforation(int base,int d,int sheet)
 {
   int i,j,k,n,nd;
   bool good,found;
@@ -517,7 +526,7 @@ bool Spacetime::perforation(int base,int d,int sheet)
     }
   }
   else {
-    if (d < 2 || d >= Complex::ND) return false;
+    if (d < 2 || d >= Complex<kind1>::ND) return false;
     if (skeleton->simplices[d].empty()) return false;
     nd = (signed) skeleton->simplices[d].size();
     for(i=0; i<nd; ++i) {
@@ -552,14 +561,15 @@ bool Spacetime::perforation(int base,int d,int sheet)
   return true;
 }
 
-bool Spacetime::inflation(int base,double creativity,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::inflation(int base,double creativity,int sheet)
 {
   // Performs an inflation on the event base with colour sheet
   int i,k,n1,na,delta,its = 0;
   bool success;
   std::set<int> vx,locus,candidates;
   std::set<int>::const_iterator it;
-  Event vt;
+  Event<kind1> vt;
   SYNARMOSMA::hash_map::const_iterator qt;
 
   vt.activate(sheet);
@@ -567,7 +577,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
 
   if (base >= 0) {
     n1 = skeleton->vertex_dimension(base,sheet);
-    if (n1 == Complex::ND) return false;
+    if (n1 == Complex<kind1>::ND) return false;
     int j,vtx[2];
     std::set<int>::const_iterator jt;
     std::set<int> M,N;
@@ -578,7 +588,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     // 1+n1 and ND - the greater the magnitude of v's deficiency,
     // the higher the dimension d should be...
     tau = std::abs(skeleton->events[base].get_deficiency()) + 25.0;
-    delta = int(double(Complex::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
+    delta = int(double(Complex<kind1>::ND-1-n1)*1.0/(1.0 + std::exp(tau)) + double(1 + n1));
 
     for(i=0; i<(signed) skeleton->simplices[n1].size(); ++i) {
       if (!skeleton->simplices[n1][i].active(sheet)) continue;
@@ -603,7 +613,7 @@ bool Spacetime::inflation(int base,double creativity,int sheet)
     if (M.empty()) creativity = 1.0;
     do {
       its++;
-      if (its == Complex::ND) creativity = 1.0;
+      if (its == Complex<kind1>::ND) creativity = 1.0;
       if (skeleton->RND->drandom() < creativity) {
         // Create a new event...
         k = event_addition(base,sheet);

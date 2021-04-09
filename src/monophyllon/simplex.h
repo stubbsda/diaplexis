@@ -4,6 +4,8 @@
 #define _simplexh
 
 namespace DIAPLEXIS {
+  template<class kind>
+  class Complex;
   /// A class representing the d-simplices (where d > 0) of the spacetime complex.
 
   /// This class is derived from the Synarmosma library's Cell class,
@@ -95,6 +97,7 @@ namespace DIAPLEXIS {
     friend Simplex operator ^(const Simplex&,const Simplex&);
     /// This method overrides the ostream operator so as to do a pretty print of an instance of the class.
     friend std::ostream& operator<< (std::ostream&,const Simplex&);
+    template<class kind>
     friend class Complex;
   };
 

@@ -8,7 +8,11 @@
 #define _complexh
 
 namespace DIAPLEXIS {
+  template<class kind1,class kind2>
+  class Spacetime;
+
   /// A class representing an abstract simplicial complex of finite dimension.
+  template<class kind>
   class Complex {
    private:
     /// This property is true if this complex satisfies the axioms of a combinatorial
@@ -25,7 +29,7 @@ namespace DIAPLEXIS {
     int topological_radius = 4;
     /// This property stores the 0-simplices (events) of the complex as a
     /// vector of type Event.
-    std::vector<Event> events;
+    std::vector<Event<kind> > events;
     /// This property stores the higher-dimensional simplices, as an array of
     /// 1 + Complex::ND vectors of type Simplex.
     std::vector<Simplex>* simplices;
@@ -269,156 +273,186 @@ namespace DIAPLEXIS {
     int get_incept(int,int) const;
     /// This method sets the first element of the argument to the Complex::pseudomanifold property and second element to the value of the Complex::boundary property.
     void is_pseudomanifold(std::pair<bool,bool>&) const;
+    template<class kind1,class kind2>
     friend class Spacetime;
   };
 
-  inline void Complex::get_neighbours(int n,std::set<int>& S) const
+  template<class kind>
+  inline void Complex<kind>::get_neighbours(int n,std::set<int>& S) const
   {
     S = events[n].neighbours;
   }
 
-  inline void Complex::get_homology(std::string& s) const 
+  template<class kind>
+  inline void Complex<kind>::get_homology(std::string& s) const 
   {
     s = H->write();
   }
 
-  inline void Complex::get_homotopy(std::string& s) const 
+  template<class kind>
+  inline void Complex<kind>::get_homotopy(std::string& s) const 
   {
     s = pi1->write();
   }
 
-  inline void Complex::set_homology_field(SYNARMOSMA::Homology::Field F) 
+  template<class kind>
+  inline void Complex<kind>::set_homology_field(SYNARMOSMA::Homology::Field F) 
   {
     H->set_field(F);
   }
 
-  inline void Complex::set_homology_method(SYNARMOSMA::Homology::Method M) 
+  template<class kind>
+  inline void Complex<kind>::set_homology_method(SYNARMOSMA::Homology::Method M) 
   {
     H->set_method(M);
   }
 
-  inline SYNARMOSMA::Homology::Field Complex::get_homology_field() const 
+  template<class kind>
+  inline SYNARMOSMA::Homology::Field Complex<kind>::get_homology_field() const 
   {
     return H->get_field();
   }
 
-  inline SYNARMOSMA::Homology::Method Complex::get_homology_method() const 
+  template<class kind>
+  inline SYNARMOSMA::Homology::Method Complex<kind>::get_homology_method() const 
   {
     return H->get_method();
   }
 
-  inline bool Complex::active_event(int n,int sheet) const 
+  template<class kind>
+  inline bool Complex<kind>::active_event(int n,int sheet) const 
   {
     if (sheet == -1) return (!events[n].ubiquity.empty());
 
     return (events[n].ubiquity.count(sheet) > 0);
   }
 
-  inline bool Complex::active_simplex(int d,int n,int sheet) const 
+  template<class kind>
+  inline bool Complex<kind>::active_simplex(int d,int n,int sheet) const 
   {
     if (d == 0) return active_event(n,sheet);
     if (sheet == -1) return (!simplices[d][n].ubiquity.empty());
     return (simplices[d][n].ubiquity.count(sheet) > 0); 
   }
 
-  inline int Complex::get_dimension(int sheet) const
+  template<class kind>
+  inline int Complex<kind>::get_dimension(int sheet) const
   {
     return dimension(sheet);
   }
 
-  inline int Complex::get_event_dimension(int n,int sheet) const
+  template<class kind>
+  inline int Complex<kind>::get_event_dimension(int n,int sheet) const
   {
     return vertex_dimension(n,sheet);
   }
 
-  inline int Complex::get_cardinality(int d,int sheet) const 
+  template<class kind>
+  inline int Complex<kind>::get_cardinality(int d,int sheet) const 
   {
     return cardinality(d,sheet);
   }
 
-  inline void Complex::get_vertex_degree_statistics(double* output,int sheet) const 
+  template<class kind>
+  inline void Complex<kind>::get_vertex_degree_statistics(double* output,int sheet) const 
   {
     vertex_degree_statistics(output,sheet);
   }
 
-  inline void Complex::get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const
+  template<class kind>
+  inline void Complex<kind>::get_fvector(std::vector<int>& f,std::vector<int>& fstar,int sheet) const
   {
     compute_fvector(f,fstar,sheet);
   }
 
-  inline void Complex::get_simplex_vertices(int d,int n,int* vx) const 
+  template<class kind>
+  inline void Complex<kind>::get_simplex_vertices(int d,int n,int* vx) const 
   {
     simplices[d][n].get_vertices(vx);
   }
 
-  inline std::string Complex::get_simplex_key(int d,int n) const 
+  template<class kind>
+  inline std::string Complex<kind>::get_simplex_key(int d,int n) const 
   {
     return SYNARMOSMA::make_key(simplices[d][n].vertices);
   }
 
-  inline int Complex::get_cyclicity(int sheet) const
+  template<class kind>
+  inline int Complex<kind>::get_cyclicity(int sheet) const
   {
     return cyclicity(sheet);
   }
 
-  inline int Complex::get_circuit_rank(int sheet) const
+  template<class kind>
+  inline int Complex<kind>::get_circuit_rank(int sheet) const
   {
     return circuit_rank(sheet);
   }
 
-  inline bool Complex::is_orientable() const 
+  template<class kind>
+  inline bool Complex<kind>::is_orientable() const 
   {
     return orientable;
   }
 
-  inline int Complex::get_euler_characteristic(int sheet) const
+  template<class kind>
+  inline int Complex<kind>::get_euler_characteristic(int sheet) const
   {
     return euler_characteristic(sheet);
   }
 
-  inline double Complex::get_event_obliquity(int n) const 
+  template<class kind>
+  inline double Complex<kind>::get_event_obliquity(int n) const 
   {
     return events[n].obliquity;
   }
 
-  inline double Complex::get_event_energy(int n) const 
+  template<class kind>
+  inline double Complex<kind>::get_event_energy(int n) const 
   {
     return events[n].get_energy();
   }
 
-  inline double Complex::get_event_deficiency(int n) const 
+  template<class kind>
+  inline double Complex<kind>::get_event_deficiency(int n) const 
   {
     return events[n].deficiency;
   }
 
-  inline double Complex::get_event_entwinement(int n,int sheet) const 
+  template<class kind>
+  inline double Complex<kind>::get_event_entwinement(int n,int sheet) const 
   {
     return events[n].entwinement[sheet];
   }
 
-  inline int Complex::get_events() const
+  template<class kind>
+  inline int Complex<kind>::get_events() const
   {
     return (signed) events.size();
   }
 
-  inline double Complex::get_total_energy(int sheet) const 
+  template<class kind>
+  inline double Complex<kind>::get_total_energy(int sheet) const 
   {
     return total_energy(sheet);
   }
 
-  inline int Complex::get_entourage_cardinality(int d,int n) const
+  template<class kind>
+  inline int Complex<kind>::get_entourage_cardinality(int d,int n) const
   {
     int output = (d == 0) ? (signed) events[n].neighbours.size() : (signed) simplices[d][n].entourage.size(); 
     return output;
   }
 
-  inline int Complex::get_incept(int d,int n) const 
+  template<class kind>
+  inline int Complex<kind>::get_incept(int d,int n) const 
   {
     int output = (d == 0) ? events[n].incept : simplices[d][n].incept; 
     return output;
   }
 
-  inline bool Complex::edge_exists(int u,int v,int sheet) const
+  template<class kind>
+  inline bool Complex<kind>::edge_exists(int u,int v,int sheet) const
   {
     if (u == v || u < 0 || v < 0) throw std::invalid_argument("Illegal vertex values in the Complex::edge_exists method!");
 
@@ -435,7 +469,8 @@ namespace DIAPLEXIS {
     return true;
   }
 
-  inline int Complex::get_edge_index(const std::set<int>& vx) const 
+  template<class kind>
+  inline int Complex<kind>::get_edge_index(const std::set<int>& vx) const 
   {
     if (vx.size() != 2) throw std::invalid_argument("Illegal set cardinality in the Complex::get_edge_index method!");
     
@@ -444,13 +479,15 @@ namespace DIAPLEXIS {
     return qt->second;
   }
 
-  inline void Complex::is_pseudomanifold(std::pair<bool,bool>& output) const 
+  template<class kind>
+  inline void Complex<kind>::is_pseudomanifold(std::pair<bool,bool>& output) const 
   {
     output.first = pseudomanifold;
     output.second = boundary;
   }
 
-  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
+  template<class kind>
+  inline void Complex<kind>::compute_graph(SYNARMOSMA::Graph* G,int sheet) const
   {
     if (events.empty()) return;
 
@@ -458,7 +495,8 @@ namespace DIAPLEXIS {
     compute_graph(G,offset,sheet);
   }
 
-  inline void Complex::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
+  template<class kind>
+  inline void Complex<kind>::compute_graph(SYNARMOSMA::Graph* G,int base,int sheet) const
   {
     compute_graph(G,base,Complex::topological_radius,sheet);
   }

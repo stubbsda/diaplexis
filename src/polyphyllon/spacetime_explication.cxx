@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-bool Spacetime::stellar_addition(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::stellar_addition(int base,int sheet)
 {
   if (skeleton->vertex_dimension(base,sheet) < 2) return false;
   // Take one of these 2-skeleton->simplices and eliminate it in favour of a
@@ -63,7 +64,8 @@ bool Spacetime::stellar_addition(int base,int sheet)
   return true;    
 }
 
-bool Spacetime::correction(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::correction(int base,int sheet)
 {
   // This method needs to loop over all events in a given sheet and find those which
   // are capable of adding another event at a distance of (roughly) one and which is
@@ -150,7 +152,8 @@ bool Spacetime::correction(int base,int sheet)
   return true;
 }
 
-bool Spacetime::contraction(int base,double l,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::contraction(int base,double l,int sheet)
 {
   int i,vx[2];
   std::set<int> pool;
@@ -182,7 +185,8 @@ bool Spacetime::contraction(int base,double l,int sheet)
   return true;
 }
 
-bool Spacetime::compensation_m(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::compensation_m(int base,int sheet)
 {
   if (skeleton->vertex_dimension(base,sheet) < 2) return false;
 
@@ -230,7 +234,8 @@ bool Spacetime::compensation_m(int base,int sheet)
   return true;
 }
 
-bool Spacetime::compensation_g(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::compensation_g(int base,int sheet)
 {
   int i,j,vx[2],sdegree = 0;
   double l;
@@ -330,7 +335,8 @@ bool Spacetime::compensation_g(int base,int sheet)
   return true;
 }
 
-bool Spacetime::foliation_x(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::foliation_x(int base,int sheet)
 {
   int i,p,n1,n2,vx[2];
   std::set<int> candidates,S;
@@ -359,7 +365,8 @@ bool Spacetime::foliation_x(int base,int sheet)
   return true;
 }
 
-bool Spacetime::deflation(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::deflation(int base,int sheet)
 {
   int d = skeleton->vertex_dimension(base,sheet);
   if (d < 2) return false;
@@ -379,7 +386,8 @@ bool Spacetime::deflation(int base,int sheet)
   return true;
 }
 
-bool Spacetime::reduction(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::reduction(int base,int sheet)
 {
   const int d = skeleton->vertex_dimension(base,sheet);
   if (d < 2) return false;
@@ -410,7 +418,8 @@ bool Spacetime::reduction(int base,int sheet)
   return true;
 }
 
-bool Spacetime::amputation(int base,double tolerance,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::amputation(int base,double tolerance,int sheet)
 {
   int i,j,n,p,vx[2];
   std::set<int> candidates;
@@ -450,7 +459,8 @@ bool Spacetime::amputation(int base,double tolerance,int sheet)
   return true;
 }
 
-bool Spacetime::fusion_x(int base,double tolerance,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::fusion_x(int base,double tolerance,int sheet)
 {
   int i,j;
   std::vector<std::pair<int,int> > candidates;
@@ -473,7 +483,8 @@ bool Spacetime::fusion_x(int base,double tolerance,int sheet)
   return true;
 }
 
-bool Spacetime::germination(int base,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::germination(int base,int sheet)
 {
   // This method constructs new neighbour events w_i for the base event which are
   // unit distance from the base event and orthogonal to the base event's existing edges, 

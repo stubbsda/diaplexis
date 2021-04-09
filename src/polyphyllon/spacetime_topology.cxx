@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-int Spacetime::superposition_fusion()
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::superposition_fusion()
 {
   int i,j,nf,v1,v2,nfail = 0,nfused = 0;
   double delta,pfusion = 0.0;
@@ -53,7 +54,8 @@ int Spacetime::superposition_fusion()
   return nfused;
 }
 
-int Spacetime::event_fission()
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::event_fission()
 {
   int i,n,sheet,nc = 0,ulimit = int(event_fission_percentage*double(skeleton->cardinality(0,-1)));
   double alpha;
@@ -85,7 +87,8 @@ int Spacetime::event_fission()
   return nc;
 }
 
-int Spacetime::compression(double threshold)
+template<class kind1,class kind2>
+int Spacetime<kind1,kind2>::compression(double threshold)
 {
   int i,n,nc,v[2],output = 0;
   std::set<int> locus;
@@ -195,7 +198,8 @@ int Spacetime::compression(double threshold)
   return output;
 }
 
-bool Spacetime::interplication(int centre,double size,int D,int sheet)
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::interplication(int centre,double size,int D,int sheet)
 {
   // Method to construct a highly-entwined knot after carving out a hole for 
   // in the spacetime complex - it really only makes sense if D is large 
@@ -385,7 +389,8 @@ bool Spacetime::interplication(int centre,double size,int D,int sheet)
   return true;
 }
 
-void Spacetime::regularization(bool minimal,int sheet)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::regularization(bool minimal,int sheet)
 {
   if (!minimal) skeleton->simplicial_implication(sheet);
 

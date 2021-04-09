@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vector<int>& vx_map,const std::vector<double>& energy,const std::vector<double>& y,double* output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::mechanical_force(const std::vector<int>& offset,const std::vector<int>& vx_map,const std::vector<double>& energy,const std::vector<double>& y,double* output) const
 {
   int i,j,k;
   double delta,r_true;
@@ -55,7 +56,8 @@ void Spacetime::mechanical_force(const std::vector<int>& offset,const std::vecto
   }
 }
 
-void Spacetime::mechanical_solver()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::mechanical_solver()
 {
   // Method to use an effective force algorithm to calculate the best 
   // geometric configuration for the spacetime complex, with the possibility 
@@ -201,7 +203,7 @@ void Spacetime::mechanical_solver()
   compute_volume();
   if (!cgradient_refinement || geometry->get_euclidean() == false) return;
   double d,q,E,prior,alpha = 0.0,beta,E_initial,nx = 0.0,sigma = 0.1;
-  SYNARMOSMA::Geometry initial_state; 
+  SYNARMOSMA::Geometry<kind2> initial_state; 
   std::vector<int> flexible_edge;
   std::vector<double> s,snew,dx,dy,dx_old,x,c,fx;
 
@@ -326,7 +328,8 @@ void Spacetime::mechanical_solver()
   }
 }
 
-void Spacetime::evolutionary_solver()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::evolutionary_solver()
 {
   int i,j,n,in1,vc,joust,generation = 1;
   bool viable;
@@ -334,9 +337,9 @@ void Spacetime::evolutionary_solver()
   std::vector<std::pair<int,int> > vcount;
   std::set<int> modified_vertices,vx;
   std::set<int>::const_iterator it;
-  std::vector<SYNARMOSMA::Geometry> pool,ptemp;
-  SYNARMOSMA::Geometry optimal; 
-  SYNARMOSMA::Geometry initial_state; 
+  std::vector<SYNARMOSMA::Geometry<kind2> > pool,ptemp;
+  SYNARMOSMA::Geometry<kind2> optimal; 
+  SYNARMOSMA::Geometry<kind2> initial_state; 
   const int pmagnitude = int(0.15*system_size);
   const double initial_error = error;
 
@@ -345,11 +348,11 @@ void Spacetime::evolutionary_solver()
 #endif
 
   for(i=0; i<2*pool_size; ++i) {
-    pool.push_back(SYNARMOSMA::Geometry(*geometry));
+    pool.push_back(SYNARMOSMA::Geometry<kind2>(*geometry));
     vcount.push_back(std::pair<int,int>(0,0));
   }
   for(i=0; i<pool_size; ++i) {
-    ptemp.push_back(SYNARMOSMA::Geometry(*geometry));
+    ptemp.push_back(SYNARMOSMA::Geometry<kind2>(*geometry));
   }
 
   geometry->store(&initial_state);
@@ -481,7 +484,8 @@ void Spacetime::evolutionary_solver()
   structural_deficiency();
 }
 
-void Spacetime::annealing_solver()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::annealing_solver()
 {
   int i,j,n,m,step,naccept,nim,nwo_a,nwo_r;
   double S,q,t,E_old,paccept,sigma,E_avg,E_best,delta,temperature = 100.0;
@@ -489,7 +493,7 @@ void Spacetime::annealing_solver()
   std::set<int> modified_vertices;
   std::set<int>::const_iterator it;
   std::vector<double> E,lengths,base,output,output1,output2;
-  SYNARMOSMA::Geometry optimal; 
+  SYNARMOSMA::Geometry<kind2> optimal; 
   const double initial_error = error;
 
   geometry->store(&optimal);
@@ -660,15 +664,16 @@ void Spacetime::annealing_solver()
   structural_deficiency();
 }
 
-void Spacetime::simplex_solver()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::simplex_solver()
 {
   int i,j,k = 0,in1,bindex,windex,ntrans = 0;
   double f,q,centroid[system_size];
-  SYNARMOSMA::Geometry SR(*geometry),SE(*geometry); 
-  SYNARMOSMA::Geometry initial_state; 
+  SYNARMOSMA::Geometry<kind2> SR(*geometry),SE(*geometry); 
+  SYNARMOSMA::Geometry<kind2> initial_state; 
   std::vector<std::pair<int,double> > fitness;
   std::set<int> modified_vertices;
-  std::vector<SYNARMOSMA::Geometry> S;
+  std::vector<SYNARMOSMA::Geometry<kind2> > S;
   const int nv = (signed) skeleton->events.size();
   const double initial_error = error;
 
@@ -693,7 +698,7 @@ void Spacetime::simplex_solver()
     for(j=0; j<nv; ++j) {
       skeleton->events[j].set_geometry_modified(false);
     }
-    for(j=1; j<=Complex::ND; ++j) {
+    for(j=1; j<=Complex<kind1>::ND; ++j) {
       for(k=0; k<(signed) skeleton->simplices[j].size(); ++k) {
         skeleton->simplices[j][k].set_modified(false);
       }
@@ -868,7 +873,8 @@ void Spacetime::simplex_solver()
   structural_deficiency();
 }
 
-void Spacetime::optimize()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::optimize()
 {
   int i,n;
   bool deficient = false;

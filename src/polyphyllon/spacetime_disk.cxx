@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::read_parameters(const std::string& filename)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::read_parameters(const std::string& filename)
 {
   int q,tvalue,n_is = 0,n_so = 0,D = 0;
   unsigned long rs;
@@ -415,7 +416,7 @@ void Spacetime::read_parameters(const std::string& filename)
   }
   else if (initial_state == Initial_Topology::monoplex) {
     assert(initial_dim > 0);
-    assert(initial_dim <= Complex::ND);
+    assert(initial_dim <= Complex<kind1>::ND);
     initial_size = 1 + initial_dim;
   }
   else if (initial_state == Initial_Topology::singleton) {
@@ -459,7 +460,8 @@ void Spacetime::read_parameters(const std::string& filename)
   original_state = initial_state;
 }
 
-void Spacetime::write_log() const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::write_log() const
 {
   int i,j,l,v,nn,ne,max_val,min_val,ntime,nspace,ncyclic,nf,np,nat;
   int nsource,nsink,nnull,nch,in1,sum,mx,mn;
@@ -498,7 +500,7 @@ void Spacetime::write_log() const
     s << "<Hostname>" << hostname << "</Hostname>" << std::endl;
     s << "<StartTime>" << cdate << "</StartTime>" << std::endl;
     s << "<CompileTimeParameters>" << std::endl;
-    s << "<MaximumSimplicialDimension>" << Complex::ND << "</MaximumSimplicialDimension>" << std::endl;
+    s << "<MaximumSimplicialDimension>" << Complex<kind1>::ND << "</MaximumSimplicialDimension>" << std::endl;
     s << "<AtomicPropositions>" << SYNARMOSMA::Proposition::get_clause_size() << "</AtomicPropositions>" << std::endl;
     s << "</CompileTimeParameters>" << std::endl;
     s << "<RunTimeParameters>" << std::endl;
@@ -824,7 +826,7 @@ void Spacetime::write_log() const
   for(i=0; i<Nt; ++i) {
     sum = 0;
     mx = 0;
-    mn = Complex::ND;
+    mn = Complex<kind1>::ND;
     for(j=0; j<Nv; ++j) {
       v = vdimension[Nt*j+i];
       if (v == -1) continue;
@@ -1095,7 +1097,8 @@ void Spacetime::write_log() const
   logfile.save_file(log_file.c_str());
 }
 
-void Spacetime::read_state(const std::string& filename)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::read_state(const std::string& filename)
 {
   int i,j,n;
   std::string cmodel,fmodel;
@@ -1115,9 +1118,9 @@ void Spacetime::read_state(const std::string& filename)
   }
 
   s.read((char*)(&n),sizeof(int));
-  if (n != Complex::ND) {
+  if (n != Complex<kind1>::ND) {
     s.close();
-    throw std::runtime_error("The compiled binary's maximum simplicial dimension " + std::to_string(Complex::ND) + " does not match that (" + std::to_string(n) + ") of the data file!");
+    throw std::runtime_error("The compiled binary's maximum simplicial dimension " + std::to_string(Complex<kind1>::ND) + " does not match that (" + std::to_string(n) + ") of the data file!");
   }
 
   s.read((char*)(&n),sizeof(int));
@@ -1202,7 +1205,8 @@ void Spacetime::read_state(const std::string& filename)
   s.close();
 }
 
-void Spacetime::write_state(const std::string& filename) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::write_state(const std::string& filename) const
 {
   int i,j,n = SYNARMOSMA::Proposition::get_clause_size();
   std::string datafile;
@@ -1220,7 +1224,7 @@ void Spacetime::write_state(const std::string& filename) const
 
   // First the global parameters...
   s.write((char*)(&ftype),sizeof(int));
-  s.write((char*)(&Complex::ND),sizeof(int));
+  s.write((char*)(&Complex<kind1>::ND),sizeof(int));
   s.write((char*)(&n),sizeof(int));
 
   // Now the global runtime parameters specific to the

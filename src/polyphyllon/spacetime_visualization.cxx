@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::get_energy_extrema(std::pair<double,double>& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::get_energy_extrema(std::pair<double,double>& output) const
 {
   int i;
   double alpha,u_ex = 0.0,l_ex = 0.0;
@@ -24,7 +25,8 @@ void Spacetime::get_energy_extrema(std::pair<double,double>& output) const
   output.second = l_ex;
 }
 
-void Spacetime::get_deficiency_extrema(std::pair<double,double>& output) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::get_deficiency_extrema(std::pair<double,double>& output) const
 {
   int i;
   double alpha,u_ex = 0.0,l_ex = 0.0;
@@ -46,7 +48,8 @@ void Spacetime::get_deficiency_extrema(std::pair<double,double>& output) const
   output.second = l_ex;
 }
 
-void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,bool use_energy) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,bool use_energy) const
 {
   int i,j;
   const int nv = (signed) skeleton->events.size();
@@ -263,7 +266,8 @@ void Spacetime::compute_colours(std::vector<unsigned char>& chi,bool use_sheets,
   }
 }
 
-void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,int sheet) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::export_visual_data(std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,int sheet) const
 {
   int i,j = 0,D,vx[2];
   std::vector<double> x;
@@ -356,7 +360,8 @@ void Spacetime::export_visual_data(std::vector<float>& vcoords,std::vector<int>&
   }
 }
 
-void Spacetime::export_visual_data(std::vector<float>& colours,std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,bool use_energy) const
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::export_visual_data(std::vector<float>& colours,std::vector<float>& vcoords,std::vector<int>& evertex,std::pair<int,int>& vdata,bool use_energy) const
 {
   int i,j = 0,D,vx[2];
   std::vector<double> x;

@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-Spacetime::Spacetime(bool no_disk)
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::Spacetime(bool no_disk)
 {
   allocate();
   diskless = no_disk;
@@ -10,7 +11,8 @@ Spacetime::Spacetime(bool no_disk)
   initialize();
 }
 
-Spacetime::Spacetime(const std::string& filename,bool no_disk)
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::Spacetime(const std::string& filename,bool no_disk)
 {
   allocate();
   read_parameters(filename);
@@ -19,22 +21,25 @@ Spacetime::Spacetime(const std::string& filename,bool no_disk)
   initialize();
 }
 
-Spacetime::~Spacetime()
+template<class kind1,class kind2>
+Spacetime<kind1,kind2>::~Spacetime()
 {
   delete skeleton;
   delete geometry;
   if (score_allocated) delete[] hyphantic_notes;
 }
 
-void Spacetime::allocate()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::allocate()
 {
   // Default geometry (Euclidean, absolute, dimensionally 
   // uniform, background dimension = 3)
-  geometry = new SYNARMOSMA::Geometry;
-  skeleton = new Complex;
+  geometry = new SYNARMOSMA::Geometry<kind2>;
+  skeleton = new Complex<kind1>;
 }
 
-void Spacetime::restart(const std::string& filename,bool save_seed)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::restart(const std::string& filename,bool save_seed)
 {
   if (save_seed) {
     unsigned long n = skeleton->RND->get_seed();
@@ -49,7 +54,8 @@ void Spacetime::restart(const std::string& filename,bool save_seed)
   initialize();
 }
 
-void Spacetime::clear()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::clear()
 {
   skeleton->clear();
   geometry->clear();
@@ -57,7 +63,8 @@ void Spacetime::clear()
   hyphantic_ops = "";
 }
 
-double Spacetime::condense()
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::condense()
 {
   // First check how many ghost events and edges there are in this spacetime....
   int n = skeleton->cardinality(0),m = skeleton->cardinality(1);
@@ -76,7 +83,7 @@ double Spacetime::condense()
   std::vector<double> xc;
   std::vector<std::vector<double> > svalues;
   std::set<int>::const_iterator it;
-  std::vector<Event> nevents;
+  std::vector<Event<kind1> > nevents;
   std::vector<Simplex> nsimplices;
 
   n = 0;
@@ -100,7 +107,7 @@ double Spacetime::condense()
     skeleton->events[i].clear_entourage();
     vx.clear();
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind1>::ND; ++i) {
     m = (signed) skeleton->simplices[i].size();
     skeleton->index_table[i].clear();
     for(j=0; j<m; ++j) {
@@ -120,13 +127,14 @@ double Spacetime::condense()
   return 1.0;
 }
 
-bool Spacetime::clean() const
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::clean() const
 {
   unsigned int i;
   for(i=0; i<skeleton->events.size(); ++i) {
     if (skeleton->events[i].get_topology_modified()) return false;
   }
-  for(int d=1; d<=Complex::ND; ++d) {
+  for(int d=1; d<=Complex<kind1>::ND; ++d) {
     for(i=0; i<skeleton->simplices[d].size(); ++i) {
       if (skeleton->simplices[d][i].get_modified()) return false;
     }
@@ -134,14 +142,16 @@ bool Spacetime::clean() const
   return true;
 }
 
-void Spacetime::fallback()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::fallback()
 {
   if (!reversible) return;
   read_state("data/.previous_step.dat");
   reversible = false;
 }
 
-bool Spacetime::advance()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::advance()
 {
   static double htime = 0.0;
   static double gtime = 0.0;
@@ -190,7 +200,8 @@ bool Spacetime::advance()
   return done;
 }
 
-double Spacetime::evolve()
+template<class kind1,class kind2>
+double Spacetime<kind1,kind2>::evolve()
 {
   for(int i=0; i<max_iter; ++i) {
     if (advance()) break;
@@ -224,7 +235,8 @@ double Spacetime::evolve()
   return error;
 }
 
-bool Spacetime::correctness()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::correctness()
 {
   unsigned int i,j;
   double delta,original_error;
@@ -239,7 +251,7 @@ bool Spacetime::correctness()
     skeleton->events[i].set_topology_modified(true);
     skeleton->events[i].set_geometry_modified(true);
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind1>::ND; ++i) {
     for(j=0; j<skeleton->simplices[i].size(); ++j) {
       skeleton->simplices[i][j].set_modified(true);
     }
@@ -251,12 +263,13 @@ bool Spacetime::correctness()
   delta = std::abs(original_error - error);
   if (delta < std::numeric_limits<double>::epsilon()) return true;
 #ifdef VERBOSE
-  std::cout << "Error difference in Spacetime::correctness method is " << original_error << "  " << error << "  " << delta << std::endl;
+  std::cout << "Error difference in Spacetime<kind1,kind2>::correctness method is " << original_error << "  " << error << "  " << delta << std::endl;
 #endif
   return false;
 }
 
-void Spacetime::structural_deficiency()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::structural_deficiency()
 {
   int i,j,v1,v2,v3,k = 0;
   double sum1,sum2,l,l_inv,alpha,d1,d2,delta,E_total = 0.0;
@@ -392,9 +405,9 @@ void Spacetime::structural_deficiency()
     rho[v1] = skeleton->events[v1].get_energy(); 
     // Sanity checks...
 #ifdef DEBUG
-    if (std::isnan(R[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1)); 
-    if (std::isnan(rho[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1)); 
-    if (std::isnan(length_deviation[v1])) throw std::runtime_error("NaN detected in Spacetime::structural_deficiency for vertex " + std::to_string(v1));
+    if (std::isnan(R[v1])) throw std::runtime_error("NaN detected in Spacetime<kind1,kind2>::structural_deficiency for vertex " + std::to_string(v1)); 
+    if (std::isnan(rho[v1])) throw std::runtime_error("NaN detected in Spacetime<kind1,kind2>::structural_deficiency for vertex " + std::to_string(v1)); 
+    if (std::isnan(length_deviation[v1])) throw std::runtime_error("NaN detected in Spacetime<kind1,kind2>::structural_deficiency for vertex " + std::to_string(v1));
 #endif
   }
   
@@ -442,7 +455,8 @@ void Spacetime::structural_deficiency()
 #endif
 }
 
-bool Spacetime::global_operations()
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::global_operations()
 {
   int i,j,n,k = 0;
   bool output = false;
@@ -461,7 +475,7 @@ bool Spacetime::global_operations()
   for(i=0; i<nv; ++i) {
     if (skeleton->events[i].get_incept() == -1) skeleton->events[i].set_incept(iterations);
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind1>::ND; ++i) {
     n = (signed) skeleton->simplices[i].size();
     for(j=0; j<n; ++j) {
       if (skeleton->simplices[i][j].get_incept() == -1) skeleton->simplices[i][j].set_incept(iterations);
@@ -507,8 +521,8 @@ bool Spacetime::global_operations()
   std::cout << "Standard deviation of event energy is " << sigma << std::endl;
 
   // Analyze the distribution of event dimensionalities...
-  int histogram[1 + Complex::ND],histo2[1 + Complex::ND];
-  for(i=0; i<=Complex::ND; ++i) {
+  int histogram[1 + Complex<kind1>::ND],histo2[1 + Complex<kind1>::ND];
+  for(i=0; i<=Complex<kind1>::ND; ++i) {
     histogram[i] = 0;
     histo2[i] = 0;
   }
@@ -518,7 +532,7 @@ bool Spacetime::global_operations()
     if (skeleton->events[i].zero_energy()) continue;
     histogram[skeleton->vertex_dimension(i)] += 1;
   }
-  for(i=0; i<=Complex::ND; ++i) {
+  for(i=0; i<=Complex<kind1>::ND; ++i) {
     std::cout << "There are " << histo2[i] << " (" << histogram[i] << ") active " << i << "-dimensional events." << std::endl;
   }
 #endif
@@ -584,9 +598,9 @@ bool Spacetime::global_operations()
 
   structural_deficiency();
 
-  if (error < Spacetime::convergence_threshold || iterations >= max_iter) converged = true;
+  if (error < Spacetime<kind1,kind2>::convergence_threshold || iterations >= max_iter) converged = true;
 #ifdef VERBOSE
-  std::cout << iterations << "  " << error << "  " << Spacetime::convergence_threshold << "  " << converged << std::endl;
+  std::cout << iterations << "  " << error << "  " << Spacetime<kind1,kind2>::convergence_threshold << "  " << converged << std::endl;
 #endif
 
   if (converged) {
@@ -612,7 +626,8 @@ bool Spacetime::global_operations()
   return output;
 }
 
-bool Spacetime::consistent() const
+template<class kind1,class kind2>
+bool Spacetime<kind1,kind2>::consistent() const
 {
   if (!skeleton->consistent()) return false;
 

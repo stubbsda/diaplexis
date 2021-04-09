@@ -2,12 +2,14 @@
 
 using namespace DIAPLEXIS;
 
-Event::Event()
+template<class kind>
+Event<kind>::Event()
 {
 
 }
 
-Event::Event(const Event& source)
+template<class kind>
+Event<kind>::Event(const Event<kind>& source)
 {
   incept = source.incept;
   topological_dimension = source.topological_dimension;
@@ -27,7 +29,8 @@ Event::Event(const Event& source)
   geometry_modified = source.geometry_modified;
 }
 
-Event& Event::operator =(const Event& source)
+template<class kind>
+Event<kind>& Event<kind>::operator =(const Event<kind>& source)
 {
   if (this == &source) return *this;
 
@@ -51,14 +54,16 @@ Event& Event::operator =(const Event& source)
   return *this;
 }
 
-Event::~Event()
+template<class kind>
+Event<kind>::~Event()
 {
 
 }
 
-void Event::clear()
+template<class kind>
+void Event<kind>::clear()
 {
-  SYNARMOSMA::Vertex::clear();
+  SYNARMOSMA::Vertex<kind>::clear();
 
   ubiquity.clear();
   boundary = false;
@@ -71,13 +76,14 @@ void Event::clear()
   theorem.clear();
 }
 
-int Event::serialize(std::ofstream& s) const 
+template<class kind>
+int Event<kind>::serialize(std::ofstream& s) const 
 {
   int n,count = 0;
   double l;
   std::set<int>::const_iterator it;
 
-  count += SYNARMOSMA::Vertex::serialize(s);
+  count += SYNARMOSMA::Vertex<kind>::serialize(s);
 
   s.write((char*)(&deficiency),sizeof(double)); count += sizeof(double);
   s.write((char*)(&obliquity),sizeof(double)); count += sizeof(double);
@@ -100,14 +106,15 @@ int Event::serialize(std::ofstream& s) const
   return count;
 }
 
-int Event::deserialize(std::ifstream& s)
+template<class kind>
+int Event<kind>::deserialize(std::ifstream& s)
 {  
   int i,n,m,count = 0;
   double xc;
 
   clear();
 
-  count += SYNARMOSMA::Vertex::deserialize(s);
+  count += SYNARMOSMA::Vertex<kind>::deserialize(s);
 
   s.read((char*)(&deficiency),sizeof(double)); count += sizeof(double);
   s.read((char*)(&obliquity),sizeof(double)); count += sizeof(double);
@@ -129,8 +136,8 @@ int Event::deserialize(std::ifstream& s)
 }
 
 namespace DIAPLEXIS {
-
-  std::ostream& operator <<(std::ostream& s,const Event& source)
+  template<class kind>
+  std::ostream& operator <<(std::ostream& s,const Event<kind>& source)
   {
     std::set<int>::const_iterator it;
 

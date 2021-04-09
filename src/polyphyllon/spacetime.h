@@ -12,6 +12,7 @@
 
 namespace DIAPLEXIS {
   /// A class representing the spacetime, a combination of dynamic geometric and topological properties.
+  template<class kind1,class kind2>
   class Spacetime {
    protected:
     /// This enumerated class lists the five initial states for the spacetime: random (the Spacetime::edge_probability 
@@ -86,10 +87,10 @@ namespace DIAPLEXIS {
     double global_deficiency = 0.0;
     /// This property contains all of the spacetime's topology, stored in a 
     /// pointer to an instance of the Complex class.
-    Complex* skeleton;
+    Complex<kind1>* skeleton;
     /// This property contains the spacetime's geometry, stored in a pointer to 
     /// an instance of the Synarmosma library's Geometry class.
-    SYNARMOSMA::Geometry* geometry;
+    SYNARMOSMA::Geometry<kind2>* geometry;
     /// This property stores the collection of sheets that are associated 
     /// with this multi-sheeted spacetime, as a vector of type Sheet.
     std::vector<Sheet> codex;
@@ -609,7 +610,8 @@ namespace DIAPLEXIS {
     int get_codex_size() const;
   };
 
-  inline std::string Spacetime::sheet_activity() const
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::sheet_activity() const
   {
     std::string out = "(";
     for(int i=0; i<(signed) codex.size()-1; ++i) {
@@ -620,66 +622,79 @@ namespace DIAPLEXIS {
     return out;
   }
 
-  inline void Spacetime::set_checkpoint_frequency(int n) 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::set_checkpoint_frequency(int n) 
   {
     checkpoint_frequency = n;
   }
 
-  inline void Spacetime::get_coordinates(int n,std::vector<double>& x) const 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::get_coordinates(int n,std::vector<double>& x) const 
   {
     geometry->get_coordinates(n,x);
   }
 
-  inline double Spacetime::get_geometric_distance(int n,int m) const
+  template<class kind1,class kind2>
+  inline double Spacetime<kind1,kind2>::get_geometric_distance(int n,int m) const
   {
     return geometry->get_squared_distance(n,m,false);
   }
 
-  inline int Spacetime::get_background_dimension() const
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_background_dimension() const
   {
     return geometry->dimension();
   }
 
-  inline std::string Spacetime::get_state_file() const 
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::get_state_file() const 
   {
     return state_file;
   }
 
-  inline void Spacetime::get_arclength_statistics(double* output,int sheet) const 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::get_arclength_statistics(double* output,int sheet) const 
   {
     arclength_statistics(output,sheet);
   }
 
-  inline int Spacetime::get_iterations() const
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_iterations() const
   {
     return iterations;
   }
 
-  inline double Spacetime::get_error() const
+  template<class kind1,class kind2>
+  inline double Spacetime<kind1,kind2>::get_error() const
   {
     return error;
   }
 
-  inline int Spacetime::get_maximum_iterations() const 
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_maximum_iterations() const 
   {
     return max_iter;
   }
 
-  inline bool Spacetime::finished() const 
+  template<class kind1,class kind2>
+  inline bool Spacetime<kind1,kind2>::finished() const 
   {
     return converged;
   }
 
-  inline std::string Spacetime::get_sheet_ops(int n) const 
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::get_sheet_ops(int n) const 
   {
     return codex[n].get_hyphantic_operations();
   }
 
-  inline std::string Spacetime::get_sheet_activity() const {
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::get_sheet_activity() const {
     return sheet_activity();
   }
 
-  inline int Spacetime::get_codex_size() const
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_codex_size() const
   {
     return (signed) codex.size();
   }

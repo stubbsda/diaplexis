@@ -11,6 +11,7 @@
 
 namespace DIAPLEXIS {
   /// A class representing the spacetime, a combination of dynamic geometric and topological properties.
+  template<class kind1,class kind2>
   class Spacetime {
    protected:
     /// This enumerated class lists the five initial states for the spacetime: random (the Spacetime::edge_probability 
@@ -85,10 +86,10 @@ namespace DIAPLEXIS {
     double global_deficiency = 0.0;
     /// This property contains all of the spacetime's topology, stored in a 
     /// pointer to an instance of the Complex class.
-    Complex* skeleton;
+    Complex<kind1>* skeleton;
     /// This property contains the spacetime's geometry, stored in a pointer to 
     /// an instance of the Synarmosma library's Geometry class.
-    SYNARMOSMA::Geometry* geometry;
+    SYNARMOSMA::Geometry<kind2>* geometry;
     /// This property contains a list of all of the hyphantic operations 
     /// successfully carried out on the spacetime complex since the start 
     /// of the simulation. 
@@ -562,57 +563,68 @@ namespace DIAPLEXIS {
     bool finished() const;
   };
 
-  inline void Spacetime::set_checkpoint_frequency(int n) 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::set_checkpoint_frequency(int n) 
   {
     checkpoint_frequency = n;
   }
 
-  inline void Spacetime::get_coordinates(int n,std::vector<double>& x) const 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::get_coordinates(int n,std::vector<double>& x) const 
   {
     geometry->get_coordinates(n,x);
   }
 
-  inline double Spacetime::get_geometric_distance(int n,int m) const
+  template<class kind1,class kind2>
+  inline double Spacetime<kind1,kind2>::get_geometric_distance(int n,int m) const
   {
     return geometry->get_squared_distance(n,m,false);
   }
 
-  inline int Spacetime::get_background_dimension() const
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_background_dimension() const
   {
     return geometry->dimension();
   }
 
-  inline std::string Spacetime::get_state_file() const 
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::get_state_file() const 
   {
     return state_file;
   }
 
-  inline std::string Spacetime::get_hyphantic_operations() const
+  template<class kind1,class kind2>
+  inline std::string Spacetime<kind1,kind2>::get_hyphantic_operations() const
   {
     return hyphantic_ops;
   }
 
-  inline void Spacetime::get_arclength_statistics(double* output) const 
+  template<class kind1,class kind2>
+  inline void Spacetime<kind1,kind2>::get_arclength_statistics(double* output) const 
   {
     arclength_statistics(output);
   }
 
-  inline int Spacetime::get_iterations() const
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_iterations() const
   {
     return iterations;
   }
 
-  inline double Spacetime::get_error() const
+  template<class kind1,class kind2>
+  inline double Spacetime<kind1,kind2>::get_error() const
   {
     return error;
   }
 
-  inline int Spacetime::get_maximum_iterations() const 
+  template<class kind1,class kind2>
+  inline int Spacetime<kind1,kind2>::get_maximum_iterations() const 
   {
     return max_iter;
   }
 
-  inline bool Spacetime::finished() const 
+  template<class kind1,class kind2>
+  inline bool Spacetime<kind1,kind2>::finished() const 
   {
     return converged;
   }

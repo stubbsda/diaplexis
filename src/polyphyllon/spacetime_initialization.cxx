@@ -2,11 +2,12 @@
 
 using namespace DIAPLEXIS;
 
-void Spacetime::build_initial_state(const std::set<int>& locus)
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::build_initial_state(const std::set<int>& locus)
 {
   int i,j,m,in1;
   std::string geometry_type;
-  Event vt;
+  Event<kind1> vt;
   const int D = geometry->dimension();
   const bool relational = geometry->get_relational();
   std::vector<double> svalue;
@@ -320,7 +321,8 @@ void Spacetime::build_initial_state(const std::set<int>& locus)
 #endif
 }
 
-void Spacetime::initialize()
+template<class kind1,class kind2>
+void Spacetime<kind1,kind2>::initialize()
 {
   int i;
   std::stringstream day,month,year,pid;

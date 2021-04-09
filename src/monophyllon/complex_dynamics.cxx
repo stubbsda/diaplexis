@@ -2,7 +2,8 @@
 
 using namespace DIAPLEXIS;
 
-void Complex::inversion()
+template<class kind>
+void Complex<kind>::inversion()
 {
   int i,j;
   std::set<int> hold;
@@ -25,7 +26,7 @@ void Complex::inversion()
     events[i].neighbours = hold;
     hold.clear();
   }
-  for(i=1; i<=Complex::ND; ++i) {
+  for(i=1; i<=Complex<kind>::ND; ++i) {
     simplices[i].clear();
     index_table[i].clear();
   }
@@ -42,7 +43,8 @@ void Complex::inversion()
   compute_entourages();
 }
 
-double Complex::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
+template<class kind>
+double Complex<kind>::distribution_fitness(int* volume,const std::vector<int>& affinity,int nprocs) const
 {
   int i,sum = 0,bcount = 0;
   double mu,sigma = 0.0;
@@ -67,7 +69,8 @@ double Complex::distribution_fitness(int* volume,const std::vector<int>& affinit
   return sigma + double(bcount);
 }
 
-void Complex::distribute(int nprocs) const
+template<class kind>
+void Complex<kind>::distribute(int nprocs) const
 {
   if (nprocs < 1) throw std::invalid_argument("The number of processors must be greater than zero!");
   int i,j,k,n,p,p_old,ecount,bcount,its = 0,volume[nprocs],max_dim = 0,current = -1,cproc = 0,nreal = 0;
@@ -302,7 +305,8 @@ void Complex::distribute(int nprocs) const
   }
 }
 
-double Complex::set_logical_atoms(int n)
+template<class kind>
+double Complex<kind>::set_logical_atoms(int n)
 { 
   if (n < 1) throw std::invalid_argument("The number of atoms must be greater than zero!");
 
@@ -345,7 +349,8 @@ double Complex::set_logical_atoms(int n)
   return output;
 }
 
-double Complex::logical_energy(int v) const
+template<class kind>
+double Complex<kind>::logical_energy(int v) const
 {
   if (events[v].neighbours.empty() || !events[v].active) return 0.0;
   int n = 0;
@@ -363,7 +368,8 @@ double Complex::logical_energy(int v) const
   return sum;
 }
 
-bool Complex::logical_conformity(int v) const
+template<class kind>
+bool Complex<kind>::logical_conformity(int v) const
 {
   if (!events[v].active) return false;
 
@@ -377,7 +383,8 @@ bool Complex::logical_conformity(int v) const
   return p.satisfiable();
 }
 
-void Complex::compute_simplex_energy(int d,int n)
+template<class kind>
+void Complex<kind>::compute_simplex_energy(int d,int n)
 {
   int i,vx[1+d];
   double alpha = 0.0;
@@ -390,7 +397,8 @@ void Complex::compute_simplex_energy(int d,int n)
   simplices[d][n].energy = alpha/double(1 + d);
 }
 
-double Complex::parity_hamiltonian(double J,bool ferromagnetic) const 
+template<class kind>
+double Complex<kind>::parity_hamiltonian(double J,bool ferromagnetic) const 
 {
   // An Ising-like model based on the simplex parity...
   int i;
@@ -409,7 +417,8 @@ double Complex::parity_hamiltonian(double J,bool ferromagnetic) const
   return -J*double(H);
 }
 
-void Complex::energy_diffusion(int nchip)
+template<class kind>
+void Complex<kind>::energy_diffusion(int nchip)
 {
   // This algorithm, based on the parallel chip-firing game for graphs
   // (cf. T-Y Jiang et al., SIAM J. Disc. Math., 29:615-630, (2015)) is 
@@ -455,7 +464,8 @@ void Complex::energy_diffusion(int nchip)
   } 
 }
 
-void Complex::energy_diffusion(double Lambda,double cutoff)
+template<class kind>
+void Complex<kind>::energy_diffusion(double Lambda,double cutoff)
 {
   const int nv = (signed) events.size();
   int i,j,v,n,m,nc; 

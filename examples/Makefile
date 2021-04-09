@@ -5,7 +5,7 @@ CXX_FLAGS += -I$(INSTALL_DIR)/include -L$(INSTALL_DIR)/lib -Wl,-rpath $(INSTALL_
 ifeq ($(TYPE),MONOPHYLLON)
   CXX_FLAGS += -DMONOPHYLLON
   LIBS = -ldiaplexis-monophyllon
-else 
+else
   CXX_FLAGS += -DPOLYPHYLLON
   LIBS = -ldiaplexis-polyphyllon
 endif
